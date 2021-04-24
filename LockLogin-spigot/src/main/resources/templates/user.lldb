@@ -1,0 +1,27 @@
+/// LockLogin user data file. -->
+/// Please do not modify this file -->
+/// until you know what you are doing!
+
+
+/// The first recorded player name -->
+PLAYER:
+
+
+/// The user UUID, used for offline API -->
+UUID:
+
+
+/// The user password -->
+PASSWORD:
+
+
+/// The user google auth token -->
+TOKEN:
+
+
+/// The user pin -->
+PIN:
+
+
+/// The user google auth status -->
+2FA:

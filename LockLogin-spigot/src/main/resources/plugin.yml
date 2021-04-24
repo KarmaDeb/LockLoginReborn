@@ -1,0 +1,93 @@
+name: LockLogin
+version: ${project.version}
+main: ml.karmaconfigs.locklogin.plugin.bukkit.Main
+api-version: 1.16
+
+commands:
+  locklogin:
+    description: The command to manage the plugin, such as reload, or apply updates
+  setloginspawn:
+    description: The command to set login spawn, must be enabled in config.yml!
+  register:
+    description: The command that allows a player to register
+  login:
+    description: The command that allows a player to login into his account
+  2fa:
+    description: The command that allows a player to manage his 2FA settings
+  playerinfo:
+    description: The command that allows a player/server to view a player information
+  delaccount:
+    description: The command that allows a player to remove an account
+    aliases:
+      - delacc
+  unlock:
+    description: The command that allows a player to unlock an account
+
+permissions:
+  locklogin.reload:
+    children:
+      locklogin.reload.config:
+        description: The permission required to reload only configuration file
+        default: false
+      locklogin.reload.messages:
+        description: The permission required to reload only messages file
+        default: false
+    description: The permission required to reload configuration/messages files
+    default: false
+  locklogin.applyupdates:
+    children:
+      locklogin.applyupdates.unsafe:
+        description: The permission required to apply unsafe updates
+        default: false
+    description: The permission required to apply LockLogin update
+    default: false
+  locklogin.migrate:
+    children:
+      locklogin.migrate.external:
+        description: The permission required to perform/request module migrations
+        default: false
+      locklogin.migrate.authme:
+        description: The permission required to perform/request authme migrations
+        default: false
+      locklogin.migrate.loginsecurity:
+        description: The permission required to perform/request loginsecurity migrations
+        default: false
+    description: The permission required to perform/request migrations
+    default: false
+  locklogin.setspawn:
+    description: The permission required to set the login spawn location
+    default: op
+  locklogin.resetlocation:
+    children:
+      locklogin.resetlocation.all:
+        description: The permission required to reset all players location
+        default: false
+      locklogin.resetlocation.individual:
+        description: The permission required to reset a single player location
+        default: false
+    description: The permission required to reset the last player location
+    default: false
+  locklogin.info:
+    children:
+      locklogin.info.request:
+        description: The permission required to request other player information
+        default: false
+      locklogin.info.alt:
+        children:
+          locklogin.info.alt.alert:
+            description: The permission required to receive alerts when a player with alt account joins the server
+            default: false
+        description: The permission required to request alt account information
+        default: false
+    description: The permission required to request player or plugin information
+    default: op
+  locklogin.account:
+    children:
+      locklogin.account.remove:
+        description: The permission required to remove a client account
+        default: false
+      locklogin.account.unlock:
+        description: The permission required to unlock a client account
+        default: false
+    description: The permission required to manage a player account
+    default: false

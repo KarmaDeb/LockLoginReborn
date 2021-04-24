@@ -1,0 +1,9 @@
+project_name: ${project.name}
+project_version: ${project.version}
+project_developers: ${project.author}
+project_build: ${project.buildType}
+project_debug: ${project.debug}
+project_unsafeUpdate: ${project.unsafeUpdate}
+project_logSizeLimit: ${project.logSizeLimit}
+project_karmaapi: ${project.karmaapi}
+project_update: ${project.update}

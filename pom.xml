@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ml.karmaconfigs</groupId>
+    <artifactId>LockLogin</artifactId>
+    <version>1.10.5</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.author>KarmaDev</project.author>
+        <project.buildType>RELEASE</project.buildType>
+        <project.debug>false</project.debug>
+        <project.unsafeUpdate>false</project.unsafeUpdate>
+        <project.logSizeLimit>70</project.logSizeLimit>
+        <project.karmaapi>1.1.5</project.karmaapi>
+        <project.update>RemasteringUpdate</project.update>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.2.4</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <createDependencyReducedPom>false</createDependencyReducedPom>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>internal.repo</id>
+            <name>Temporary Staging Repository</name>
+            <url>file://D:/Intel/Projects/KarmaAPI/maven</url>
+        </repository>
+    </distributionManagement>
+
+    <modules>
+        <module>locklogin-common</module>
+        <module>locklogin-spigot</module>
+        <module>locklogin-bungee</module>
+        <module>locklogin-velocity</module>
+        <module>LockLogin-bundle</module>
+    </modules>
+</project>

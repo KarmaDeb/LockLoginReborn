@@ -1,0 +1,198 @@
+#LockLogin message file
+#----------------------------------
+#Translation: Spanish (Official)
+#Editor: KarmaDev
+#Last edited: 22 - April - 2021 01:30
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates ( this means
+#   this language will be translated by the author when a new
+#   message is added )
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+
+#Plugin prefix
+Prefix: "&eLockLogin &7>> "
+
+#Permission error message
+PermissionError: "&5&oNo tienes el permiso {permission}"
+
+#BungeeCord proxy message
+BungeeProxy: "&5&oPor favor, entra a través del proxy BungeeCord!"
+
+#Session messages - Manager
+PlayerNotVerified: "&5&oNo puedes luchar contra {player} mientras no esté verificado"
+AlreadyPlaying: "&5&oEste usuario ya está jugando"
+PasswordMinChar: "&5&oLa contraseña debe tener 4 carácteres"
+MaxIp: "&5&oMáximo de cuentas por IP alcanzado en el servidor"
+ConnectionError: "&5&oEl jugador {player} no está online"
+PlayerInfoUsage: "&5&oPor favor, usa /playerinfo <jugador>"
+LookUpUsage: "&5&oPor favor, usa /lookup <jugador>"
+AltFound: "&5&o{player} podría tener {alts} cuentas alternas, escribe /lookup {player} para más información"
+NeverPlayed: "&5&oEl jugador {player} nunca ha jugado en este servidor"
+TargetAccessError: "&5&oEl jugador {player} no está verificado"
+IncorrectPassword: "&5&oLa contraseña especificada no es correcta!"
+OnlyAzuriom:
+  - "{ServerName}"
+  - ""
+  - "&cPor favor, registra tu cuenta desde:"
+  - "&7https://myazuriomwebsite.com/user/register"
+
+#Session messages - Captcha
+Captcha: "&7Tu código captcha es: &e{captcha}"
+TypeCaptcha: "&5&oPor favor, usa /captcha <captcha>"
+CaptchaTimeOut: "&5&oHas tardado demasiado tiempo en escribir tu captcha!"
+SpecifyCaptcha: "&5&oPor favor, escribe un captcha válido"
+CaptchaValidated: "&dCódigo captcha verificado"
+InvalidCaptcha: "&5&oEl código captcha especificado no es válido"
+AlreadyCaptcha: "&5&oTu captcha ya está verificado!"
+
+#Session messages - Register
+Register: "&5&oPor favor, usa /register <contraseña> <contraseña> <captcha>"
+Registered: "&dRegistro completado, gracias por jugar"
+AlreadyRegistered: "&5&oYa estás registrado!"
+RegisterError: "&5&oLas contraseñas no coinciden!"
+PasswordInsecure: "&5&oLa contraseña no es segura!"
+RegisterOut: "&5&oHas tardado demasiado en registrarte"
+RegisterTitle: "&7Tienes"
+RegisterSubtitle: "&b{time} &7para registrarte"
+MaxRegisters:
+  - "{ServerName}"
+  - ""
+  - "&cHas alcanzado el máximo de cuentas por usuario en"
+  - "&cen servidor"
+  - ""
+  - "&cSi crees que se trata de un error, repórtalo en"
+  - "&7https://discordexample.gg"
+
+#Session messages - Login
+Login: "&5&oPor favor, usa /login <contraseña> <captcha>"
+Logged: "&dSesión iniciada, bienvenido de vuelta &7{player}"
+AlreadyLogged: "&5&oYa has iniciado sesión!"
+LoginInsecure: "&5&oTu contraseña ha sido calificada como poco segura y debe ser cambiada"
+LoginOut: "&5&oHas tardado demasiado en iniciar sesión"
+LoginTitle: "&7Tienes"
+LoginSubtitle: "&b{time} &7para iniciar sesión"
+
+#Session messages - Pin
+PinTitle: "&eLockLogin pinner"
+PinSet: "&dTu pin ha sido establecido correctamente"
+AlreadyPin: "&5&oYa has establecido tu pin!"
+NoPin: "&5&oNo tienes ningún pin!"
+SetPin: "&5&oPor favor, usa /pin setup <pin>"
+ResetPin: "&5&oPor favor, usa /pin reset <pin>"
+PinDisabled: "&5&oLos pines están deshabilitados"
+PinLength: "&5&oEl pin debe tener ser de 4 dígitos"
+IncorrectPin: "&5&oEse pin no es correcto!"
+
+#Session messages - 2FA
+2FaUsages: "&5&oArgumentos 2fa válidos: &e<setup>&7, &e<remove>&7, &e<código 2fa>"
+2FaSetupUsage: "&5&oPor favor, usa /2fa setup <contraseña>"
+2FaRemoveUsage: "&5&oPor favor, usa /2fa remove <contraseña> <código 2fa>"
+2FaAuthenticate: "&5&oPor favor, usa /2fa <código 2fa>"
+2FaLogged: "&dCódigo 2FA validado"
+2FaAlreadyLogged: "&5&oYa estás verificado con 2FA!"
+2FaIncorrect: "&5&oCódigo 2FA incorrecto"
+2FaAlready: "&5&oYa has establecido tu 2FA!"
+2FaToggleError: "&5&oError al alternar 2FA ( contraseña/código incorrectos )"
+Disabled2FA: "&5&o2FA desactivado, tu cuenta es menos segura"
+Enabled2FA: "&d2FA activado, tu cuenta es segura de nuevo"
+2FaAccountDisabled: "&5&o2FA está desactivado en tu cuenta"
+2FAServerDisabled: "&5&o2FA está desactivado en el servidor"
+2FAScratchCodes:
+  - "&7Hey! &b{player}&7, estos son tus códigos de recuperación,"
+  - "&7asegúrate de guardarlos bien, ya que esta será la última"
+  - "&7vez que los veas:"
+2FaInstructions:
+  - "&fComo verificarse con el 2FA?"
+  - "&71 - Haz click en '{message}'"
+  - "&72 - Descarga la app Google Authenticator"
+  - "&73 - Pulsa en el botón '+' dentro de la app"
+  - "&74 - Pulsa en 'Escanear un código QR'"
+  - "&75 - Escanea el código QR de la pantalla ( paso #1 )"
+  - "&77 - Busca {account} en la aplicación Google Authenticator"
+  - "&78 - Escribe /2fa <código mostrado en la app> o <código de recuperación>"
+2FaLink: "&bHaz click aquí para obtener tu código QR"
+
+#Session messages - Password change
+ChangePass: "&5&oPor favor, usa /{arg} <contraseña> <nueva contraseña>"
+ChangeSame: "&5&oTu contraseña no puede ser igual que la anterior!"
+ChangeDone: "&dTu contraseña ha sido cambiada!"
+
+#Session messages - Unloging
+UnLog: "&5&oPor favor, usa /{arg}"
+UnLogged: "&5&oSesión cerrada, verifícate ahora!"
+ForcedUnLog: "&5&oTu sesión ha sido cerrada por un administrador, inicia sesión de nuevo"
+ForcedUnLogAdmin: "&dSesión de {player} cerrada"
+
+#Session messages - Account removal
+DelAccount: "&5&oPor favor, usa /{arg} <contraseña|jugador> [contraseña]"
+DelAccountMatch: "&5&oLas contraseñas no coinciden"
+AccountDeleted: "&5&oTu cuenta ha sido eliminada"
+ForcedDelAccount:
+  - "{ServerName}"
+  - ""
+  - "&cTu cuenta ha sido eliminada por"
+  - "&cun administrador ( &7{player}&c )"
+  - "&cy ha sido bloqueada temporalmente"
+  - "&cpara evitar que se pierdan tus datos"
+  - "&chasta que un administrador la desbloquee"
+  - ""
+  - "&cSi no has pedido esta acción, por favor"
+  - "&crepórtalo en: &7https://discordexample.gg"
+ForcedDelAccountAdmin: "&dCuenta de {player} eliminada"
+
+#Session messages - Account unblocking
+AccountUnlock: "&5&oPor favor, usa /unblock <jugador>"
+AccountUnlocked: "&dCuenta de {player} desbloqueada"
+AccountNotLocked: "&5&oLa cuenta de {player} no está bloqueada!"
+
+#Spawn utilities ( includes take back )
+SpawnSet: "&dUbicación del spawn definida"
+LocationsReset: "&dTodas las últimas ubicaciones han sido eliminadas"
+LocationReset: "&dLa última ubicación de {player} ha sido eliminada"
+LocationsFixed: "&dTodas las ubicaciones han sido revisadas"
+LocationFixed: "&dLa última ubicación de {player} ha sido revisada"
+NoLastLocation: "&5&oEl jugador {player} no tiene última ubicación"
+RestLastLocUsage: "&5&oPor favor, usa /locations [jugador|@all|@me] <remove|fix>"
+
+#Account migration
+Migrating: "&dMigrando cuenta de {player} a {type}"
+MigratingAll: "&dMigrando todas las cuentas a {type}"
+Migrated: "&dMigración de cuenta(s) finalizada"
+MigrationUsage: "&5&oPor favor, usa /migrate"
+MigrationConnectionError: "&5&oHubo un error al intentar conectar con {type}"
+
+#Security messages
+IpBlocked:
+  - "{ServerName}"
+  - ""
+  - "&cLos sistemas de LockLogin han detectado un"
+  - "&ctráfico inusual en tu IP y ha sido bloqueada"
+  - "&f{time} {time_format}"
+AntiBot:
+  - "{ServerName}"
+  - ""
+  - "&cAgrega este servidor a la lista de servidores"
+  - "&cSi ya lo tienes, actualiza tu lista de servidores"
+IllegalName:
+  - "{ServerName}"
+  - ""
+  - "&cTu nombre no puede contener:"
+  - "{chars}"
+UUIDFetchError:
+  - "{ServerName}"
+  - ""
+  - "&cHa habido un problema al sincronizar tu UUID con"
+  - "&cel nombre del cliente..."
+IpProxyError:
+  - "{ServerName}"
+  - ""
+  - "&cTu IP ha sido marcada como sospechosa"
+  - "&cSi crees que se trata de un error, por favor"
+  - "&crepórtalo en: &7https://discordexample.gg"

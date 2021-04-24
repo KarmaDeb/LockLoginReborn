@@ -1,0 +1,197 @@
+#LockLogin message file
+#----------------------------------
+#Translation: German (Official)
+#Editor: KarmaDev
+#Last edited: 23 - April - 2021 01:50
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates ( this means
+#   this language will be translated by the author when a new
+#   message is added )
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+
+#Plugin prefix
+Prefix: "&eLockLogin &7>> "
+
+#Permission error message
+PermissionError: "&5&oSie verfügen nicht über die Berechtigung {permission}"
+
+#BungeeCord proxy message
+BungeeProxy: "&5&oBitte verbinden Sie sich durch Bungee-Proxy!"
+
+#Session messages - Manager
+PlayerNotVerified: "&5&oSie können gegen {player} nicht kämpfen, während er nicht angemeldet/registriert ist."
+AlreadyPlaying: "&5&oDer Spieler spielt bereits"
+PasswordMinChar: "&5&oKennwort muss 4 chars min haben"
+MaxIp: "&5&oMax. Konto pro IP, das auf dem Server erreicht wurde"
+ConnectionError: "&5&oDer Player {player} ist nicht online"
+PlayerInfoUsage: "&5&oBitte verwenden Sie /playerinfo <player>"
+LookUpUsage: "&5&oBitte verwenden Sie /lookup <player>"
+AltFound: "&5&o{player} konnte {alt} alt-Accounts, Typ /Lookup {player} für weitere Informationen haben"
+NeverPlayed: "&5&oDer Player {player} hat nie auf dem Server gespielt"
+TargetAccessError: "&5&oDer Player {player} ist nicht angemeldet/registriert"
+IncorrectPassword: "&5&oDas angegebene Kennwort ist nicht korrekt!"
+OnlyAzuriom:
+  - "{ServerName}"
+  - ""
+  - "&cBitte registrieren Sie Ihr Konto von:"
+  - "&7https://myazuriomwebsite.com/user/register"
+
+#Session messages - Captcha
+Captcha: "&7Ihr captcha-Code lautet: &e {captcha}"
+TypeCaptcha: "&5&oBitte verwenden Sie /captcha <captcha>"
+CaptchaTimeOut: "&5&oSie haben zu viel Zeit genommen, um captcha zu schreiben!"
+SpecifyCaptcha: "&5&oGeben Sie einen gültigen Captcha-Code an"
+CaptchaValidated: "&dCaptcha-Code geprüft"
+InvalidCaptcha: "&5&oDer angegebene captcha-Code ist ungültig oder korrekt."
+AlreadyCaptcha: "&5&oIhr Captcha-Code ist bereits verifiziert!"
+
+#Session messages - Register
+Register: "&5&oBitte verwenden Sie /register <password> <password> <captcha> <captcha>"
+Registered: "&dRegistrieren abgeschlossen, danke für das Spielen"
+AlreadyRegistered: "&5&oSie sind bereits registriert"
+RegisterError: "&5&oDie angegebenen Kennwörter stimmen nicht überein!"
+PasswordInsecure: "&5&oDas angegebene Kennwort ist nicht sicher!"
+RegisterOut: "&5&oSie haben zu viel Zeit gebraucht, um sich zu registrieren"
+RegisterTitle: "&7Sie haben"
+RegisterSubtitle: "&b{time} &7zum Registrieren"
+MaxRegisters:
+  - "{ServerName}"
+  - ""
+  - "&cSie haben max. registrierte Konten im Server erreicht"
+  - ""
+  - "&cWenn Sie der Meinung sind, dass dies ein Fehler ist, melden Sie ihn bitte an"
+  - "&7https://discordexample.gg"
+
+#Session messages - Login
+Login: "&5&oBitte verwenden Sie /login <password> <captcha>"
+Logged: "&dLogged-in, willkommen zurück &7{player}"
+AlreadyLogged: "&5&oSie sind bereits angemeldet!"
+LoginInsecure: "&5&oIhr Kennwort wurde als nicht sicher eingestuft und Sie müssen es ändern."
+LoginOut: "&5&oSie haben zu viel Zeit zum Einloggen genommen"
+LoginTitle: "&7Sie haben"
+LoginSubtitle: "&b{time} &7zum Anmelden"
+
+#Session messages - Pin
+PinTitle: " &eLockLogin pinner"
+PinSet: "&dDer Pin wurde erfolgreich festgelegt"
+AlreadyPin: "&5&oSie haben bereits Ihren Pin gesetzt!"
+NoPin: "&5&oSie haben keinen Stift!"
+SetPin: "&5&oBitte verwenden Sie die Option /pin <pin>"
+ResetPin: "&5&oBitte verwenden /pin zurücksetzen <pin>"
+PinDisabled: "&5&oPins sind inaktiviert"
+PinLength: "&5&oPin muss 4 Ziffern haben"
+IncorrectPin: "&5&oDer angegebene Pin ist nicht korrekt!"
+
+#Session messages - 2FA
+2FaUsages: "&5&oGültige 2FA-Unterargumente: &e<setup>&7, &e<remove>&7, &e<2facode>"
+2FaSetupUsage: "&5&oBitte verwenden Sie die /2fa setup <password>"
+2FaRemoveUsage: "&5&oBitte verwenden Sie /2fa remove <password> <2fa code>"
+2FaAuthenticate: "&5&oBitte verwenden Sie /2fa <2fa code>"
+2FaLogged: "&d2FA-Code geprüft"
+2FaAlreadyLogged: "&5&oSie sind bereits mit 2FA authentifiziert!"
+2FaIncorrect: "&5&oFalscher 2FA-Code"
+2FaAlready: "&5&oSie haben bereits Ihre 2FA konfiguriert!"
+2FaToggleError: "&5&oFehler beim Versuch, 2FA zu wechseln (falsches Kennwort/Code)"
+Disabled2FA: "&5&o2FA inaktiviert, Ihr Konto ist jetzt weniger sicher"
+Enabled2FA: "&d2FA aktiviert, Ihr Konto ist wieder sicher"
+2FaAccountDisabled: "&5&o2FA ist in Ihrem Konto inaktiviert"
+2FAServerDisabled: "&5&o2FA ist in diesem Server derzeit inaktiviert"
+2FAScratchCodes:
+  - "&7Hey! &b{player}&7, das sind Ihre Wiederherstellungscodes,"
+  - "&7stellen sicher, dass sie nicht verloren gehen, da dies der letzte sein wird"
+  - "&7Zeit, die Sie sehen:"
+2FaInstructions:
+  - "&fWie kann man sich mit dem google Authentifikator authentifizieren?"
+  - "&71 - Klicken Sie auf '{message}'"
+  - "&72 - App "Google Authenticator" herunterladen"
+  - "&73 - Tippen Sie auf '+' in der App"
+  - "&74 - Tippen Sie auf "QR-Code scannen""
+  - "&75 - Scannen Sie den in der Anzeige angezeigten QR-Code (Schritt #1 )"
+  - "&77 - Suche nach {account} in der Google-Authentifizierungsanwendung"
+  - "&78 - Typ /2fa <code shown in app> oder <scratch code>"
+2FaLink: "&bKlicken Sie hier, um Ihren 2FA QR-Code zu erhalten"
+
+#Session messages - Password change
+ChangePass: "&5&oBitte verwenden /{arg} <password> <new password>"
+ChangeSame: "&5&oIhr Passwort kann nicht gleich alt sein!"
+ChangeDone: "&dIhr Kennwort wurde geändert!"
+
+#Session messages - Unloging
+UnLog: "&5&oBitte verwenden /{arg}"
+UnLogged: "&5&oSitzung geschlossen, Wiederanmeldung jetzt!"
+ForcedUnLog: "&5&oIhre Sitzung wurde von einem Administrator geschlossen. Melden Sie sich erneut an"
+ForcedUnLogAdmin: "&dSitzung von {player} geschlossen"
+
+#Session messages - Account removal
+DelAccount: "&5&oBitte verwenden /{arg} <password|player> <password>"
+DelAccountMatch: "&5&oDie bereitgestellten Kennwörter stimmen nicht überein"
+AccountDeleted: "&5&oIhr Konto wurde gelöscht"
+ForcedDelAccount:
+  - "{ServerName}"
+  - ""
+  - "&cIhr Konto wurde entfernt von"
+  - "&cAdministrator (&7 {player} &c)"
+  - "&cund wurde zeitlich blockiert"
+  - "&cum Datenverlust zu vermeiden, bis zum Mitarbeiter"
+  - "&centsperrt es"
+  - ""
+  - "&cWenn Sie diese Aktion nicht aufrufen, wenden Sie sich bitte an"
+  - "&cmelden Sie diese Aktion unter: &7https://discordexample.gg"
+ForcedDelAccountAdmin: "&dKonto von {player} entfernt"
+
+#Session messages - Account unblocking
+AccountUnlock: "&5&oBitte verwenden /unlock <player>"
+AccountUnlocked: "&dKonto von {player} wurde freigeschaltet"
+AccountNotLocked: "&5&oDas Konto von {player} ist nicht gesperrt!"
+
+#Spawn utilities ( includes take back )
+SpawnSet: "&dDie Einloggen-Spawn-Position wurde festgelegt"
+LocationsReset: "&dAlle letzten Positionen wurden zurückgesetzt"
+LocationReset: "&dLetzte Position von {player} wurde zurückgesetzt"
+LocationsFixed: "&dAlle letzten Positionen wurden behoben"
+LocationFixed: "&dPosition von {player} wurde behoben"
+NoLastLocation: "&5&oDer Player {player} hat die letzte Position nicht."
+RestLastLocUsage: "&5&oBitte verwenden Sie /locations [player |@all|@me] <remove|fix>"
+
+#Account migration
+Migrating: "&dKonto von {player} auf {type} migrieren"
+MigratingAll: "&dKonten von allen auf {type} migrieren"
+Migrated: "&dAccount migration(s) von beendet"
+MigrationUsage: "&5&oBitte, verwenden/migrieren"
+MigrationConnectionError: "&5&oBei dem Versuch, eine Verbindung zu {type} herzustellen, ist ein Fehler aufgetreten."
+
+#Security messages
+IpBlocked:
+  - "{ServerName}"
+  - ""
+  - "&cLockLogin-Systeme haben eine"
+  - "&cungewöhnlicher Datenverkehr auf Ihrer IP und wurde blockiert"
+  - "&f{time} {time_format}"
+AntiBot:
+  - "{ServerName}"
+  - ""
+  - "&cDiesen Server zu Ihrer Serverliste hinzufügen"
+  - "&cWenn Sie es bereits haben, laden Sie die Serverliste erneut."
+IllegalName:
+  - "{ServerName}"
+  - ""
+  - "&cIhr Name kann nicht enthalten:"
+  - "{chars}"
+UUIDFetchError:
+  - "{ServerName}"
+  - ""
+  - "&cBeim Abrufen der UUID ist ein Fehler aufgetreten."
+  - "&cmit Clientname ..."
+IpProxyError:
+  - "{ServerName}"
+  - ""
+  - "&cIhre IP-Adresse scheint ein wenig verdächtig"
+  - "&cWenn Sie der Meinung sind, dass dies ein Fehler ist, wenden Sie sich bitte an"
+  - "&cdas Personal unter: &7https://discordexample.gg"
