@@ -129,7 +129,7 @@ public final class Main extends JavaPlugin {
     private void sendInjectionError(final String name) {
         Messages messages = new Messages();
 
-        getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getProperty("plugin_injection_error").replace("{0}", name)));
+        getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getProperty("plugin_injection_error", "LockLogin failed to inject dependency ( {0} )").replace("{0}", name)));
     }
 
     /**

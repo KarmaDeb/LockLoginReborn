@@ -64,7 +64,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                 tarUser = null;
                             }
 
-                            user.send(properties.getProperty("player_information_header"));
+                            user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
                             user.send("&r");
 
                             List<String> parsed = parseMessages(data.isLocked());
@@ -96,7 +96,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                     user.send(messages.prefix() + messages.permissionError(playerInfo()));
                 }
             } else {
-                user.send(messages.prefix() + properties.getProperty("session_not_valid"));
+                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&cYour session is invalid, try leaving and joining the server again"));
             }
         } else {
             ConsoleAccount console = new ConsoleAccount();
@@ -121,7 +121,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                 tarUser = null;
                             }
 
-                            Console.send(properties.getProperty("player_information_header"));
+                            Console.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
                             Console.send(" ");
 
                             List<String> parsed = parseMessages(data.isLocked());
@@ -153,7 +153,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                     Console.send(messages.prefix() + messages.infoUsage() + "&r ( remember to include the console password as last argument )");
                 }
             } else {
-                Console.send(messages.prefix() + properties.getProperty("console_not_registered"));
+                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&cThe console must register to run protected commands!"));
             }
         }
 
@@ -168,7 +168,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
      * @return the parsed player info message
      */
     private List<String> parseMessages(final boolean condition) {
-        String[] propData = properties.getProperty("player_information_message").split(",");
+        String[] propData = properties.getProperty("player_information_message", "&7Locked: &d{0},condition=&7Locked by: &d{0}%&7Locked since: &d{0};,&7Name: &d{0},&7Account ID: &d{0},&7Registered: &d{0},&7Logged: &d{0},&7Temp logged: &d{0},&72FA: &d{0},&7Pin: &d{0}").split(",");
         List<String> cmdMessages = new ArrayList<>();
 
         for (String propMSG : propData) {
