@@ -4,6 +4,7 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.KarmaFile;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
+import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.Nullable;
@@ -45,14 +46,20 @@ public final class RestartCache {
     }
 
     /**
-     * Store bungeecord data so the plugin won't need
-     * to load it again after a server restart
+     * Store bungeecord key so a fake bungeecord server
+     * won't be able to send a fake key
      */
-    public final void storeBungeeData() {
+    public final void storeBungeeKey() {
         if (!cache.exists())
             cache.create();
 
+        try {
+            Class<?> storagerClass = BungeeDataStorager.class;
+            Field keyField = storagerClass.getDeclaredField("key");
 
+            String key = (String) keyField.get(null);
+            cache.set("KEY", key);
+        } catch (Throwable ignored) {}
     }
 
     /**
@@ -92,6 +99,26 @@ public final class RestartCache {
                     Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                 }
             }
+        }
+    }
+
+    /**
+     * Load the stored bungeecord key
+     */
+    public final void loadBungeeKey() {
+        if (cache.exists()) {
+            try {
+                String key = cache.getString("KEY", "");
+
+                if (!key.replaceAll("\\s", "").isEmpty()) {
+                    Class<?> storagerClass = BungeeDataStorager.class;
+                    Field keyField = storagerClass.getDeclaredField("key");
+
+                    keyField.setInt(keyField, keyField.getModifiers() & ~Modifier.FINAL);
+                    keyField.set(storagerClass, key);
+                    keyField.setInt(keyField, keyField.getModifiers() & Modifier.FINAL);
+                }
+            } catch (Throwable ignored) {}
         }
     }
 

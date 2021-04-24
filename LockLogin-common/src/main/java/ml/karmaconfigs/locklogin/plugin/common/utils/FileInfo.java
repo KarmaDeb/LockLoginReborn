@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.plugin.common.utils.version.VersionChannel;
+import ml.karmaconfigs.locklogin.plugin.common.utils.enums.UpdateChannel;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -86,7 +86,7 @@ public interface FileInfo {
      * @return the jar file update name
      */
     static String getUpdateName(final File file) {
-        String def = StringUtils.randomString(4, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER);;
+        String def = StringUtils.randomString(4, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER);
 
         try {
             JarFile jar = new JarFile(file);
@@ -196,7 +196,7 @@ public interface FileInfo {
      * @param file the jar file
      * @return the jar version channel
      */
-    static VersionChannel getChannel(final File file) {
+    static UpdateChannel getChannel(final File file) {
         try {
             JarFile jar = new JarFile(file);
             JarEntry jar_info = jar.getJarEntry("global.yml");
@@ -209,13 +209,13 @@ public interface FileInfo {
                 yml.close();
 
                 String value = values.getOrDefault("project_build", "RELEASE").toString();
-                return VersionChannel.valueOf(value.toUpperCase());
+                return UpdateChannel.valueOf(value.toUpperCase());
             }
             jar.close();
 
-            return VersionChannel.RELEASE;
+            return UpdateChannel.RELEASE;
         } catch (Throwable ex) {
-            return VersionChannel.RELEASE;
+            return UpdateChannel.RELEASE;
         }
     }
 }

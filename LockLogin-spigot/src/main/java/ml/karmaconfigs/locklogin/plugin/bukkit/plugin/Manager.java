@@ -74,6 +74,8 @@ public final class Manager {
             Console.send(plugin, "Loaded custom player session manager", Level.INFO);
         }
 
+        loadCache();
+
         Config config = new Config();
         if (config.isBungeeCord()) {
             Messenger messenger = plugin.getServer().getMessenger();
@@ -249,6 +251,7 @@ public final class Manager {
      */
     protected static void loadCache() {
         RestartCache cache = new RestartCache();
+        cache.loadBungeeKey();
         cache.loadSessions();
 
         cache.remove();

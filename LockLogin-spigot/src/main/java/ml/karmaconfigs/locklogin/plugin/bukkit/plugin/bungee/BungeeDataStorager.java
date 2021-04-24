@@ -1,5 +1,6 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee;
 
+import ml.karmaconfigs.locklogin.api.encryption.CryptType;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 
 import java.lang.reflect.Field;
@@ -27,9 +28,11 @@ public final class BungeeDataStorager {
                 Class<?> storager = BungeeDataStorager.class;
                 Field sessionsField = storager.getDeclaredField("key");
 
+                CryptoUtil util = new CryptoUtil(providedKey, null);
+
                 sessionsField.setAccessible(true);
                 sessionsField.setInt(sessionsField, sessionsField.getModifiers() & ~Modifier.FINAL);
-                sessionsField.set(storager, providedKey);
+                sessionsField.set(storager, util.hash(CryptType.SHA512, true));
                 sessionsField.setInt(sessionsField, sessionsField.getModifiers() & Modifier.FINAL);
             } catch (Throwable ignored) {}
         }

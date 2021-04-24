@@ -1,7 +1,6 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 
 import ml.karmaconfigs.api.bukkit.Console;
-import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.BukkitManager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -52,7 +51,7 @@ public final class LockLoginCommand implements CommandExecutor {
                             break;
                         case "applyUpdates":
                             if (player.hasPermission(applyUpdates())) {
-                                user.send(messages.prefix() + "&cNot re-implemented yet!");
+                                BukkitManager.update(sender);
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(applyUpdates()));
                             }
@@ -80,7 +79,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                 break;
                             case "applyUpdates":
                                 if (console.validate(args[1])) {
-                                    Console.send(plugin, "Not re-implemented yet!", Level.GRAVE);
+                                    BukkitManager.update(sender);
                                 } else {
                                     Console.send(messages.prefix() + messages.incorrectPassword());
                                 }
