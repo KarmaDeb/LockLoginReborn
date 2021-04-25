@@ -47,7 +47,7 @@ public final class SetSpawnCommand implements CommandExecutor {
                 user.send(messages.prefix() + messages.permissionError(setSpawn()));
             }
         } else {
-            Console.send(plugin, properties.getProperty("only_console_spawn", "&cThe console does not have a valid location!"), Level.INFO);
+            Console.send(plugin, properties.getProperty("only_console_spawn", "&5&oThe console does not have a valid location!"), Level.INFO);
         }
 
         return false;

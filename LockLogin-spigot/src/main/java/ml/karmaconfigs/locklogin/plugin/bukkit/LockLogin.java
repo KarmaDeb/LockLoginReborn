@@ -38,7 +38,7 @@ public interface LockLogin {
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
     static JavaModuleLoader getLoader() {
-        File modulesFolder = new File(plugin.getDataFolder(), "modules");
+        File modulesFolder = new File(plugin.getDataFolder() + File.separator + "plugin", "modules");
 
         if (!modulesFolder.exists())
             try {

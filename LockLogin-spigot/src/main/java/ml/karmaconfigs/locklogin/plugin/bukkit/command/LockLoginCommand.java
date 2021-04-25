@@ -1,7 +1,9 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 
 import ml.karmaconfigs.api.bukkit.Console;
-import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.BukkitManager;
+import ml.karmaconfigs.locklogin.api.LockLoginListener;
+import ml.karmaconfigs.locklogin.api.event.plugin.UpdateRequestEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.FileReloader;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
@@ -38,20 +40,22 @@ public final class LockLoginCommand implements CommandExecutor {
 
             switch (args.length) {
                 case 0:
-                    user.send("&cAvailable sub-commands:&7 /locklogin &e<reload>");
+                    user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>");
                     break;
                 case 1:
                     switch (args[0].toLowerCase()) {
                         case "reload":
                             if (player.hasPermission(reload())) {
-                                BukkitManager.reload(player);
+                                FileReloader.reload(player);
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(reload()));
                             }
                             break;
-                        case "applyUpdates":
+                        case "applyupdates":
                             if (player.hasPermission(applyUpdates())) {
-                                BukkitManager.update(sender);
+                                //BukkitManager.update(sender);
+                                UpdateRequestEvent event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
+                                LockLoginListener.callEvent(event);
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(applyUpdates()));
                             }
@@ -72,14 +76,17 @@ public final class LockLoginCommand implements CommandExecutor {
                         switch (args[0].toLowerCase()) {
                             case "reload":
                                 if (console.validate(args[1])) {
-                                    BukkitManager.reload(null);
+                                    FileReloader.reload(null);
                                 } else {
                                     Console.send(messages.prefix() + messages.incorrectPassword());
                                 }
                                 break;
-                            case "applyUpdates":
+                            case "applyupdates":
                                 if (console.validate(args[1])) {
-                                    BukkitManager.update(sender);
+                                    //BukkitManager.update(sender);
+                                    //BukkitManager.unload();
+                                    UpdateRequestEvent event = new UpdateRequestEvent(sender, sender.hasPermission(applyUnsafeUpdates()), null);
+                                    LockLoginListener.callEvent(event);
                                 } else {
                                     Console.send(messages.prefix() + messages.incorrectPassword());
                                 }
@@ -89,7 +96,7 @@ public final class LockLoginCommand implements CommandExecutor {
                         }
                 }
             } else {
-                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&cThe console must register to run protected commands!"));
+                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&5&oThe console must register to run protected commands!"));
             }
         }
         return false;

@@ -95,9 +95,9 @@ public final class JarManager {
      * @param target the target jar main class
      * @return if the jar file could be injected
      */
-    public final boolean inject(final Object target) {
+    public final boolean inject(final Class<?> target) {
         try{
-            URLClassLoader cl = (URLClassLoader) target.getClass().getClassLoader();
+            URLClassLoader cl = (URLClassLoader) target.getClassLoader();
             Class<?> clazz = URLClassLoader.class;
 
             // Get the protected addURL method from the parent URLClassLoader class

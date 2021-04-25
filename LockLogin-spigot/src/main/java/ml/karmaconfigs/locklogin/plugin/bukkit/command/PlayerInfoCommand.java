@@ -96,7 +96,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                     user.send(messages.prefix() + messages.permissionError(playerInfo()));
                 }
             } else {
-                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&cYour session is invalid, try leaving and joining the server again"));
+                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
             ConsoleAccount console = new ConsoleAccount();
@@ -153,7 +153,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                     Console.send(messages.prefix() + messages.infoUsage() + "&r ( remember to include the console password as last argument )");
                 }
             } else {
-                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&cThe console must register to run protected commands!"));
+                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&5&oThe console must register to run protected commands!"));
             }
         }
 

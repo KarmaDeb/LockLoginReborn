@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>LockLogin</artifactId>
+        <groupId>ml.karmaconfigs</groupId>
+        <version>1.10.5</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>LockLogin-manager</artifactId>
+
+    <properties>
+        <maven.compiler.source>15</maven.compiler.source>
+        <maven.compiler.target>15</maven.compiler.target>
+    </properties>
+
+    <build>
+        <finalName>LockLoginManager</finalName>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>ml.karmaconfigs</groupId>
+            <artifactId>LockLogin-API</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ml.karmaconfigs</groupId>
+            <artifactId>KarmaAPI-Common</artifactId>
+            <version>${project.karmaapi}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.16.5-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ml.karmaconfigs</groupId>
+            <artifactId>LockLogin-common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>LockLogin-API</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>ml.karmaconfigs</groupId>
+            <artifactId>LockLogin-spigot</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>LockLogin-API</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>LockLogin-Common</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>

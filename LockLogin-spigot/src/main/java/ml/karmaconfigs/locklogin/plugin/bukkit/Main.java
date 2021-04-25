@@ -111,8 +111,7 @@ public final class Main extends JavaPlugin {
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
             if (moduleFiles != null) {
                 for (File module : moduleFiles) {
-                    if (LockLogin.getLoader().isLoaded(module.getName()))
-                        LockLogin.getLoader().unloadModule(module.getName());
+                    LockLogin.getLoader().unloadModule(module.getName());
                 }
             }
 
@@ -129,7 +128,7 @@ public final class Main extends JavaPlugin {
     private void sendInjectionError(final String name) {
         Messages messages = new Messages();
 
-        getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getProperty("plugin_injection_error", "LockLogin failed to inject dependency ( {0} )").replace("{0}", name)));
+        getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getProperty("plugin_injection_error", "&5&oLockLogin failed to inject dependency ( {0} )").replace("{0}", name)));
     }
 
     /**
@@ -137,7 +136,7 @@ public final class Main extends JavaPlugin {
      */
     private boolean injectAPI() {
         String version = FileInfo.getKarmaVersion(lockloginFile);
-        File dest_file = new File(getDataFolder() + File.separator + "api" + File.separator + version, "KarmaAPI-Bundle.jar");
+        File dest_file = new File(getDataFolder() + File.separator + "plugin" + File.separator + "api" + File.separator + "KarmaAPI" + File.separator + version, "KarmaAPI-Bundle.jar");
 
         System.out.println("Preparing plugin for injection");
 
@@ -145,7 +144,7 @@ public final class Main extends JavaPlugin {
         Throwable result = manager.download("https://raw.githubusercontent.com/KarmaConfigs/project_c/main/src/libs/KarmaAPI/" + FileInfo.getKarmaVersion(lockloginFile) + "/KarmaAPI-Bundle.jar");
 
         if (result == null) {
-            return manager.inject(this);
+            return manager.inject(this.getClass());
         } else {
             result.printStackTrace();
         }

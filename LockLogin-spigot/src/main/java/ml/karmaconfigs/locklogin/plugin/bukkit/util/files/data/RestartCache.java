@@ -26,7 +26,7 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class RestartCache {
 
-    private final KarmaFile cache = new KarmaFile(plugin, "plugin.cache", "restart", "cache");
+    private final KarmaFile cache = new KarmaFile(plugin, "plugin.cache", "plugin", "updater", "cache");
 
     /**
      * Store the sessions into the cache file

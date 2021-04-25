@@ -1,0 +1,8 @@
+name: LockLoginManager
+version: ${project.version}
+description:
+  - "A module that allows LockLogin"
+  - "to self update at runtime"
+author: KarmaDev
+update_url: ""
+loader_bukkit: ml.karmaconfigs.locklogin.manager.bukkit.Main

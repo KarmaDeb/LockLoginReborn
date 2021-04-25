@@ -67,5 +67,6 @@
         <module>locklogin-bungee</module>
         <module>locklogin-velocity</module>
         <module>LockLogin-bundle</module>
+        <module>LockLogin-manager</module>
     </modules>
 </project>

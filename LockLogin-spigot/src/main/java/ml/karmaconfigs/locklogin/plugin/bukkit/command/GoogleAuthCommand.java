@@ -182,7 +182,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
                     user.send(message.prefix() + message.gAuthServerDisabled());
                 }
             } else {
-                user.send(message.prefix() + properties.getProperty("session_not_valid", "&cYour session is invalid, try leaving and joining the server again"));
+                user.send(message.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
             Console.send(plugin, "", Level.INFO);

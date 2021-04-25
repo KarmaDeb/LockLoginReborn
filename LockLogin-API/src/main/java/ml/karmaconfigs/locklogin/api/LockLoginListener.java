@@ -2,6 +2,7 @@ package ml.karmaconfigs.locklogin.api;
 
 import ml.karmaconfigs.locklogin.api.event.util.Event;
 import ml.karmaconfigs.locklogin.api.modules.bukkit.JavaModule;
+import ml.karmaconfigs.locklogin.api.event.util.EventListener;
 
 import java.lang.reflect.Method;
 import java.util.*;

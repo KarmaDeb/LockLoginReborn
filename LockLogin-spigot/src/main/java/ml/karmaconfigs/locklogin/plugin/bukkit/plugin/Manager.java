@@ -19,6 +19,7 @@ import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
+import ml.karmaconfigs.locklogin.plugin.common.web.VersionDownloader;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.messaging.Messenger;
@@ -195,7 +196,7 @@ public final class Manager {
         Config config = new Config();
 
         String country = config.getLang().country(config.getLangName());
-        File msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_" + country + ".yml");
+        File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
         InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
         //Check if the file exists inside the plugin as an official language
@@ -214,7 +215,7 @@ public final class Manager {
                 failed.add(msg_file.getName());
                 Console.send(plugin, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
 
-                msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_en.yml");
+                msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                 if (!msg_file.exists()) {
                     FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
@@ -271,6 +272,19 @@ public final class Manager {
                 changelog_requests = 3;
 
                 Console.send(checker.getChangelog());
+
+                if (!VersionDownloader.isDownloading()) {
+                    VersionDownloader downloader = new VersionDownloader(versionID, config.getUpdaterOptions().getChannel());
+                    downloader.download(
+                            file -> Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO),
+                            error -> {
+                                if (error != null) {
+                                    logger.scheduleLog(Level.GRAVE, error);
+                                    logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
+                                    Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
+                                }
+                            });
+                }
             } else {
                 changelog_requests--;
             }

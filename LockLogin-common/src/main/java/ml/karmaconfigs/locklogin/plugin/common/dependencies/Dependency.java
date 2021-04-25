@@ -14,7 +14,7 @@ public abstract class Dependency {
         dependencyName = name;
         dependencyDownload = downloadURL;
 
-        location = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "libraries", name + ".jar");
+        location = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + File.separator + "plugin" + File.separator + "api" + File.separator + "lib", name + ".jar");
     }
 
     public final String getName() {

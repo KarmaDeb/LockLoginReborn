@@ -26,7 +26,7 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class Message {
 
-    private static File msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_en.yml");
+    private static File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
     private static YamlConfiguration msg = YamlConfiguration.loadConfiguration(msg_file);
 
     private static boolean alerted = false;
@@ -38,7 +38,7 @@ public final class Message {
         Config config = new Config();
 
         String country = config.getLang().country(config.getLangName());
-        msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_" + country + ".yml");
+        msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
         InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
         //Check if the file exists inside the plugin as an official language
@@ -58,7 +58,7 @@ public final class Message {
                     alerted = true;
                 }
 
-                msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_en.yml");
+                msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                 if (!msg_file.exists()) {
                     FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
@@ -88,7 +88,7 @@ public final class Message {
             Config config = new Config();
 
             String country = config.getLang().country(config.getLangName());
-            msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_" + country + ".yml");
+            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
             InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
             //Check if the file exists inside the plugin as an official language
@@ -118,7 +118,7 @@ public final class Message {
                         alerted = true;
                     }
 
-                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang_v2", "messages_en.yml");
+                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                     if (!msg_file.exists()) {
                         FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");

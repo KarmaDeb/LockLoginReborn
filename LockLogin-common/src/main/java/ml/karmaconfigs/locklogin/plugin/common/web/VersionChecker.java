@@ -8,6 +8,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public final class VersionChecker {
 
@@ -15,6 +18,8 @@ public final class VersionChecker {
 
     private static String latest_version = "";
     private static String latest_changelog = "";
+
+    private static boolean can_check = true;
 
     /**
      * Initialize the version checker
@@ -29,40 +34,55 @@ public final class VersionChecker {
      * Check for a new version
      */
     public final void checkVersion(final UpdateChannel channel) {
-        String name = "release/latest.txt";
-        switch (channel) {
-            case SNAPSHOT:
-                name = "snapshot/latest.txt";
-                break;
-            case RC:
-                name = "rc/latest.txt";
-                break;
-            default:
-                break;
-        }
+        if (can_check) {
+            can_check = false;
 
-        try {
-            URL url = new URL("https://karmaconfigs.github.io/updates/LockLogin/" + name);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-            String word;
-            List<String> lines = new ArrayList<>();
-            while ((word = reader.readLine()) != null)
-                lines.add((word.replaceAll("\\s", "").isEmpty() ? "&f" : word));
+            int wait = (int) TimeUnit.MINUTES.convert(5, TimeUnit.MILLISECONDS);
 
-            reader.close();
-            StringBuilder changelog_builder = new StringBuilder();
-            for (int i = 1; i < lines.size(); i++) {
-                String line = lines.get(i);
-                changelog_builder.append(line
-                        .replace("[", "{open}")
-                        .replace("]", "{close}")
-                        .replace(",", "{comma}")
-                        .replace("_", "&")).append("\n");
+            //Avoid plugin instances to flood the update channel
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                   can_check = true;
+                }
+            }, wait);
+
+            String name = "release/latest.txt";
+            switch (channel) {
+                case SNAPSHOT:
+                    name = "snapshot/latest.txt";
+                    break;
+                case RC:
+                    name = "rc/latest.txt";
+                    break;
+                default:
+                    break;
             }
 
-            latest_changelog = StringUtils.replaceLast(changelog_builder.toString(), "\n", "");
-            latest_version = StringUtils.stripColor(lines.get(0));
-        } catch (Throwable ignored) {}
+            try {
+                URL url = new URL("https://karmaconfigs.github.io/updates/LockLogin/" + name);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                String word;
+                List<String> lines = new ArrayList<>();
+                while ((word = reader.readLine()) != null)
+                    lines.add((word.replaceAll("\\s", "").isEmpty() ? "&f" : word));
+
+                reader.close();
+                StringBuilder changelog_builder = new StringBuilder();
+                for (int i = 1; i < lines.size(); i++) {
+                    String line = lines.get(i);
+                    changelog_builder.append(line
+                            .replace("[", "{open}")
+                            .replace("]", "{close}")
+                            .replace(",", "{comma}")
+                            .replace("_", "&")).append("\n");
+                }
+
+                latest_changelog = StringUtils.replaceLast(changelog_builder.toString(), "\n", "");
+                latest_version = StringUtils.stripColor(lines.get(0));
+            } catch (Throwable ignored) {}
+        }
     }
 
     /**
@@ -75,6 +95,15 @@ public final class VersionChecker {
             return false;
 
         return latest_version.equals(current_version);
+    }
+
+    /**
+     * Get the plugin latest version id
+     *
+     * @return the plugin latest version id
+     */
+    public final String getLatestVersion() {
+        return latest_version;
     }
 
     /**

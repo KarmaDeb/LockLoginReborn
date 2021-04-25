@@ -56,7 +56,7 @@ public final class LoginCommand implements CommandExecutor {
                         } else {
                             logger.scheduleLog(Level.GRAVE, "Couldn't create account of player {0}", StringUtils.stripColor(player.getDisplayName()));
 
-                            user.send(messages.prefix() + properties.getProperty("could_not_create_user", "&cWe're sorry, but we couldn't create your account"));
+                            user.send(messages.prefix() + properties.getProperty("could_not_create_user", "&5&oWe're sorry, but we couldn't create your account"));
                             return true;
                         }
 
@@ -141,10 +141,10 @@ public final class LoginCommand implements CommandExecutor {
                     }
                 }
             } else {
-                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&cYour session is invalid, try leaving and joining the server again"));
+                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(plugin, properties.getProperty("only_console_login", "&cYou can't login as the console!"), Level.INFO);
+            Console.send(plugin, properties.getProperty("only_console_login", "&5&oYou can't login as the console!"), Level.INFO);
         }
 
         return false;
