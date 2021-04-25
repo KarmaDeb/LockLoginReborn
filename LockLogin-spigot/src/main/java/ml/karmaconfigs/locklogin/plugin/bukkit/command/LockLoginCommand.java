@@ -3,6 +3,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.event.plugin.UpdateRequestEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.FileReloader;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.*;
 
-public final class LockLoginCommand implements CommandExecutor {
+public final class LockLoginCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -100,5 +101,15 @@ public final class LockLoginCommand implements CommandExecutor {
             }
         }
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "locklogin";
     }
 }

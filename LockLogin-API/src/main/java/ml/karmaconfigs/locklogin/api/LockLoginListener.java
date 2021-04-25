@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.api;
 
 import ml.karmaconfigs.locklogin.api.event.util.Event;
-import ml.karmaconfigs.locklogin.api.modules.bukkit.JavaModule;
+import ml.karmaconfigs.locklogin.api.modules.PluginModule;
 import ml.karmaconfigs.locklogin.api.event.util.EventListener;
 
 import java.lang.reflect.Method;
@@ -12,8 +12,8 @@ import java.util.*;
  */
 public final class LockLoginListener {
 
-    private final static Map<JavaModule, Set<EventListener>> listeners = new HashMap<>();
-    private final static Map<JavaModule, Set<Method>> unregistered = new HashMap<>();
+    private final static Map<PluginModule, Set<EventListener>> listeners = new HashMap<>();
+    private final static Map<PluginModule, Set<Method>> unregistered = new HashMap<>();
 
     /**
      * Register a listener and link it to
@@ -22,7 +22,7 @@ public final class LockLoginListener {
      * @param owner the module owner
      * @param handler the event handler class
      */
-    public static void registerListener(final JavaModule owner, final EventListener handler) {
+    public static void registerListener(final PluginModule owner, final EventListener handler) {
         Set<EventListener> handlers = listeners.getOrDefault(owner, new LinkedHashSet<>());
         handlers.add(handler);
 
@@ -35,7 +35,7 @@ public final class LockLoginListener {
      * @param owner the module owner
      * @param event the event to ignore
      */
-    public static void unregisterListener(final JavaModule owner, final Event event) {
+    public static void unregisterListener(final PluginModule owner, final Event event) {
         Set<EventListener> handlers = listeners.getOrDefault(owner, new LinkedHashSet<>());
         Set<Method> disabled = unregistered.getOrDefault(owner, new LinkedHashSet<>());
         for (EventListener handler : handlers) {
@@ -57,7 +57,7 @@ public final class LockLoginListener {
      *
      * @param module the module
      */
-    public static void unregisterListeners(final JavaModule module) {
+    public static void unregisterListeners(final PluginModule module) {
         listeners.put(module, new HashSet<>());
     }
 
@@ -67,7 +67,7 @@ public final class LockLoginListener {
      * @param event the event to call
      */
     public static void callEvent(final Event event) {
-        for (JavaModule module : listeners.keySet()) {
+        for (PluginModule module : listeners.keySet()) {
             Set<EventListener> handlers = listeners.getOrDefault(module, new LinkedHashSet<>());
 
             for (EventListener handler : handlers) {

@@ -8,6 +8,7 @@ import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 import ml.karmaconfigs.locklogin.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.ScratchCodes;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -26,7 +27,7 @@ import java.util.List;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 
-public final class GoogleAuthCommand implements CommandExecutor {
+public final class GoogleAuthCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -43,7 +44,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         Config config = new Config();
-        Message message = new Message();
+        Message messages = new Message();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -54,13 +55,13 @@ public final class GoogleAuthCommand implements CommandExecutor {
             if (session.isValid()) {
                 if (config.enable2FA()) {
                     if (args.length == 0) {
-                        user.send(message.prefix() + message.gAuthUsages());
+                        user.send(messages.prefix() + messages.gAuthUsages());
                     } else {
                         switch (args[0].toLowerCase()) {
                             case "setup":
                                 if (args.length == 2) {
                                     if (manager.has2FA()) {
-                                        user.send(message.prefix() + message.gAuthSetupAlready());
+                                        user.send(messages.prefix() + messages.gAuthSetupAlready());
                                     } else {
                                         String password = args[1];
 
@@ -72,7 +73,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                                 GoogleAuthFactory factory = user.getTokenFactory();
                                                 token = factory.generateToken();
 
-                                                user.send(message.prefix() + message.gAuthInstructions());
+                                                user.send(messages.prefix() + messages.gAuthInstructions());
 
                                                 String name = config.serverName();
                                                 if (name.replaceAll("\\s", "").isEmpty())
@@ -80,28 +81,28 @@ public final class GoogleAuthCommand implements CommandExecutor {
 
                                                 String token_url = StringUtils.formatString("https://karmaconfigs.ml/qr/?{0}%20{1}?{2}", StringUtils.stripColor(player.getDisplayName()), StringUtils.formatString("({0})", name), token);
 
-                                                ComponentFactory c_factory = new ComponentFactory(message.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url);
+                                                ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url);
                                                 user.send(c_factory.get());
 
                                                 List<Integer> scratch_codes = factory.getRecoveryCodes();
-                                                user.send(message.gAuthScratchCodes(scratch_codes));
+                                                user.send(messages.gAuthScratchCodes(scratch_codes));
 
                                                 ScratchCodes codes = new ScratchCodes(player);
                                                 codes.store(scratch_codes);
 
                                                 manager.setGAuth(token);
                                             } else {
-                                                user.send(message.prefix() + message.gAuthEnabled());
+                                                user.send(messages.prefix() + messages.gAuthEnabled());
                                             }
 
-                                            session.setTempLogged(false);
+                                            session.set2FALogged(false);
                                             manager.set2FA(true);
                                         } else {
-                                            user.send(message.prefix() + message.gAuthToggleError());
+                                            user.send(messages.prefix() + messages.gAuthToggleError());
                                         }
                                     }
                                 } else {
-                                    user.send(message.prefix() + message.gAuthSetupUsage());
+                                    user.send(messages.prefix() + messages.gAuthSetupUsage());
                                 }
                                 break;
                             case "remove":
@@ -121,18 +122,18 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                             if (util.validate() && factory.validate(manager.getGAuth(), code)) {
                                                 manager.set2FA(false);
 
-                                                user.send(message.prefix() + message.gAuthDisabled());
+                                                user.send(messages.prefix() + messages.gAuthDisabled());
                                             } else {
-                                                user.send(message.prefix() + message.gAuthToggleError());
+                                                user.send(messages.prefix() + messages.gAuthToggleError());
                                             }
                                         } catch (Throwable ex) {
-                                            user.send(message.prefix() + message.gAuthIncorrect());
+                                            user.send(messages.prefix() + messages.gAuthIncorrect());
                                         }
                                     } else {
-                                        user.send(message.prefix() + message.gAuthNotEnabled());
+                                        user.send(messages.prefix() + messages.gAuthNotEnabled());
                                     }
                                 } else {
-                                    user.send(message.prefix() + message.gAuthRemoveUsage());
+                                    user.send(messages.prefix() + messages.gAuthRemoveUsage());
                                 }
                                 break;
                             default:
@@ -147,46 +148,56 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                         ScratchCodes codes = new ScratchCodes(player);
 
                                         if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
-                                            session.setTempLogged(false);
+                                            session.set2FALogged(false);
 
-                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.SUCCESS, player, message.gAuthCorrect(), null);
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.SUCCESS, player, messages.gAuthCorrect(), null);
                                             LockLoginListener.callEvent(event);
 
-                                            user.send(message.prefix() + event.getAuthMessage());
+                                            user.send(messages.prefix() + event.getAuthMessage());
 
                                             if (codes.needsNew()) {
                                                 List<Integer> newCodes = GoogleAuthFactory.ScratchGenerator.generate();
-                                                user.send(message.gAuthScratchCodes(newCodes));
+                                                user.send(messages.gAuthScratchCodes(newCodes));
 
                                                 codes.store(newCodes);
                                             }
                                         } else {
-                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, player, message.gAuthIncorrect(), null);
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, player, messages.gAuthIncorrect(), null);
                                             LockLoginListener.callEvent(event);
 
-                                            user.send(message.prefix() + event.getAuthMessage());
+                                            user.send(messages.prefix() + event.getAuthMessage());
                                         }
                                     } catch (Throwable ex) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.ERROR, player, message.gAuthIncorrect(), null);
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.ERROR, player, messages.gAuthIncorrect(), null);
                                         LockLoginListener.callEvent(event);
 
-                                        user.send(message.prefix() + event.getAuthMessage());
+                                        user.send(messages.prefix() + event.getAuthMessage());
                                     }
                                 } else {
-                                    user.send(message.prefix() + message.gAuthNotEnabled());
+                                    user.send(messages.prefix() + messages.gAuthNotEnabled());
                                 }
                                 break;
                         }
                     }
                 } else {
-                    user.send(message.prefix() + message.gAuthServerDisabled());
+                    user.send(messages.prefix() + messages.gAuthServerDisabled());
                 }
             } else {
-                user.send(message.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
+                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
             Console.send(plugin, "", Level.INFO);
         }
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "2fa";
     }
 }

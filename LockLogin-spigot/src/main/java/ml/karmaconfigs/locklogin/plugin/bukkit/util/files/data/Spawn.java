@@ -4,8 +4,11 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.KarmaFile;
 import ml.karmaconfigs.api.common.Level;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +37,16 @@ public final class Spawn {
      * location
      */
     public final void teleport(final Player player) {
+        assert spawn_location.getWorld() != null;
+
+        Block middle_down = spawn_location.getBlock().getRelative(BlockFace.UP);
+        Block middle_up = middle_down.getRelative(BlockFace.UP);
+
+        if (!middle_down.getType().equals(Material.AIR) && !middle_up.getType().equals(Material.AIR)) {
+            Block highest = spawn_location.getWorld().getHighestBlockAt(spawn_location);
+            spawn_location = highest.getLocation().add(0D, 1D, 0D);
+        }
+
         plugin.getServer().getScheduler().runTask(plugin, () -> player.teleport(spawn_location));
     }
 

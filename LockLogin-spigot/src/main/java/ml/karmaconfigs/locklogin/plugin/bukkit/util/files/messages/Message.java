@@ -181,11 +181,11 @@ public final class Message {
         return parse(str);
     }
 
-    public final String notVerified() {
+    public final String notVerified(final Player target) {
         String str = msg.getString("PlayerNotVerified", "&5&oYou can't fight against {player} while he's not logged/registered");
         assert str != null;
 
-        return parse(str);
+        return parse(str.replace("{player}", StringUtils.stripColor(target.getDisplayName())));
     }
 
     public final String alreadyPlaying() {
@@ -469,8 +469,29 @@ public final class Message {
         return parse(str);
     }
 
+    public final String pinUsages() {
+        String str = msg.getString("PinUsages", "&5&oValid pin sub-arguments: &e<setup>&7, &e<remove>&7, &e<change>");
+        assert str != null;
+
+        return str;
+    }
+
     public final String pinSet() {
         String str = msg.getString("PinSet", "&dYour pin has been set successfully");
+        assert str != null;
+
+        return parse(str);
+    }
+
+    public final String pinReseted() {
+        String str = msg.getString("PinReseted", "&5&oPin removed, your account is now less secure");
+        assert str != null;
+
+        return parse(str);
+    }
+
+    public final String pinChanged() {
+        String str = msg.getString("PinChanged", "&dYour pin has been changed successfully");
         assert str != null;
 
         return parse(str);
@@ -490,7 +511,7 @@ public final class Message {
         return parse(str);
     }
 
-    public final String pinUsage() {
+    public final String setPin() {
         String str = msg.getString("SetPin", "&5&oPlease, use /pin setup <pin>");
         assert str != null;
 
@@ -499,6 +520,13 @@ public final class Message {
 
     public final String resetPin() {
         String str = msg.getString("ResetPin", "&5&oPlease, use /pin reset <pin>");
+        assert str != null;
+
+        return parse(str);
+    }
+
+    public final String changePin() {
+        String str = msg.getString("ChangePin", "&5&oPlease, use /pin change <pin> <new pin>");
         assert str != null;
 
         return parse(str);

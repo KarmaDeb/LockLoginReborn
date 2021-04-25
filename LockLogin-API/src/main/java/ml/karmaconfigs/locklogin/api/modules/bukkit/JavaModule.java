@@ -4,6 +4,7 @@ import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.modules.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.PluginModule;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
-public abstract class JavaModule {
+public abstract class JavaModule extends PluginModule {
 
     /**
      * On module enable logic

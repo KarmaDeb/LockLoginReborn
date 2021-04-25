@@ -28,11 +28,18 @@ public abstract class ClientSession {
     public abstract void setLogged(final boolean status);
 
     /**
-     * Set the session temp log status
+     * Set the session 2fa log status
      *
-     * @param status the session temp log status
+     * @param status the session 2fa log status
      */
-    public abstract void setTempLogged(final boolean status);
+    public abstract void set2FALogged(final boolean status);
+
+    /**
+     * Set the session pin log status
+     *
+     * @param status the session pin log status
+     */
+    public abstract void setPinLogged(final boolean status);
 
     /**
      * Validate the session
@@ -81,6 +88,19 @@ public abstract class ClientSession {
      */
     public abstract boolean isTempLogged();
 
+    /**
+     * Check if the session is 2fa logged
+     *
+     * @return if the session is 2fa logged
+     */
+    public abstract boolean is2FALogged();
+
+    /**
+     * Check if the session is pin logged
+     *
+     * @return if the session is pin logged
+     */
+    public abstract boolean isPinLogged();
 
     /**
      * Get the session captcha

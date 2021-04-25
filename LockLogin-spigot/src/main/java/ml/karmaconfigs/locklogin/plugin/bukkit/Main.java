@@ -10,6 +10,7 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.Manager;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import ml.karmaconfigs.locklogin.plugin.common.dependencies.Dependency;
 import ml.karmaconfigs.locklogin.plugin.common.dependencies.LockLoginDependencies;
+import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.utils.platform.Platform;
@@ -94,6 +95,8 @@ public final class Main extends JavaPlugin {
 
             PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
             LockLoginListener.callEvent(event);
+
+            AllowedCommand.scan();
 
             Manager.initialize();
         } else {

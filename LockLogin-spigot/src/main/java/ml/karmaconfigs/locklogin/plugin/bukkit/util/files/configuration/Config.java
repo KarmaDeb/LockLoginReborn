@@ -79,7 +79,6 @@ public final class Config {
 
             int login_message_interval = cfg.getInt("MessagesInterval.Logging", 5);
 
-            String captcha_mode = cfg.getString("Captcha.Mode", "SIMPLE");
             int captcha_length = cfg.getInt("Captcha.Length", 8);
 
             String password_encryption = cfg.getString("Encryption.Passwords", "SHA512");
@@ -92,7 +91,6 @@ public final class Config {
             String module_prefix = cfg.getString("ModulePrefix", "$");
 
             assert server_name != null;
-            assert captcha_mode != null;
             assert password_encryption != null;
             assert pin_encryption != null;
             assert update_channel != null;
@@ -132,18 +130,6 @@ public final class Config {
                 cfg.set("MessagesInterval.Logging", login_message_interval);
 
                 changes = true;
-            }
-
-            switch (captcha_mode.toLowerCase()) {
-                case "simple":
-                case "complex":
-                case "disabled":
-                    break;
-                default:
-                    captcha_mode = "SIMPLE";
-                    cfg.set("Captcha.Mode", captcha_mode);
-
-                    changes = true;
             }
 
             if (captcha_length < 8 || captcha_length > 16) {
@@ -269,16 +255,13 @@ public final class Config {
     }
 
     public final CaptchaConfig captchaOptions() {
-        String mode = cfg.getString("Captcha.Mode", "SIMPLE");
-        assert mode != null;
-
-        int timeout = cfg.getInt("Captcha.TimeOut", 0);
+        boolean enabled = cfg.getBoolean("Captcha.Enabled", true);
         int length = cfg.getInt("Captcha.Difficulty.Length", 8);
         boolean letters = cfg.getBoolean("Captcha.Difficulty.Letters", true);
         boolean strike = cfg.getBoolean("Captcha.Strikethrough.Enabled", true);
         boolean randomStrike = cfg.getBoolean("Captcha.Strikethrough.Random", true);
 
-        return new CaptchaConfig(mode.toUpperCase(), timeout, length, letters, strike, randomStrike);
+        return new CaptchaConfig(enabled, length, letters, strike, randomStrike);
     }
 
     public final CryptType passwordEncryption() {

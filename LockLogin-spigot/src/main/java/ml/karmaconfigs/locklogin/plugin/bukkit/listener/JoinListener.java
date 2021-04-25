@@ -1,11 +1,9 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.LockLoginListener;
-import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.event.user.UserJoinEvent;
@@ -24,7 +22,6 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.Name;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
 import ml.karmaconfigs.locklogin.plugin.common.utils.UUIDGen;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.CaptchaType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,7 +44,6 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 public final class JoinListener implements Listener {
 
     private final static Map<InetAddress, String> verified = new HashMap<>();
-    private final static Set<UUID> captcha_check = new HashSet<>();
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -216,11 +212,12 @@ public final class JoinListener implements Listener {
 
                 ClientSession session = user.getSession();
                 session.validate();
-                session.setTempLogged(false);
+                session.setPinLogged(false);
+                session.set2FALogged(false);
                 session.setLogged(false);
 
                 //Automatically mark players as captcha verified if captcha is disabled
-                if (config.captchaOptions().getMode().equals(CaptchaType.DISABLED))
+                if (!config.captchaOptions().isEnabled())
                     session.setCaptchaLogged(true);
 
                 if (config.enableSpawn()) {
@@ -276,26 +273,7 @@ public final class JoinListener implements Listener {
                 bar.stop();
             });
 
-            if (config.captchaOptions().getMode().equals(CaptchaType.COMPLEX) && config.captchaOptions().getTimeout() >= 15 && !session.isCaptchaLogged()) {
-                if (!captcha_check.contains(player.getUniqueId())) {
-                    captcha_check.add(player.getUniqueId());
-
-                    AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, config.captchaOptions().getTimeout(), false).setAsync(false);
-                    timer.addAction(() -> {
-                        if (session.isCaptchaLogged())
-                            timer.setCancelled();
-                    }).addActionOnEnd(() -> {
-                        captcha_check.remove(player.getUniqueId());
-                        user.kick(messages.captchaTimeout());
-                    }).addActionOnCancel(() -> {
-                        captcha_check.remove(player.getUniqueId());
-                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-                    });
-                    timer.start();
-                }
-            } else {
-                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-            }
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
 
             if (join_message != null)
                 plugin.getServer().getOnlinePlayers().forEach(target -> target.sendMessage(StringUtils.toColor(join_message)));

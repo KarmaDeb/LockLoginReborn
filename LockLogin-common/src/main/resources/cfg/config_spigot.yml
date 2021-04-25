@@ -65,13 +65,6 @@ MessagesInterval:
 
 #Captcha options
 # Available options:
-#   COMPLEX -> Requires to do /captcha <captcha> before
-#             login or register
-#   SIMPLE -> Requires to put the captcha during login
-#            and register
-#   DISABLED -> Completely disables this feature
-#              ( Not recommended, use it at your own risk )
-# TimeOut -> Set to 0 to disable
 #
 # Difficulty -> Captcha difficulty settings
 #   Length -> Captcha code length ( min is 8, max is 16 )
@@ -81,8 +74,7 @@ MessagesInterval:
 #     Random -> Randomize the characters with strikethrough
 #             effect
 Captcha:
-  Mode: "SIMPLE"
-  TimeOut: 0
+  Enabled: true
   Difficulty:
     Length: 8
     Letters: true

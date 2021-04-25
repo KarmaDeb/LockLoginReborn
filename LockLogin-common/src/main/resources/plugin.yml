@@ -12,6 +12,8 @@ commands:
     description: The command that allows a player to register
   login:
     description: The command that allows a player to login into his account
+  pin:
+    description: The command that allows a player to manage his pin
   2fa:
     description: The command that allows a player to manage his 2FA settings
   playerinfo:

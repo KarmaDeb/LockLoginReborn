@@ -4,6 +4,7 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
@@ -23,7 +24,7 @@ import java.util.*;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.*;
 
-public final class PlayerInfoCommand implements CommandExecutor {
+public final class PlayerInfoCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -201,5 +202,15 @@ public final class PlayerInfoCommand implements CommandExecutor {
         }
         
         return cmdMessages;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "playerinfo";
     }
 }

@@ -1,11 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.options;
 
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.CaptchaType;
-
 public final class CaptchaConfig {
 
-    private final CaptchaType type;
-    private final int timeout;
+    private final boolean enabled;
     private final int length;
     private final boolean letters;
     private final boolean strikethrough;
@@ -14,16 +11,14 @@ public final class CaptchaConfig {
     /**
      * Initialize the captcha configuration
      *
-     * @param mode the captcha mode
-     * @param complexTimeOut the complex mode time out
+     * @param toggle the captcha mode
      * @param captchaLength the captcha code length
      * @param includeLetters include letters in code
      * @param enableStrike enable strikethrough effect on captcha
      * @param randomStrike randomize characters with strike effect
      */
-    public CaptchaConfig(final String mode, final int complexTimeOut, final int captchaLength, final boolean includeLetters, final boolean enableStrike, final boolean randomStrike) {
-        type = CaptchaType.valueOf(mode);
-        timeout = complexTimeOut;
+    public CaptchaConfig(final boolean toggle, final int captchaLength, final boolean includeLetters, final boolean enableStrike, final boolean randomStrike) {
+        enabled = toggle;
         length = captchaLength;
         letters = includeLetters;
         strikethrough = enableStrike;
@@ -35,18 +30,8 @@ public final class CaptchaConfig {
      *
      * @return the captcha mode
      */
-    public CaptchaType getMode() {
-        return type;
-    }
-
-    /**
-     * Get the captcha time out
-     *
-     * @return the captcha complex mode
-     * timeout
-     */
-    public int getTimeout() {
-        return timeout;
+    public final boolean isEnabled() {
+        return enabled;
     }
 
     /**
@@ -54,7 +39,7 @@ public final class CaptchaConfig {
      *
      * @return the captcha code length
      */
-    public int getLength() {
+    public final int getLength() {
         return length;
     }
 
@@ -63,7 +48,7 @@ public final class CaptchaConfig {
      *
      * @return if the captcha has letters
      */
-    public boolean hasLetters() {
+    public final boolean hasLetters() {
         return letters;
     }
 
@@ -73,7 +58,7 @@ public final class CaptchaConfig {
      *
      * @return if the captcha has strike
      */
-    public boolean enableStrike() {
+    public final boolean enableStrike() {
         return strikethrough;
     }
 
@@ -84,7 +69,7 @@ public final class CaptchaConfig {
      *
      * @return if the strike effect is random
      */
-    public boolean randomStrike() {
+    public final boolean randomStrike() {
         return randomStrikethrough;
     }
 }

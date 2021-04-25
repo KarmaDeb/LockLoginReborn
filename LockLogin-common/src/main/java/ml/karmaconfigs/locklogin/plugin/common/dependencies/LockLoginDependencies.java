@@ -24,7 +24,15 @@ public enum LockLoginDependencies {
     /**
      * LockLogin dependency
      */
-    LOG4J_WEB;
+    LOG4J_WEB,
+    /**
+     * LockLogin dependency
+     */
+    JAVASSIST,
+    /**
+     * LockLogin dependency
+     */
+    REFLECTIONS;
 
     /**
      * Get the dependency as a dependency object
@@ -64,6 +72,20 @@ public enum LockLoginDependencies {
                 };
             case LOG4J_WEB:
                 return new Dependency("Log4j Web", "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.14.1/log4j-web-2.14.1.jar") {
+                    @Override
+                    public void inject() {
+                        onInject.accept(this);
+                    }
+                };
+            case JAVASSIST:
+                return new Dependency("Java Assist", "https://repo1.maven.org/maven2/org/javassist/javassist/3.27.0-GA/javassist-3.27.0-GA.jar") {
+                    @Override
+                    public void inject() {
+                        onInject.accept(this);
+                    }
+                };
+            case REFLECTIONS:
+                return new Dependency("Reflections", "https://repo1.maven.org/maven2/org/reflections/reflections/0.9.12/reflections-0.9.12.jar") {
                     @Override
                     public void inject() {
                         onInject.accept(this);

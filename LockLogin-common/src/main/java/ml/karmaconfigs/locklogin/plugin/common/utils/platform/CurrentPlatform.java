@@ -14,6 +14,8 @@ public final class CurrentPlatform {
     private static Platform platform;
     private static Class<?> main;
 
+    private static String prefix = "$";
+
     private static Class<? extends AccountManager> manager;
     private static Class<? extends ClientSession> sessionManager;
 
@@ -62,6 +64,15 @@ public final class CurrentPlatform {
      */
     public static void setOnline(final boolean onlineMode) {
         online = onlineMode;
+    }
+
+    /**
+     * Set the current module commands prefix
+     *
+     * @param modulePrefix the module commands prefix
+     */
+    public static void setPrefix(final String modulePrefix) {
+        prefix = modulePrefix;
     }
 
     /**
@@ -159,5 +170,14 @@ public final class CurrentPlatform {
      */
     public static boolean isOnline() {
         return online;
+    }
+
+    /**
+     * Get the plugin modules command prefix
+     *
+     * @return the command prefix
+     */
+    public static String getPrefix() {
+        return prefix;
     }
 }

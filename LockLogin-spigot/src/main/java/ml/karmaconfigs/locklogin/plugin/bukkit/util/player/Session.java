@@ -14,7 +14,8 @@ public final class Session extends ClientSession {
 
     private boolean captcha_logged = false;
     private boolean logged = false;
-    private boolean temp_logged = false;
+    private boolean pin_logged = false;
+    private boolean gAuth_logged = false;
     private boolean bungee_verified = true;
 
     private Session() {}
@@ -60,13 +61,23 @@ public final class Session extends ClientSession {
     }
 
     /**
-     * Set the session temp log status
+     * Set the session 2fa log status
      *
-     * @param status the session temp log status
+     * @param status the session 2fa log status
      */
     @Override
-    public final void setTempLogged(final boolean status) {
-        temp_logged = status;
+    public final void set2FALogged(final boolean status) {
+        gAuth_logged = status;
+    }
+
+    /**
+     * Set the session pin log status
+     *
+     * @param status the session pin log status
+     */
+    @Override
+    public final void setPinLogged(final boolean status) {
+        pin_logged = status;
     }
 
     /**
@@ -133,7 +144,27 @@ public final class Session extends ClientSession {
      */
     @Override
     public final boolean isTempLogged() {
-        return temp_logged;
+        return gAuth_logged && pin_logged;
+    }
+
+    /**
+     * Check if the session is 2fa logged
+     *
+     * @return if the session is 2fa logged
+     */
+    @Override
+    public boolean is2FALogged() {
+        return gAuth_logged;
+    }
+
+    /**
+     * Check if the session is pin logged
+     *
+     * @return if the session is pin logged
+     */
+    @Override
+    public boolean isPinLogged() {
+        return pin_logged;
     }
 
     /**

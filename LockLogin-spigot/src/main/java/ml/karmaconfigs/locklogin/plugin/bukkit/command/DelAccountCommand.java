@@ -4,6 +4,7 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.*;
 
-public final class DelAccountCommand implements CommandExecutor {
+public final class DelAccountCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -85,7 +86,8 @@ public final class DelAccountCommand implements CommandExecutor {
                                 user.send(messages.prefix() + messages.accountDeleted());
 
                                 //Completely restart the client session
-                                user.getSession().setTempLogged(false);
+                                user.getSession().setPinLogged(false);
+                                user.getSession().set2FALogged(false);
                                 user.getSession().setLogged(false);
                                 user.getSession().invalidate();
                                 user.getSession().validate();
@@ -148,5 +150,15 @@ public final class DelAccountCommand implements CommandExecutor {
         }
 
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "delaccount";
     }
 }

@@ -28,7 +28,7 @@ public final class Password {
 
         if (insecure.isEmpty()) {
             try {
-                InputStream in = getClass().getResourceAsStream("/insecure.txt");
+                InputStream in = getClass().getResourceAsStream("/security/insecure.txt");
                 if (in != null) {
                     InputStreamReader inReader = new InputStreamReader(in, StandardCharsets.UTF_8);
                     BufferedReader reader = new BufferedReader(inReader);

@@ -8,6 +8,7 @@ import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 import ml.karmaconfigs.locklogin.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
 
-public final class LoginCommand implements CommandExecutor {
+public final class LoginCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -148,5 +149,15 @@ public final class LoginCommand implements CommandExecutor {
         }
 
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "login";
     }
 }

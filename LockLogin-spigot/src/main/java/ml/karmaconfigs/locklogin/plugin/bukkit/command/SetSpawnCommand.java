@@ -2,6 +2,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.Spawn;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
@@ -15,7 +16,7 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.*;
 
-public final class SetSpawnCommand implements CommandExecutor {
+public final class SetSpawnCommand extends PluginCommandType implements CommandExecutor {
 
 
     /**
@@ -51,5 +52,15 @@ public final class SetSpawnCommand implements CommandExecutor {
         }
 
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "setloginspawn";
     }
 }

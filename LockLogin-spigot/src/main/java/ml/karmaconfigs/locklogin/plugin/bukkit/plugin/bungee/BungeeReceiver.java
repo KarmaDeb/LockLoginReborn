@@ -8,6 +8,7 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.Spawn;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -53,6 +54,10 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     spawn.teleport(player);
                                 }
 
+                                session.setLogged(input.readBoolean());
+                                session.set2FALogged(input.readBoolean());
+                                session.setPinLogged(input.readBoolean());
+
                                 break;
                             case "captchalog":
                                 if (!session.isCaptchaLogged()) {
@@ -76,14 +81,17 @@ public final class BungeeReceiver implements PluginMessageListener {
 
                                 switch (pin_sub.toLowerCase()) {
                                     case "open":
-                                        //TODO:
-                                        // 1. Create pin GUI ( graphical user interface )
-                                        // 2. Open pin GUI ( graphical user interface )
+                                        if (!session.isPinLogged()) {
+                                            PinInventory inventory = new PinInventory(player);
+                                            inventory.open();
+                                        }
                                         break;
                                     case "close":
-                                        //TODO:
-                                        // 1. Create pin GUI ( graphical user interface )
-                                        // 2. Close pin GUI ( graphical user interface )
+                                        if (player.getOpenInventory().getTopInventory().getHolder() instanceof PinInventory) {
+                                            PinInventory inventory = new PinInventory(player);
+                                            inventory.close();
+                                        }
+                                        session.setPinLogged(true);
                                         break;
                                     default:
                                         logger.scheduleLog(Level.GRAVE, "Unknown pin sub channel: " + pin_sub);
@@ -92,16 +100,16 @@ public final class BungeeReceiver implements PluginMessageListener {
 
 
                                 break;
-                            case "templog":
-                                if (!session.isTempLogged()) {
-                                    session.setTempLogged(true);
-                                }
+                            case "2fa":
+                                String gauth_sub = input.readUTF();
 
+                                session.setPinLogged(true);
                                 break;
                             case "unlogin":
                                 if (session.isLogged()) {
                                     session.setLogged(false);
-                                    session.setTempLogged(false);
+                                    session.set2FALogged(false);
+                                    session.setPinLogged(false);
                                     storager.restLogin();
                                 }
 

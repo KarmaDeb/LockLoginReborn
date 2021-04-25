@@ -12,7 +12,7 @@ import java.util.Properties;
 public final class Messages {
 
     public final String getProperty(final String name, final String def) {
-        File propFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin", "plugin_messages.properties");
+        File propFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
 
         try {
             if (propFile.exists()) {
@@ -23,7 +23,7 @@ public final class Messages {
 
                 return properties.getProperty(name, def);
             } else {
-                InputStream in = getClass().getResourceAsStream("/plugin_messages.properties");
+                InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
                 if (in != null) {
                     Files.copy(in, propFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 

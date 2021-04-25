@@ -5,10 +5,11 @@ import ml.karmaconfigs.api.bukkit.karmayaml.FileCopy;
 import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.api.modules.PluginModule;
 import ml.karmaconfigs.locklogin.plugin.bukkit.Main;
 import ml.karmaconfigs.locklogin.plugin.bukkit.command.*;
-import ml.karmaconfigs.locklogin.plugin.bukkit.listener.JoinListener;
-import ml.karmaconfigs.locklogin.plugin.bukkit.listener.QuitListener;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
+import ml.karmaconfigs.locklogin.plugin.bukkit.listener.*;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
@@ -20,10 +21,12 @@ import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionDownloader;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.messaging.Messenger;
 import org.bukkit.plugin.messaging.PluginMessageListenerRegistration;
+import org.reflections.Reflections;
 
 import java.io.File;
 import java.io.InputStream;
@@ -31,8 +34,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.api.common.Console.Colors.*;
 
-public final class Manager {
+public final class Manager extends PluginModule {
 
     private static int changelog_requests = 0;
     private static int updater_id = 0;
@@ -47,7 +51,7 @@ public final class Manager {
         } catch (Throwable ignored) {}
 
         System.out.println();
-        artGen.print(ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         Console.send("&eversion:&6 {0}", versionID);
 
         Proxy.scan();
@@ -114,61 +118,25 @@ public final class Manager {
     protected static void registerCommands() {
         Set<String> unregistered = new LinkedHashSet<>();
 
-        PluginCommand locklogin = plugin.getCommand("locklogin");
-        PluginCommand setspawn = plugin.getCommand("setloginspawn");
-        PluginCommand register = plugin.getCommand("register");
-        PluginCommand login = plugin.getCommand("login");
-        PluginCommand gAuth = plugin.getCommand("2fa");
-        PluginCommand playerinfo = plugin.getCommand("playerinfo");
-        PluginCommand delaccount = plugin.getCommand("delaccount");
-        PluginCommand unlock = plugin.getCommand("unlock");
-        if (locklogin != null) {
-            LockLoginCommand lockloginExecutor = new LockLoginCommand();
-            locklogin.setExecutor(lockloginExecutor);
-        } else {
-            unregistered.add("locklogin");
-        }
-        if (setspawn != null) {
-            SetSpawnCommand setspawnExecutor = new SetSpawnCommand();
-            setspawn.setExecutor(setspawnExecutor);
-        } else {
-            unregistered.add("setloginspawn");
-        }
-        if (register != null) {
-            RegisterCommand registerExecutor = new RegisterCommand();
-            register.setExecutor(registerExecutor);
-        } else {
-            unregistered.add("register");
-        }
-        if (login != null) {
-            LoginCommand loginExecutor = new LoginCommand();
-            login.setExecutor(loginExecutor);
-        } else {
-            unregistered.add("login");
-        }
-        if (gAuth != null) {
-            GoogleAuthCommand gAuthExecutor = new GoogleAuthCommand();
-            gAuth.setExecutor(gAuthExecutor);
-        } else {
-            unregistered.add("2fa");
-        }
-        if (playerinfo != null) {
-            PlayerInfoCommand playerinfoExecutor = new PlayerInfoCommand();
-            playerinfo.setExecutor(playerinfoExecutor);
-        } else {
-            unregistered.add("playerinfo");
-        }
-        if (delaccount != null) {
-            DelAccountCommand delaccountExecutor = new DelAccountCommand();
-            delaccount.setExecutor(delaccountExecutor);
-        } else {
-            unregistered.add("delaccount");
-        }
-        if (unlock != null) {
-            UnLockCommand unlockExecutor = new UnLockCommand();
-            unlock.setExecutor(unlockExecutor);
-        } else {
-            unregistered.add("unlock");
+        Reflections reflections = new Reflections("ml.karmaconfigs.locklogin.plugin.bukkit.command");
+        Set<Class<? extends PluginCommandType>> commands = reflections.getSubTypesOf(PluginCommandType.class);
+
+        for (Class<? extends PluginCommandType> command : commands) {
+            try {
+                PluginCommandType type = command.getDeclaredConstructor().newInstance();
+
+                PluginCommand pluginCMD = plugin.getCommand(type.command());
+                if (pluginCMD != null) {
+                    if (type instanceof CommandExecutor) {
+                        CommandExecutor executor = (CommandExecutor) type;
+                        pluginCMD.setExecutor(executor);
+                    }
+                } else {
+                    unregistered.add(type.command());
+                }
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
         }
 
         if (!unregistered.isEmpty()) {
@@ -242,9 +210,15 @@ public final class Manager {
     protected static void registerListeners() {
         Listener onJoin = new JoinListener();
         Listener onQuit = new QuitListener();
+        Listener onChat = new ChatListener();
+        Listener other = new OtherListener();
+        Listener inventory = new InventoryListener();
 
         plugin.getServer().getPluginManager().registerEvents(onJoin, plugin);
         plugin.getServer().getPluginManager().registerEvents(onQuit, plugin);
+        plugin.getServer().getPluginManager().registerEvents(onChat, plugin);
+        plugin.getServer().getPluginManager().registerEvents(other, plugin);
+        plugin.getServer().getPluginManager().registerEvents(inventory, plugin);
     }
 
     /**

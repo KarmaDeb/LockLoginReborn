@@ -7,12 +7,12 @@ import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.event.user.AccountCreatedEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.Password;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.CaptchaType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 
-public final class RegisterCommand implements CommandExecutor {
+public final class RegisterCommand extends PluginCommandType implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -77,7 +77,11 @@ public final class RegisterCommand implements CommandExecutor {
                                             user.send(messages.prefix() + messages.registered());
 
                                             session.setLogged(true);
-                                            session.setTempLogged(true);
+
+                                            if (!manager.has2FA())
+                                                session.set2FALogged(true);
+                                            if (manager.getPin().replaceAll("\\s", "").isEmpty())
+                                                session.setPinLogged(true);
 
                                             AccountCreatedEvent event = new AccountCreatedEvent(player, null);
                                             LockLoginListener.callEvent(event);
@@ -88,7 +92,7 @@ public final class RegisterCommand implements CommandExecutor {
                                         user.send(messages.prefix() + messages.registerError());
                                     }
                                 } else {
-                                    if (config.captchaOptions().getMode().equals(CaptchaType.SIMPLE)) {
+                                    if (config.captchaOptions().isEnabled()) {
                                         user.send(messages.prefix() + messages.register());
                                     }
                                 }
@@ -167,5 +171,15 @@ public final class RegisterCommand implements CommandExecutor {
         }
 
         return false;
+    }
+
+    /**
+     * Get the plugin command name
+     *
+     * @return the plugin command
+     */
+    @Override
+    public String command() {
+        return "register";
     }
 }

@@ -32,7 +32,7 @@ public final class Proxy {
     public static void scan() {
         if (proxies.isEmpty()) {
             try {
-                InputStream input = Proxy.class.getResourceAsStream("/proxies.txt");
+                InputStream input = Proxy.class.getResourceAsStream("/security/proxies.txt");
                 if (input != null) {
                     InputStreamReader inReader = new InputStreamReader(input, StandardCharsets.UTF_8);
                     BufferedReader reader = new BufferedReader(inReader);
