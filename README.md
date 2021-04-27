@@ -13,6 +13,7 @@ TODO:
   - Add /account change <old password> <new password>
   - Move /delaccount <pass> <pass> to /account remove <password> <password>
   - Move /delaccount <player> /account remove <player>
+  - Move /unlock <player> to /account unlock <player>
   - Add PlaceholderAPI support
   - Make locklogin.forcefa permission work
   - Disable hunguer while un-logged
