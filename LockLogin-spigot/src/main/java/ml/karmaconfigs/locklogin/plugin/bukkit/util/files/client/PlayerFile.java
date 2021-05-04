@@ -7,17 +7,21 @@ import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.AzuriomId;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.encryption.CryptTarget;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import org.bukkit.OfflinePlayer;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -261,62 +265,6 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
-     * Save the player name
-     *
-     * @param name the new player name
-     */
-    @Override
-    public final void setName(final String name) {
-        manager.set("PLAYER", name);
-    }
-
-    /**
-     * Set the player's password
-     *
-     * @param newPassword the new player password
-     */
-    @Override
-    public final void setPassword(final String newPassword) {
-        if (newPassword != null) {
-            CryptoUtil util = new CryptoUtil(newPassword, null);
-            Config config = new Config();
-
-            manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
-        } else {
-            manager.set("PASSWORD", "");
-        }
-    }
-
-    /**
-     * Set the player Google Authenticator token
-     *
-     * @param token the token
-     */
-    @Override
-    public final void setGAuth(final String token) {
-        CryptoUtil util = new CryptoUtil(token, null);
-
-        manager.set("TOKEN", util.toBase64(false));
-    }
-
-    /**
-     * Set the player pin
-     *
-     * @param pin the pin
-     */
-    @Override
-    public final void setPin(final String pin) {
-        if (pin != null) {
-            CryptoUtil util = new CryptoUtil(pin, null);
-            Config config = new Config();
-
-            manager.set("PIN", util.hash(config.pinEncryption(), true));
-        } else {
-            manager.set("PIN", "");
-        }
-    }
-
-    /**
      * Set the account 2FA status
      *
      * @param status the account 2FA status
@@ -334,6 +282,16 @@ public final class PlayerFile extends AccountManager {
     @Override
     public final String getName() {
         return manager.getString("PLAYER", "").replace("PLAYER:", "");
+    }
+
+    /**
+     * Save the player name
+     *
+     * @param name the new player name
+     */
+    @Override
+    public final void setName(final String name) {
+        manager.set("PLAYER", name);
     }
 
     /**
@@ -361,6 +319,23 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
+     * Set the player's password
+     *
+     * @param newPassword the new player password
+     */
+    @Override
+    public final void setPassword(final String newPassword) {
+        if (newPassword != null) {
+            CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).build();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+            manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
+        } else {
+            manager.set("PASSWORD", "");
+        }
+    }
+
+    /**
      * Get player Google Authenticator token
      *
      * @return the player google auth token
@@ -368,6 +343,22 @@ public final class PlayerFile extends AccountManager {
     @Override
     public final String getGAuth() {
         return manager.getString("TOKEN", "").replace("TOKEN:", "");
+    }
+
+    /**
+     * Set the player Google Authenticator token
+     *
+     * @param token the token
+     */
+    @Override
+    public final void setGAuth(final String token) {
+        if (token != null) {
+            CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).build();
+
+            manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
+        } else {
+            manager.set("TOKEN", "");
+        }
     }
 
     /**
@@ -381,6 +372,23 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
+     * Set the player pin
+     *
+     * @param pin the pin
+     */
+    @Override
+    public final void setPin(final String pin) {
+        if (pin != null) {
+            CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).build();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+            manager.set("PIN", util.hash(config.pinEncryption(), true));
+        } else {
+            manager.set("PIN", "");
+        }
+    }
+
+    /**
      * Check if the player has 2fa
      *
      * @return if the player has 2Fa in his account
@@ -388,6 +396,22 @@ public final class PlayerFile extends AccountManager {
     @Override
     public final boolean has2FA() {
         return manager.getBoolean("2FA", false);
+    }
+
+    /**
+     * Get the account creation time
+     *
+     * @return the account created time
+     */
+    @Override
+    public Instant getCreationTime() {
+        try {
+            BasicFileAttributes attr = Files.readAttributes(manager.getFile().toPath(), BasicFileAttributes.class);
+            return attr.creationTime().toInstant();
+        } catch (Throwable ignored) {
+        }
+
+        return Instant.now();
     }
 
     @Override
@@ -405,7 +429,8 @@ public final class PlayerFile extends AccountManager {
                         AccountManager acManager = new PlayerFile(offline);
 
                         managers.add(acManager);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
         }

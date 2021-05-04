@@ -21,6 +21,8 @@ public final class Messages {
                 Properties properties = new Properties();
                 properties.load(in);
 
+                in.close();
+
                 return properties.getProperty(name, def);
             } else {
                 InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
@@ -30,10 +32,13 @@ public final class Messages {
                     Properties properties = new Properties();
                     properties.load(in);
 
+                    in.close();
+
                     return properties.getProperty(name, def);
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         return "";
     }

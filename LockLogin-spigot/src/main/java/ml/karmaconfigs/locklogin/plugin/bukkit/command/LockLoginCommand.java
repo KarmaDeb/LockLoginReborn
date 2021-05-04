@@ -1,23 +1,29 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 
 import ml.karmaconfigs.api.bukkit.Console;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
-import ml.karmaconfigs.locklogin.api.event.plugin.UpdateRequestEvent;
-import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.PluginModule;
+import ml.karmaconfigs.locklogin.api.modules.event.plugin.UpdateRequestEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.FileReloader;
-import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.utils.ComponentFactory;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
-import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.*;
+import java.util.Set;
 
-public final class LockLoginCommand extends PluginCommandType implements CommandExecutor {
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.*;
+
+@SystemCommand(command = "locklogin")
+public final class LockLoginCommand implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -41,7 +47,7 @@ public final class LockLoginCommand extends PluginCommandType implements Command
 
             switch (args.length) {
                 case 0:
-                    user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>");
+                    user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>");
                     break;
                 case 1:
                     switch (args[0].toLowerCase()) {
@@ -56,60 +62,32 @@ public final class LockLoginCommand extends PluginCommandType implements Command
                             if (player.hasPermission(applyUpdates())) {
                                 //BukkitManager.update(sender);
                                 UpdateRequestEvent event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
-                                LockLoginListener.callEvent(event);
+                                JavaModuleManager.callEvent(event);
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(applyUpdates()));
                             }
                             break;
-                        default:
+                        case "modules":
+                            Set<PluginModule> modules = JavaModuleLoader.getModules();
+                            ComponentFactory main = new ComponentFactory("&3Modules &8&o( &a" + modules.size() + " &8&o)&7: ");
 
+                            int id = 0;
+                            for (PluginModule module : modules) {
+                                ComponentFactory factory = new ComponentFactory("&e" + StringUtils.stripColor(module.name()) + (id == modules.size() - 1 ? "" : "&7, "));
+                                factory.hover("\n&7Owner: &e" + module.author() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description());
+
+                                main.addExtra(factory);
+                                id++;
+                            }
+
+                            user.send(main.get());
+                            break;
+                        default:
                     }
             }
         } else {
-            ConsoleAccount console = new ConsoleAccount();
-
-            if (console.isRegistered()) {
-                switch (args.length) {
-                    case 0:
-                        Console.send(messages.prefix() + "&5&oAvailable sub-commands: /locklogin &e<reload> <password>");
-                        break;
-                    case 2:
-                        switch (args[0].toLowerCase()) {
-                            case "reload":
-                                if (console.validate(args[1])) {
-                                    FileReloader.reload(null);
-                                } else {
-                                    Console.send(messages.prefix() + messages.incorrectPassword());
-                                }
-                                break;
-                            case "applyupdates":
-                                if (console.validate(args[1])) {
-                                    //BukkitManager.update(sender);
-                                    //BukkitManager.unload();
-                                    UpdateRequestEvent event = new UpdateRequestEvent(sender, sender.hasPermission(applyUnsafeUpdates()), null);
-                                    LockLoginListener.callEvent(event);
-                                } else {
-                                    Console.send(messages.prefix() + messages.incorrectPassword());
-                                }
-                                break;
-                            default:
-
-                        }
-                }
-            } else {
-                Console.send(messages.prefix() + properties.getProperty("console_not_registered", "&5&oThe console must register to run protected commands!"));
-            }
+            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
         }
         return false;
-    }
-
-    /**
-     * Get the plugin command name
-     *
-     * @return the plugin command
-     */
-    @Override
-    public String command() {
-        return "locklogin";
     }
 }

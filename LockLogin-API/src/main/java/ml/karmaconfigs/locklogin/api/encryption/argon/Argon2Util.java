@@ -1,42 +1,34 @@
 package ml.karmaconfigs.locklogin.api.encryption.argon;
 
-import ml.karmaconfigs.locklogin.api.encryption.EncryptionMethod;
-import ml.karmaconfigs.locklogin.api.encryption.argon.util.Argon2;
-import ml.karmaconfigs.locklogin.api.encryption.argon.util.model.Argon2Type;
-import ml.karmaconfigs.locklogin.api.encryption.CryptType;
+import ml.karmaconfigs.locklogin.api.encryption.HashType;
+import ml.karmaconfigs.locklogin.api.encryption.libraries.argon.Argon2;
+import ml.karmaconfigs.locklogin.api.encryption.libraries.argon.model.Argon2Type;
 
 import java.nio.charset.StandardCharsets;
 
 /**
  * LockLogin Argon2 utilities
  */
-public final class Argon2Util extends EncryptionMethod {
+public final class Argon2Util {
 
     private final String password;
-    private final String token;
-
-    private final CryptType type;
 
     /**
      * Argon 2 utils class
      *
      * @param key the password/token to use
-     * @param userToken the user hashed password
-     * @param argonType the argon2 type to use
      */
-    public Argon2Util(final String key, final String userToken, final CryptType argonType) {
+    public Argon2Util(final String key) {
         password = key;
-        token = userToken;
-        type = argonType;
     }
 
     /**
      * Hash to argon password
      *
+     * @param type the argon password type
      * @return the hashed password if it's not argon
      */
-    @Override
-    public final String hash() {
+    public final String hashPassword(final HashType type) {
         switch (type) {
             case ARGON2I:
                 Argon2 argon2i = Argon2.create().type(Argon2Type.Argon2i);
@@ -52,20 +44,17 @@ public final class Argon2Util extends EncryptionMethod {
     /**
      * Check if the argon password matches with the specified token
      *
+     * @param token the player hashed password
+     * @param type  the encryption type
      * @return if the password matches
      */
-    @Override
-    public final boolean check() {
-        if (token != null) {
-            switch (type) {
-                case ARGON2I:
-                case ARGON2ID:
-                    return Argon2.checkHash(token, password.getBytes(StandardCharsets.UTF_8));
-                default:
-                    return false;
-            }
+    public final boolean checkPassword(final String token, final HashType type) {
+        switch (type) {
+            case ARGON2I:
+            case ARGON2ID:
+                return Argon2.checkHash(token, password.getBytes(StandardCharsets.UTF_8));
+            default:
+                return false;
         }
-
-        return false;
     }
 }

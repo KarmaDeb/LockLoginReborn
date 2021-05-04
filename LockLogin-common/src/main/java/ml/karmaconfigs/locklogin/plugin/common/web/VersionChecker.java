@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.plugin.common.web;
 
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.UpdateChannel;
+import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,12 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 public final class VersionChecker {
 
-    private final String current_version;
-
     private static String latest_version = "";
     private static String latest_changelog = "";
-
     private static boolean can_check = true;
+    private final String current_version;
 
     /**
      * Initialize the version checker
@@ -44,7 +42,7 @@ public final class VersionChecker {
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                   can_check = true;
+                    can_check = true;
                 }
             }, wait);
 
@@ -81,7 +79,8 @@ public final class VersionChecker {
 
                 latest_changelog = StringUtils.replaceLast(changelog_builder.toString(), "\n", "");
                 latest_version = StringUtils.stripColor(lines.get(0));
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 

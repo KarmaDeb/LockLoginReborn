@@ -1,8 +1,14 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
+
 import java.time.Instant;
 import java.time.Month;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.TextStyle;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 
 public final class InstantParser {
@@ -79,5 +85,33 @@ public final class InstantParser {
     public final int getDay() {
         String day = instant.toString().split("-")[2].split("T")[0];
         return Integer.parseInt(day);
+    }
+
+    /**
+     * Get the time ago from the specified instant
+     *
+     * @param instance the instant
+     * @return the time ago
+     */
+    public final String getDifference(final Instant instance) {
+        Messages properties = new Messages();
+
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        ZonedDateTime instanceZone = ZonedDateTime.ofInstant(instance, ZoneId.systemDefault());
+        Calendar instanceCalendar = GregorianCalendar.from(instanceZone);
+
+        int creation_year = calendar.get(Calendar.YEAR);
+        int creation_month = calendar.get(Calendar.MONTH);
+        int creation_day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        int today_year = instanceCalendar.get(Calendar.YEAR);
+        int today_month = instanceCalendar.get(Calendar.MONTH);
+        int today_day = instanceCalendar.get(Calendar.DAY_OF_MONTH);
+
+        return Math.abs(today_year - creation_year) + " " + properties.getProperty("year", "year(s)") + ", " +
+                Math.abs(today_month - creation_month) + " " + properties.getProperty("month", "month(s)") + ", " +
+                Math.abs(today_day - creation_day) + " " + properties.getProperty("day", "day(s)");
     }
 }

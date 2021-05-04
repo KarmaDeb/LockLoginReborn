@@ -3,7 +3,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 /**
  * Private GSA code

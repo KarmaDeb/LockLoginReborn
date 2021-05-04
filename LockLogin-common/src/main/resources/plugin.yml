@@ -1,8 +1,37 @@
+#####################################################################################
+#                                                                                   #
+#    #          ####     ####    #    #   #          ####     ####    #   #    #    #
+#    #         #    #   #    #   #   #    #         #    #   #    #   #   ##   #    #
+#    #         #    #   #        ####     #         #    #   #        #   # #  #    #
+#    #         #    #   #        #  #     #         #    #   #  ###   #   #  # #    #
+#    #         #    #   #    #   #   #    #         #    #   #    #   #   #   ##    #
+#    #######    ####     ####    #    #   #######    ####     ####    #   #    #    #
+#                                                                                   #
+#####################################################################################
 name: LockLogin
 version: ${project.version}
+author: ${project.author}
+description: ${project.description}
+website: ${project.url}
 main: ml.karmaconfigs.locklogin.plugin.bukkit.Main
-api-version: 1.16
+database: false
+api-version: 1.13
+softdepend:
+  - PlaceholderAPI
 
+
+
+#####################################################################################################
+#                                                                                                   #
+#      ######     #######     ##     ##   ##     ##      ###      ##    ##   ########     ######    #
+#    ##     ##   ##     ##    ###   ###   ###   ###     ## ##     ###   ##   ##     ##   ##    ##   #
+#    ##          ##     ##    #### ####   #### ####    ##   ##    ####  ##   ##     ##   ##         #
+#    ##          ##     ##    ## ### ##   ## ### ##   ##     ##   ## ## ##   ##     ##    ######    #
+#    ##          ##     ##    ##     ##   ##     ##   #########   ##  ####   ##     ##         ##   #
+#    ##     ##   ##     ##    ##     ##   ##     ##   ##     ##   ##   ###   ##     ##   ##    ##   #
+#      ######     #######     ##     ##   ##     ##   ##     ##   ##    ##   ########     ######    #
+#                                                                                                   #
+#####################################################################################################
 commands:
   locklogin:
     description: The command to manage the plugin, such as reload, or apply updates
@@ -17,14 +46,27 @@ commands:
   2fa:
     description: The command that allows a player to manage his 2FA settings
   playerinfo:
-    description: The command that allows a player/server to view a player information
-  delaccount:
-    description: The command that allows a player to remove an account
-    aliases:
-      - delacc
-  unlock:
-    description: The command that allows a player to unlock an account
+    description: The command that allows a player to view a player information
+  alias:
+    description: The command that allows a player to create/manage aliases of playerinfo
+  account:
+    description: The command that allows a player to manage account
+  lastloc:
+    description: The command that allows a player to manage last locations
 
+
+
+#################################################################
+#                                                               #
+#    ########    ########   ########    ##     ##    ######     #
+#    ##     ##   ##         ##     ##   ###   ###   ##    ##    #
+#    ##     ##   ##         ##     ##   #### ####   ##          #
+#    ########    ######     ########    ## ### ##    ######     #
+#    ##          ##         ##   ##     ##     ##         ##    #
+#    ##          ##         ##    ##    ##     ##   ##    ##    #
+#    ##          ########   ##     ##   ##     ##    ######     #
+#                                                               #
+#################################################################
 permissions:
   locklogin.reload:
     children:
@@ -59,16 +101,6 @@ permissions:
   locklogin.setspawn:
     description: The permission required to set the login spawn location
     default: op
-  locklogin.resetlocation:
-    children:
-      locklogin.resetlocation.all:
-        description: The permission required to reset all players location
-        default: false
-      locklogin.resetlocation.individual:
-        description: The permission required to reset a single player location
-        default: false
-    description: The permission required to reset the last player location
-    default: false
   locklogin.info:
     children:
       locklogin.info.request:
@@ -85,11 +117,23 @@ permissions:
     default: op
   locklogin.account:
     children:
+      locklogin.account.close:
+        description: The permission required to close a client account
+        default: false
       locklogin.account.remove:
         description: The permission required to remove a client account
         default: false
       locklogin.account.unlock:
         description: The permission required to unlock a client account
         default: false
+      locklogin.account.location:
+        description: The permission required to manage player(s) last location
+        default: false
     description: The permission required to manage a player account
+    default: false
+  locklogin.forcefa:
+    description: The permission that will force the player run /2fa setup after register
+    default: false
+  locklogin.alias:
+    description: The permission to create/destroy or manage aliases
     default: false

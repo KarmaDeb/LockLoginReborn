@@ -6,40 +6,12 @@ public abstract class ClientSession {
 
     /**
      * Initialize the session
-     *
+     * <p>
      * In this process the captcha and instant
      * are generated, with boolean values ( all
      * should be false by default )
      */
     public abstract void initialize();
-
-    /**
-     * Set the session captcha log status
-     *
-     * @param status the captcha log status
-     */
-    public abstract void setCaptchaLogged(final boolean status);
-
-    /**
-     * Set the session log status
-     *
-     * @param status the session login status
-     */
-    public abstract void setLogged(final boolean status);
-
-    /**
-     * Set the session 2fa log status
-     *
-     * @param status the session 2fa log status
-     */
-    public abstract void set2FALogged(final boolean status);
-
-    /**
-     * Set the session pin log status
-     *
-     * @param status the session pin log status
-     */
-    public abstract void setPinLogged(final boolean status);
 
     /**
      * Validate the session
@@ -58,7 +30,6 @@ public abstract class ClientSession {
      */
     public abstract Instant getInitialization();
 
-
     /**
      * Check if the session has been bungee-verified
      *
@@ -75,11 +46,25 @@ public abstract class ClientSession {
     public abstract boolean isCaptchaLogged();
 
     /**
+     * Set the session captcha log status
+     *
+     * @param status the captcha log status
+     */
+    public abstract void setCaptchaLogged(final boolean status);
+
+    /**
      * Check if the session is logged
      *
      * @return if the session is logged
      */
     public abstract boolean isLogged();
+
+    /**
+     * Set the session log status
+     *
+     * @param status the session login status
+     */
+    public abstract void setLogged(final boolean status);
 
     /**
      * Check if the session is temp logged
@@ -96,11 +81,25 @@ public abstract class ClientSession {
     public abstract boolean is2FALogged();
 
     /**
+     * Set the session 2fa log status
+     *
+     * @param status the session 2fa log status
+     */
+    public abstract void set2FALogged(final boolean status);
+
+    /**
      * Check if the session is pin logged
      *
      * @return if the session is pin logged
      */
     public abstract boolean isPinLogged();
+
+    /**
+     * Set the session pin log status
+     *
+     * @param status the session pin log status
+     */
+    public abstract void setPinLogged(final boolean status);
 
     /**
      * Get the session captcha

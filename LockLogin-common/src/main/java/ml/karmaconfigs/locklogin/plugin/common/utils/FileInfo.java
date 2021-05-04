@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.UpdateChannel;
+import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -196,7 +196,7 @@ public interface FileInfo {
      * @param file the jar file
      * @return the jar version channel
      */
-    static UpdateChannel getChannel(final File file) {
+    static ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel getChannel(final File file) {
         try {
             JarFile jar = new JarFile(file);
             JarEntry jar_info = jar.getJarEntry("global.yml");

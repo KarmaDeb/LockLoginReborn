@@ -13,8 +13,8 @@ import java.util.Set;
 
 public final class Proxy {
 
-    private final InetSocketAddress ip;
     private final static Set<String> proxies = new LinkedHashSet<>();
+    private final InetSocketAddress ip;
 
     /**
      * Initialize the proxy checker
@@ -44,7 +44,8 @@ public final class Proxy {
                         }
                     }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 

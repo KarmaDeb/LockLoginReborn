@@ -7,7 +7,7 @@ import java.io.File;
 
 /**
  * LockLogin AzuriomID memory
- *
+ * <p>
  * As azuriom generates random UUIDs, instead of
  * using bukkit "OfflinePlayer:[name]" uuid conversion,
  * LockLogin must memorize to which account is assigned each

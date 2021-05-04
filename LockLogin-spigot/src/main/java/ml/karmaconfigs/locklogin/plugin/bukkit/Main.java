@@ -4,23 +4,31 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.JarInjector;
 import ml.karmaconfigs.api.common.KarmaPlugin;
 import ml.karmaconfigs.api.common.Level;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
-import ml.karmaconfigs.locklogin.api.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.api.modules.client.MessageSender;
+import ml.karmaconfigs.locklogin.api.modules.client.Player;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.dependencies.Dependency;
+import ml.karmaconfigs.locklogin.api.modules.dependencies.LockLoginDependencies;
+import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.api.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.Manager;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
-import ml.karmaconfigs.locklogin.plugin.common.dependencies.Dependency;
-import ml.karmaconfigs.locklogin.plugin.common.dependencies.LockLoginDependencies;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
-import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
-import ml.karmaconfigs.locklogin.plugin.common.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 @KarmaPlugin
 public final class Main extends JavaPlugin {
@@ -39,11 +47,28 @@ public final class Main extends JavaPlugin {
         if (injected) {
             CurrentPlatform.setPlatform(Platform.BUKKIT);
             CurrentPlatform.setMain(Main.class);
+            CurrentPlatform.setOnline(getServer().getOnlineMode());
+            CurrentPlatform.setAccountsManager(PlayerFile.class);
+
+            Consumer<MessageSender> onMessage = messageSender -> {
+                Player player = messageSender.getPlayer();
+                UUID id = player.getUUID();
+
+                org.bukkit.entity.Player client = getServer().getPlayer(id);
+                if (client != null)
+                    client.sendMessage(StringUtils.toColor(messageSender.getMessage()));
+            };
+
+            try {
+                JarManager.changeField(Player.class, "onChat", true, onMessage);
+            } catch (Throwable ignored) {}
 
             Console.setOkPrefix(this, "&aOk &e>> &7");
             Console.setInfoPrefix(this, "&7Info &e>> &7");
             Console.setWarningPrefix(this, "&6Warning &e>> &7");
             Console.setGravePrefix(this, "&4Grave &e>> &7");
+
+            prepareManager();
 
             Set<Dependency> error = new LinkedHashSet<>();
             for (LockLoginDependencies lockloginDependency : LockLoginDependencies.values()) {
@@ -88,13 +113,13 @@ public final class Main extends JavaPlugin {
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
             if (moduleFiles != null) {
                 for (File module : moduleFiles) {
-                    if (!LockLogin.getLoader().isLoaded(module.getName()))
+                    if (!JavaModuleLoader.isLoaded(module.getName()))
                         LockLogin.getLoader().loadModule(module.getName());
                 }
             }
 
             PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-            LockLoginListener.callEvent(event);
+            JavaModuleManager.callEvent(event);
 
             AllowedCommand.scan();
 
@@ -109,7 +134,7 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         if (injected) {
             PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
-            LockLoginListener.callEvent(event);
+            JavaModuleManager.callEvent(event);
 
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
             if (moduleFiles != null) {
@@ -139,19 +164,43 @@ public final class Main extends JavaPlugin {
      */
     private boolean injectAPI() {
         String version = FileInfo.getKarmaVersion(lockloginFile);
-        File dest_file = new File(getDataFolder() + File.separator + "plugin" + File.separator + "api" + File.separator + "KarmaAPI" + File.separator + version, "KarmaAPI-Bundle.jar");
+        File dest_file = new File(getDataFolder() + File.separator + "plugin" + File.separator + "api" + File.separator + "KarmaAPI" + File.separator + "custom", "KarmaAPI-Bundle.jar");
 
-        System.out.println("Preparing plugin for injection");
+        if (dest_file.exists()) {
+            System.out.println("Found custom KarmaAPI-Bundle.jar instance, trying to use it");
 
-        JarManager manager = new JarManager(dest_file);
-        Throwable result = manager.download("https://raw.githubusercontent.com/KarmaConfigs/project_c/main/src/libs/KarmaAPI/" + FileInfo.getKarmaVersion(lockloginFile) + "/KarmaAPI-Bundle.jar");
-
-        if (result == null) {
+            JarManager manager = new JarManager(dest_file);
             return manager.inject(this.getClass());
         } else {
-            result.printStackTrace();
+            dest_file = new File(getDataFolder() + File.separator + "plugin" + File.separator + "api" + File.separator + "KarmaAPI" + File.separator + version, "KarmaAPI-Bundle.jar");
+            System.out.println("Preparing plugin for injection");
+
+            JarManager manager = new JarManager(dest_file);
+            Throwable result = manager.download("https://raw.githubusercontent.com/KarmaConfigs/project_c/main/src/libs/KarmaAPI/" + FileInfo.getKarmaVersion(lockloginFile) + "/KarmaAPI-Bundle.jar");
+
+            if (result == null) {
+                return manager.inject(this.getClass());
+            } else {
+                result.printStackTrace();
+            }
         }
 
         return false;
+    }
+
+    /**
+     * Prepare LockLoginManager module
+     */
+    private void prepareManager() {
+        File dest_file = new File(getDataFolder() + File.separator + "plugin" + File.separator + "modules", "LockLoginManager.jar");
+
+        Console.send(this, "Checking LockLogin manager module, please wait...", Level.INFO);
+
+        JarManager manager = new JarManager(dest_file);
+        Throwable result = manager.download("https://karmaconfigs.github.io/updates/LockLogin/modules/manager/LockLoginManager.jar");
+
+        if (result != null) {
+            Console.send(this, "LockLogin manager module is not downloaded/updated and couldn't be downloaded, apply updates and helpme command won't be available!", Level.GRAVE);
+        }
     }
 }

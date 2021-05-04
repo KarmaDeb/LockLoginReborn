@@ -4,8 +4,10 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.KarmaFile;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeDataStorager;
+import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.JarManager;
+import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
@@ -22,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class RestartCache {
 
@@ -31,17 +33,25 @@ public final class RestartCache {
     /**
      * Store the sessions into the cache file
      */
-    public final void storeSessions() {
+    public final void storeUserData() {
         if (!cache.exists())
             cache.create();
 
         Map<UUID, ClientSession> sessions = User.getSessionMap();
-        String serialized = serialize(sessions);
+        Map<UUID, GameMode> spectators = User.getSpectatorMap();
+        String sessions_serialized = serialize(sessions);
+        String spectators_serialized = serialize(spectators);
 
-        if (serialized != null) {
-            cache.set("SESSIONS", serialized);
+        if (sessions_serialized != null) {
+            cache.set("SESSIONS", sessions_serialized);
         } else {
             Console.send(plugin, properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
+        }
+
+        if (spectators_serialized != null) {
+            cache.set("SPECTATORS", spectators_serialized);
+        } else {
+            Console.send(plugin, properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "spectators are null");
         }
     }
 
@@ -59,17 +69,20 @@ public final class RestartCache {
 
             String key = (String) keyField.get(null);
             cache.set("KEY", key);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
      * Load the stored sessions
      */
-    public final void loadSessions() {
+    public final void loadUserData() {
         if (cache.exists()) {
-            String serialized = cache.getString("SESSIONS", "");
-            if (!serialized.replaceAll("\\s", "").isEmpty()) {
-                Map<UUID, ClientSession> sessions = unSerializeMap(serialized);
+            String sessions_serialized = cache.getString("SESSIONS", "");
+            String spectator_serialized = cache.getString("SPECTATORS", "");
+
+            if (!sessions_serialized.replaceAll("\\s", "").isEmpty()) {
+                Map<UUID, ClientSession> sessions = unSerializeMap(sessions_serialized);
                 Map<UUID, ClientSession> fixedSessions = new HashMap<>();
                 if (sessions != null) {
                     //Remove offline player sessions to avoid security issues
@@ -84,19 +97,35 @@ public final class RestartCache {
                     }
 
                     try {
-                        Class<?> user = User.class;
-                        Field sessionsField = user.getDeclaredField("sessions");
-
-                        sessionsField.setAccessible(true);
-                        sessionsField.setInt(sessionsField, sessionsField.getModifiers() & ~Modifier.FINAL);
-                        sessionsField.set(user, fixedSessions);
-                        sessionsField.setInt(sessionsField, sessionsField.getModifiers() & Modifier.FINAL);
-
+                        JarManager.changeField(User.class, "sessions", true, fixedSessions);
                     } catch (Throwable ex) {
                         Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
                     }
                 } else {
                     Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
+                }
+            }
+
+            if (!spectator_serialized.replaceAll("\\s", "").isEmpty()) {
+                Map<UUID, GameMode> spectators = unSerializeMap(spectator_serialized);
+                Map<UUID, GameMode> fixedSpectators = new HashMap<>();
+                if (spectators != null) {
+                    //Remove offline player sessions to avoid security issues
+                    for (UUID id : spectators.keySet()) {
+                        GameMode mode = spectators.getOrDefault(id, GameMode.SURVIVAL);
+                        OfflinePlayer player = plugin.getServer().getOfflinePlayer(id);
+                        if (player.isOnline() && player.getPlayer() != null) {
+                            fixedSpectators.put(id, mode);
+                        }
+                    }
+
+                    try {
+                        JarManager.changeField(User.class, "temp_spectator", true, fixedSpectators);
+                    } catch (Throwable ex) {
+                        Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", ex.fillInStackTrace());
+                    }
+                } else {
+                    Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "temp spectators map is null");
                 }
             }
         }
@@ -111,14 +140,10 @@ public final class RestartCache {
                 String key = cache.getString("KEY", "");
 
                 if (!key.replaceAll("\\s", "").isEmpty()) {
-                    Class<?> storagerClass = BungeeDataStorager.class;
-                    Field keyField = storagerClass.getDeclaredField("key");
-
-                    keyField.setInt(keyField, keyField.getModifiers() & ~Modifier.FINAL);
-                    keyField.set(storagerClass, key);
-                    keyField.setInt(keyField, keyField.getModifiers() & Modifier.FINAL);
+                    JarManager.changeField(BungeeDataStorager.class, "key", true, key);
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -128,7 +153,8 @@ public final class RestartCache {
     public final void remove() {
         try {
             Files.delete(cache.getFile().toPath());
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
@@ -154,12 +180,12 @@ public final class RestartCache {
      * Un-serialize the object
      *
      * @param serialized the serialized object
-     * @param <K> the map key type
-     * @param <V> the map value type
+     * @param <K>        the map key type
+     * @param <V>        the map value type
      * @return the un-serialized object
      */
     @Nullable
-    private <K,V> Map<K, V> unSerializeMap(String serialized) {
+    private <K, V> Map<K, V> unSerializeMap(String serialized) {
         try {
             serialized = new String(Base64.getDecoder().decode(serialized.getBytes(StandardCharsets.UTF_8)));
             ByteArrayInputStream input = new ByteArrayInputStream(serialized.getBytes(StandardCharsets.UTF_8));

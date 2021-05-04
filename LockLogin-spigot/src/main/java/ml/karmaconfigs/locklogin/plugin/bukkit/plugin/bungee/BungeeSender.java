@@ -1,14 +1,15 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.bukkit.entity.Player;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
-
+@SuppressWarnings("UnstableApiUsage")
 public final class BungeeSender {
 
     private static String key = "";
@@ -22,20 +23,20 @@ public final class BungeeSender {
      * Send the player pin input to BungeeCord
      *
      * @param player the player
-     * @param pin the player pin input
+     * @param pin    the player pin input
      */
     public static void sendPinInput(final Player player, final String pin) {
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(b);
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
         try {
-            out.writeUTF("pin");
-            out.writeUTF(player.getUniqueId().toString());
-            out.writeUTF(pin);
+            output.writeUTF("pin");
+            output.writeUTF(key);
+            output.writeUTF(player.getUniqueId().toString());
+            output.writeUTF(pin);
         } catch (Throwable ex) {
             logger.scheduleLog(Level.GRAVE, ex);
             logger.scheduleLog(Level.INFO, "Error while sending player pin GUI input to bungee");
         }
 
-        player.sendPluginMessage(plugin, "ll_account", b.toByteArray());
+        player.sendPluginMessage(plugin, "ll:account", output.toByteArray());
     }
 }

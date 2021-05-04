@@ -1,11 +1,12 @@
 package ml.karmaconfigs.locklogin.api.account;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * LockLogin account id
  */
-public final class AccountID {
+public final class AccountID implements Serializable {
 
     private final String id;
 

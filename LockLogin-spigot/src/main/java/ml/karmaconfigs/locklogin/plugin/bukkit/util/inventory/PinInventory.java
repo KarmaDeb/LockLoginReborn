@@ -2,16 +2,20 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory;
 
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Number;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Button;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -20,7 +24,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -36,11 +43,9 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 public final class PinInventory implements InventoryHolder {
 
     private final static HashMap<Player, String> input = new HashMap<>();
-
+    private final static Map<UUID, PinInventory> inventories = new HashMap<>();
     private final Player player;
     private final Inventory inventory;
-
-    private final static Map<UUID, PinInventory> inventories = new HashMap<>();
 
     /**
      * Initialize the pin inventory for
@@ -68,19 +73,19 @@ public final class PinInventory implements InventoryHolder {
      * Initialize the inventory items
      */
     private void makeInventory() {
-        inventory.setItem(12, Number.seven());
-        inventory.setItem(13, Number.eight());
-        inventory.setItem(14, Number.nine());
-        inventory.setItem(21, Number.four());
-        inventory.setItem(22, Number.five());
-        inventory.setItem(23, Number.six());
+        inventory.setItem(12, Button.seven());
+        inventory.setItem(13, Button.eight());
+        inventory.setItem(14, Button.nine());
+        inventory.setItem(21, Button.four());
+        inventory.setItem(22, Button.five());
+        inventory.setItem(23, Button.six());
         inventory.setItem(25, getInput());
-        inventory.setItem(30, Number.one());
-        inventory.setItem(31, Number.two());
-        inventory.setItem(32, Number.three());
-        inventory.setItem(36, Number.erase());
-        inventory.setItem(40, Number.zero());
-        inventory.setItem(44, Number.confirm());
+        inventory.setItem(30, Button.one());
+        inventory.setItem(31, Button.two());
+        inventory.setItem(32, Button.three());
+        inventory.setItem(36, Button.erase());
+        inventory.setItem(40, Button.zero());
+        inventory.setItem(44, Button.confirm());
 
         try {
             fillEmptySlots(new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE", true)), 1));
@@ -103,25 +108,71 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Open the inventory to the player
      */
-    public final void open() {
-        try {
-            player.openInventory(inventory);
-        } catch (Throwable e) {
-            logger.scheduleLog(Level.GRAVE, e);
-            logger.scheduleLog(Level.INFO, "Couldn't open pin GUI to player " + player.getName());
-        }
+    public synchronized final void open() {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            try {
+                player.openInventory(inventory);
+            } catch (Throwable e) {
+                PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+                if (!config.isBungeeCord()) {
+                    Message messages = new Message();
+
+                    User user = new User(player);
+                    ClientSession session = user.getSession();
+                    AccountManager manager = user.getManager();
+
+                    if (manager.has2FA()) {
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.gAuthInstructions(), null);
+                        JavaModuleManager.callEvent(event);
+
+                        user.send(messages.prefix() + event.getAuthMessage());
+                        session.setPinLogged(true);
+                    } else {
+                        user.setTempSpectator(false);
+
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                        JavaModuleManager.callEvent(event);
+
+                        if (config.takeBack()) {
+                            LastLocation location = new LastLocation(player);
+                            location.teleport();
+                        }
+
+                        ClientVisor visor = new ClientVisor(player);
+                        visor.authenticate();
+
+                        user.send(messages.prefix() + event.getAuthMessage());
+                        session.setPinLogged(true);
+                        session.set2FALogged(true);
+
+                        if (!config.isBungeeCord())
+                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+                    }
+
+                    close();
+                } else {
+                    BungeeSender.sendPinInput(player, "error");
+                }
+
+                logger.scheduleLog(Level.GRAVE, e);
+                logger.scheduleLog(Level.INFO, "Couldn't open pin GUI to player {0}, this will result in a fake-pin validation", StringUtils.stripColor(player.getDisplayName()));
+            }
+        });
     }
 
     /**
      * Close the inventory to the player
      */
-    public final void close() {
-        if (player != null && player.isOnline()) {
-            player.getInventory();
-            player.closeInventory();
+    public synchronized final void close() {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (player != null && player.isOnline()) {
+                player.getInventory();
+                player.closeInventory();
 
-            inventories.remove(player.getUniqueId());
-        }
+                inventories.remove(player.getUniqueId());
+            }
+        });
     }
 
     /**
@@ -132,7 +183,7 @@ public final class PinInventory implements InventoryHolder {
         ClientSession session = user.getSession();
         AccountManager manager = user.getManager();
 
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (session.isValid()) {
@@ -140,25 +191,48 @@ public final class PinInventory implements InventoryHolder {
                 if (!config.isBungeeCord()) {
                     String pin = input.get(player).replaceAll("-", "");
 
-                    CryptoUtil utils = new CryptoUtil(pin, user.getManager().getPin());
+                    CryptoUtil utils = CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build();
                     if (utils.validate()) {
-                        if (manager.has2FA()) {
-                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, player, messages.gAuthInstructions(), null);
-                            LockLoginListener.callEvent(event);
+                        if (utils.needsRehash(config.passwordEncryption())) {
+                            //Set the player password again to update his hash
+                            manager.setPin(pin);
+                            logger.scheduleLog(Level.INFO, "Updated pin hash of {0} from {1} to {2}",
+                                    StringUtils.stripColor(player.getDisplayName()),
+                                    utils.getTokenHash().name(),
+                                    config.passwordEncryption().name());
+                        }
 
-                            user.send(messages.prefix() + event.getAuthMessage());
-                        } else {
-                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, player, messages.logged(), null);
-                            LockLoginListener.callEvent(event);
+                        if (manager.has2FA()) {
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.gAuthInstructions(), null);
+                            JavaModuleManager.callEvent(event);
 
                             user.send(messages.prefix() + event.getAuthMessage());
                             session.setPinLogged(true);
+                        } else {
+                            user.setTempSpectator(false);
+
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                            JavaModuleManager.callEvent(event);
+
+                            if (config.takeBack()) {
+                                LastLocation location = new LastLocation(player);
+                                location.teleport();
+                            }
+
+                            ClientVisor visor = new ClientVisor(player);
+                            visor.authenticate();
+
+                            user.send(messages.prefix() + event.getAuthMessage());
+                            session.setPinLogged(true);
+                            session.set2FALogged(true);
+
+                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
                         }
 
                         close();
                     } else {
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, player, messages.incorrectPin(), null);
-                        LockLoginListener.callEvent(event);
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.incorrectPin(), null);
+                        JavaModuleManager.callEvent(event);
 
                         user.send(messages.prefix() + event.getAuthMessage());
                     }

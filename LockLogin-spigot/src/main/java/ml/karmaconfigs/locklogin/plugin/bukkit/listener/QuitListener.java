@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.event.user.UserQuitEvent;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserQuitEvent;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
@@ -15,18 +15,20 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.net.InetSocketAddress;
 
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.fromPlayer;
+
 public final class QuitListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onQuit_APICall(PlayerQuitEvent e) {
-        UserQuitEvent event = new UserQuitEvent(e.getPlayer(), e);
-        LockLoginListener.callEvent(event);
+        UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
+        JavaModuleManager.callEvent(event);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onKick_APICall(PlayerKickEvent e) {
-        UserQuitEvent event = new UserQuitEvent(e.getPlayer(), e);
-        LockLoginListener.callEvent(event);
+        UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
+        JavaModuleManager.callEvent(event);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -50,9 +52,14 @@ public final class QuitListener implements Listener {
 
             ClientSession session = user.getSession();
             session.invalidate();
+            session.setLogged(false);
+            session.setPinLogged(false);
+            session.set2FALogged(false);
 
             user.removeLockLoginUser();
         }
+
+        user.setTempSpectator(false);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -76,8 +83,13 @@ public final class QuitListener implements Listener {
 
             ClientSession session = user.getSession();
             session.invalidate();
+            session.setLogged(false);
+            session.setPinLogged(false);
+            session.set2FALogged(false);
 
             user.removeLockLoginUser();
         }
+
+        user.setTempSpectator(false);
     }
 }

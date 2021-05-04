@@ -1,15 +1,14 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin;
 
 import ml.karmaconfigs.api.bukkit.Console;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
-import ml.karmaconfigs.locklogin.api.event.plugin.PluginStatusChangeEvent;
-import ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 
 public class FileReloader {
 
@@ -20,7 +19,7 @@ public class FileReloader {
      */
     public static void reload(final Player player) {
         PluginStatusChangeEvent reload_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_START, null);
-        LockLoginListener.callEvent(reload_start);
+        JavaModuleManager.callEvent(reload_start);
 
         Message message = new Message();
         if (player != null) {
@@ -66,6 +65,6 @@ public class FileReloader {
         }
 
         PluginStatusChangeEvent reload_finish = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_END, null);
-        LockLoginListener.callEvent(reload_finish);
+        JavaModuleManager.callEvent(reload_finish);
     }
 }

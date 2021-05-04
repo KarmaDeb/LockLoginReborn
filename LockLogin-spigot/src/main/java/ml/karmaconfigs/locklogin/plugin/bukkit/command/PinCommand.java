@@ -4,10 +4,12 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,9 +17,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 
-public class PinCommand extends PluginCommandType implements CommandExecutor {
+@SystemCommand(command = "pin")
+public class PinCommand implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -33,7 +37,7 @@ public class PinCommand extends PluginCommandType implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (sender instanceof Player) {
@@ -44,66 +48,73 @@ public class PinCommand extends PluginCommandType implements CommandExecutor {
 
             if (session.isValid()) {
                 if (config.enablePin()) {
-                    if (args.length == 0) {
-                        user.send(messages.prefix() + messages.pinUsages());
-                    } else {
-                        switch (args[0].toLowerCase()) {
-                            case "setup":
-                                if (args.length == 2) {
-                                    if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
-                                        String pin = args[1];
+                    if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+                        if (args.length == 0) {
+                            user.send(messages.prefix() + messages.pinUsages());
+                        } else {
+                            switch (args[0].toLowerCase()) {
+                                case "setup":
+                                    if (args.length == 2) {
+                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                            String pin = args[1];
 
-                                        manager.setPin(pin);
-                                        user.send(messages.prefix() + messages.pinSet());
-                                    } else {
-                                        user.send(messages.prefix() + messages.alreadyPin());
-                                    }
-                                } else {
-                                    user.send(messages.prefix() + messages.setPin());
-                                }
-                                break;
-                            case "remove":
-                                if (args.length == 2) {
-                                    if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
-                                        user.send(messages.prefix() + messages.noPin());
-                                    } else {
-                                        String current = args[1];
+                                            manager.setPin(pin);
+                                            user.send(messages.prefix() + messages.pinSet());
 
-                                        CryptoUtil util = new CryptoUtil(current, manager.getPin());
-                                        if (util.validate()) {
-                                            manager.setPin(null);
-                                            user.send(messages.prefix() + messages.pinReseted());
+                                            session.setPinLogged(false);
+
+                                            PinInventory inventory = new PinInventory(player);
+                                            inventory.open();
                                         } else {
-                                            user.send(messages.prefix() + messages.incorrectPin());
+                                            user.send(messages.prefix() + messages.alreadyPin());
                                         }
-                                    }
-                                } else {
-                                    user.send(messages.prefix() + messages.resetPin());
-                                }
-                                break;
-                            case "change":
-                                if (args.length == 3) {
-                                    if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
-                                        user.send(messages.prefix() + messages.noPin());
                                     } else {
-                                        String current = args[1];
-                                        String newPin = args[2];
-
-                                        CryptoUtil util = new CryptoUtil(current, manager.getPin());
-                                        if (util.validate()) {
-                                            manager.setPin(newPin);
-                                            user.send(messages.prefix() + messages.pinChanged());
-                                        } else {
-                                            user.send(messages.prefix() + messages.incorrectPin());
-                                        }
+                                        user.send(messages.prefix() + messages.setPin());
                                     }
-                                } else {
-                                    user.send(messages.prefix() + messages.changePin());
-                                }
-                                break;
-                            default:
-                                user.send(messages.prefix() + messages.pinUsages());
-                                break;
+                                    break;
+                                case "remove":
+                                    if (args.length == 2) {
+                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                            user.send(messages.prefix() + messages.noPin());
+                                        } else {
+                                            String current = args[1];
+
+                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            if (util.validate()) {
+                                                manager.setPin(null);
+                                                user.send(messages.prefix() + messages.pinReseted());
+                                            } else {
+                                                user.send(messages.prefix() + messages.incorrectPin());
+                                            }
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.resetPin());
+                                    }
+                                    break;
+                                case "change":
+                                    if (args.length == 3) {
+                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                            user.send(messages.prefix() + messages.noPin());
+                                        } else {
+                                            String current = args[1];
+                                            String newPin = args[2];
+
+                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            if (util.validate()) {
+                                                manager.setPin(newPin);
+                                                user.send(messages.prefix() + messages.pinChanged());
+                                            } else {
+                                                user.send(messages.prefix() + messages.incorrectPin());
+                                            }
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.changePin());
+                                    }
+                                    break;
+                                default:
+                                    user.send(messages.prefix() + messages.pinUsages());
+                                    break;
+                            }
                         }
                     }
                 } else {
@@ -117,15 +128,5 @@ public class PinCommand extends PluginCommandType implements CommandExecutor {
         }
 
         return false;
-    }
-
-    /**
-     * Get the plugin command name
-     *
-     * @return the plugin command
-     */
-    @Override
-    public String command() {
-        return "pin";
     }
 }

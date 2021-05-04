@@ -1,9 +1,13 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.player;
 
+import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
 import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.boss.BossColor;
+import ml.karmaconfigs.api.common.boss.ProgressiveBar;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import org.bukkit.entity.Player;
 
@@ -12,15 +16,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class SessionCheck implements Runnable {
 
     private final Player player;
     private final Set<UUID> under_check = new HashSet<>();
-
     private final Consumer<Player> authAction;
     private final Consumer<Player> failAction;
+    private BossMessage boss;
+    private String BAR_COLOR = "&a";
 
     /**
      * Initialize the status checker
@@ -44,26 +49,54 @@ public final class SessionCheck implements Runnable {
     @Override
     public final void run() {
         if (!under_check.contains(player.getUniqueId())) {
-            System.out.println("Starting session check");
             under_check.add(player.getUniqueId());
 
             User user = new User(player);
-            Config config = new Config();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
             Message messages = new Message();
 
-            int time = config.registerOptions().timeOut();
+            int tmp_time = config.registerOptions().timeOut();
             if (user.isRegistered()) {
-                time = config.loginOptions().timeOut();
+                tmp_time = config.loginOptions().timeOut();
                 user.send(messages.prefix() + messages.login());
+
+                if (config.loginOptions().hasBossBar())
+                    boss = new BossMessage(plugin, messages.loginBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             } else {
                 user.send(messages.prefix() + messages.register());
+
+                if (config.registerOptions().hasBossBar())
+                    boss = new BossMessage(plugin, messages.registerBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             }
 
+            if (boss != null) {
+                boss.scheduleBar(player);
+            }
+
+            int time = tmp_time;
             AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, time, false).setAsync(false);
             timer.addAction(() -> {
                 ClientSession session = user.getSession();
-                if (!session.isLogged()) {
+                if (!session.isLogged() && player.isOnline()) {
                     int timer_time = timer.getTime();
+
+                    if (boss != null) {
+                        if (timer_time == ((int) Math.round(((double) time / 2)))) {
+                            boss.color(BossColor.YELLOW);
+                            BAR_COLOR = "&e";
+                        }
+
+                        if (timer_time == ((int) Math.round(((double) time / 3)))) {
+                            boss.color(BossColor.RED);
+                            BAR_COLOR = "&c";
+                        }
+
+                        if (user.isRegistered()) {
+                            boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                        } else {
+                            boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                        }
+                    }
 
                     if (user.isRegistered()) {
                         if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
@@ -72,6 +105,8 @@ public final class SessionCheck implements Runnable {
                         if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
                             user.send(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time));
                     }
+
+                    player.setMaximumAir(20 * 10);
                 } else {
                     timer.setCancelled();
                 }
@@ -86,12 +121,18 @@ public final class SessionCheck implements Runnable {
 
                 if (failAction != null)
                     failAction.accept(player);
+
+                if (boss != null)
+                    boss.cancel();
             }).addActionOnCancel(() -> {
                 user.restorePotionEffects();
                 under_check.remove(player.getUniqueId());
 
                 if (authAction != null)
                     authAction.accept(player);
+
+                if (boss != null)
+                    boss.cancel();
             });
 
             timer.start();
@@ -104,7 +145,7 @@ public final class SessionCheck implements Runnable {
      * task
      */
     private void startMessageTask() {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
         User user = new User(player);
 

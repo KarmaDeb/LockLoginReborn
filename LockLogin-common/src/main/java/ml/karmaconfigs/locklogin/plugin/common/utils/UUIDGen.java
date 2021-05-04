@@ -1,6 +1,6 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
-import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

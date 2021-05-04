@@ -4,6 +4,7 @@ import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -24,6 +25,19 @@ public final class JarManager {
      */
     public JarManager(final File file) {
         jarFile = file;
+    }
+
+    public synchronized static void changeField(final Class<?> clazz, final String fieldName, final boolean declared, final Object value) throws Throwable {
+        Field field;
+
+        if (declared) {
+            field = clazz.getDeclaredField(fieldName);
+        } else {
+            field = clazz.getField(fieldName);
+        }
+
+        field.setAccessible(true);
+        field.set(clazz, value);
     }
 
     /**
@@ -96,7 +110,7 @@ public final class JarManager {
      * @return if the jar file could be injected
      */
     public final boolean inject(final Class<?> target) {
-        try{
+        try {
             URLClassLoader cl = (URLClassLoader) target.getClassLoader();
             Class<?> clazz = URLClassLoader.class;
 
@@ -120,10 +134,12 @@ public final class JarManager {
      */
     private static final class NvbTrustManager implements TrustManager, X509TrustManager {
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) { }
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) { }
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
 
         @Override
         public X509Certificate[] getAcceptedIssuers() {

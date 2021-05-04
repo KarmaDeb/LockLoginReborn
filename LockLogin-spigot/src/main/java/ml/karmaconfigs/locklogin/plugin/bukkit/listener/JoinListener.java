@@ -1,22 +1,29 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
+import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
+import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
+import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.event.user.UserJoinEvent;
-import ml.karmaconfigs.locklogin.api.event.user.UserPostJoinEvent;
-import ml.karmaconfigs.locklogin.api.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserPostJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.Spawn;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.SessionCheck;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.security.BruteForce;
+import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Name;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
@@ -30,16 +37,20 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerPreLoginEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.altInfo;
 
 public final class JoinListener implements Listener {
 
@@ -54,39 +65,39 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPreLogin_APICall(AsyncPlayerPreLoginEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (!config.isBungeeCord()) {
             UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
-            LockLoginListener.callEvent(event);
+            JavaModuleManager.callEvent(event);
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onLogin_APICall(PlayerLoginEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (!config.isBungeeCord()) {
             OfflinePlayer offline = plugin.getServer().getOfflinePlayer(e.getPlayer().getUniqueId());
 
             UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
-            LockLoginListener.callEvent(event);
+            JavaModuleManager.callEvent(event);
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPostLogin_APICall(PlayerJoinEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (!config.isBungeeCord()) {
-            UserPostJoinEvent event = new UserPostJoinEvent(e.getPlayer(), e);
-            LockLoginListener.callEvent(event);
+            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
+            JavaModuleManager.callEvent(event);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public final void onServerPing(ServerListPingEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (!config.isBungeeCord())
             verified.put(e.getAddress(), "");
@@ -101,15 +112,49 @@ public final class JoinListener implements Listener {
         String address = "null";
         try {
             address = ip.getHostAddress();
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
             try {
                 if (validateIP(ip)) {
-                    Config config = new Config();
+                    PluginConfiguration config = CurrentPlatform.getConfiguration();
 
                     if (!config.isBungeeCord()) {
                         UUID gen_uuid = UUIDGen.getUUID(e.getName());
                         UUID tar_uuid = e.getUniqueId();
+
+                        if (config.registerOptions().maxAccounts() > 0) {
+                            AccountData data = new AccountData(ip, AccountID.fromUUID(e.getUniqueId()));
+
+                            if (data.allow(config.registerOptions().maxAccounts())) {
+                                data.save();
+
+                                int amount = data.getAlts().size();
+                                if (amount > 2) {
+                                    for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                        if (online.hasPermission(altInfo())) {
+                                            User user = new User(online);
+                                            user.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
+                                        }
+                                    }
+
+                                    if (!messages.altFound(e.getName(), amount).replaceAll("\\s", "").isEmpty())
+                                        Console.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
+                                }
+                            } else {
+                                e.disallow(PlayerPreLoginEvent.Result.KICK_FULL, StringUtils.toColor(messages.maxRegisters()));
+                                return;
+                            }
+                        }
+
+                        if (config.bruteForceOptions().getMaxTries() > 0) {
+                            BruteForce protection = new BruteForce(ip);
+                            if (protection.isBlocked()) {
+                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft())));
+                                return;
+                            }
+                        }
+
                         if (config.antiBot()) {
                             if (verified.containsKey(ip)) {
                                 String name = verified.getOrDefault(ip, "");
@@ -169,7 +214,7 @@ public final class JoinListener implements Listener {
                                 InstantParser parser = new InstantParser(date);
                                 String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
 
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.forcedDelAccount(administrator + " [ " + dateString + " ]")));
+                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]")));
                                 logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", e.getName(), administrator, dateString);
                                 return;
                             }
@@ -177,6 +222,19 @@ public final class JoinListener implements Listener {
 
                         //Allow the player at the eyes of the plugin
                         e.allow();
+
+                        //This is only required while in bungeecord mode
+                        if (config.isBungeeCord()) {
+                            AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, 5, false);
+                            timer.addActionOnEnd(() -> {
+                                Player online = plugin.getServer().getPlayer(e.getUniqueId());
+                                if (online != null && online.isOnline()) {
+                                    User user = new User(online);
+                                    if (!user.getSession().isValid())
+                                        user.kick(messages.bungeeProxy());
+                                }
+                            }).start();
+                        }
                     }
                 } else {
                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
@@ -194,7 +252,11 @@ public final class JoinListener implements Listener {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
             Message messages = new Message();
-            Config config = new Config();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+            User user = new User(player);
+            if (!user.isLockLoginUser())
+                user.applyLockLoginUser();
 
             if (!config.isBungeeCord()) {
                 IpData data = new IpData(e.getAddress());
@@ -205,10 +267,6 @@ public final class JoinListener implements Listener {
                     return;
                 }
                 data.addClone();
-
-                User user = new User(player);
-                if (!user.isLockLoginUser())
-                    user.applyLockLoginUser();
 
                 ClientSession session = user.getSession();
                 session.validate();
@@ -235,15 +293,16 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPostLogin(PlayerJoinEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        Player player = e.getPlayer();
+        InetSocketAddress ip = player.getAddress();
+        User user = new User(player);
+
         if (!config.isBungeeCord()) {
             Message messages = new Message();
 
             String join_message = e.getJoinMessage();
-
-            Player player = e.getPlayer();
-            InetSocketAddress ip = player.getAddress();
-            User user = new User(player);
 
             Proxy proxy = new Proxy(ip);
             if (proxy.isProxy()) {
@@ -261,7 +320,7 @@ public final class JoinListener implements Listener {
 
             ClientSession session = user.getSession();
 
-            BarMessage bar = new BarMessage(player, messages.captchaMessage(session.getCaptcha()));
+            BarMessage bar = new BarMessage(player, messages.captcha(session.getCaptcha()));
             if (!session.isCaptchaLogged())
                 bar.send(true);
 
@@ -278,6 +337,12 @@ public final class JoinListener implements Listener {
             if (join_message != null)
                 plugin.getServer().getOnlinePlayers().forEach(target -> target.sendMessage(StringUtils.toColor(join_message)));
         }
+
+        if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+            user.setTempSpectator(true);
+
+        ClientVisor visor = new ClientVisor(player);
+        visor.hide();
     }
 
     /**

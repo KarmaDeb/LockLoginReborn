@@ -25,35 +25,35 @@ PermissionError: "&5&oYou do not have the permission {permission}"
 #BungeeCord proxy message
 BungeeProxy: "&5&oPlease, connect through bungee proxy!"
 
+#Inventories messages
+PinTitle: "&8&lLockLogin pinner"
+AltLookup: "&8&lAlt accounts lookup"
+InfoGUI: "&8&lBundled player info"
+Next: "&eNext"
+Back: "&eBack"
+
 #Session messages - Manager
 PlayerNotVerified: "&5&oYou can't fight against {player} while he's not logged/registered"
 AlreadyPlaying: "&5&oThat player is already playing"
-PasswordMinChar: "&5&oPassword must have 4 chars min"
+PlayerInfoUsage: "&5&oValid playerinfo sub-arguments: &e<player|players>&7, &e<@[alias]>"
 MaxIp: "&5&oMax account per IP reached on the server"
 ConnectionError: "&5&oThe player {player} is not online"
-PlayerInfoUsage: "&5&oPlease, use /playerinfo <player>"
-LookUpUsage: "&5&oPlease, use /lookup <player>"
-AltFound: "&5&o{player} could have {alts} alt accounts, type /lookup {player} for more info"
+LookUpUsage: "&5&oPlease, use /account alts <player>"
+AltFound: "&5&o{player} could have {alts} alt accounts, type /account alts {player} for more info"
 NeverPlayed: "&5&oThe player {player} never played on the server"
 TargetAccessError: "&5&oThe player {player} isn't logged in/registered"
 IncorrectPassword: "&5&oThe provided password is not correct!"
+Captcha: "&7Your captcha code is: &e{captcha}"
+InvalidCaptcha: "&5&oThe specified captcha code is not valid or correct"
 OnlyAzuriom:
   - "{ServerName}"
   - ""
   - "&cPlease register your account from:"
   - "&7https://myazuriomwebsite.com/user/register"
 
-#Session messages - Captcha
-Captcha: "&7Your captcha code is: &e{captcha}"
-TypeCaptcha: "&5&oPlease, use /captcha <captcha>"
-CaptchaTimeOut: "&5&oYou took too much time to write captcha!"
-SpecifyCaptcha: "&5&oPlease provide a valid captcha code"
-CaptchaValidated: "&dCaptcha code validated"
-InvalidCaptcha: "&5&oThe specified captcha code is not valid or correct"
-AlreadyCaptcha: "&5&oYour captcha code is already verified!"
-
 #Session messages - Register
 Register: "&5&oPlease, use /register <password> <password> <captcha>"
+RegisterBar: "{color}You have &7{time}{color} to register"
 Registered: "&dRegister completed, thank for playing"
 AlreadyRegistered: "&5&oYou are already registered!"
 RegisterError: "&5&oThe provided passwords does not match!"
@@ -71,6 +71,7 @@ MaxRegisters:
 
 #Session messages - Login
 Login: "&5&oPlease, use /login <password> <captcha>"
+LoginBar: "{color}You have &7{time}{color} to login"
 Logged: "&dLogged-in, welcome back &7{player}"
 AlreadyLogged: "&5&oYou are already logged!"
 LoginInsecure: "&5&oYour password has been classified as not secure and you must change it"
@@ -79,7 +80,6 @@ LoginTitle: "&7You have"
 LoginSubtitle: "&b{time} &7to login"
 
 #Session messages - Pin
-PinTitle: "&eLockLogin pinner"
 PinUsages: "&5&oValid pin sub-arguments: &e<setup>&7, &e<remove>&7, &e<change>"
 PinSet: "&dYour pin has been set successfully"
 PinResetted: "&5&oPin removed, your account is now less secure"
@@ -122,22 +122,22 @@ Enabled2FA: "&d2FA enabled, your account is secure again"
   - "&78 - Type /2fa <code shown in app> or <scratch code>"
 2FaLink: "&bClick here to get your 2FA QR code"
 
-#Session messages - Password change
-ChangePass: "&5&oPlease, use /{arg} <password> <new password>"
+#Session messages - Account management
+AccountArguments: "&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
+Change: "&5&oPlease, use /account change <password> <new password>"
 ChangeSame: "&5&oYour password can't be the same as old!"
 ChangeDone: "&dYour password has changed!"
-
-#Session messages - Unloging
-UnLog: "&5&oPlease, use /{arg}"
-UnLogged: "&5&oSession closed, re-login now!"
-ForcedUnLog: "&5&oYour session have been closed by an admin, login again"
-ForcedUnLogAdmin: "&dSession of {player} closed"
-
-#Session messages - Account removal
-DelAccount: "&5&oPlease, use /{arg} <password|player> <password>"
-DelAccountMatch: "&5&oThe provided passwords does not match"
-AccountDeleted: "&5&oYour account have been deleted"
-ForcedDelAccount:
+AccountUnlock: "&5&oPlease, use /account unlock <player>"
+AccountUnlocked: "&dAccount of {player} has been unlocked"
+AccountNotLocked: "&5&oAccount of {player} is not locked!"
+Close: "&5&oPlease, use /account close [player]"
+Closed: "&5&oSession closed, re-login now!"
+ForceClose: "&5&oYour session have been closed by an admin, login again"
+ForceCloseAdmin: "&dSession of {player} closed"
+Remove: "&5&oPlease, use /account remove <password|player> [password]"
+RemoveAccountMatch: "&5&oThe provided passwords does not match"
+AccountRemoved: "&5&oYour account have been deleted"
+ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cYour account has been removed by"
@@ -148,12 +148,7 @@ ForcedDelAccount:
   - ""
   - "&cIf you didn't call this action, please"
   - "&creport this action at: &7https://discordexample.gg"
-ForcedDelAccountAdmin: "&dAccount of {player} removed"
-
-#Session messages - Account unblocking
-AccountUnlock: "&5&oPlease, use /unblock <player>"
-AccountUnlocked: "&dAccount of {player} has been unlocked"
-AccountNotLocked: "&5&oAccount of {player} is not locked!"
+ForcedAccountRemovalAdmin: "&dAccount of {player} removed, don't forget to run /account unlock {player}!"
 
 #Spawn utilities ( includes take back )
 SpawnSet: "&dThe login spawn location have been set"
@@ -161,15 +156,18 @@ LocationsReset: "&dAll last locations have been reset"
 LocationReset: "&dLast location of {player} has been reset"
 LocationsFixed: "&dAll last locations have been fixed"
 LocationFixed: "&dLocation of {player} has been fixed"
-NoLastLocation: "&5&oThe player {player} doesn't has last location"
-RestLastLocUsage: "&5&oPlease, use /locations [player|@all|@me] <remove|fix>"
+ResetLastLocUsage: "&5&oPlease, use /locations [player|@all|@me] <remove|fix>"
 
-#Account migration
-Migrating: "&dMigrating account of {player} to {type}"
-MigratingAll: "&dMigrating accounts of everyone to {type}"
-Migrated: "&dAccount(s) migration ended"
-MigrationUsage: "&5&oPlease, use /migrate"
-MigrationConnectionError: "&5&oThere was an error while trying to connect to {type}"
+#Alias messages
+AliasArguments: "&5&oValid alias sub-arguments: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [player(s)]"
+AliasCreated: "&dAlias {alias} created successfully"
+AliasDestroyed: "&5&oAlias {alias} has been destroyed"
+AliasExists: "&5&oAlias {alias} already exists!"
+AliasNotFound: "&5&oCouldn't find any alias called {alias}"
+AddedPlayer: "&dAdded {player} to {alias}"
+RemovedPlayer: "&dRemoved {player} from {alias}"
+PlayerNotIn: "&5&o{player} is not in {alias}!"
+PlayerAlreadyIn: "&5&o{player} is already in {alias}!"
 
 #Security messages
 IpBlocked:

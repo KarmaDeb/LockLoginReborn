@@ -1,23 +1,26 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
+import ml.karmaconfigs.api.bukkit.soundutil.Sound;
+import ml.karmaconfigs.api.bukkit.soundutil.SoundPlayer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PinInventory;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Number;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Button;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryInteractEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import java.util.Collections;
+
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class InventoryListener implements Listener {
 
@@ -56,32 +59,241 @@ public final class InventoryListener implements Listener {
      * if its not a number
      */
     private Action getAction(final ItemStack stack) {
-        if (isSimilar(stack, Number.one()))
+        if (isSimilar(stack, Button.one()))
             return Action.ONE;
-        if (isSimilar(stack, Number.two()))
+        if (isSimilar(stack, Button.two()))
             return Action.TWO;
-        if (isSimilar(stack, Number.three()))
+        if (isSimilar(stack, Button.three()))
             return Action.THREE;
-        if (isSimilar(stack, Number.four()))
+        if (isSimilar(stack, Button.four()))
             return Action.FOUR;
-        if (isSimilar(stack, Number.five()))
+        if (isSimilar(stack, Button.five()))
             return Action.FIVE;
-        if (isSimilar(stack, Number.six()))
+        if (isSimilar(stack, Button.six()))
             return Action.SIX;
-        if (isSimilar(stack, Number.seven()))
+        if (isSimilar(stack, Button.seven()))
             return Action.SEVEN;
-        if (isSimilar(stack, Number.eight()))
+        if (isSimilar(stack, Button.eight()))
             return Action.EIGHT;
-        if (isSimilar(stack, Number.nine()))
+        if (isSimilar(stack, Button.nine()))
             return Action.NINE;
-        if (isSimilar(stack, Number.zero()))
+        if (isSimilar(stack, Button.zero()))
             return Action.ZERO;
-        if (isSimilar(stack, Number.erase()))
+        if (isSimilar(stack, Button.erase()))
             return Action.ERASE;
-        if (isSimilar(stack, Number.confirm()))
+        if (isSimilar(stack, Button.confirm()))
             return Action.CONFIRM;
+        if (isSimilar(stack, Button.next()))
+            return Action.NEXT;
+        if (isSimilar(stack, Button.back()))
+            return Action.BACK;
 
         return Action.NONE;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public final void onInventoryOpen(InventoryOpenEvent e) {
+        Inventory inventory = e.getInventory();
+        HumanEntity entity = e.getPlayer();
+
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
+            if (!session.isPinLogged()) {
+                if (!(inventory.getHolder() instanceof PinInventory)) {
+                    e.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public final void onInventoryClose(InventoryCloseEvent e) {
+        HumanEntity entity = e.getPlayer();
+
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
+            if (!session.isPinLogged()) {
+                plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                    PinInventory pin = new PinInventory(player);
+                    pin.open();
+                }, 5);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public final void menuInteract(InventoryInteractEvent e) {
+        Player player = (Player) e.getWhoClicked();
+        User user = new User(player);
+        ClientSession session = user.getSession();
+
+        if (!session.isPinLogged()) {
+            Inventory inventory = e.getInventory();
+
+            e.setCancelled(!(inventory.getHolder() instanceof PinInventory));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public final void menuClick(InventoryClickEvent e) {
+        Player player = (Player) e.getWhoClicked();
+        User user = new User(player);
+        ClientSession session = user.getSession();
+
+        Inventory inventory = e.getInventory();
+        ItemStack clicked = e.getCurrentItem();
+
+        if (!session.isPinLogged()) {
+            if (inventory.getHolder() instanceof PinInventory) {
+                if (e.getClick() == ClickType.LEFT) {
+                    PinInventory pin = new PinInventory(player);
+
+                    if (clicked != null) {
+                        Action action = getAction(clicked);
+                        switch (action) {
+                            case ZERO:
+                            case ONE:
+                            case TWO:
+                            case THREE:
+                            case FOUR:
+                            case FIVE:
+                            case SIX:
+                            case SEVEN:
+                            case EIGHT:
+                            case NINE:
+                                SoundPlayer pling = new SoundPlayer(plugin, Sound.BLOCK_NOTE_BLOCK_PLING);
+                                try {
+                                    pling.playTo(player, 5, getNote(action.friendly()));
+                                } catch (Throwable ignored) {
+                                }
+
+                                pin.addInput(action.friendly());
+                                pin.updateInput();
+                                break;
+                            case CONFIRM:
+                                pin.confirm();
+                                break;
+                            case ERASE:
+                                pin.eraseInput();
+                                pin.updateInput();
+
+                                SoundPlayer hat = new SoundPlayer(plugin, Sound.BLOCK_NOTE_BLOCK_HAT);
+                                hat.playTo(player, 5, 2.1);
+                                break;
+                            case NONE:
+                            default:
+                                break;
+                        }
+                    }
+                }
+            } else {
+                //If the player is not pin logged and the inventory
+                //is not a PinInventory, then close the inventory
+                player.closeInventory();
+            }
+
+            e.setCancelled(true);
+        } else {
+            if (inventory.getHolder() instanceof AltAccountsInventory) {
+                if (e.getClick() == ClickType.LEFT) {
+                    if (clicked != null) {
+                        Action action = getAction(clicked);
+                        AltAccountsInventory alts;
+                        switch (action) {
+                            case NEXT:
+                                alts = AltAccountsInventory.manager.getInventory(player);
+                                if (alts == null)
+                                    alts = new AltAccountsInventory(player, Collections.emptySet());
+
+                                if (alts.getPlayerPage() + 1 < alts.getPages())
+                                    alts.openPage(alts.getPlayerPage() + 1);
+                                break;
+                            case BACK:
+                                alts = AltAccountsInventory.manager.getInventory(player);
+                                if (alts == null)
+                                    alts = new AltAccountsInventory(player, Collections.emptySet());
+
+                                if (alts.getPlayerPage() - 1 > 0)
+                                    alts.openPage(alts.getPlayerPage() - 1);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    e.setCancelled(true);
+                }
+            } else {
+                if (inventory.getHolder() instanceof PlayersInfoInventory) {
+                    if (e.getClick() == ClickType.LEFT) {
+                        if (clicked != null) {
+                            Action action = getAction(clicked);
+                            PlayersInfoInventory infos;
+                            switch (action) {
+                                case NEXT:
+                                    infos = PlayersInfoInventory.manager.getInventory(player);
+                                    if (infos == null)
+                                        infos = new PlayersInfoInventory(player, Collections.emptySet());
+
+                                    if (infos.getPlayerPage() + 1 < infos.getPages())
+                                        infos.openPage(infos.getPlayerPage() + 1);
+                                    break;
+                                case BACK:
+                                    infos = PlayersInfoInventory.manager.getInventory(player);
+                                    if (infos == null)
+                                        infos = new PlayersInfoInventory(player, Collections.emptySet());
+
+                                    if (infos.getPlayerPage() - 1 > 0)
+                                        infos.openPage(infos.getPlayerPage() - 1);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+
+                        e.setCancelled(true);
+                    }
+                }
+            }
+        }
+    }
+
+    private double getNote(final String number) {
+        try {
+            int num = Integer.parseInt(number);
+            switch (num) {
+                case 0:
+                    return 0.5;
+                case 1:
+                    return 0.6;
+                case 2:
+                    return 0.7;
+                case 3:
+                    return 1.1;
+                case 4:
+                    return 1.2;
+                case 5:
+                    return 1.3;
+                case 6:
+                    return 1.7;
+                case 7:
+                    return 1.8;
+                case 8:
+                    return 1.9;
+                case 9:
+                default:
+                    return 2.0;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return 1D;
     }
 
     /**
@@ -144,10 +356,19 @@ public final class InventoryListener implements Listener {
         ERASE,
 
         /**
-         * Confirm call or accept
-         * call
+         * Confirm pin input
          */
         CONFIRM,
+
+        /**
+         * Next page
+         */
+        NEXT,
+
+        /**
+         * Previous page
+         */
+        BACK,
 
         /**
          * Prevent errors
@@ -187,106 +408,14 @@ public final class InventoryListener implements Listener {
                     return "erase";
                 case CONFIRM:
                     return "confirm";
+                case NEXT:
+                    return "->";
+                case BACK:
+                    return "<-";
                 case NONE:
                 default:
                     return "";
             }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public final void onInventoryOpen(InventoryOpenEvent e) {
-        Inventory inventory = e.getInventory();
-        HumanEntity entity = e.getPlayer();
-
-        if (entity instanceof Player) {
-            Player player = (Player) entity;
-            User user = new User(player);
-            ClientSession session = user.getSession();
-
-            if (!session.isLogged() || !session.isTempLogged() && !user.getManager().getPin().replaceAll("\\s", "").isEmpty()) {
-                e.setCancelled(!(inventory.getHolder() instanceof PinInventory));
-            }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public final void onInventoryClose(InventoryCloseEvent e) {
-        HumanEntity entity = e.getPlayer();
-
-        if (entity instanceof Player) {
-            Player player = (Player) entity;
-            User user = new User(player);
-            ClientSession session = user.getSession();
-
-            if (!session.isPinLogged() && !user.getManager().getPin().replaceAll("\\s", "").isEmpty()) {
-                plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                    PinInventory pin = new PinInventory(player);
-                    pin.open();
-                }, 5);
-            }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public final void menuInteract(InventoryInteractEvent e) {
-        Player player = (Player) e.getWhoClicked();
-        User user = new User(player);
-        ClientSession session = user.getSession();
-
-        if (!session.isPinLogged()) {
-            Inventory inventory = e.getInventory();
-
-            e.setCancelled(!(inventory.getHolder() instanceof PinInventory));
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public final void menuClick(InventoryClickEvent e) {
-        Player player = (Player) e.getWhoClicked();
-        User user = new User(player);
-        ClientSession session = user.getSession();
-
-        if (!session.isPinLogged()) {
-            Inventory inventory = e.getInventory();
-
-            if (inventory.getHolder() instanceof PinInventory) {
-                ItemStack clicked = e.getCurrentItem();
-                PinInventory pin = new PinInventory(player);
-
-                if (clicked != null) {
-                    Action action = getAction(clicked);
-                    switch (action) {
-                        case ZERO:
-                        case ONE:
-                        case TWO:
-                        case THREE:
-                        case FOUR:
-                        case FIVE:
-                        case SIX:
-                        case SEVEN:
-                        case EIGHT:
-                        case NINE:
-                            pin.addInput(action.friendly());
-                            break;
-                        case CONFIRM:
-                            pin.confirm();
-                            break;
-                        case ERASE:
-                            pin.eraseInput();
-                            break;
-                        case NONE:
-                        default:
-                            break;
-                    }
-                }
-            } else {
-                //If the player is not pin logged and the inventory
-                //is not a PinInventory, then close the inventory
-                player.closeInventory();
-            }
-
-            e.setCancelled(true);
         }
     }
 }

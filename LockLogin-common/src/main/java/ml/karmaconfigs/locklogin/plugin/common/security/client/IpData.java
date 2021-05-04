@@ -1,15 +1,13 @@
 package ml.karmaconfigs.locklogin.plugin.common.security.client;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class IpData {
 
-    private final InetAddress address;
-
     private final static Map<byte[], Integer> clones = new HashMap<>();
+    private final InetAddress address;
 
     /**
      * Initialize the IP data

@@ -3,13 +3,13 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.event.user.AccountCreatedEvent;
-import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
-import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.ConsoleAccount;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.user.AccountCreatedEvent;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.Password;
@@ -20,8 +20,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.forceFA;
 
-public final class RegisterCommand extends PluginCommandType implements CommandExecutor {
+@SystemCommand(command = "register")
+public final class RegisterCommand implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -43,7 +45,7 @@ public final class RegisterCommand extends PluginCommandType implements CommandE
             Player player = (Player) sender;
             User user = new User(player);
 
-            Config config = new Config();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             ClientSession session = user.getSession();
             if (session.isValid()) {
@@ -78,13 +80,18 @@ public final class RegisterCommand extends PluginCommandType implements CommandE
 
                                             session.setLogged(true);
 
-                                            if (!manager.has2FA())
-                                                session.set2FALogged(true);
+                                            if (!manager.has2FA()) {
+                                                if (player.hasPermission(forceFA())) {
+                                                    player.performCommand("2fa setup " + password);
+                                                } else {
+                                                    session.set2FALogged(true);
+                                                }
+                                            }
                                             if (manager.getPin().replaceAll("\\s", "").isEmpty())
                                                 session.setPinLogged(true);
 
-                                            AccountCreatedEvent event = new AccountCreatedEvent(player, null);
-                                            LockLoginListener.callEvent(event);
+                                            AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
+                                            JavaModuleManager.callEvent(event);
                                         } else {
                                             user.send(messages.prefix() + messages.passwordInsecure());
                                         }
@@ -138,48 +145,9 @@ public final class RegisterCommand extends PluginCommandType implements CommandE
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            if (args.length == 2) {
-                String password = args[0];
-                String confirmation = args[1];
-
-                Password checker = new Password(password);
-
-                if (checker.isSecure()) {
-                    ConsoleAccount console = new ConsoleAccount();
-                    if (console.isRegistered()) {
-                        checker = new Password(confirmation);
-
-                        if (checker.isSecure()) {
-                            if (console.changePassword(password, confirmation)) {
-                                Console.send(messages.prefix() + messages.changeDone());
-                            } else {
-                                Console.send(messages.prefix() + messages.incorrectPassword());
-                            }
-                        } else {
-                            Console.send(messages.prefix() + messages.passwordInsecure());
-                        }
-                    } else {
-                        console.setPassword(password);
-                        Console.send(messages.prefix() + messages.registered());
-                    }
-                } else {
-                    Console.send(messages.prefix() + messages.passwordInsecure());
-                }
-            } else {
-                Console.send(messages.prefix() + messages.register());
-            }
+            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
         }
 
         return false;
-    }
-
-    /**
-     * Get the plugin command name
-     *
-     * @return the plugin command
-     */
-    @Override
-    public String command() {
-        return "register";
     }
 }

@@ -16,7 +16,7 @@ public final class ComponentFactory {
      * @param message the component message
      */
     public ComponentFactory(final String message) {
-         text = new TextComponent(StringUtils.toColor(message));
+        text = new TextComponent(StringUtils.toColor(message));
     }
 
     /**

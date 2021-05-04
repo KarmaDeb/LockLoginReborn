@@ -47,7 +47,8 @@ public final class AlertSystem {
                     .replace("replace-one", "[")
                     .replace("replace-two", "]")
                     .replace("replace-comma", ",");
-        } catch (IOException ignore) {}
+        } catch (IOException ignore) {
+        }
     }
 
     /**

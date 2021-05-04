@@ -3,18 +3,25 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.command;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.files.options.BruteForceConfig;
+import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.event.user.UserAuthenticateEvent;
-import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.PluginCommandType;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PinInventory;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.SessionCheck;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.security.BruteForce;
 import ml.karmaconfigs.locklogin.plugin.common.security.Password;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,9 +29,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
 
-public final class LoginCommand extends PluginCommandType implements CommandExecutor {
+@SystemCommand(command = "login")
+public final class LoginCommand implements CommandExecutor {
 
     /**
      * Executes the given command, returning its success.
@@ -45,7 +52,7 @@ public final class LoginCommand extends PluginCommandType implements CommandExec
             User user = new User(player);
 
             Message messages = new Message();
-            Config config = new Config();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             ClientSession session = user.getSession();
             if (session.isValid()) {
@@ -76,25 +83,86 @@ public final class LoginCommand extends PluginCommandType implements CommandExec
                                 Password checker = new Password(password);
                                 checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
 
+                                BruteForce protection = null;
+                                if (player.getAddress() != null)
+                                    protection = new BruteForce(player.getAddress().getAddress());
+
                                 if (checker.isSecure()) {
-                                    CryptoUtil util = new CryptoUtil(password, manager.getPassword());
-                                    if (util.validate()) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, player, messages.logged(), null);
-                                        LockLoginListener.callEvent(event);
-
-                                        session.setLogged(true);
-
-                                        if (config.takeBack()) {
-                                            LastLocation location = new LastLocation(player);
-                                            location.teleport();
+                                    CryptoUtil utils = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                    if (utils.validate()) {
+                                        if (utils.needsRehash(config.passwordEncryption())) {
+                                            //Set the player password again to update his hash
+                                            manager.setPassword(password);
+                                            logger.scheduleLog(Level.INFO, "Updated password hash of {0} from {1} to {2}",
+                                                    StringUtils.stripColor(player.getDisplayName()),
+                                                    utils.getTokenHash().name(),
+                                                    config.passwordEncryption().name());
                                         }
 
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                    } else {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, player, messages.logged(), null);
-                                        LockLoginListener.callEvent(event);
+                                        if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                                            JavaModuleManager.callEvent(event);
 
-                                        user.send(messages.prefix() + messages.incorrectPassword());
+                                            user.setTempSpectator(false);
+
+                                            session.set2FALogged(true);
+                                            session.setPinLogged(true);
+
+                                            if (config.takeBack()) {
+                                                LastLocation location = new LastLocation(player);
+                                                location.teleport();
+                                            }
+
+                                            ClientVisor visor = new ClientVisor(player);
+                                            visor.authenticate();
+
+                                            user.send(messages.prefix() + event.getAuthMessage());
+
+                                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+                                        } else {
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
+                                            JavaModuleManager.callEvent(event);
+
+                                            if (!manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                                session.setPinLogged(false);
+
+                                                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                                                    PinInventory pin = new PinInventory(player);
+                                                    pin.open();
+                                                });
+                                            } else {
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                user.send(messages.prefix() + messages.gAuthInstructions());
+                                            }
+                                        }
+
+                                        session.setLogged(true);
+                                        if (protection != null)
+                                            protection.success();
+                                    } else {
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
+                                        JavaModuleManager.callEvent(event);
+
+                                        if (protection != null) {
+                                            protection.fail();
+
+                                            BruteForceConfig bruteForce = config.bruteForceOptions();
+                                            LoginConfig loginConfig = config.loginOptions();
+
+                                            if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
+                                                protection.block(bruteForce.getBlockTime());
+                                                user.kick(messages.ipBlocked(protection.getBlockLeft()));
+                                            } else {
+                                                if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
+                                                    protection.success();
+                                                    user.kick(event.getAuthMessage());
+                                                } else {
+                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                }
+                                            }
+                                        } else {
+                                            user.send(messages.prefix() + event.getAuthMessage());
+                                        }
                                     }
                                 } else {
                                     user.send(messages.prefix() + messages.loginInsecure());
@@ -149,15 +217,5 @@ public final class LoginCommand extends PluginCommandType implements CommandExec
         }
 
         return false;
-    }
-
-    /**
-     * Get the plugin command name
-     *
-     * @return the plugin command
-     */
-    @Override
-    public String command() {
-        return "login";
     }
 }

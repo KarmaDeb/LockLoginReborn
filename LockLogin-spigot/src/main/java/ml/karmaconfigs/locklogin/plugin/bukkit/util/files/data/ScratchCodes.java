@@ -1,14 +1,15 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data;
 
 import ml.karmaconfigs.api.bukkit.KarmaFile;
-import ml.karmaconfigs.locklogin.api.encryption.CryptType;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public class ScratchCodes {
 
@@ -33,9 +34,10 @@ public class ScratchCodes {
      */
     public final void store(final List<Integer> scratch_codes) {
         List<String> codes = new ArrayList<>();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         for (int code : scratch_codes) {
-            CryptoUtil util = new CryptoUtil(String.valueOf(code), "");
-            codes.add(util.hash(CryptType.SHA256, false));
+            CryptoUtil util = CryptoUtil.getBuilder().withPassword(code).build();
+            codes.add(util.hash(config.pinEncryption(), false));
         }
 
         codesFile.set("CODES", codes);
@@ -49,19 +51,17 @@ public class ScratchCodes {
     public final boolean validate(final int code) {
         boolean status = false;
 
-        CryptoUtil util = new CryptoUtil(String.valueOf(code), null);
-        String hashedCode = util.hash(CryptType.SHA256, false);
-
         List<String> codes = codesFile.getStringList("CODES");
         String remove = "";
         if (!codes.isEmpty()) {
             for (String token : codes) {
-               if (token.equals(hashedCode)) {
-                   remove = token;
-                   status = true;
+                CryptoUtil util = CryptoUtil.getBuilder().withPassword(code).withToken(token).build();
+                if (util.validate()) {
+                    remove = token;
+                    status = true;
 
-                   break;
-               }
+                    break;
+                }
             }
         }
 
@@ -88,7 +88,6 @@ public class ScratchCodes {
      *
      * @param code the number code
      * @return the string code
-     *
      * @deprecated no longer used, but may be util
      * in some future
      */

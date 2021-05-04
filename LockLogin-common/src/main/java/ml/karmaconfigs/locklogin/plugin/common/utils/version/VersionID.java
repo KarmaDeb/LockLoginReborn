@@ -1,18 +1,20 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils.version;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class VersionID {
 
+    private final static Map<String, String> versionMap = new HashMap<>();
     private final String rootVersion;
     private final String keyName;
-
-    private final static Map<String, String> versionMap = new HashMap<>();
 
     /**
      * Initialize the version id
      *
-     * @param root the root version id
+     * @param root   the root version id
      * @param update the update name
      */
     public VersionID(final String root, final String update) {

@@ -13,9 +13,9 @@ public final class LockedData {
      *
      * @param administrator the administrator who
      *                      issued the lock
-     * @param lockDate the date when the lock was
-     *                 performed
-     * @param exists if the data exists
+     * @param lockDate      the date when the lock was
+     *                      performed
+     * @param exists        if the data exists
      */
     public LockedData(final String administrator, final Instant lockDate, final boolean exists) {
         issuer = administrator;

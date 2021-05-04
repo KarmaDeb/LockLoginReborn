@@ -12,7 +12,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.isNullOrEmpty;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class Spawn {
 
@@ -103,6 +104,7 @@ public final class Spawn {
                 spawn_location.setPitch(pitch);
                 spawn_location.setYaw(yaw);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 }

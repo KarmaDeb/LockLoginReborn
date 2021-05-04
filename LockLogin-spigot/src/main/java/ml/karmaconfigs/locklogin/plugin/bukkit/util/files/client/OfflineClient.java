@@ -2,7 +2,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client;
 
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
-import ml.karmaconfigs.locklogin.plugin.common.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -42,7 +42,7 @@ public final class OfflineClient {
                 Set<AccountManager> managers = current.getAccounts();
 
                 for (AccountManager manager : managers) {
-                    if (manager.getName().equals(searching) || manager.getUUID().getId().equals(searching))
+                    if (manager.getName().equals(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching))
                         return manager;
                 }
             } else {

@@ -1,8 +1,9 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.command.LockLoginCommand;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
@@ -14,7 +15,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class ChatListener implements Listener {
 
@@ -24,14 +25,19 @@ public final class ChatListener implements Listener {
         User user = new User(player);
         ClientSession session = user.getSession();
 
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (session.isValid()) {
             if (!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged()) {
-                if (!AllowedCommand.isAllowed(getCommand(e.getMessage()))) {
+                if (user.getManager().has2FA() && session.isLogged()) {
                     e.setCancelled(true);
-                    return;
+                    user.send(messages.prefix() + messages.gAuthenticate());
+                } else {
+                    if (!AllowedCommand.isAllowed(getCommand(e.getMessage()))) {
+                        e.setCancelled(true);
+                        return;
+                    }
                 }
             }
         } else {
@@ -42,9 +48,9 @@ public final class ChatListener implements Listener {
         }
 
         if (!config.isBungeeCord()) {
-            if (LockLoginCommand.parse(e.getMessage())) {
+            if (JavaModuleManager.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                LockLoginCommand.fireCommand(e.getMessage(), player);
+                JavaModuleManager.fireCommand(player, e.getMessage());
             }
         }
     }
@@ -55,14 +61,24 @@ public final class ChatListener implements Listener {
         User user = new User(player);
         ClientSession session = user.getSession();
 
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (session.isValid()) {
-            if (!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged()) {
+            if (!session.isCaptchaLogged() || !session.isLogged()) {
                 String command = getCommand(e.getMessage());
                 e.setCancelled(!command.equals("register") && !command.equals("login") && !AllowedCommand.isAllowed(command));
+
                 return;
+            } else {
+                if (!session.isTempLogged() && user.getManager().has2FA()) {
+                    String command = getCommand(e.getMessage());
+
+                    if (!command.equals("2fa")) {
+                        e.setCancelled(true);
+                        user.send(messages.prefix() + messages.gAuthenticate());
+                    }
+                }
             }
         } else {
             //Instantly cancel the event if the player session is not validated by LockLogin
@@ -72,20 +88,20 @@ public final class ChatListener implements Listener {
         }
 
         if (!config.isBungeeCord()) {
-            if (LockLoginCommand.parse(e.getMessage())) {
+            if (JavaModuleManager.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                LockLoginCommand.fireCommand(e.getMessage(), player);
+                JavaModuleManager.fireCommand(player, e.getMessage());
             }
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public final void onConsoleCommand(ServerCommandEvent e) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (!config.isBungeeCord()) {
-            if (LockLoginCommand.parse(e.getCommand())) {
+            if (JavaModuleManager.parseCommand(e.getCommand())) {
                 e.setCancelled(true);
-                LockLoginCommand.fireCommand(e.getCommand(), e.getSender());
+                JavaModuleManager.fireCommand(e.getSender(), e.getCommand());
             }
         }
     }
@@ -107,7 +123,8 @@ public final class ChatListener implements Listener {
                         return cmdData[1];
                     }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
             return cmd.split(" ")[0].replace("/", "");
         } else {
             if (cmd.contains(" ")) {

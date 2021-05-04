@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.manager.bukkit.listener;
 
-import ml.karmaconfigs.locklogin.api.ModuleEventHandler;
-import ml.karmaconfigs.locklogin.api.event.plugin.UpdateRequestEvent;
-import ml.karmaconfigs.locklogin.api.event.util.EventListener;
+import ml.karmaconfigs.locklogin.api.modules.event.ModuleEventHandler;
+import ml.karmaconfigs.locklogin.api.modules.event.plugin.UpdateRequestEvent;
+import ml.karmaconfigs.locklogin.api.modules.event.util.EventListener;
 import ml.karmaconfigs.locklogin.manager.bukkit.BukkitManager;
 import org.bukkit.command.CommandSender;
 

@@ -1,13 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ml.karmaconfigs</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.10.5</version>
+    <version>1.11.1</version>
     <packaging>pom</packaging>
+
+    <name>LockLogin</name>
+    <description>
+        LockLogin is an advanced login plugin, one of the most secure available,
+        with tons of features. It has a lot of customization options to not say
+        almost everything is customizable. Regular updates and one of the bests
+        discord supports ( according to spigotmc reviews ). LockLogin is a plugin
+        always open to new feature requests, and bug reports. More than a plugin,
+        a plugin you can contribute indirectly; A community plugin for the plugin community.
+    </description>
+    <url>https://github.com/KarmaConfigs/LockLogin</url>
+
+    <licenses>
+        <license>
+            <name>GSA GPL 1.1</name>
+            <url>https://karmaconfigs.github.io/page/license</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Karma Dev</name>
+            <email>karmaconfigs@gmail.com</email>
+            <organization>GSA</organization>
+            <organizationUrl>https://discord.gg/jRFfsdxnJR</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/KarmaConfigs/LockLogin.git</connection>
+        <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLogin.git</developerConnection>
+        <url>http://github.com/KarmaConfigs/LockLogin/tree/master</url>
+        <tag>1.11.1-SNAPSHOT</tag>
+    </scm>
 
     <properties>
         <java.version>1.8</java.version>
@@ -17,7 +52,17 @@
         <project.debug>false</project.debug>
         <project.unsafeUpdate>false</project.unsafeUpdate>
         <project.logSizeLimit>70</project.logSizeLimit>
-        <project.karmaapi>1.1.5</project.karmaapi>
+        <project.karmaapi>1.2.0</project.karmaapi>
+        <project.author>KarmaDev</project.author>
+        <project.description>
+            LockLogin is an advanced login plugin, one of the most secure available,
+            with tons of features. It has a lot of customization options to not say
+            almost everything is customizable. Regular updates and one of the bests
+            discord supports ( according to spigotmc reviews ). LockLogin is a plugin
+            always open to new feature requests, and bug reports. More than a plugin,
+            a plugin you can contribute indirectly; A community plugin for the plugin community.
+        </project.description>
+        <project.url>https://karmaconfigs.ml/</project.url>
         <project.update>RemasteringUpdate</project.update>
     </properties>
 
@@ -49,19 +94,91 @@
                         </execution>
                     </executions>
                 </plugin>
+                <!--
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.7</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>ossrh</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.2.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <additionalOptions>
+                            <additionalOption>-Xdoclint:none</additionalOption>
+                        </additionalOptions>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                -->
             </plugins>
         </pluginManagement>
     </build>
 
+    <!--
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+    -->
+
     <distributionManagement>
         <repository>
             <id>internal.repo</id>
-            <name>Temporary Staging Repository</name>
-            <url>file://D:/Intel/Projects/KarmaAPI/maven</url>
+            <name>Internal repo</name>
+            <url>file:///home/staging/locklogin/in</url>
         </repository>
     </distributionManagement>
 
     <modules>
+        <module>locklogin-API</module>
         <module>locklogin-common</module>
         <module>locklogin-spigot</module>
         <module>locklogin-bungee</module>

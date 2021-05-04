@@ -1,13 +1,15 @@
 package ml.karmaconfigs.locklogin.api.account;
 
+import java.io.Serializable;
+import java.time.Instant;
 import java.util.Set;
 
 /**
  * LockLogin account manager
- *
+ * <p>
  * MUST HAVE AN EMPTY CONSTRUCTOR
  */
-public abstract class AccountManager {
+public abstract class AccountManager implements Serializable {
 
     /**
      * Check if the file exists
@@ -38,35 +40,6 @@ public abstract class AccountManager {
     public abstract void saveUUID(final AccountID id);
 
     /**
-     * Save the account name
-     *
-     * @param name the account name
-     */
-    public abstract void setName(final String name);
-
-    /**
-     * Save the account password
-     *
-     * @param password the account password
-     */
-    public abstract void setPassword(final String password);
-
-    /**
-     * Save the account google auth token
-     *
-     * @param token the account google auth
-     *              token
-     */
-    public abstract void setGAuth(final String token);
-
-    /**
-     * Save the account pin
-     *
-     * @param pin the account pin
-     */
-    public abstract void setPin(final String pin);
-
-    /**
      * Save the account 2FA status
      *
      * @param status the account 2FA status
@@ -88,11 +61,25 @@ public abstract class AccountManager {
     public abstract String getName();
 
     /**
+     * Save the account name
+     *
+     * @param name the account name
+     */
+    public abstract void setName(final String name);
+
+    /**
      * Get the account password
      *
      * @return the account password
      */
     public abstract String getPassword();
+
+    /**
+     * Save the account password
+     *
+     * @param password the account password
+     */
+    public abstract void setPassword(final String password);
 
     /**
      * Get the account google auth token
@@ -103,6 +90,14 @@ public abstract class AccountManager {
     public abstract String getGAuth();
 
     /**
+     * Save the account google auth token
+     *
+     * @param token the account google auth
+     *              token
+     */
+    public abstract void setGAuth(final String token);
+
+    /**
      * Get the account pin
      *
      * @return the account pin
@@ -110,11 +105,25 @@ public abstract class AccountManager {
     public abstract String getPin();
 
     /**
+     * Save the account pin
+     *
+     * @param pin the account pin
+     */
+    public abstract void setPin(final String pin);
+
+    /**
      * Check if the account has 2FA
      *
      * @return if the account has 2FA
      */
     public abstract boolean has2FA();
+
+    /**
+     * Get the account creation time
+     *
+     * @return the account created time
+     */
+    public abstract Instant getCreationTime();
 
     /**
      * Get a list of accounts

@@ -25,35 +25,35 @@ PermissionError: "&5&oSie verfügen nicht über die Berechtigung {permission}"
 #BungeeCord proxy message
 BungeeProxy: "&5&oBitte verbinden Sie sich durch Bungee-Proxy!"
 
+#Inventories messages
+PinTitle: "&8&lLockLogin pinner"
+AltLookup: "&8&lAlt accounts lookup"
+InfoGUI: "&8&lBundled player info"
+Next: "&eNext"
+Back: "&eBack"
+
 #Session messages - Manager
 PlayerNotVerified: "&5&oSie können gegen {player} nicht kämpfen, während er nicht angemeldet/registriert ist."
 AlreadyPlaying: "&5&oDer Spieler spielt bereits"
-PasswordMinChar: "&5&oKennwort muss 4 chars min haben"
 MaxIp: "&5&oMax. Konto pro IP, das auf dem Server erreicht wurde"
 ConnectionError: "&5&oDer Player {player} ist nicht online"
-PlayerInfoUsage: "&5&oBitte verwenden Sie /playerinfo <player>"
-LookUpUsage: "&5&oBitte verwenden Sie /lookup <player>"
-AltFound: "&5&o{player} konnte {alt} alt-Accounts, Typ /Lookup {player} für weitere Informationen haben"
+PlayerInfoUsage: "&5&oGültige playerinfo-Unterargumente: &e<player|players>&7, &e<@[alias]>"
+LookUpUsage: "&5&oBitte verwenden Sie /account alts <player>"
+AltFound: "&5&o{player} konnte {alt} alt-Accounts, Typ /account alts {player} für weitere Informationen haben"
 NeverPlayed: "&5&oDer Player {player} hat nie auf dem Server gespielt"
 TargetAccessError: "&5&oDer Player {player} ist nicht angemeldet/registriert"
 IncorrectPassword: "&5&oDas angegebene Kennwort ist nicht korrekt!"
+Captcha: "&7Ihr captcha-Code lautet: &e {captcha}"
+InvalidCaptcha: "&5&oDer angegebene captcha-Code ist ungültig oder korrekt."
 OnlyAzuriom:
   - "{ServerName}"
   - ""
   - "&cBitte registrieren Sie Ihr Konto von:"
   - "&7https://myazuriomwebsite.com/user/register"
 
-#Session messages - Captcha
-Captcha: "&7Ihr captcha-Code lautet: &e {captcha}"
-TypeCaptcha: "&5&oBitte verwenden Sie /captcha <captcha>"
-CaptchaTimeOut: "&5&oSie haben zu viel Zeit genommen, um captcha zu schreiben!"
-SpecifyCaptcha: "&5&oGeben Sie einen gültigen Captcha-Code an"
-CaptchaValidated: "&dCaptcha-Code geprüft"
-InvalidCaptcha: "&5&oDer angegebene captcha-Code ist ungültig oder korrekt."
-AlreadyCaptcha: "&5&oIhr Captcha-Code ist bereits verifiziert!"
-
 #Session messages - Register
 Register: "&5&oBitte verwenden Sie /register <password> <password> <captcha> <captcha>"
+RegisterBar: "{color}Sie haben &7{time}{color} zum Registrieren"
 Registered: "&dRegistrieren abgeschlossen, danke für das Spielen"
 AlreadyRegistered: "&5&oSie sind bereits registriert"
 RegisterError: "&5&oDie angegebenen Kennwörter stimmen nicht überein!"
@@ -71,6 +71,7 @@ MaxRegisters:
 
 #Session messages - Login
 Login: "&5&oBitte verwenden Sie /login <password> <captcha>"
+LoginBar: "{color}Sie haben &7{time}{color} zum Anmelden"
 Logged: "&dLogged-in, willkommen zurück &7{player}"
 AlreadyLogged: "&5&oSie sind bereits angemeldet!"
 LoginInsecure: "&5&oIhr Kennwort wurde als nicht sicher eingestuft und Sie müssen es ändern."
@@ -79,7 +80,6 @@ LoginTitle: "&7Sie haben"
 LoginSubtitle: "&b{time} &7zum Anmelden"
 
 #Session messages - Pin
-PinTitle: " &eLockLogin pinner"
 PinUsages: "&5&oGültige 2FA-Unterargumente: &e<setup>&7, &e<remove>&7, &e<change>"
 PinSet: "&dDer Pin wurde erfolgreich festgelegt"
 PinReseted: "&5&oPin entfernt, Ihr Konto ist jetzt weniger sicher"
@@ -122,22 +122,22 @@ Enabled2FA: "&d2FA aktiviert, Ihr Konto ist wieder sicher"
   - "&78 - Typ /2fa <code shown in app> oder <scratch code>"
 2FaLink: "&bKlicken Sie hier, um Ihren 2FA QR-Code zu erhalten"
 
-#Session messages - Password change
-ChangePass: "&5&oBitte verwenden /{arg} <password> <new password>"
+#Session messages - Account management
+AccountArguments: "&5&oGültige unterargumente: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
+Change: "&5&oBitte verwenden /account change <password> <new password>"
 ChangeSame: "&5&oIhr Passwort kann nicht gleich alt sein!"
 ChangeDone: "&dIhr Kennwort wurde geändert!"
-
-#Session messages - Unloging
-UnLog: "&5&oBitte verwenden /{arg}"
-UnLogged: "&5&oSitzung geschlossen, Wiederanmeldung jetzt!"
-ForcedUnLog: "&5&oIhre Sitzung wurde von einem Administrator geschlossen. Melden Sie sich erneut an"
-ForcedUnLogAdmin: "&dSitzung von {player} geschlossen"
-
-#Session messages - Account removal
-DelAccount: "&5&oBitte verwenden /{arg} <password|player> <password>"
-DelAccountMatch: "&5&oDie bereitgestellten Kennwörter stimmen nicht überein"
-AccountDeleted: "&5&oIhr Konto wurde gelöscht"
-ForcedDelAccount:
+AccountUnlock: "&5&oBitte verwenden /account unlock <player>"
+AccountUnlocked: "&dKonto von {player} wurde freigeschaltet"
+AccountNotLocked: "&5&oDas Konto von {player} ist nicht gesperrt!"
+Close: "&5&oBitte verwenden /account close [player]"
+Closed: "&5&oSitzung geschlossen, Wiederanmeldung jetzt!"
+ForceClose: "&5&oIhre Sitzung wurde von einem Administrator geschlossen. Melden Sie sich erneut an"
+ForceCloseAdmin: "&dSitzung von {player} geschlossen"
+Remove: "&5&oBitte verwenden /account remove <password|player> [password]"
+RemoveAccountMatch: "&5&oDie bereitgestellten Kennwörter stimmen nicht überein"
+AccountRemoved: "&5&oIhr Konto wurde gelöscht"
+ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cIhr Konto wurde entfernt von"
@@ -148,12 +148,7 @@ ForcedDelAccount:
   - ""
   - "&cWenn Sie diese Aktion nicht aufrufen, wenden Sie sich bitte an"
   - "&cmelden Sie diese Aktion unter: &7https://discordexample.gg"
-ForcedDelAccountAdmin: "&dKonto von {player} entfernt"
-
-#Session messages - Account unblocking
-AccountUnlock: "&5&oBitte verwenden /unlock <player>"
-AccountUnlocked: "&dKonto von {player} wurde freigeschaltet"
-AccountNotLocked: "&5&oDas Konto von {player} ist nicht gesperrt!"
+ForcedAccountRemovalAdmin: "&dKonto von {player} entfernt, Führen Sie kein Run /account unlock {player}!"
 
 #Spawn utilities ( includes take back )
 SpawnSet: "&dDie Einloggen-Spawn-Position wurde festgelegt"
@@ -161,15 +156,18 @@ LocationsReset: "&dAlle letzten Positionen wurden zurückgesetzt"
 LocationReset: "&dLetzte Position von {player} wurde zurückgesetzt"
 LocationsFixed: "&dAlle letzten Positionen wurden behoben"
 LocationFixed: "&dPosition von {player} wurde behoben"
-NoLastLocation: "&5&oDer Player {player} hat die letzte Position nicht."
-RestLastLocUsage: "&5&oBitte verwenden Sie /locations [player |@all|@me] <remove|fix>"
+ResetLastLocUsage: "&5&oBitte verwenden Sie /locations [player |@all|@me] <remove|fix>"
 
-#Account migration
-Migrating: "&dKonto von {player} auf {type} migrieren"
-MigratingAll: "&dKonten von allen auf {type} migrieren"
-Migrated: "&dAccount migration(s) von beendet"
-MigrationUsage: "&5&oBitte, verwenden/migrieren"
-MigrationConnectionError: "&5&oBei dem Versuch, eine Verbindung zu {type} herzustellen, ist ein Fehler aufgetreten."
+#Alias messages
+AliasArguments: "&5&oGültige unterargumente: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [player(s)]"
+AliasCreated: "&dAlias {alias} erfolgreich erstellt"
+AliasDestroyed: "&5&oAlias {alias} wurde zerstört"
+AliasExists: "&5&oAlias {alias} existiert bereits!"
+AliasNotFound: "&5&oKann keinen Alias namens {alias} finden."
+AddedPlayer: "&d{player} zu {Alias} hinzugefügt"
+RemovedPlayer: "&d{player} von {alias} entfernt"
+PlayerNotIn: "&5&o{player} ist nicht in {alias}!"
+PlayerAlreadyIn: "&5&o{player} ist bereits in {alias}!"
 
 #Security messages
 IpBlocked:

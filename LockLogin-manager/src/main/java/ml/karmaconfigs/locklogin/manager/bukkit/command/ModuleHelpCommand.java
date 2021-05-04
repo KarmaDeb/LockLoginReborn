@@ -1,12 +1,10 @@
 package ml.karmaconfigs.locklogin.manager.bukkit.command;
 
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.locklogin.api.command.Command;
-import ml.karmaconfigs.locklogin.api.command.help.HelpPage;
+import ml.karmaconfigs.locklogin.api.modules.command.Command;
+import ml.karmaconfigs.locklogin.api.modules.command.help.HelpPage;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
-
-import java.util.Arrays;
 
 public final class ModuleHelpCommand extends Command {
 

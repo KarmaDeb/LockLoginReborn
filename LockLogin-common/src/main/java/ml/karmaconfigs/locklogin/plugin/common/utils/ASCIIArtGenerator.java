@@ -15,29 +15,14 @@ public class ASCIIArtGenerator {
 
     private static final String DEFAULT_ART_SYMBOL = "*";
 
-    public enum ASCIIArtFont {
-        ART_FONT_DIALOG("Dialog"), ART_FONT_DIALOG_INPUT("DialogInput"),
-        ART_FONT_MONO("Monospaced"),ART_FONT_SERIF("Serif"), ART_FONT_SANS_SERIF("SansSerif");
-
-        private final String value;
-
-        public String getValue() {
-            return value;
-        }
-
-        ASCIIArtFont(String value) {
-            this.value = value;
-        }
-    }
-
     /**
      * Prints ASCII art for the specified text. For size, you can use predefined sizes or a custom size.
      * Usage - printTextArt("Hi",30,ASCIIArtFont.ART_FONT_SERIF,"@");
      *
-     * @param artText the text to generate
+     * @param artText    the text to generate
      * @param textHeight - Use a predefined size or a custom type
-     * @param fontType - Use one of the available fonts
-     * @param artSymbol - Specify the character for printing the ascii art
+     * @param fontType   - Use one of the available fonts
+     * @param artSymbol  - Specify the character for printing the ascii art
      */
     public final void print(String color, String artText, int textHeight, ASCIIArtFont fontType, String artSymbol) {
         String fontName = fontType.getValue();
@@ -66,7 +51,7 @@ public class ASCIIArtGenerator {
      * Convenience method for printing ascii text art.
      * Font default - Dialog,  Art symbol default - *
      *
-     * @param artText the text to generate
+     * @param artText    the text to generate
      * @param textHeight the text height
      */
     public final void print(String artText, int textHeight) {
@@ -77,8 +62,8 @@ public class ASCIIArtGenerator {
      * Using the Current font and current art text find the width of the full image
      *
      * @param textHeight the text height
-     * @param artText the text to generate
-     * @param fontName the text font name
+     * @param artText    the text to generate
+     * @param fontName   the text font name
      * @return the text width
      */
     private int findImageWidth(int textHeight, String artText, String fontName) {
@@ -91,12 +76,27 @@ public class ASCIIArtGenerator {
     /**
      * Find where the text baseline should be drawn so that the characters are within image
      *
-     * @param g the graphics instance
+     * @param g    the graphics instance
      * @param font the text font
      * @return the baseline expected location
      */
     private int getBaselinePosition(Graphics g, Font font) {
         FontMetrics metrics = g.getFontMetrics(font);
         return metrics.getAscent() - metrics.getDescent();
+    }
+
+    public enum ASCIIArtFont {
+        ART_FONT_DIALOG("Dialog"), ART_FONT_DIALOG_INPUT("DialogInput"),
+        ART_FONT_MONO("Monospaced"), ART_FONT_SERIF("Serif"), ART_FONT_SANS_SERIF("SansSerif");
+
+        private final String value;
+
+        ASCIIArtFont(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

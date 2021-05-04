@@ -1,0 +1,40 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under GSA GPL license    #
+#           https://karmaconfigs.ml/license               #
+#                                                         #
+#                                                         #
+#                   This configuration                    #
+#              file manages multi-bungee and              #
+#           auth/lobby servers configuration...           #
+#                                                         #
+###########################################################
+
+#Manage LockLogin proxy options
+#
+# MultiBungee -> Enables multiple bungeecord support
+# AuthServers -> Allows LockLogin to send players to auth-lobby or main-lobby
+#                depending on their session status
+Options:
+  MultiBungee: false
+  SendToServers: true
+
+#PLEASE DO NOT MODIFY THIS, THIS IS
+#YOUR UNIQUE BUNGEECORD PROXY ID
+#AND THIS WILL BE USED FOR MULTI-BUNGEE
+#IF ENABLED
+ID: ""
+
+#Manage which servers will use LockLogin
+# This works like server-priority of bungee's configuration,
+# the plugin will try with the first, if fail with the second
+# and like that until the list ends or the player-server-send is success.
+#
+# To use all the servers you can use '*' or add all of them manually
+Servers:
+  Lobby:
+    - "lobby"
+    - "lobbyFallBack"
+  Auth:
+    - "auth"
+    - "authFallBack"

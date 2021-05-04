@@ -7,7 +7,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.time.Instant;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class LockedAccount {
 

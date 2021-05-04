@@ -1,0 +1,219 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under GSA GPL license    #
+#           https://karmaconfigs.ml/license               #
+#                                                         #
+#                                                         #
+#                   For more help                         #
+#             go to: https://rb.gy/jlmjah                 #
+#                                                         #
+###########################################################
+
+#This is used by 2fa
+#and some plugin messages
+ServerName: ""
+
+#Registration options
+# Boss -> Shows a boss bar which health and color
+#         depends on the remaining time ( bar color requires
+#         MC 1.9+ )
+# Blind -> Applies a blind potion
+#          effect when the player
+#          joins if he's not registered
+#
+# Nausea -> Applies a confusion effect
+#           when the player joins if he's
+#           not registered, util for anarchy
+#           servers
+#
+# TimeOut -> The maximum time the player has
+#            to perform the register
+#
+# Max -> The maximum amount of accounts allowed
+#        TO REGISTER per IP
+Register:
+  Boss: true
+  Blind: false
+  Nausea: false
+  TimeOut: 60
+  Max: 2
+
+#Login options
+# Boss -> Shows a boss bar which health and color
+#         depends on the remaining time ( bar color requires
+#         MC 1.9+ )
+# Blind -> Applies a blind potion
+#          effect when the player
+#          joins if he's not logged in
+#
+# Nausea -> Applies a confusion effect
+#           when the player joins if he's
+#           not logged in, util for anarchy
+#           servers
+#
+# TimeOut -> The maximum time the player has
+#            to perform the login
+#
+# MaxTries -> The maximum amount of password tries
+#             the player has before getting kicked
+Login:
+  Boss: true
+  Blind: true
+  Nausea: true
+  TimeOut: 30
+  MaxTries: 5
+
+#Login/Register messages in chat
+#interval, minimum is 5, maximum is
+#the specified in Login/Register section
+#( TimeOut time )
+MessagesInterval:
+  Registration: 5
+  Logging: 5
+
+#Captcha options
+# Available options:
+#
+# Difficulty -> Captcha difficulty settings
+#   Length -> Captcha code length ( min is 8, max is 16 )
+#   Letters -> Include letters in the captcha
+#   Strikethrough -> Strikethrough captcha settings
+#     Enabled -> Enable strikethrough feature
+#     Random -> Randomize the characters with strikethrough
+#             effect
+Captcha:
+  Enabled: true
+  Difficulty:
+    Length: 8
+    Letters: true
+  Strikethrough:
+    Enabled: true
+    Random: true
+
+#Encryption configuration
+# Available types:
+# "SHA512"
+# "SHA256"
+# "BCrypt"
+# "Argon2i"
+# "Argon2id"
+Encryption:
+  Passwords: "SHA512"
+  Pin: "SHA512"
+
+#Azuriom integration options
+# Restrict -> Restrict new accounts to
+#             azuriom registered accounts
+#
+# SemiPremium -> Try to use online player UUID
+Azuriom:
+  Restrict: false
+  SemiPremium: false
+
+#BurteForce options
+# Tries -> The maximum amount of tries
+#          the IP has to login per connection
+#          (Per connection = Respecting Login's MaxTries)
+#
+# BlockTime -> The time (in minutes) the IP will
+#              be blocked if tries get to 0
+BruteForce:
+  Tries: 3
+  BlockTime: 30
+
+#AntiBot is a feature that
+#will try to keep bots away
+#from your server by just checking
+#if the connecting player has pinged
+#the server (bots doesn't ping servers)
+AntiBot: true
+
+#AllowSameIP is a feature that will
+#allow a player that is already connected
+#to join the server if his IP is the same
+#that the one is already connected.
+#By enabling this the player will still have
+#to login
+AllowSameIp: true
+
+#Enable pin feature (This is not 2FA)
+#LockLogin pin or LockLogin Pinner is
+#an extra pin feature that adds an extra
+#security layer to your players accounts
+Pin: true
+
+#Enable 2FA feature (using Google Authenticator)
+#This adds and extra security layer to your
+#players account, but since due Spigot API is
+#bypasseable, you should enable PIN feature
+#For help while using/scanning 2FA QR codes
+#check these link:
+#
+# https://rb.gy/clq5ou
+# https://rb.gy/ugciij
+# This tutorial is on an iPhone
+# but the process is the same
+# on Android
+2FA: true
+
+#Updater options
+# Channel -> Update system channel;
+#            Available channels:
+#            - RELEASE
+#            - RC | RELEASECANDIDATE | RELEASE_CANDIDATE
+#            - SNAPSHOT
+#
+# Check -> Enable the update checker
+#          if disabled, an unique check
+#          will be performed on each server
+#          start
+#
+# CheckTime -> The time (in minutes) before each
+#              update check, the minimum is 5 and
+#              the maximum is 86400 (1 day)
+#
+# ChangeLog -> Enable changelog displayer in each
+#              new update found message
+Updater:
+  Channel: "RELEASE"
+  Check: true
+  CheckTime: 10
+
+#Spawn options
+# Manage -> Allow LockLogin to manage
+#           on-join spawn. To set the
+#           spawn you must use /setloginspawn
+# TakeBack -> Teleport the player back to his
+#             latest location after logging in
+Spawn:
+  Manage: false
+  TakeBack: false
+
+#Enable clear chat feature, this
+#option will clear ONLY CONNECTED
+#PLAYER chat, there won't be a change
+#for other players
+ClearChat: false
+
+#The maximum amount of accounts allowed
+#TO BE IN THE SERVER per IP
+AccountsPerIp: 2
+
+#Toggle LockLogin name verifier when
+#a player joins the server, using
+#mojang's name rules:
+#4 chars min, 16 max, only "_" allowed
+CheckNames: true
+
+#Plugin language
+#For more info please visit:
+# https://rb.gy/jlmjah
+Lang: en_EN
+
+#Account storage system
+#For more info please visit:
+# https://rb.gy/jlmjah
+AccountSys: File
+
+#Module commands prefix
+ModulePrefix: "$"

@@ -2,13 +2,14 @@ package ml.karmaconfigs.locklogin.manager.bukkit;
 
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.LockLoginListener;
-import ml.karmaconfigs.locklogin.api.event.plugin.PluginStatusChangeEvent;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.configuration.Config;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.UpdateChannel;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -26,7 +27,7 @@ import java.time.Instant;
 import java.util.*;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
-import static ml.karmaconfigs.locklogin.plugin.bukkit.permission.PluginPermission.applyUnsafeUpdates;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 
 public class BukkitManager {
 
@@ -217,7 +218,7 @@ public class BukkitManager {
      * @param unsafe if the issuer is able to perform unsafe updates
      */
     public static void update(final CommandSender issuer, final boolean unsafe) {
-        Config config = new Config();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (update_issuer instanceof Player) {
@@ -321,7 +322,7 @@ public class BukkitManager {
     /**
      * Update the LockLogin instance
      *
-     * @param update_jar the update jar file
+     * @param update_jar  the update jar file
      * @param current_jar the current jar file
      */
     private static void update(final File update_jar, final File current_jar) {
@@ -329,15 +330,16 @@ public class BukkitManager {
         Message messages = new Message();
 
         RestartCache cache = new RestartCache();
-        cache.storeSessions();
+        cache.storeUserData();
         cache.storeBungeeKey();
 
         PluginStatusChangeEvent update_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_START, null);
-        LockLoginListener.callEvent(update_start);
+        JavaModuleManager.callEvent(update_start);
 
         Timer load_timer = new Timer();
         load_timer.schedule(new TimerTask() {
             int back = 8;
+
             @Override
             public void run() {
                 if (back != 0 && back <= 5) {
@@ -352,7 +354,7 @@ public class BukkitManager {
                             load(current_jar);
 
                             PluginStatusChangeEvent update_end = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_END, null);
-                            LockLoginListener.callEvent(update_end);
+                            JavaModuleManager.callEvent(update_end);
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             try {
@@ -383,8 +385,8 @@ class FileData {
      * Initialize the file data
      *
      * @param update_jar the update LockLogin file
-     * @param date the download date of the file
-     * @param version the jar version id
+     * @param date       the download date of the file
+     * @param version    the jar version id
      */
     public FileData(final File update_jar, final Instant date, final String version) {
         file = update_jar;

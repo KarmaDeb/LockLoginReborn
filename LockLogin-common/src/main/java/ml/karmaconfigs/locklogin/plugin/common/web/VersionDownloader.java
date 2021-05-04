@@ -3,7 +3,7 @@ package ml.karmaconfigs.locklogin.plugin.common.web;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
-import ml.karmaconfigs.locklogin.plugin.common.utils.enums.UpdateChannel;
+import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -46,11 +46,31 @@ public final class VersionDownloader {
     }
 
     /**
+     * Get the downloader download percentage
+     *
+     * @return the downloader download percentage
+     */
+    public static double getPercentage() {
+        return percentage;
+    }
+
+    /**
+     * Get if the downloader is already downloading
+     * the latest version
+     *
+     * @return if the downloader is already downloading the
+     * latest version
+     */
+    public static boolean isDownloading() {
+        return downloading;
+    }
+
+    /**
      * Download the latest version
      *
      * @param onDownload when the downloader downloads
      *                   the latest version
-     * @param onFail when the downloader fails to download
+     * @param onFail     when the downloader fails to download
      */
     public final void download(final Consumer<File> onDownload, final Consumer<Throwable> onFail) {
         String time = Instant.now().toString().replace(":", ";");
@@ -106,26 +126,6 @@ public final class VersionDownloader {
             if (onDownload != null)
                 onDownload.accept(getDownloaded());
         }
-    }
-
-    /**
-     * Get the downloader download percentage
-     *
-     * @return the downloader download percentage
-     */
-    public static double getPercentage() {
-        return percentage;
-    }
-
-    /**
-     * Get if the downloader is already downloading
-     * the latest version
-     *
-     * @return if the downloader is already downloading the
-     * latest version
-     */
-    public static boolean isDownloading() {
-        return downloading;
     }
 
     /**
