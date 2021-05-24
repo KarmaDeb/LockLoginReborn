@@ -2,19 +2,20 @@ package ml.karmaconfigs.locklogin.plugin.velocity;
 
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.ProxyServer;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.ReflectionUtil;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.Logger;
 import ml.karmaconfigs.api.velocity.Util;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.client.Player;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
-import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 import ml.karmaconfigs.locklogin.plugin.common.utils.version.VersionID;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
+import org.bstats.velocity.Metrics;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -25,12 +26,14 @@ public interface LockLogin {
 
     PluginContainer plugin = Main.plugin;
     ProxyServer server = Main.server;
+    Metrics.Factory factory = Main.factory;
+    Main main = Main.get();
 
     String name = ReflectionUtil.getName(plugin);
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath()));
+            .getPath().replaceAll("%20", " ")));
     String version = ReflectionUtil.getVersion(plugin);
 
     String versionID = new VersionID(version, update).generate().get();
@@ -38,7 +41,7 @@ public interface LockLogin {
     File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath());
+            .getPath().replaceAll("%20", " "));
 
     Logger logger = new Logger(plugin);
 
@@ -60,15 +63,13 @@ public interface LockLogin {
         return new JavaModuleLoader(modulesFolder);
     }
 
-    static Player fromPlayer(final com.velocitypowered.api.proxy.Player player) {
-        User user = new User(player);
-
+    static ModulePlayer fromPlayer(final com.velocitypowered.api.proxy.Player player) {
         String name = player.getGameProfile().getName();
         UUID uuid = player.getUniqueId();
-        ClientSession session = user.getSession();
-        AccountManager manager = user.getManager();
+        ClientSession session = User.getSession(player);
+        AccountManager manager = User.getManager(player);
         InetAddress address = player.getRemoteAddress().getAddress();
 
-        return new Player(name, uuid, session, manager, address);
+        return new ModulePlayer(name, uuid, session, manager, address);
     }
 }

@@ -27,6 +27,15 @@ public final class JarManager {
         jarFile = file;
     }
 
+    /**
+     * Change the filed value of the specified class
+     *
+     * @param clazz the class
+     * @param fieldName the field name
+     * @param declared if the field is declared
+     * @param value the field value
+     * @throws Throwable to catch any possible error
+     */
     public synchronized static void changeField(final Class<?> clazz, final String fieldName, final boolean declared, final Object value) throws Throwable {
         Field field;
 
@@ -55,6 +64,7 @@ public final class JarManager {
         try {
             URL download_url = new URL(url);
             URLConnection connection = download_url.openConnection();
+            connection.connect();
 
             System.out.println("Checking jar version, please wait...");
 
@@ -120,7 +130,6 @@ public final class JarManager {
             // Run projected addURL method to add JAR to classpath
             method.setAccessible(true);
             method.invoke(cl, jarFile.toURI().toURL());
-
             return true;
         } catch (Throwable ex) {
             ex.printStackTrace();

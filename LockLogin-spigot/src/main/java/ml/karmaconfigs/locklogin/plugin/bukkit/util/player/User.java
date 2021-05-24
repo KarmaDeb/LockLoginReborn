@@ -10,8 +10,8 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.SessionInitializationEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
@@ -37,9 +37,9 @@ public final class User {
     private final static Map<UUID, Collection<PotionEffect>> effects = new HashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
     private static Map<UUID, ClientSession> sessions = new HashMap<>();
+    private final static Map<UUID, AccountManager> managers = new HashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
     private static Map<UUID, GameMode> temp_spectator = new HashMap<>();
-    private final AccountManager manager;
     private final Player player;
 
     /**
@@ -75,7 +75,7 @@ public final class User {
         }
 
         if (CurrentPlatform.isValidAccountManager()) {
-            manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, plugin.getServer().getOfflinePlayer(player.getUniqueId()));
+            AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, plugin.getServer().getOfflinePlayer(player.getUniqueId()));
 
             if (manager == null) {
                 plugin.getPluginLoader().disablePlugin(plugin);
@@ -93,6 +93,8 @@ public final class User {
                     if (id.getId().replaceAll("\\s", "").isEmpty())
                         manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
                 }
+
+                managers.put(player.getUniqueId(), manager);
             }
         } else {
             plugin.getPluginLoader().disablePlugin(plugin);
@@ -119,11 +121,31 @@ public final class User {
     }
 
     /**
+     * Get the player session
+     *
+     * @param player the player
+     * @return the player session
+     */
+    public static ClientSession getSession(final Player player) {
+        return sessions.get(player.getUniqueId());
+    }
+
+    /**
+     * Get the player account manager
+     *
+     * @param player the player
+     * @return the player account manager
+     */
+    public static AccountManager getManager(final Player player) {
+        return managers.getOrDefault(player.getUniqueId(), CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, player));
+    }
+
+    /**
      * Apply the user the "LockLoginUser" metadata
      * value
      */
     public synchronized final void applyLockLoginUser() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> player.setMetadata("LockLoginUser", new FixedMetadataValue(plugin, player.getUniqueId().toString())));
+        trySync(() -> player.setMetadata("LockLoginUser", new FixedMetadataValue(plugin, player.getUniqueId().toString())));
     }
 
     /**
@@ -132,7 +154,7 @@ public final class User {
      * @param status the temp spectator status
      */
     public synchronized final void setTempSpectator(final boolean status) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        trySync(() -> {
             if (status) {
                 temp_spectator.put(player.getUniqueId(), player.getGameMode());
                 player.setGameMode(GameMode.SPECTATOR);
@@ -147,7 +169,7 @@ public final class User {
      * Save the current player potion effects
      */
     public synchronized final void savePotionEffects() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        trySync(() -> {
             if (!effects.containsKey(player.getUniqueId()))
                 effects.put(player.getUniqueId(), player.getActivePotionEffects());
         });
@@ -158,7 +180,7 @@ public final class User {
      * types
      */
     public synchronized final void applySessionEffects() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        trySync(() -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             List<PotionEffect> apply = new ArrayList<>();
             if (isRegistered()) {
@@ -194,7 +216,7 @@ public final class User {
      * Restore the player potion effects
      */
     public synchronized final void restorePotionEffects() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        trySync(() -> {
             player.getActivePotionEffects().forEach(effect -> {
                 try {
                     player.removePotionEffect(effect.getType());
@@ -219,7 +241,7 @@ public final class User {
      * value
      */
     public final void removeLockLoginUser() {
-        player.removeMetadata("LockLoginUser", plugin);
+        trySync(() -> player.removeMetadata("LockLoginUser", plugin));
     }
 
     /**
@@ -270,7 +292,7 @@ public final class User {
      * @param reason the reason of the kick
      */
     public synchronized final void kick(final String reason) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        trySync(() -> {
             String[] parsed = parseMessage(reason);
 
             if (parsed.length > 1) {
@@ -289,10 +311,26 @@ public final class User {
      * Get the current player account manager
      *
      * @return the player account manager
+     * @throws IllegalStateException if the current manager is null
      */
     @NotNull
-    public final AccountManager getManager() {
-        return manager;
+    public final AccountManager getManager() throws IllegalStateException {
+        if (CurrentPlatform.isValidAccountManager()) {
+            try {
+                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, player);
+
+                if (manager != null) {
+                    managers.put(player.getUniqueId(), manager);
+                    return manager;
+                } else {
+                    throw new IllegalStateException("Cannot get user manager with null player account manager, does it has an OfflinePlayer constructor?");
+                }
+            } catch (Throwable ex) {
+                throw new IllegalStateException("Failed to initialize user account with current account manager, does it has an OfflinePlayer constructor?");
+            }
+        } else {
+            throw new IllegalStateException("Cannot get user manager with an invalid player account manager");
+        }
     }
 
     /**
@@ -382,7 +420,7 @@ public final class User {
                         .replace("{ServerName}", config.serverName());
 
                 try {
-                    if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
+                    if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
                         message = PlaceholderAPI.setPlaceholders(player, message);
                 } catch (Throwable ignored) {
                 }
@@ -397,7 +435,7 @@ public final class User {
             String message = official;
 
             try {
-                if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
+                if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
                     message = PlaceholderAPI.setPlaceholders(player, message);
             } catch (Throwable ignored) {
             }

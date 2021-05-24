@@ -54,7 +54,7 @@ public final class BruteForce {
                     timer.cancel();
                 }
             }
-        }, 0, TimeUnit.SECONDS.convert(1, TimeUnit.MILLISECONDS));
+        }, 0, 1000);
     }
 
     /**

@@ -1,6 +1,5 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.util.player;
 
-import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -11,20 +10,23 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.SessionInitializationEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.Permission;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.*;
@@ -36,6 +38,7 @@ public final class User {
 
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static Map<UUID, ClientSession> sessions = new HashMap<>();
+    private final static Map<UUID, AccountManager> managers = new HashMap<>();
 
     private final AccountManager manager;
     private final Player player;
@@ -88,6 +91,8 @@ public final class User {
                     if (id.getId().replaceAll("\\s", "").isEmpty())
                         manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
                 }
+
+                managers.put(player.getUniqueId(), manager);
             }
         } else {
             throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
@@ -101,6 +106,26 @@ public final class User {
      */
     public static Map<UUID, ClientSession> getSessionMap() {
         return new HashMap<>(sessions);
+    }
+
+    /**
+     * Get the player session
+     *
+     * @param player the player
+     * @return the player session
+     */
+    public static ClientSession getSession(final Player player) {
+        return sessions.get(player.getUniqueId());
+    }
+
+    /**
+     * Get the player account manager
+     *
+     * @param player the player
+     * @return the player account manager
+     */
+    public static AccountManager getManager(final Player player) {
+        return managers.get(player.getUniqueId());
     }
 
     /**
@@ -159,45 +184,39 @@ public final class User {
 
             if (session.isValid()) {
                 if (session.isLogged() && session.isCaptchaLogged()) {
-                    if (Proxy.inAuth(player)) {
-                        Iterator<Object> lobbies = proxy.lobbyServers();
+                    if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
+                        Iterator<RegisteredServer> lobbies = proxy.lobbyServers(RegisteredServer.class);
                         if (lobbies.hasNext()) {
                             do {
-                                Object lobby = lobbies.next();
-                                if (lobby instanceof RegisteredServer) {
-                                    RegisteredServer lInfo = (RegisteredServer) lobby;
-                                    if (!failSet.contains(lInfo.getServerInfo().getName())) {
-                                        player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
-                                            if (error != null || !result.isSuccessful()) {
-                                                failSet.add(lInfo.getServerInfo().getName());
+                                RegisteredServer lInfo = lobbies.next();
+                                if (!failSet.contains(lInfo.getServerInfo().getName())) {
+                                    player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
+                                        if (error != null || !result.isSuccessful()) {
+                                            failSet.add(lInfo.getServerInfo().getName());
 
-                                                checkServer(failSet.toArray(new String[]{}));
-                                            }
-                                        });
-                                        break;
-                                    }
+                                            checkServer(failSet.toArray(new String[]{}));
+                                        }
+                                    });
+                                    break;
                                 }
                             } while (lobbies.hasNext());
                         }
                     }
                 } else {
-                    if (!Proxy.inAuth(player)) {
-                        Iterator<Object> auths = proxy.authServer();
+                    if (!Proxy.inAuth(player) && Proxy.authsValid()) {
+                        Iterator<RegisteredServer> auths = proxy.authServer(RegisteredServer.class);
                         if (auths.hasNext()) {
                             do {
-                                Object auth = auths.next();
-                                if (auth instanceof RegisteredServer) {
-                                    RegisteredServer aInfo = (RegisteredServer) auth;
-                                    if (!failSet.contains(aInfo.getServerInfo().getName())) {
-                                        player.createConnectionRequest(aInfo).connect().whenComplete((result, error) -> {
-                                            if (error != null || !result.isSuccessful()) {
-                                                failSet.add(aInfo.getServerInfo().getName());
+                                RegisteredServer aInfo = auths.next();
+                                if (!failSet.contains(aInfo.getServerInfo().getName())) {
+                                    player.createConnectionRequest(aInfo).connect().whenComplete((result, error) -> {
+                                        if (error != null || !result.isSuccessful()) {
+                                            failSet.add(aInfo.getServerInfo().getName());
 
-                                                checkServer(failSet.toArray(new String[]{}));
-                                            }
-                                        });
-                                        break;
-                                    }
+                                            checkServer(failSet.toArray(new String[]{}));
+                                        }
+                                    });
+                                    break;
                                 }
                             } while (auths.hasNext());
                         }

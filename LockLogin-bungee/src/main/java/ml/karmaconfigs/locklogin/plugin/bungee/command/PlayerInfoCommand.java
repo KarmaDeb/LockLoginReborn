@@ -4,16 +4,18 @@ import ml.karmaconfigs.api.bungee.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bungee.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedData;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.locklogin.plugin.common.utils.Alias;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -70,22 +72,61 @@ public final class PlayerInfoCommand extends Command {
                                     case "@":
                                         name = target.replaceFirst("@", "");
 
-                                        Alias alias = new Alias(name);
-                                        if (alias.exists()) {
-                                            Set<AccountID> ids = alias.getUsers();
-                                            Set<AccountManager> accounts = new HashSet<>();
-                                            for (AccountID id : ids) {
-                                                offline = new OfflineClient(id);
-                                                manager = offline.getAccount();
+                                        if (!name.equalsIgnoreCase("everyone") && !name.equalsIgnoreCase("persistent") && !(name.toLowerCase().startsWith("permission[") && name.endsWith("]"))) {
+                                            Alias alias = new Alias(name);
+                                            if (alias.exists()) {
+                                                Set<AccountID> ids = alias.getUsers();
+                                                Set<AccountManager> accounts = new HashSet<>();
+                                                for (AccountID id : ids) {
+                                                    offline = new OfflineClient(id);
+                                                    manager = offline.getAccount();
 
-                                                if (manager != null)
-                                                    accounts.add(manager);
+                                                    if (manager != null)
+                                                        accounts.add(manager);
+                                                }
+
+                                                AccountParser parser = new AccountParser(accounts);
+                                                DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                            } else {
+                                                user.send(messages.prefix() + messages.aliasNotFound(name));
                                             }
-
-                                            AccountParser parser = new AccountParser(accounts);
-                                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
                                         } else {
-                                            user.send(messages.prefix() + messages.aliasNotFound(name));
+                                            AccountParser parser;
+
+                                            switch (name) {
+                                                case "everyone":
+                                                    Set<AccountManager> everyoneAccounts = new LinkedHashSet<>();
+
+                                                    for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
+                                                        manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
+                                                        if (manager != null)
+                                                            everyoneAccounts.add(manager);
+                                                    }
+
+                                                    parser = new AccountParser(everyoneAccounts);
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                case "persistent":
+                                                    parser = new AccountParser(PersistentSessionData.getPersistentAccounts());
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                    break;
+                                                default:
+                                                    String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
+
+                                                    Set<AccountManager> permissionAccounts = new LinkedHashSet<>();
+
+                                                    for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
+                                                        if (online.hasPermission(permission)) {
+
+                                                            manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
+                                                            if (manager != null)
+                                                                permissionAccounts.add(manager);
+                                                        }
+                                                    }
+
+                                                    parser = new AccountParser(permissionAccounts);
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                    break;
+                                            }
                                         }
                                         break;
                                     case "#":
@@ -172,7 +213,7 @@ public final class PlayerInfoCommand extends Command {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 

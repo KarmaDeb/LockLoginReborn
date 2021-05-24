@@ -1,6 +1,6 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 import org.yaml.snakeyaml.Yaml;
 
@@ -86,7 +86,7 @@ public interface FileInfo {
      * @return the jar file update name
      */
     static String getUpdateName(final File file) {
-        String def = StringUtils.randomString(4, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER);
+        String def = "--";
 
         try {
             JarFile jar = new JarFile(file);
@@ -105,33 +105,6 @@ public interface FileInfo {
             return def;
         } catch (Throwable ex) {
             return def;
-        }
-    }
-
-    /**
-     * Check if the file has advanced debug enabled
-     *
-     * @param file the jar file
-     * @return if the jar file has advanced debug enabled
-     */
-    static boolean apiDebug(final File file) {
-        try {
-            JarFile jar = new JarFile(file);
-            JarEntry jar_info = jar.getJarEntry("global.yml");
-
-            if (jar_info != null) {
-                InputStream yml = jar.getInputStream(jar_info);
-
-                Yaml yaml = new Yaml();
-                Map<String, Object> values = yaml.load(yml);
-                yml.close();
-                return Boolean.parseBoolean(values.getOrDefault("project_debug", false).toString());
-            }
-            jar.close();
-
-            return false;
-        } catch (Throwable ex) {
-            return false;
         }
     }
 
@@ -196,7 +169,7 @@ public interface FileInfo {
      * @param file the jar file
      * @return the jar version channel
      */
-    static ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel getChannel(final File file) {
+    static UpdateChannel getChannel(final File file) {
         try {
             JarFile jar = new JarFile(file);
             JarEntry jar_info = jar.getJarEntry("global.yml");

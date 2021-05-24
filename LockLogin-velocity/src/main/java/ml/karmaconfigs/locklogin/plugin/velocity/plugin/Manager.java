@@ -1,6 +1,9 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.plugin;
 
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.event.ResultedEvent;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import ml.karmaconfigs.api.common.Level;
@@ -10,11 +13,16 @@ import ml.karmaconfigs.api.velocity.Util;
 import ml.karmaconfigs.api.velocity.karmayaml.FileCopy;
 import ml.karmaconfigs.api.velocity.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
+import ml.karmaconfigs.locklogin.plugin.common.session.Session;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
-import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionDownloader;
@@ -26,25 +34,33 @@ import ml.karmaconfigs.locklogin.plugin.velocity.listener.JoinListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.MessageListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.QuitListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.filter.ConsoleFilter;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.filter.PluginFilter;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.player.Session;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.player.SessionCheck;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
+import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Logger;
+import org.bstats.charts.SimplePie;
+import org.bstats.velocity.Metrics;
 import org.reflections.Reflections;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.*;
+import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 public final class Manager {
 
@@ -94,6 +110,7 @@ public final class Manager {
 
         server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.CHANNEL_PLAYER));
         server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.PLUGIN_CHANNEL));
+        server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.ACCESS_CHANNEL));
 
         AccountManager manager = CurrentPlatform.getAccountManager(null);
         if (manager != null) {
@@ -129,6 +146,17 @@ public final class Manager {
                 }
             });
         }
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.getUpdaterOptions().isEnabled()) {
+            scheduleVersionCheck();
+        } else {
+            performVersionCheck();
+        }
+        scheduleAlertSystem();
+
+        registerMetrics();
+        initPlayers();
     }
 
     public static void terminate() {
@@ -160,6 +188,13 @@ public final class Manager {
         Console.send("&eversion:&6 {0}", versionID);
         Console.send(" ");
         Console.send("&e-----------------------");
+
+        ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
+
+        for (Player player : server.getAllPlayers()) {
+            User user = new User(player);
+            user.kick("&eLockLogin\n\n&cPlugin shutting down");
+        }
     }
 
     /**
@@ -226,16 +261,25 @@ public final class Manager {
         Set<String> failed = new LinkedHashSet<>();
 
         File cfg = new File(util.getDataFolder(), "config.yml");
+        File proxy = new File(util.getDataFolder(), "proxy.yml");
 
         FileCopy config_copy = new FileCopy(plugin, "cfg/config.yml");
+        FileCopy proxy_copy = new FileCopy(plugin, "cfg/proxy.yml");
         try {
             config_copy.copy(cfg);
         } catch (Throwable ex) {
             failed.add("config.yml");
         }
+        try {
+            proxy_copy.copy(proxy);
+        } catch (Throwable ex) {
+            failed.add("proxy.yml");
+        }
 
         Config config = new Config();
+        ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy_cfg = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
         CurrentPlatform.setConfigManager(config);
+        CurrentPlatform.setProxyManager(proxy_cfg);
 
         String country = config.getLang().country(config.getLangName());
         File msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
@@ -278,6 +322,22 @@ public final class Manager {
         }
 
         Config.manager.checkValues();
+    }
+
+    /**
+     * Register plugin metrics
+     */
+    protected static void registerMetrics() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        Metrics metrics = factory.make(main, 11291);
+
+        metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
+        metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
+                .replace("true", "Clear chat")
+                .replace("false", "Don't clear chat")));
+        metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
+                .replace("true", "Sessions enabled")
+                .replace("false", "Sessions disabled")));
     }
 
     /**
@@ -368,6 +428,105 @@ public final class Manager {
 
         alert_id = timer.getTimerId();
 
+    }
+
+    /**
+     * Initialize already connected players
+     *
+     * This is util after plugin updates or
+     * plugin load using third-party loaders
+     */
+    protected static void initPlayers() {
+        server.getScheduler().buildTask(plugin, () -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            Message messages = new Message();
+
+            for (Player player : server.getAllPlayers()) {
+                server.getScheduler().buildTask(plugin, () -> {
+                    InetSocketAddress ip = player.getRemoteAddress();
+                    IpData data = new IpData(ip.getAddress());
+                    int amount = data.getClonesAmount();
+                    User user = new User(player);
+
+                    if (amount + 1 == config.accountsPerIP()) {
+                        user.kick(messages.maxIP());
+                        return;
+                    }
+                    data.addClone();
+
+                    Optional<ServerConnection> tmp_server = player.getCurrentServer();
+                    if (tmp_server.isPresent()) {
+                        ServerConnection connection = tmp_server.get();
+
+                        RegisteredServer info = connection.getServer();
+                        ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
+
+                        if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
+                            if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
+                                DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+
+                            if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
+                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                        }
+                    }
+
+                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+
+                    DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+                    DataSender.send(player, validation);
+
+                    Proxy proxy = new Proxy(ip);
+                    if (proxy.isProxy()) {
+                        user.kick(messages.ipProxyError());
+                        return;
+                    }
+
+                    user.applySessionEffects();
+
+                    if (config.clearChat()) {
+                        for (int i = 0; i < 150; i++)
+                            server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                    }
+
+                    ClientSession session = user.getSession();
+                    session.validate();
+
+                    if (!config.captchaOptions().isEnabled())
+                        session.setCaptchaLogged(true);
+
+                    AdvancedPluginTimer tmp_timer = null;
+                    if (!session.isCaptchaLogged()) {
+                        tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
+                        tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
+                    }
+
+                    MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+                            .addBoolData(session.isLogged())
+                            .addBoolData(session.is2FALogged())
+                            .addBoolData(session.isPinLogged())
+                            .addBoolData(user.isRegistered()).build();
+                    DataSender.send(player, join);
+
+                    AdvancedPluginTimer timer = tmp_timer;
+                    SessionCheck check = new SessionCheck(player, target -> {
+                        player.sendActionBar(Component.text().content("").build());
+                        if (timer != null)
+                            timer.setCancelled();
+                    }, target -> {
+                        player.sendActionBar(Component.text().content("").build());
+                        if (timer != null)
+                            timer.setCancelled();
+                    });
+
+                    server.getScheduler().buildTask(plugin, check).schedule();
+
+                    user.checkServer();
+                }).delay(2, TimeUnit.SECONDS).schedule();
+            }
+        }).schedule();
     }
 
     /**

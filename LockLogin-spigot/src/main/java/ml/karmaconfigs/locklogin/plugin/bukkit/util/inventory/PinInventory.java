@@ -6,8 +6,8 @@ import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
@@ -53,15 +53,17 @@ public final class PinInventory implements InventoryHolder {
      *
      * @param _player the player
      */
-    public PinInventory(Player _player) {
+    public PinInventory(final Player _player) {
         if (!inventories.containsKey(_player.getUniqueId())) {
             player = _player;
 
             Message messages = new Message();
 
-            inventory = plugin.getServer().createInventory(this, 45, StringUtils.toColor(messages.pinTitle()));
-            makeInventory();
+            String title = StringUtils.toColor(messages.pinTitle());
+            if (title.length() > 32)
+                title = title.substring(0, 32);
 
+            inventory = plugin.getServer().createInventory(this, 45, title);
             inventories.put(_player.getUniqueId(), this);
         } else {
             player = inventories.get(_player.getUniqueId()).player;
@@ -72,7 +74,7 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Initialize the inventory items
      */
-    private void makeInventory() {
+    protected void makeInventory() {
         inventory.setItem(12, Button.seven());
         inventory.setItem(13, Button.eight());
         inventory.setItem(14, Button.nine());
@@ -108,71 +110,61 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Open the inventory to the player
      */
-    public synchronized final void open() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            try {
-                player.openInventory(inventory);
-            } catch (Throwable e) {
-                PluginConfiguration config = CurrentPlatform.getConfiguration();
+    public final void open() {
+        try {
+            makeInventory();
+            player.openInventory(inventory);
+        } catch (Throwable ex) {
+            logger.scheduleLog(Level.GRAVE, ex);
+            logger.scheduleLog(Level.INFO, "Couldn't open pin GUI to player {0}", StringUtils.stripColor(player.getDisplayName()));
 
-                if (!config.isBungeeCord()) {
-                    Message messages = new Message();
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            Message messages = new Message();
 
-                    User user = new User(player);
-                    ClientSession session = user.getSession();
-                    AccountManager manager = user.getManager();
+            if (config.isBungeeCord()) {
+                BungeeSender.sendPinInput(player, "error");
+            } else {
+                User user = new User(player);
 
-                    if (manager.has2FA()) {
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.gAuthInstructions(), null);
-                        JavaModuleManager.callEvent(event);
+                ClientSession session = user.getSession();
+                AccountManager manager = user.getManager();
 
-                        user.send(messages.prefix() + event.getAuthMessage());
-                        session.setPinLogged(true);
-                    } else {
-                        user.setTempSpectator(false);
+                session.setPinLogged(true);
 
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
-                        JavaModuleManager.callEvent(event);
 
-                        if (config.takeBack()) {
-                            LastLocation location = new LastLocation(player);
-                            location.teleport();
-                        }
+                UserAuthenticateEvent event;
+                event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS)
+                        , fromPlayer(player),
+                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged())
+                        , null);
 
-                        ClientVisor visor = new ClientVisor(player);
-                        visor.authenticate();
+                if (!manager.has2FA()) {
+                    user.setTempSpectator(false);
 
-                        user.send(messages.prefix() + event.getAuthMessage());
-                        session.setPinLogged(true);
-                        session.set2FALogged(true);
-
-                        if (!config.isBungeeCord())
-                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+                    if (config.takeBack()) {
+                        LastLocation location = new LastLocation(player);
+                        location.teleport();
                     }
-
-                    close();
-                } else {
-                    BungeeSender.sendPinInput(player, "error");
                 }
 
-                logger.scheduleLog(Level.GRAVE, e);
-                logger.scheduleLog(Level.INFO, "Couldn't open pin GUI to player {0}, this will result in a fake-pin validation", StringUtils.stripColor(player.getDisplayName()));
+                JavaModuleManager.callEvent(event);
+
+                user.send(messages.prefix() + event.getAuthMessage());
             }
-        });
+        }
     }
 
     /**
      * Close the inventory to the player
      */
-    public synchronized final void close() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            if (player != null && player.isOnline()) {
-                player.getInventory();
-                player.closeInventory();
+    public final void close() {
+        if (player != null && player.isOnline()) {
+            player.getInventory();
+            player.closeInventory();
 
-                inventories.remove(player.getUniqueId());
-            }
-        });
+            inventories.remove(player.getUniqueId());
+        }
     }
 
     /**
@@ -220,7 +212,8 @@ public final class PinInventory implements InventoryHolder {
                             }
 
                             ClientVisor visor = new ClientVisor(player);
-                            visor.authenticate();
+                            visor.unVanish();
+                            visor.checkVanish();
 
                             user.send(messages.prefix() + event.getAuthMessage());
                             session.setPinLogged(true);

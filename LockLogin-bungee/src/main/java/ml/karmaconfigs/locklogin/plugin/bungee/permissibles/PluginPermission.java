@@ -1,5 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.permissibles;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class PluginPermission {
 
     public static Permission reload() {
@@ -104,5 +107,65 @@ public final class PluginPermission {
 
     public static Permission alias() {
         return new Permission("locklogin.alias");
+    }
+
+    public static Permission modules() {
+        Permission permission = new Permission("locklogin.module");
+        permission.addNode("locklogin.module.load", true, true);
+        permission.addNode("locklogin.module.unload", true, true);
+        permission.addNode("locklogin.module.list", true, true);
+
+        return permission;
+    }
+
+    public static Permission loadModules() {
+        Permission permission = new Permission("locklogin.module.load");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
+    }
+
+    public static Permission unloadModules() {
+        Permission permission = new Permission("locklogin.module.unload");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
+    }
+
+    public static Permission listModules() {
+        Permission permission = new Permission("locklogin.module.list");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
+    }
+
+    public static Permission updater() {
+        Permission permission = new Permission("locklogin.updater");
+        permission.addNode("locklogin.updater.version", true, true);
+        permission.addNode("locklogin.updater.changelog", true, true);
+        permission.addNode("locklogin.updater.check", true, true);
+
+        return permission;
+    }
+
+    public static Permission version() {
+        Permission permission = new Permission("locklogin.updater.version");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
+    }
+
+    public static Permission changelog() {
+        Permission permission = new Permission("locklogin.updater.changelog");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
+    }
+
+    public static Permission check() {
+        Permission permission = new Permission("locklogin.updater.check");
+        permission.addNode("locklogin.updater", true, false);
+
+        return permission;
     }
 }

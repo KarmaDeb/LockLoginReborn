@@ -65,6 +65,13 @@ public final class PlayerFile extends AccountManager {
             manager = new KarmaFile(plugin, player.getUniqueId().toString().replace("-", "") + ".lldb", "data", "accounts");
     }
 
+    public PlayerFile(final AccountID id) {
+        player = null;
+
+        File file = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", id.getId().replace("-", "") + ".lldb");
+        manager = new KarmaFile(file);
+    }
+
     /**
      * Migrate from LockLogin v1 player database
      */

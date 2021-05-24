@@ -19,6 +19,12 @@ Options:
   MultiBungee: false
   SendToServers: true
 
+#This must be the same for all
+#the proxy instances! You can write here
+#whatever you want. BUT MUST BE THE SAME
+#AS YOUR OTHER PROXY.YML CONFIGURATION FILES
+ProxyKey: ""
+
 #PLEASE DO NOT MODIFY THIS, THIS IS
 #YOUR UNIQUE BUNGEECORD PROXY ID
 #AND THIS WILL BE USED FOR MULTI-BUNGEE

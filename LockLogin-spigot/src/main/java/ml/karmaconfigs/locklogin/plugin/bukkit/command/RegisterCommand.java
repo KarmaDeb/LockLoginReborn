@@ -6,8 +6,8 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.AccountCreatedEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.AccountCreatedEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -73,28 +73,32 @@ public final class RegisterCommand implements CommandExecutor {
                                         Password checker = new Password(password);
                                         checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
 
-                                        if (checker.isSecure()) {
-                                            manager.setPassword(password);
-
-                                            user.send(messages.prefix() + messages.registered());
-
-                                            session.setLogged(true);
-
-                                            if (!manager.has2FA()) {
-                                                if (player.hasPermission(forceFA())) {
-                                                    player.performCommand("2fa setup " + password);
-                                                } else {
-                                                    session.set2FALogged(true);
-                                                }
-                                            }
-                                            if (manager.getPin().replaceAll("\\s", "").isEmpty())
-                                                session.setPinLogged(true);
-
-                                            AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
-                                            JavaModuleManager.callEvent(event);
-                                        } else {
+                                        if (!checker.isSecure()) {
                                             user.send(messages.prefix() + messages.passwordInsecure());
+
+                                            if (config.blockUnsafePasswords()) {
+                                                return false;
+                                            }
                                         }
+
+                                        manager.setPassword(password);
+
+                                        user.send(messages.prefix() + messages.registered());
+
+                                        session.setLogged(true);
+
+                                        if (!manager.has2FA()) {
+                                            if (player.hasPermission(forceFA())) {
+                                                player.performCommand("2fa setup " + password);
+                                            } else {
+                                                session.set2FALogged(true);
+                                            }
+                                        }
+                                        if (manager.getPin().replaceAll("\\s", "").isEmpty())
+                                            session.setPinLogged(true);
+
+                                        AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
+                                        JavaModuleManager.callEvent(event);
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

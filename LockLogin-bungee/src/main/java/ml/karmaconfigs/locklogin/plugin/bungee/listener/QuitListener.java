@@ -1,10 +1,11 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.listener;
 
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserQuitEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserQuitEvent;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -42,6 +43,9 @@ public final class QuitListener implements Listener {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
 
+            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            keeper.store();
+
             if (ip != null) {
                 IpData data = new IpData(ip.getAddress());
                 data.delClone();
@@ -64,6 +68,9 @@ public final class QuitListener implements Listener {
         if (!player.isConnected()) {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
+
+            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            keeper.store();
 
             if (ip != null) {
                 IpData data = new IpData(ip.getAddress());

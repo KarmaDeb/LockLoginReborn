@@ -203,7 +203,7 @@ edward
 333333
 oliver
 redsox
-player
+modulePlayer
 nikita
 knight
 fender

@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.plugin;
 
 import ml.karmaconfigs.api.bungee.Console;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.plugin.PluginStatusChangeEvent;
 import ml.karmaconfigs.locklogin.plugin.bungee.permissibles.PluginPermission;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;

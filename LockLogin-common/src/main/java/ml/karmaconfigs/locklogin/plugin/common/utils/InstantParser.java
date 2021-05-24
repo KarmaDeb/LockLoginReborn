@@ -34,9 +34,10 @@ public final class InstantParser {
      * @return the instant year
      */
     public final int getYear() {
-        String year = instant.toString().split("-")[0];
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
 
-        return Integer.parseInt(year);
+        return calendar.get(Calendar.YEAR);
     }
 
     /**
@@ -45,36 +46,10 @@ public final class InstantParser {
      * @return the instant month
      */
     public final String getMonth() {
-        String month_id = instant.toString().split("-")[1];
-        int month_num = Integer.parseInt(month_id);
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
 
-        switch (month_num) {
-            case 0:
-                return Month.JANUARY.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 1:
-                return Month.FEBRUARY.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 2:
-                return Month.MARCH.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 3:
-                return Month.APRIL.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 4:
-                return Month.MAY.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 5:
-                return Month.JUNE.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 6:
-                return Month.JULY.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 7:
-                return Month.OCTOBER.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 8:
-                return Month.AUGUST.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 9:
-                return Month.SEPTEMBER.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 10:
-                return Month.NOVEMBER.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-            case 11:
-            default:
-                return Month.DECEMBER.getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        }
+        return calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
     }
 
     /**
@@ -83,8 +58,56 @@ public final class InstantParser {
      * @return the instant day
      */
     public final int getDay() {
-        String day = instant.toString().split("-")[2].split("T")[0];
-        return Integer.parseInt(day);
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        return calendar.get(Calendar.DAY_OF_MONTH);
+    }
+
+    /**
+     * Get the instant hour
+     *
+     * @return the instant hour
+     */
+    public final int getHour() {
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        return calendar.get(Calendar.HOUR_OF_DAY);
+    }
+
+    /**
+     * Get the instant minute
+     *
+     * @return the instant minute
+     */
+    public final int getMinute() {
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        return calendar.get(Calendar.MINUTE);
+    }
+
+    /**
+     * Get the instant second
+     *
+     * @return the instant second
+     */
+    public final int getSecond() {
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        return calendar.get(Calendar.SECOND);
+    }
+
+    /**
+     * Parse the instant to display all the util date
+     * info
+     *
+     * @return the parsed instant to string
+     */
+    public final String parse() {
+        return getYear() + " / " + getMonth() + " / " + getDay() + " " + getHour() + ":" + getMinute() + ":" + getSecond();
     }
 
     /**
@@ -105,13 +128,21 @@ public final class InstantParser {
         int creation_year = calendar.get(Calendar.YEAR);
         int creation_month = calendar.get(Calendar.MONTH);
         int creation_day = calendar.get(Calendar.DAY_OF_MONTH);
+        int creation_hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int creation_minute = calendar.get(Calendar.MINUTE);
+        int creation_second = calendar.get(Calendar.SECOND);
 
         int today_year = instanceCalendar.get(Calendar.YEAR);
         int today_month = instanceCalendar.get(Calendar.MONTH);
         int today_day = instanceCalendar.get(Calendar.DAY_OF_MONTH);
+        int today_hour = instanceCalendar.get(Calendar.HOUR_OF_DAY);
+        int today_minute = instanceCalendar.get(Calendar.MINUTE);
+        int today_second = instanceCalendar.get(Calendar.SECOND);
 
         return Math.abs(today_year - creation_year) + " " + properties.getProperty("year", "year(s)") + ", " +
                 Math.abs(today_month - creation_month) + " " + properties.getProperty("month", "month(s)") + ", " +
-                Math.abs(today_day - creation_day) + " " + properties.getProperty("day", "day(s)");
+                Math.abs(today_day - creation_day) + " " + properties.getProperty("day", "day(s)") + " " +
+        properties.getProperty("time_at", "at") + " " + Math.abs(today_hour - creation_hour) + ":" + Math.abs(today_minute - creation_minute) +
+                " " + Math.abs(today_second - creation_second);
     }
 }

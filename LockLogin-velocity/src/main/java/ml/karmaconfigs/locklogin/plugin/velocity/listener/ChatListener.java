@@ -6,7 +6,7 @@ import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
@@ -24,7 +24,7 @@ public final class ChatListener {
         Message messages = new Message();
 
         if (session.isValid()) {
-            if (!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged()) {
+            if (!session.isLogged() || !session.isTempLogged()) {
                 if (user.getManager().has2FA() && session.isLogged()) {
                     e.setResult(PlayerChatEvent.ChatResult.denied());
                     user.send(messages.prefix() + messages.gAuthenticate());
@@ -59,7 +59,7 @@ public final class ChatListener {
             Message messages = new Message();
 
             if (session.isValid()) {
-                if (!session.isCaptchaLogged() || !session.isLogged()) {
+                if (!session.isLogged()) {
                     String command = getCommand(e.getCommand());
                     if (!command.equals("register") && !command.equals("login") && !AllowedCommand.isAllowed(command)) {
                         e.setResult(CommandExecuteEvent.CommandResult.denied());

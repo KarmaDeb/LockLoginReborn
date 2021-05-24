@@ -35,6 +35,20 @@ public abstract class PluginConfiguration {
     public abstract LoginConfig loginOptions();
 
     /**
+     * Get if the plugin has sessions enabled
+     *
+     * @return if the plugin has sessions
+     */
+    public abstract boolean enableSessions();
+
+    /**
+     * Get the session life time
+     *
+     * @return the session life time
+     */
+    public abstract int sessionTime();
+
+    /**
      * Get the captcha options
      *
      * @return the captcha options
@@ -54,6 +68,16 @@ public abstract class PluginConfiguration {
      * @return the pin encryption type
      */
     public abstract HashType pinEncryption();
+
+    /**
+     * Get if the plugin should block the player
+     * login/register when he has an invalid password.
+     *
+     * Forcing him to change it until it's safe
+     *
+     * @return if the plugin should block unsafe passwords
+     */
+    public abstract boolean blockUnsafePasswords();
 
     /**
      * Get anti-brute force system options

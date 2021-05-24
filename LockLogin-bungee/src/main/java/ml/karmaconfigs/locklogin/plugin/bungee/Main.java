@@ -5,17 +5,18 @@ import ml.karmaconfigs.api.common.JarInjector;
 import ml.karmaconfigs.api.common.KarmaPlugin;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.modules.client.MessageSender;
-import ml.karmaconfigs.locklogin.api.modules.client.Player;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.dependencies.Dependency;
-import ml.karmaconfigs.locklogin.api.modules.dependencies.LockLoginDependencies;
-import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.util.client.MessageSender;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.util.dependencies.Dependency;
+import ml.karmaconfigs.locklogin.api.modules.util.dependencies.LockLoginDependencies;
+import ml.karmaconfigs.locklogin.api.modules.api.event.plugin.PluginStatusChangeEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.api.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.Manager;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
+import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @KarmaPlugin
@@ -38,7 +40,7 @@ public final class Main extends Plugin {
     private final static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath());
+            .getPath().replaceAll("%20", " "));
 
     private static boolean injected = false;
 
@@ -47,84 +49,87 @@ public final class Main extends Plugin {
         injected = injectAPI();
 
         if (injected) {
-            CurrentPlatform.setPlatform(Platform.BUNGEE);
-            CurrentPlatform.setMain(Main.class);
-            CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
-            CurrentPlatform.setAccountsManager(PlayerFile.class);
+            getProxy().getScheduler().runAsync(this, () -> {
+                CurrentPlatform.setPlatform(Platform.BUNGEE);
+                CurrentPlatform.setMain(Main.class);
+                CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
 
-            Consumer<MessageSender> onMessage = messageSender -> {
-                Player player = messageSender.getPlayer();
-                UUID id = player.getUUID();
+                Consumer<MessageSender> onMessage = messageSender -> {
+                    ModulePlayer modulePlayer = messageSender.getPlayer();
+                    UUID id = modulePlayer.getUUID();
 
-                ProxiedPlayer client = getProxy().getPlayer(id);
-                if (client != null)
-                    client.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
-            };
+                    ProxiedPlayer client = getProxy().getPlayer(id);
+                    if (client != null)
+                        client.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                };
+                BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
 
-            try {
-                JarManager.changeField(Player.class, "onChat", true, onMessage);
-            } catch (Throwable ignored) {}
+                try {
+                    JarManager.changeField(ModulePlayer.class, "onChat", true, onMessage);
+                    JarManager.changeField(ModuleMessageService.class, "onDataSent", true, onDataSend);
+                } catch (Throwable ignored) {}
 
-            Console.setOkPrefix(this, "&aOk &e>> &7");
-            Console.setInfoPrefix(this, "&7Info &e>> &7");
-            Console.setWarningPrefix(this, "&6Warning &e>> &7");
-            Console.setGravePrefix(this, "&4Grave &e>> &7");
+                Console.setOkPrefix(this, "&aOk &e>> &7");
+                Console.setInfoPrefix(this, "&7Info &e>> &7");
+                Console.setWarningPrefix(this, "&6Warning &e>> &7");
+                Console.setGravePrefix(this, "&4Grave &e>> &7");
 
-            prepareManager();
+                prepareManager();
 
-            Set<Dependency> error = new LinkedHashSet<>();
-            for (LockLoginDependencies lockloginDependency : LockLoginDependencies.values()) {
-                Dependency dependency = lockloginDependency.getAsDependency(obj -> {
-                    File target = obj.getLocation();
+                Set<Dependency> error = new LinkedHashSet<>();
+                for (LockLoginDependencies lockloginDependency : LockLoginDependencies.values()) {
+                    Dependency dependency = lockloginDependency.getAsDependency(obj -> {
+                        File target = obj.getLocation();
 
-                    try {
-                        JarInjector injector = new JarInjector(target);
-                        if (!injector.inject(this))
+                        try {
+                            JarInjector injector = new JarInjector(target);
+                            if (!injector.inject(this))
+                                error.add(obj);
+                        } catch (Throwable ex) {
                             error.add(obj);
-                    } catch (Throwable ex) {
-                        error.add(obj);
+                        }
+                    });
+
+                    if (dependency != null)
+                        dependency.inject();
+                }
+
+                if (!error.isEmpty()) {
+                    for (Dependency dependency : error) {
+                        try {
+                            File target = dependency.getLocation();
+
+                            JarInjector injector = new JarInjector(target);
+                            injector.download(dependency.getDownloadURL());
+
+                            injector.inject(this);
+                        } catch (Throwable ex) {
+                            sendInjectionError(dependency.getName());
+                            break;
+                        }
                     }
-                });
 
-                if (dependency != null)
-                    dependency.inject();
-            }
+                    error.clear();
+                }
 
-            if (!error.isEmpty()) {
-                for (Dependency dependency : error) {
-                    try {
-                        File target = dependency.getLocation();
+                LockLogin.logger.setMaxSize(FileInfo.logFileSize(lockloginFile));
+                LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
-                        JarInjector injector = new JarInjector(target);
-                        injector.download(dependency.getDownloadURL());
-
-                        injector.inject(this);
-                    } catch (Throwable ex) {
-                        sendInjectionError(dependency.getName());
-                        break;
+                File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
+                if (moduleFiles != null) {
+                    for (File module : moduleFiles) {
+                        if (!JavaModuleLoader.isLoaded(module.getName()))
+                            LockLogin.getLoader().loadModule(module.getName());
                     }
                 }
 
-                error.clear();
-            }
+                PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
+                JavaModuleManager.callEvent(event);
 
-            LockLogin.logger.setMaxSize(FileInfo.logFileSize(lockloginFile));
-            LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
+                AllowedCommand.scan();
 
-            File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-            if (moduleFiles != null) {
-                for (File module : moduleFiles) {
-                    if (!JavaModuleLoader.isLoaded(module.getName()))
-                        LockLogin.getLoader().loadModule(module.getName());
-                }
-            }
-
-            PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-            JavaModuleManager.callEvent(event);
-
-            AllowedCommand.scan();
-
-            Manager.initialize();
+                Manager.initialize();
+            });
         } else {
             sendInjectionError("KarmaAPI");
         }

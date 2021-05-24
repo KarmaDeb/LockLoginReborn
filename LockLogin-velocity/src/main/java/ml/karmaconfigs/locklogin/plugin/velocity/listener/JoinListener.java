@@ -6,8 +6,11 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
+import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.Console;
@@ -16,10 +19,11 @@ import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPostJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPostJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPreJoinEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.BruteForce;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
@@ -27,10 +31,12 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Name;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
-import ml.karmaconfigs.locklogin.plugin.common.utils.UUIDGen;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.UUIDGen;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedData;
@@ -44,6 +50,7 @@ import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -231,8 +238,26 @@ public final class JoinListener {
             InetSocketAddress ip = player.getRemoteAddress();
             User user = new User(player);
 
+            Optional<ServerConnection> tmp_server = player.getCurrentServer();
+            if (tmp_server.isPresent()) {
+                ServerConnection connection = tmp_server.get();
+
+                RegisteredServer info = connection.getServer();
+                ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
+
+                if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
+                    if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+
+                    if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                }
+            }
+
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
             DataSender.send(player, validation);
@@ -261,9 +286,7 @@ public final class JoinListener {
             AdvancedPluginTimer tmp_timer = null;
             if (!session.isCaptchaLogged()) {
                 tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
-                tmp_timer.addAction(() -> {
-                    player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build());
-                }).start();
+                tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
             }
 
             MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
@@ -286,9 +309,53 @@ public final class JoinListener {
 
             server.getScheduler().buildTask(plugin, check).schedule();
 
+            user.checkServer();
+            forceSessionLogin(player);
+        }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
+    }
+
+    @Subscribe(order = PostOrder.FIRST)
+    public final void onSwitch(ServerConnectedEvent e) {
+        server.getScheduler().buildTask(plugin, () -> {
+            Player player = e.getPlayer();
+            User user = new User(player);
+
+            Optional<ServerConnection> tmp_server = player.getCurrentServer();
+            if (tmp_server.isPresent()) {
+                ServerConnection connection = tmp_server.get();
+
+                RegisteredServer info = connection.getServer();
+                ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
+
+                if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
+                    if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+
+                    if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                }
+            }
+
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
-        }).delay(2, TimeUnit.SECONDS).schedule();
+
+            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+            DataSender.send(player, validation);
+
+            ClientSession session = user.getSession();
+            session.validate();
+
+            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+                    .addBoolData(session.isLogged())
+                    .addBoolData(session.is2FALogged())
+                    .addBoolData(session.isPinLogged())
+                    .addBoolData(user.isRegistered()).build();
+            DataSender.send(player, join);
+
+            user.checkServer();
+        }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
     /**
@@ -304,5 +371,36 @@ public final class JoinListener {
 
         Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
         return matcher.matches();
+    }
+
+    /**
+     * Get if the player has a session and
+     * validate it
+     *
+     * @param player the player
+     */
+    protected void forceSessionLogin(final Player player) {
+        ModulePlayer modulePlayer = fromPlayer(player);
+
+        SessionKeeper keeper = new SessionKeeper(modulePlayer);
+        if (keeper.hasSession()) {
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
+            session.setCaptchaLogged(true);
+            session.setLogged(true);
+            session.setPinLogged(true);
+            session.set2FALogged(true);
+
+            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER).build();
+            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("close").build();
+            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER).build();
+
+            DataSender.send(player, login);
+            DataSender.send(player, pin);
+            DataSender.send(player, gauth);
+
+            keeper.destroy();
+        }
     }
 }

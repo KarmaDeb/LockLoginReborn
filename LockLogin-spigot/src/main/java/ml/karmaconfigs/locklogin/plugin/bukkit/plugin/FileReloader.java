@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin;
 
 import ml.karmaconfigs.api.bukkit.Console;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.plugin.PluginStatusChangeEvent;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;

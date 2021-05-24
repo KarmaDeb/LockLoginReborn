@@ -74,9 +74,12 @@ public final class VersionDownloader {
      */
     public final void download(final Consumer<File> onDownload, final Consumer<Throwable> onFail) {
         String time = Instant.now().toString().replace(":", ";");
-        File dest_file = new File(FileUtilities.getPluginsFolder() + File.separator + "plugin" + File.separator + "updater", "LockLogin_" + time + "_" + checker.getLatestVersion() + ".jar");
+        File dest_file = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater", "LockLogin_" + time + "_" + checker.getLatestVersion().replace(";", ":") + ".jar");
 
+        dest_file = FileUtilities.getFixedFile(dest_file);
         if (getDownloaded() == null) {
+            downloading = true;
+
             try {
                 URL url = new URL(download_url);
                 URLConnection connection = url.openConnection();
@@ -103,8 +106,6 @@ public final class VersionDownloader {
 
                     sumCount += bytesRead;
                     percentage = (sumCount / size * 100.0);
-
-                    downloading = true;
                 }
 
                 output.flush();
@@ -121,10 +122,14 @@ public final class VersionDownloader {
                 if (onDownload != null) {
                     onDownload.accept(dest_file);
                 }
+
+                downloading = false;
             }
         } else {
             if (onDownload != null)
                 onDownload.accept(getDownloaded());
+
+            downloading = false;
         }
     }
 
@@ -140,9 +145,17 @@ public final class VersionDownloader {
 
         if (files != null) {
             for (File file : files) {
+                file = FileUtilities.getFixedFile(file);
                 if (!file.isDirectory() && file.getName().endsWith(".jar")) {
-                    if (file.getName().endsWith(checker.getLatestVersion() + ".jar")) {
-                        return file;
+                    if (file.getName().endsWith(checker.getLatestVersion().replace(":", ";") + ".jar")) {
+                        try {
+                            URL url = new URL(download_url);
+                            URLConnection connection = url.openConnection();
+
+                            if (file.length() == connection.getContentLengthLong()) {
+                                return file;
+                            }
+                        } catch (Throwable ignored) {}
                     }
                 }
             }

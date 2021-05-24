@@ -4,6 +4,7 @@ import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
@@ -11,7 +12,8 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.locklogin.plugin.common.utils.Alias;
+import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -62,12 +64,49 @@ public final class PlayerInfoCommand implements CommandExecutor {
                             if (target.startsWith("@")) {
                                 String name = target.replaceFirst("@", "");
 
-                                Alias alias = new Alias(name);
-                                if (alias.exists()) {
-                                    Set<AccountID> accounts = alias.getUsers();
-                                    new PlayersInfoInventory(player, accounts);
+                                if (!name.equalsIgnoreCase("everyone") && !name.equalsIgnoreCase("persistent") && !(name.toLowerCase().startsWith("permission[") && name.endsWith("]"))) {
+                                    Alias alias = new Alias(name);
+                                    if (alias.exists()) {
+                                        Set<AccountID> accounts = alias.getUsers();
+                                        new PlayersInfoInventory(player, accounts);
+                                    } else {
+                                        user.send(messages.prefix() + messages.aliasNotFound(name));
+                                    }
                                 } else {
-                                    user.send(messages.prefix() + messages.aliasNotFound(name));
+                                    switch (name) {
+                                        case "everyone":
+                                            Set<AccountID> everyoneAccounts = new LinkedHashSet<>();
+
+                                            for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                                manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                if (manager != null)
+                                                    everyoneAccounts.add(manager.getUUID());
+                                            }
+
+                                            new PlayersInfoInventory(player, everyoneAccounts);
+                                        case "persistent":
+                                            Set<AccountID> accountIDs = new LinkedHashSet<>();
+                                            for (AccountManager account : PersistentSessionData.getPersistentAccounts()) accountIDs.add(account.getUUID());
+
+                                            new PlayersInfoInventory(player, accountIDs);
+                                            break;
+                                        default:
+                                            String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
+
+                                            Set<AccountID> permissionAccounts = new LinkedHashSet<>();
+
+                                            for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                                if (online.hasPermission(permission)) {
+
+                                                    manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                    if (manager != null)
+                                                        permissionAccounts.add(manager.getUUID());
+                                                }
+                                            }
+
+                                            new PlayersInfoInventory(player, permissionAccounts);
+                                            break;
+                                    }
                                 }
                             } else {
                                 offline = new OfflineClient(target);
@@ -138,7 +177,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
 
         return false;

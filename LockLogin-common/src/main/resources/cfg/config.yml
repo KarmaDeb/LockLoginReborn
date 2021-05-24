@@ -63,6 +63,25 @@ Login:
   TimeOut: 30
   MaxTries: 5
 
+#Toggle plugin sessions system.
+#
+# Time -> The time (in minutes) an account
+#         will be valid ( 0 = 59 seconds )
+#
+#   The maximum amount of a session life
+#   time is 30 minutes
+#This requires the player to have a
+#valid LockLogin pin configured, otherwise
+#it won't work
+Sessions:
+  Enabled: false
+  Time: 5
+
+#Hide non logged players from
+#logged ones and logged players from
+#non logged.
+HideNonLogged: true
+
 #Login/Register messages in chat
 #interval, minimum is 5, maximum is
 #the specified in Login/Register section
@@ -99,16 +118,17 @@ Captcha:
 # "Argon2id"
 Encryption:
   Passwords: "SHA512"
-  Pin: "SHA512"
+  Pins: "SHA512"
 
-#Azuriom integration options
-# Restrict -> Restrict new accounts to
-#             azuriom registered accounts
+#Block login/register attempt when the
+#client has an insecure password, while
+#login process, the player account will be
+#unregistered ( only password ).
 #
-# SemiPremium -> Try to use online player UUID
-Azuriom:
-  Restrict: false
-  SemiPremium: false
+#While this in false, only a warning will be
+#set to the client telling him his password
+#is not safe
+BlockUnsafePasswords: true
 
 #BurteForce options
 # Tries -> The maximum amount of tries
@@ -171,9 +191,6 @@ Pin: true
 # CheckTime -> The time (in minutes) before each
 #              update check, the minimum is 5 and
 #              the maximum is 86400 (1 day)
-#
-# ChangeLog -> Enable changelog displayer in each
-#              new update found message
 Updater:
   Channel: "RELEASE"
   Check: true
@@ -209,11 +226,6 @@ CheckNames: true
 #For more info please visit:
 # https://rb.gy/jlmjah
 Lang: en_EN
-
-#Account storage system
-#For more info please visit:
-# https://rb.gy/jlmjah
-AccountSys: File
 
 #Module commands prefix
 ModulePrefix: "$"

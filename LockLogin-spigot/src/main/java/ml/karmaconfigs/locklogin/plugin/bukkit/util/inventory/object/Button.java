@@ -1,6 +1,7 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object;
 
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -285,7 +286,9 @@ public class Button {
         ItemMeta meta = next.getItemMeta();
         assert meta != null;
 
-        meta.setDisplayName(StringUtils.toColor("&eNext"));
+        Message messages = new Message();
+
+        meta.setDisplayName(StringUtils.toColor(messages.nextButton()));
         next.setItemMeta(meta);
 
         return next;
@@ -306,7 +309,9 @@ public class Button {
         ItemMeta meta = back.getItemMeta();
         assert meta != null;
 
-        meta.setDisplayName(StringUtils.toColor("&eBack"));
+        Message messages = new Message();
+
+        meta.setDisplayName(StringUtils.toColor(messages.backButton()));
         back.setItemMeta(meta);
 
         return back;
@@ -374,5 +379,32 @@ public class Button {
         int random = new Random().nextInt(stacks.size() - 1);
         if (random == 0) random = 1;
         return stacks.get(random);
+    }
+
+    /**
+     * Make the server loads the cache
+     */
+    @SuppressWarnings("deprecation")
+    public static void preCache() {
+        one();
+        two();
+        three();
+        four();
+        five();
+        six();
+        seven();
+        eight();
+        nine();
+        zero();
+        confirm();
+        erase();
+        next();
+        back();
+        
+        try {
+            new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE", true)), 1, (short) 3);
+            new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE")), 1, (short) 3);
+            new ItemStack(Material.LEGACY_STAINED_GLASS_PANE, 1, (short) 3);
+        } catch (Throwable ignored) {}
     }
 }

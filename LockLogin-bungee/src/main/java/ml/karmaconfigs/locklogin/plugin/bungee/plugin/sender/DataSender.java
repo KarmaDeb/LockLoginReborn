@@ -4,17 +4,25 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.logger;
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class DataSender {
 
     public final static String CHANNEL_PLAYER = "ll:account";
     public final static String PLUGIN_CHANNEL = "ll:plugin";
+    public final static String ACCESS_CHANNEL = "ll:access";
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static String key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
 
@@ -27,12 +35,19 @@ public final class DataSender {
         if (!key.replaceAll("\\s", "").isEmpty()) {
             if (player != null && player.getServer() != null && player.isConnected()) {
                 try {
-                    player.getServer().getInfo().sendData(data.getChannel(), data.getData().toByteArray());
+                    ServerInfo server = player.getServer().getInfo();
+                    if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+                        server.sendData(data.getChannel(), data.getData().toByteArray());
                 } catch (Throwable e) {
                     logger.scheduleLog(Level.GRAVE, e);
                     logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
                 }
+            } else {
+                logger.scheduleLog(Level.INFO, "Failed to send plugin message: ");
+                logger.scheduleLog(Level.INFO, "\n```yaml\nPlayer null: {0}\nServer null: {1}\nConnected: {2}\n```\n\n", player == null, (player == null || player.getServer() == null), (player != null && player.isConnected()));
             }
+        } else {
+            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
         }
     }
 
@@ -44,22 +59,60 @@ public final class DataSender {
     public static void send(final ServerInfo server, final MessageData data) {
         if (!key.replaceAll("\\s", "").isEmpty()) {
             try {
-                server.sendData(data.getChannel(), data.getData().toByteArray());
+                if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+                    server.sendData(data.getChannel(), data.getData().toByteArray());
             } catch (Throwable e) {
                 logger.scheduleLog(Level.GRAVE, e);
                 logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
             }
+        } else {
+            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
         }
     }
 
     /**
-     * Validate the server token
+     * Send a plugin message to the server
      *
-     * @param token the password token
-     * @return if the token is valid
+     * @param channel the channel name
+     * @param data the data to send
      */
-    public static boolean validate(final String token) {
-        return CryptoUtil.getBuilder().withPassword(key).withToken(token).build().validate();
+    public static void sendModule(final String channel, final byte[] data) {
+        if (!key.replaceAll("\\s", "").isEmpty()) {
+            try {
+                Set<String> server_sents = new HashSet<>();
+
+                for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                    Server server = player.getServer();
+
+                    if (server != null) {
+                        ServerInfo info = server.getInfo();
+
+                        if (!server_sents.contains(info.getName().toLowerCase())) {
+                            server_sents.add(info.getName().toLowerCase());
+
+                            if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
+                                ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                                Proxy proxy = new Proxy();
+
+                                output.writeUTF(DataType.MODULE.name().toLowerCase());
+                                output.writeUTF(proxy.getProxyID().toString());
+                                output.writeUTF(key);
+                                output.writeUTF(channel);
+                                output.writeInt(data.length);
+                                output.write(data);
+
+                                server.sendData(PLUGIN_CHANNEL, output.toByteArray());
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable e) {
+                logger.scheduleLog(Level.GRAVE, e);
+                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
+            }
+        } else {
+            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        }
     }
 
     /**
@@ -84,63 +137,11 @@ public final class DataSender {
          *
          * @param data the data type to send
          */
-        MessageDataBuilder(final DataType data) throws IllegalArgumentException {
-            String sub;
+        MessageDataBuilder(final DataType data) {
+            Proxy proxy = new Proxy();
 
-            switch (data) {
-                case JOIN:
-                    sub = "join";
-                    break;
-                case QUIT:
-                    sub = "quit";
-                    break;
-                case VALIDATION:
-                    sub = "validate";
-                    break;
-                case CAPTCHA:
-                    sub = "captchalog";
-                    break;
-                case SESSION:
-                    sub = "login";
-                    break;
-                case PIN:
-                    sub = "pin";
-                    break;
-                case GAUTH:
-                    sub = "2fa";
-                    break;
-                case CLOSE:
-                    sub = "unlogin";
-                    break;
-                case EFFECTS:
-                    sub = "effects";
-                    break;
-                case INVALIDATION:
-                    sub = "invalidation";
-                    break;
-                case MESSAGES:
-                    sub = "messages";
-                    break;
-                case CONFIG:
-                    sub = "configuration";
-                    break;
-                case LOGGED:
-                    sub = "logged_amount";
-                    break;
-                case REGISTERED:
-                    sub = "register_amount";
-                    break;
-                case INFOGUI:
-                    sub = "info";
-                    break;
-                case LOOKUPGUI:
-                    sub = "lookup";
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown data type: " + data.name());
-            }
-
-            output.writeUTF(sub);
+            output.writeUTF(data.name().toLowerCase());
+            output.writeUTF(proxy.getProxyID().toString());
             output.writeUTF(key);
         }
 

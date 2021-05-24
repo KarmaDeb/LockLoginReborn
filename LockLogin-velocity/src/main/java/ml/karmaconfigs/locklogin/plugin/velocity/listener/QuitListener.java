@@ -6,11 +6,12 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserQuitEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserQuitEvent;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 
 import java.net.InetSocketAddress;
@@ -39,6 +40,9 @@ public final class QuitListener {
             InetSocketAddress ip = player.getRemoteAddress();
             User user = new User(player);
 
+            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            keeper.store();
+
             if (ip != null) {
                 IpData data = new IpData(ip.getAddress());
                 data.delClone();
@@ -61,6 +65,9 @@ public final class QuitListener {
         if (!player.isActive()) {
             InetSocketAddress ip = player.getRemoteAddress();
             User user = new User(player);
+
+            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            keeper.store();
 
             if (ip != null) {
                 IpData data = new IpData(ip.getAddress());

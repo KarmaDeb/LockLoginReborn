@@ -95,7 +95,7 @@ public final class CryptoUtil {
                         return sha512.hash(password);
                     }
                 case SHA256:
-                    SHA256 sha256 = new SHA256(password, false);
+                    SHA256 sha256 = new SHA256(password);
                     if (encrypt) {
                         return Base64.encodeBase64String(sha256.hash().getBytes(StandardCharsets.UTF_8));
                     } else {
@@ -133,9 +133,9 @@ public final class CryptoUtil {
      */
     public final HashType getTokenHash() {
         if (!token.replaceAll("\\s", "").isEmpty()) {
-            try {
-                String clean = fromBase64(CryptTarget.TOKEN);
+            String clean = fromBase64(CryptTarget.TOKEN);
 
+            try {
                 String[] data = clean.split("\\$");
 
                 String type = data[1];
@@ -177,7 +177,11 @@ public final class CryptoUtil {
                         }
                 }
             } catch (Throwable ex) {
-                return HashType.UNKNOWN;
+                if (clean.getBytes().length == 64) {
+                    return HashType.SHA256;
+                } else {
+                    return HashType.UNKNOWN;
+                }
             }
         }
 
@@ -195,7 +199,8 @@ public final class CryptoUtil {
             String token_salt = clean.split("\\$")[1];
             if (token_salt.length() <= 1)
                 return true;
-        } catch (Throwable ignored) {
+        } catch (Throwable ex) {
+            return true;
         }
 
         HashType token_crypto = getTokenHash();
@@ -226,7 +231,8 @@ public final class CryptoUtil {
             case SHA512:
                 return sha512.auth(password, key);
             case SHA256:
-                return SHA256.check(password, key);
+                SHA256 sha256 = new SHA256(password);
+                return sha256.check(key);
             case BCrypt:
             case BCryptPHP:
                 return BCryptLib.checkpw(password, key.replaceFirst("2y", "2a"));

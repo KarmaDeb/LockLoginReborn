@@ -6,6 +6,7 @@ import ml.karmaconfigs.api.bungee.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bungee.Main;
@@ -15,34 +16,50 @@ import ml.karmaconfigs.locklogin.plugin.bungee.listener.JoinListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.listener.MessageListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.listener.QuitListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.player.SessionCheck;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
+import ml.karmaconfigs.locklogin.plugin.common.session.Session;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.filter.ConsoleFilter;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.filter.PluginFilter;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.player.Session;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
-import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionDownloader;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Listener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.simple.SimpleLogger;
+import org.bstats.bungeecord.Metrics;
+import org.bstats.charts.SimplePie;
 import org.reflections.Reflections;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.*;
+import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 public final class Manager {
 
@@ -92,6 +109,7 @@ public final class Manager {
 
         plugin.getProxy().registerChannel(DataSender.CHANNEL_PLAYER);
         plugin.getProxy().registerChannel(DataSender.PLUGIN_CHANNEL);
+        plugin.getProxy().registerChannel(DataSender.ACCESS_CHANNEL);
 
         AccountManager manager = CurrentPlatform.getAccountManager(null);
         if (manager != null) {
@@ -127,6 +145,15 @@ public final class Manager {
                 }
             });
         }
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.getUpdaterOptions().isEnabled()) {
+            scheduleVersionCheck();
+        } else {
+            performVersionCheck();
+        }
+        scheduleAlertSystem();
+        initPlayers();
     }
 
     public static void terminate() {
@@ -158,6 +185,13 @@ public final class Manager {
         Console.send("&eversion:&6 {0}", versionID);
         Console.send(" ");
         Console.send("&e-----------------------");
+
+        ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
+
+        for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+            User user = new User(player);
+            user.kick("&eLockLogin\n\n&cPlugin shutting down");
+        }
     }
 
     /**
@@ -202,15 +236,14 @@ public final class Manager {
             try {
                 ConsoleFilter filter = new ConsoleFilter(registered);
 
-                Logger coreLogger = (Logger) LogManager.getRootLogger();
-                coreLogger.addFilter(filter);
+                SimpleLogger coreLogger = (SimpleLogger) LogManager.getRootLogger();
+                coreLogger.fatal("Please do not report commands are being shown in BungeeCord console, BungeeCord logger shouldn't show player commands");
             } catch (Throwable ex) {
                 logger.scheduleLog(Level.GRAVE, ex);
                 logger.scheduleLog(Level.INFO, "Failed to register console filter");
 
                 Console.send(plugin, properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
                 Console.send(plugin, properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
-
             }
         }
     }
@@ -222,16 +255,25 @@ public final class Manager {
         Set<String> failed = new LinkedHashSet<>();
 
         File cfg = new File(plugin.getDataFolder(), "config.yml");
+        File proxy = new File(plugin.getDataFolder(), "proxy.yml");
 
         FileCopy config_copy = new FileCopy(plugin, "cfg/config.yml");
+        FileCopy proxy_copy = new FileCopy(plugin, "cfg/proxy.yml");
         try {
             config_copy.copy(cfg);
         } catch (Throwable ex) {
             failed.add("config.yml");
         }
+        try {
+            proxy_copy.copy(proxy);
+        } catch (Throwable ex) {
+            failed.add("proxy.yml");
+        }
 
         Config config = new Config();
+        ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy_cfg = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
         CurrentPlatform.setConfigManager(config);
+        CurrentPlatform.setProxyManager(proxy_cfg);
 
         String country = config.getLang().country(config.getLangName());
         File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
@@ -274,6 +316,22 @@ public final class Manager {
         }
 
         Config.manager.checkValues();
+    }
+
+    /**
+     * Register plugin metrics
+     */
+    protected static void registerMetrics() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        Metrics metrics = new Metrics(plugin, 6512);
+
+        metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
+        metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
+                .replace("true", "Clear chat")
+                .replace("false", "Don't clear chat")));
+        metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
+                .replace("true", "Sessions enabled")
+                .replace("false", "Sessions disabled")));
     }
 
     /**
@@ -342,8 +400,11 @@ public final class Manager {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, config.getUpdaterOptions().getInterval(), true).setAsync(true).addActionOnEnd(Manager::performVersionCheck);
-        if (config.getUpdaterOptions().isEnabled())
+        if (config.getUpdaterOptions().isEnabled()) {
             timer.start();
+        } else {
+            performVersionCheck();
+        }
 
         updater_id = timer.getTimerId();
 
@@ -364,6 +425,109 @@ public final class Manager {
 
         alert_id = timer.getTimerId();
 
+    }
+
+    /**
+     * Initialize already connected players
+     *
+     * This is util after plugin updates or
+     * plugin load using third-party loaders
+     */
+    protected static void initPlayers() {
+        plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            Message messages = new Message();
+
+            for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                    InetSocketAddress ip = getSocketIp(player.getSocketAddress());
+                    User user = new User(player);
+                    if (ip != null) {
+                        IpData data = new IpData(ip.getAddress());
+                        int amount = data.getClonesAmount();
+
+                        if (amount + 1 == config.accountsPerIP()) {
+                            user.kick(messages.maxIP());
+                            return;
+                        }
+
+                        data.addClone();
+                    }
+
+                    Server server = player.getServer();
+                    if (server != null) {
+                        ServerInfo info = server.getInfo();
+                        ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
+
+                        if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                            if (ServerDataStorager.needsRegister(info.getName()))
+                                DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
+
+                            if (ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
+                            }
+                        }
+                    }
+
+                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+
+                    DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+                    DataSender.send(player, validation);
+
+                    Proxy proxy = new Proxy(ip);
+                    if (proxy.isProxy()) {
+                        user.kick(messages.ipProxyError());
+                        return;
+                    }
+
+                    user.applySessionEffects();
+
+                    if (config.clearChat()) {
+                        for (int i = 0; i < 150; i++)
+                            plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                    }
+
+                    ClientSession session = user.getSession();
+                    session.validate();
+
+                    if (!config.captchaOptions().isEnabled())
+                        session.setCaptchaLogged(true);
+
+                    AdvancedPluginTimer tmp_timer = null;
+                    if (!session.isCaptchaLogged()) {
+                        tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
+                        tmp_timer.addAction(() -> {
+                            player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))));
+                        }).start();
+                    }
+
+                    MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+                            .addBoolData(session.isLogged())
+                            .addBoolData(session.is2FALogged())
+                            .addBoolData(session.isPinLogged())
+                            .addBoolData(user.isRegistered()).build();
+                    DataSender.send(player, join);
+
+                    AdvancedPluginTimer timer = tmp_timer;
+                    SessionCheck check = new SessionCheck(player, target -> {
+                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+                        if (timer != null)
+                            timer.setCancelled();
+                    }, target -> {
+                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+                        if (timer != null)
+                            timer.setCancelled();
+                    });
+
+                    plugin.getProxy().getScheduler().runAsync(plugin, check);
+
+                    user.checkServer();
+                }, 2, TimeUnit.SECONDS);
+            }
+        });
     }
 
     /**

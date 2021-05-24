@@ -2,8 +2,8 @@ package ml.karmaconfigs.locklogin.api.modules;
 
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import org.apache.commons.lang.Validate;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;

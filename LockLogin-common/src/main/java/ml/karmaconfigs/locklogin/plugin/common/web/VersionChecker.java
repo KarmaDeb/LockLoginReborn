@@ -63,23 +63,21 @@ public final class VersionChecker {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
                 String word;
                 List<String> lines = new ArrayList<>();
-                while ((word = reader.readLine()) != null)
+                while ((word = reader.readLine()) != null) {
                     lines.add((word.replaceAll("\\s", "").isEmpty() ? "&f" : word));
+                }
 
                 reader.close();
                 StringBuilder changelog_builder = new StringBuilder();
                 for (int i = 1; i < lines.size(); i++) {
                     String line = lines.get(i);
-                    changelog_builder.append(line
-                            .replace("[", "{open}")
-                            .replace("]", "{close}")
-                            .replace(",", "{comma}")
-                            .replace("_", "&")).append("\n");
+                    changelog_builder.append(line.replace("_", "&")).append("\n");
                 }
 
                 latest_changelog = StringUtils.replaceLast(changelog_builder.toString(), "\n", "");
                 latest_version = StringUtils.stripColor(lines.get(0));
-            } catch (Throwable ignored) {
+            } catch (Throwable ex) {
+                ex.printStackTrace();
             }
         }
     }
@@ -93,7 +91,7 @@ public final class VersionChecker {
         if (latest_version.replaceAll("\\s", "").isEmpty())
             return false;
 
-        return latest_version.equals(current_version);
+        return !latest_version.equals(current_version);
     }
 
     /**

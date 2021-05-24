@@ -20,13 +20,16 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.SessionCheck;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
+import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
@@ -149,7 +152,7 @@ public class AccountCommand implements CommandExecutor {
                                         user.setTempSpectator(true);
 
                                     ClientVisor visor = new ClientVisor(player);
-                                    visor.hide();
+                                    visor.vanish();
 
                                     user.send(messages.prefix() + messages.closed());
                                     SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
@@ -279,6 +282,19 @@ public class AccountCommand implements CommandExecutor {
                                 user.send(messages.prefix() + messages.permissionError(altInfo()));
                             }
                             break;
+                        case "session":
+                            if (config.enableSessions()) {
+                                AccountManager manager = user.getManager();
+                                PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
+                                if (persistent.toggleSession()) {
+                                    user.send(messages.prefix() + messages.sessionEnabled());
+                                } else {
+                                    user.send(messages.prefix() + messages.sessionDisabled());
+                                }
+                            } else {
+                                user.send(messages.prefix() + messages.sessionServerDisabled());
+                            }
+                            break;
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;
@@ -288,7 +304,98 @@ public class AccountCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            if (args.length == 0) {
+                Console.send(messages.prefix() + messages.accountArguments());
+            } else {
+                String tar_name;
+                OfflineClient offline;
+                AccountManager manager;
+
+                switch (args[0].toLowerCase()) {
+                    case "unlock":
+                        tar_name = args[0];
+                        offline = new OfflineClient(tar_name);
+
+                        manager = offline.getAccount();
+                        if (manager != null) {
+                            LockedAccount account = new LockedAccount(manager.getUUID());
+                            LockedData data = account.getData();
+
+                            if (data.isLocked()) {
+                                if (account.unlock()) {
+                                    Console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                } else {
+                                    Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                    logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                }
+                            } else {
+                                Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                        }
+                        break;
+                    case "close":
+                        if (args.length == 2) {
+                            tar_name = args[1];
+                            Player tar_p = plugin.getServer().getPlayer(tar_name);
+
+                            if (tar_p != null && tar_p.isOnline()) {
+                                User target = new User(tar_p);
+                                ClientSession session = target.getSession();
+
+                                if (session.isValid() && session.isLogged() && session.isTempLogged()) {
+                                    target.send(messages.prefix() + messages.forcedClose());
+                                    tar_p.performCommand("account close");
+                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
+
+                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                } else {
+                                    Console.send(messages.prefix() + messages.targetAccessError(tar_name));
+                                }
+                            } else {
+                                Console.send(messages.prefix() + messages.connectionError(tar_name));
+                            }
+                            break;
+                        } else {
+                            Console.send(messages.prefix() + messages.close());
+                        }
+                        break;
+                    case "remove":
+                        if (args.length == 2) {
+                            String target = args[1];
+                            Player online = plugin.getServer().getPlayer(target);
+                            offline = new OfflineClient(target);
+
+                            manager = offline.getAccount();
+                            if (manager != null) {
+                                LockedAccount account = new LockedAccount(manager.getUUID());
+
+                                manager.set2FA(false);
+                                manager.setGAuth(null);
+                                manager.setPassword(null);
+                                manager.setPin(null);
+
+                                Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+
+                                if (online != null) {
+                                    User onlineUser = new User(online);
+                                    onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
+                                }
+
+                                account.lock(StringUtils.stripColor("{ServerName}"));
+                                SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
+                            } else {
+                                Console.send(messages.prefix() + messages.neverPlayer(target));
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.remove());
+                        }
+                        break;
+                    default:
+                        Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                }
+            }
         }
 
         return false;

@@ -1,0 +1,5 @@
+#In case you have bungeecord enabled, but
+#LockLogin is not able to recognize that.
+#Use this configuration file
+settings:
+  bungeecord: false

@@ -85,19 +85,6 @@ permissions:
         default: false
     description: The permission required to apply LockLogin update
     default: false
-  locklogin.migrate:
-    children:
-      locklogin.migrate.external:
-        description: The permission required to perform/request module migrations
-        default: false
-      locklogin.migrate.authme:
-        description: The permission required to perform/request authme migrations
-        default: false
-      locklogin.migrate.loginsecurity:
-        description: The permission required to perform/request loginsecurity migrations
-        default: false
-    description: The permission required to perform/request migrations
-    default: false
   locklogin.setspawn:
     description: The permission required to set the login spawn location
     default: op
@@ -137,3 +124,29 @@ permissions:
   locklogin.alias:
     description: The permission to create/destroy or manage aliases
     default: false
+  locklogin.module:
+    children:
+      locklogin.module.load:
+        description: The permission to load a module
+        default: false
+      locklogin.module.unload:
+        description: The permission to unload a module
+        default: false
+      locklogin.module.list:
+        description: The permission to list all the modules
+        default: false
+    description: The permission to manage LockLogin modules
+    default: false
+  locklogin.updater:
+    children:
+      locklogin.updater.version:
+        description: The permission to retrieve current plugin version and latest plugin version
+        default: op
+      locklogin.updater.changelog:
+        description: The permission to retrieve the latest plugin changelog
+        default: op
+      locklogin.updater.check:
+        description: The permission to force a version check
+        default: op
+    description: The permission to manage LockLogin updater
+    default: op

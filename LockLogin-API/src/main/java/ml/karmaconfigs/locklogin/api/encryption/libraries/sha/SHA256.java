@@ -1,38 +1,64 @@
 package ml.karmaconfigs.locklogin.api.encryption.libraries.sha;
 
 import com.google.common.hash.Hashing;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 
 public class SHA256 {
 
     private final Object password;
-    private final boolean isHashed;
 
     /**
      * Initialize the codification
      *
      * @param value  the value to codify
-     * @param hashed is the value hashed?
      */
-    public SHA256(Object value, boolean hashed) {
+    public SHA256(final Object value) {
         this.password = value;
-        this.isHashed = hashed;
     }
 
     /**
      * Check if the specified password
      * is correct
      *
-     * @param password the password
-     * @param value    the value to check
+     * @param token the provided token password
      * @return a boolean
      */
-    public static boolean check(Object password, Object value) {
-        String pass = new SHA256(password, true).hash();
-        String check = new SHA256(value, false).hash();
+    public final boolean check(final String token) {
+        try {
+            String[] data = token.split("\\$");
+            String salt = data[2];
 
-        return pass.equals(check);
+            String generated = hash();
+            String generated_salt = generated.split("\\$")[2];
+            generated = generated.replaceFirst(generated_salt, salt);
+
+            return generated.equals(token);
+        } catch (Throwable ex) {
+            //Add compatibility with old SHA256 generation
+
+            String old_token = token;
+            if (token.contains("\\$")) {
+                String[] data = token.split("\\$");
+
+                int max = data.length - 1;
+
+                StringBuilder removeFrom = new StringBuilder();
+                for (int i = 0; i < max; i++) {
+                    removeFrom.append("$").append(data[i]);
+                }
+
+                old_token = token.replace(removeFrom.toString(), "");
+            }
+
+            String hashed = hash();
+            String salt = hashed.split("\\$")[2];
+
+            hashed = hashed.replaceFirst("\\$SHA256\\$" + salt + "\\$", "");
+
+            return old_token.equals(hashed);
+        }
     }
 
     /**
@@ -42,9 +68,8 @@ public class SHA256 {
      */
     @SuppressWarnings("all")
     public final String hash() {
-        if (!isHashed)
-            return Hashing.sha256().hashString(password.toString(), StandardCharsets.UTF_8).toString();
-        ;
-        return password.toString();
+        String random_salt = StringUtils.randomString(64, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER);
+
+        return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password.toString(), StandardCharsets.UTF_8).toString();
     }
 }

@@ -8,15 +8,15 @@ import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.ScratchCodes;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
@@ -211,7 +211,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("only_console_google", "&5&oThe console can't have 2FA enabled!"));
+            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 }

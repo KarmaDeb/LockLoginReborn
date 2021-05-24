@@ -3,6 +3,7 @@ package ml.karmaconfigs.locklogin.api.utils.platform;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.files.ProxyConfiguration;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
@@ -23,6 +24,7 @@ public final class CurrentPlatform {
     private static Class<? extends ClientSession> sessionManager;
 
     private static PluginConfiguration current_config;
+    private static ProxyConfiguration current_proxy;
 
     private static boolean online;
 
@@ -52,6 +54,15 @@ public final class CurrentPlatform {
      */
     public static void setConfigManager(final PluginConfiguration configuration) {
         current_config = configuration;
+    }
+
+    /**
+     * Set the current proxy configuration manager
+     *
+     * @param proxy the current proxy configuration manager
+     */
+    public static void setProxyManager(final ProxyConfiguration proxy) {
+        current_proxy = proxy;
     }
 
     /**
@@ -190,6 +201,15 @@ public final class CurrentPlatform {
      */
     public static PluginConfiguration getConfiguration() {
         return current_config;
+    }
+
+    /**
+     * Get the current proxy configuration manager
+     *
+     * @return the current proxy configuration manager
+     */
+    public static ProxyConfiguration getProxyConfiguration() {
+        return current_proxy;
     }
 
     /**

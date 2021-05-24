@@ -250,6 +250,7 @@ public final class LastLocation {
         file.set("PITCH", "");
         file.set("YAW", "");
         file.set("WORLD", "");
+        file.set("FALLING", "");
     }
 
     /**
@@ -292,8 +293,7 @@ public final class LastLocation {
                     //Unset the last location
                     remove();
                 }
-            } catch (Throwable ignored) {
-            }
+            } catch (Throwable ignored) {}
         }
     }
 }

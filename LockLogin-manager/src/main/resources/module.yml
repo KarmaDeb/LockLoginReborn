@@ -6,3 +6,4 @@ description:
 author: KarmaDev
 update_url: ""
 loader_bukkit: ml.karmaconfigs.locklogin.manager.bukkit.Main
+loader_bungee: ml.karmaconfigs.locklogin.manager.bungee.Main

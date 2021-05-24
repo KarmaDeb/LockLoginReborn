@@ -13,12 +13,13 @@ import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
+import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedData;
@@ -145,9 +146,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                     AdvancedPluginTimer tmp_timer = null;
                                     if (!session.isCaptchaLogged()) {
                                         tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
-                                        tmp_timer.addAction(() -> {
-                                            player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build());
-                                        }).start();
+                                        tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                                     }
 
                                     AdvancedPluginTimer timer = tmp_timer;
@@ -177,7 +176,7 @@ public class AccountCommand extends BungeeLikeCommand {
 
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
-                                                user.performCommand("/account close");
+                                                target.performCommand("account close");
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
 
                                                 SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
@@ -271,9 +270,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                             AdvancedPluginTimer tmp_timer = null;
                                             if (!session.isCaptchaLogged()) {
                                                 tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
-                                                tmp_timer.addAction(() -> {
-                                                    player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build());
-                                                }).start();
+                                                tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                                             }
 
                                             AdvancedPluginTimer timer = tmp_timer;
@@ -334,6 +331,19 @@ public class AccountCommand extends BungeeLikeCommand {
                                 user.send(messages.prefix() + messages.permissionError(altInfo()));
                             }
                             break;
+                        case "session":
+                            if (config.enableSessions()) {
+                                AccountManager manager = user.getManager();
+                                PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
+                                if (persistent.toggleSession()) {
+                                    user.send(messages.prefix() + messages.sessionEnabled());
+                                } else {
+                                    user.send(messages.prefix() + messages.sessionDisabled());
+                                }
+                            } else {
+                                user.send(messages.prefix() + messages.sessionServerDisabled());
+                            }
+                            break;
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;
@@ -343,7 +353,101 @@ public class AccountCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            if (args.length == 0) {
+                Console.send(messages.prefix() + messages.accountArguments());
+            } else {
+                String tar_name;
+                OfflineClient offline;
+                AccountManager manager;
+
+                switch (args[0].toLowerCase()) {
+                    case "unlock":
+                        tar_name = args[0];
+                        offline = new OfflineClient(tar_name);
+
+                        manager = offline.getAccount();
+                        if (manager != null) {
+                            LockedAccount account = new LockedAccount(manager.getUUID());
+                            LockedData data = account.getData();
+
+                            if (data.isLocked()) {
+                                if (account.unlock()) {
+                                    Console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                } else {
+                                    Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                    logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                }
+                            } else {
+                                Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                        }
+                        break;
+                    case "close":
+                        if (args.length == 2) {
+                            tar_name = args[1];
+                            Optional<Player> tar_p = server.getPlayer(tar_name);
+
+                            if (tar_p.isPresent() && tar_p.get().isActive()) {
+                                User target = new User(tar_p.get());
+                                ClientSession session = target.getSession();
+
+                                if (session.isValid() && session.isLogged() && session.isTempLogged()) {
+                                    target.send(messages.prefix() + messages.forcedClose());
+                                    target.performCommand("account close");
+                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
+
+                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                } else {
+                                    Console.send(messages.prefix() + messages.targetAccessError(tar_name));
+                                }
+                            } else {
+                                Console.send(messages.prefix() + messages.connectionError(tar_name));
+                            }
+                            break;
+                        } else {
+                            Console.send(messages.prefix() + messages.close());
+                        }
+                        break;
+                    case "remove":
+                        if (args.length == 2) {
+                            String target = args[1];
+                            Optional<Player> online = server.getPlayer(target);
+                            offline = new OfflineClient(target);
+
+                            manager = offline.getAccount();
+                            if (manager != null) {
+                                LockedAccount account = new LockedAccount(manager.getUUID());
+
+                                manager.set2FA(false);
+                                manager.setGAuth(null);
+                                manager.setPassword(null);
+                                manager.setPin(null);
+
+                                Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+
+                                if (online.isPresent()) {
+                                    DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER).build());
+                                    User onlineUser = new User(online.get());
+
+                                    onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
+                                }
+
+                                account.lock(StringUtils.stripColor("{ServerName}"));
+
+                                SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
+                            } else {
+                                Console.send(messages.prefix() + messages.neverPlayer(target));
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.remove());
+                        }
+                        break;
+                    default:
+                        Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                }
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ package ml.karmaconfigs.locklogin.plugin.bungee.util.files;
 import ml.karmaconfigs.api.bungee.karmayaml.FileCopy;
 import ml.karmaconfigs.api.bungee.karmayaml.YamlManager;
 import ml.karmaconfigs.api.bungee.karmayaml.YamlReloader;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.files.ProxyConfiguration;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -46,7 +47,7 @@ public final class Proxy extends ProxyConfiguration {
      * @return if the server has multiple bungeecord instances
      */
     @Override
-    public boolean multiBungee() {
+    public final boolean multiBungee() {
         return cfg.getBoolean("Options.MultiBungee", false);
     }
 
@@ -57,8 +58,24 @@ public final class Proxy extends ProxyConfiguration {
      * @return if the servers are enabled
      */
     @Override
-    public boolean sendToServers() {
+    public final boolean sendToServers() {
         return cfg.getBoolean("Options.SendToServers", true);
+    }
+
+    /**
+     * Get the proxy key used to register this
+     * proxy instance
+     *
+     * @return the proxy key
+     */
+    @Override
+    public String proxyKey() {
+        String key = cfg.getString("ProxyKey", "");
+        if (StringUtils.isNullOrEmpty(key)) {
+            key = StringUtils.randomString(32, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+        }
+
+        return key;
     }
 
     /**
@@ -67,11 +84,11 @@ public final class Proxy extends ProxyConfiguration {
      * @return the proxy server ID
      */
     @Override
-    public UUID getProxyID() {
+    public final UUID getProxyID() {
         UUID uuid = UUID.randomUUID();
 
         if (cfg.getString("ID", "").replaceAll("\\s", "").isEmpty()) {
-            cfg.set("ID", uuid);
+            cfg.set("ID", uuid.toString());
             try {
                 YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
             } catch (Throwable ignored) {}
@@ -79,7 +96,7 @@ public final class Proxy extends ProxyConfiguration {
             try {
                 uuid = UUID.fromString(cfg.getString("ID", ""));
             } catch (Throwable ex) {
-                cfg.set("ID", uuid);
+                cfg.set("ID", uuid.toString());
                 try {
                     YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
                 } catch (Throwable ignored) {}
@@ -92,24 +109,40 @@ public final class Proxy extends ProxyConfiguration {
     /**
      * Get all the lobby servers
      *
+     * @param <T> the server type
+     * @param instance the server class instance
      * @return all the available lobby servers
      */
     @Override
-    public Iterator<Object> lobbyServers() {
+    public final <T> Iterator<T> lobbyServers(final Class<T> instance) {
         List<String> lobbies = cfg.getStringList("Servers.Lobby");
-        Set<Object> servers = new LinkedHashSet<>();
+        Set<T> servers = new LinkedHashSet<>();
+        if (lobbies.contains("*")) {
+            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+            for (ServerInfo info : infos) {
+                if (isAssignable(instance, info)) {
+                    servers.add(instance.cast(info));
+                }
+            }
+        } else {
+            if (!lobbies.isEmpty() && arrayValid(lobbies)) {
+                for (String name : lobbies) {
+                    if (!name.replaceAll("\\s", "").isEmpty()) {
+                        ServerInfo server = plugin.getProxy().getServerInfo(name);
+                        if (server != null) {
+                            AtomicBoolean online = new AtomicBoolean(false);
+                            server.ping((result, error) -> {
+                                if (error != null)
+                                    online.set(true);
+                            });
 
-        for (String name : lobbies) {
-            ServerInfo server = plugin.getProxy().getServerInfo(name);
-            if (server != null) {
-                AtomicBoolean online = new AtomicBoolean(false);
-                server.ping((result, error) -> {
-                    if (error != null)
-                        online.set(true);
-                });
-
-                if (online.get()) {
-                    servers.add(server);
+                            if (online.get()) {
+                                if (isAssignable(instance, server)) {
+                                    servers.add(instance.cast(server));
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -120,24 +153,42 @@ public final class Proxy extends ProxyConfiguration {
     /**
      * Get all the auth servers
      *
+     * @param <T> the server type
+     * @param instance the server class instance
      * @return all the available auth servers
      */
     @Override
-    public Iterator<Object> authServer() {
+    public final <T> Iterator<T> authServer(final Class<T> instance) {
         List<String> auths = cfg.getStringList("Servers.Auth");
-        Set<Object> servers = new LinkedHashSet<>();
+        Set<T> servers = new LinkedHashSet<>();
+        if (auths.contains("*")) {
+            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+            for (ServerInfo info : infos) {
+                if (isAssignable(instance, info)) {
+                    servers.add(instance.cast(info));
+                }
+            }
+        } else {
+            servers = new LinkedHashSet<>();
 
-        for (String name : auths) {
-            ServerInfo server = plugin.getProxy().getServerInfo(name);
-            if (server != null) {
-                AtomicBoolean online = new AtomicBoolean(false);
-                server.ping((result, error) -> {
-                    if (error != null)
-                        online.set(true);
-                });
+            if (!auths.isEmpty() && arrayValid(auths)) {
+                for (String name : auths) {
+                    if (!name.replaceAll("\\s", "").isEmpty()) {
+                        ServerInfo server = plugin.getProxy().getServerInfo(name);
+                        if (server != null) {
+                            AtomicBoolean online = new AtomicBoolean(false);
+                            server.ping((result, error) -> {
+                                if (error != null)
+                                    online.set(true);
+                            });
 
-                if (online.get()) {
-                    servers.add(server);
+                            if (online.get()) {
+                                if (isAssignable(instance, server)) {
+                                    servers.add(instance.cast(server));
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -153,12 +204,80 @@ public final class Proxy extends ProxyConfiguration {
      */
     public static boolean inAuth(final ProxiedPlayer player) {
         List<String> auths = cfg.getStringList("Servers.Auth");
-        for (String str : auths) {
-            if (player.getServer().getInfo().getName().equalsIgnoreCase(str))
-                return true;
+        if (arrayValid(auths)) {
+            for (String str : auths) {
+                if (player.getServer().getInfo().getName().equalsIgnoreCase(str))
+                    return true;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get if the lobby servers are valid
+     *
+     * @return if the lobby servers are valid
+     */
+    public static boolean lobbiesValid() {
+        List<String> lobbies = cfg.getStringList("Servers.Lobby");
+        return arrayValid(lobbies);
+    }
+
+    /**
+     * Get if the auth servers are valid
+     *
+     * @return if the auth servers are valid
+     */
+    public static boolean authsValid() {
+        List<String> auths = cfg.getStringList("Servers.Auth");
+        return arrayValid(auths);
+    }
+
+    /**
+     * Get if the specified array is valid or not
+     *
+     * @param array the array
+     * @return if the array is valid
+     */
+    private static boolean arrayValid(final List<String> array) {
+        if (!array.isEmpty()) {
+            for (String val : array) {
+                if (!StringUtils.isNullOrEmpty(val))
+                    return true;
+            }
         }
 
         return false;
+    }
+
+    /**
+     * Get if the instance is assignable from
+     * the specified item
+     *
+     * @param instance the instance
+     * @param item the item to check
+     * @return if the item is an instance of the instance
+     */
+    private static boolean isAssignable(final Object instance, final Object item) {
+        if (instance instanceof Class) {
+            Class<?> clazz = (Class<?>) instance;
+            if (item instanceof Class) {
+                Class<?> itemClass = (Class<?>) item;
+                return clazz.isAssignableFrom(itemClass);
+            } else {
+                return clazz.isAssignableFrom(item.getClass());
+            }
+        } else {
+            if (item instanceof Class) {
+                Class<?> itemClass = (Class<?>) item;
+                return instance.getClass().isAssignableFrom(itemClass);
+            } else {
+                return instance.getClass().isAssignableFrom(item.getClass());
+            }
+        }
     }
 
     /**

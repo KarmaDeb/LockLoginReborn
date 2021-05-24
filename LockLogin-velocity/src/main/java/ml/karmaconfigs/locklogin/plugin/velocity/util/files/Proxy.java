@@ -3,9 +3,9 @@ package ml.karmaconfigs.locklogin.plugin.velocity.util.files;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 import ml.karmaconfigs.api.bungee.Configuration;
 import ml.karmaconfigs.api.bungee.YamlConfiguration;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.Util;
 import ml.karmaconfigs.api.velocity.karmayaml.FileCopy;
 import ml.karmaconfigs.api.velocity.karmayaml.YamlManager;
@@ -15,9 +15,9 @@ import ml.karmaconfigs.locklogin.plugin.velocity.LockLogin;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.server;
 
 public final class Proxy extends ProxyConfiguration {
 
@@ -52,7 +52,7 @@ public final class Proxy extends ProxyConfiguration {
      * @return if the server has multiple bungeecord instances
      */
     @Override
-    public boolean multiBungee() {
+    public final boolean multiBungee() {
         return cfg.getBoolean("Options.MultiBungee", false);
     }
 
@@ -63,8 +63,24 @@ public final class Proxy extends ProxyConfiguration {
      * @return if the servers are enabled
      */
     @Override
-    public boolean sendToServers() {
+    public final boolean sendToServers() {
         return cfg.getBoolean("Options.SendToServers", true);
+    }
+
+    /**
+     * Get the proxy key used to register this
+     * proxy instance
+     *
+     * @return the proxy key
+     */
+    @Override
+    public final String proxyKey() {
+        String key = cfg.getString("ProxyKey", "");
+        if (StringUtils.isNullOrEmpty(key)) {
+            key = StringUtils.randomString(32, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+        }
+
+        return key;
     }
 
     /**
@@ -73,11 +89,11 @@ public final class Proxy extends ProxyConfiguration {
      * @return the proxy server ID
      */
     @Override
-    public UUID getProxyID() {
+    public final UUID getProxyID() {
         UUID uuid = UUID.randomUUID();
 
         if (cfg.getString("ID", "").replaceAll("\\s", "").isEmpty()) {
-            cfg.set("ID", uuid);
+            cfg.set("ID", uuid.toString());
             try {
                 YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
             } catch (Throwable ignored) {}
@@ -85,7 +101,7 @@ public final class Proxy extends ProxyConfiguration {
             try {
                 uuid = UUID.fromString(cfg.getString("ID", ""));
             } catch (Throwable ex) {
-                cfg.set("ID", uuid);
+                cfg.set("ID", uuid.toString());
                 try {
                     YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
                 } catch (Throwable ignored) {}
@@ -101,15 +117,27 @@ public final class Proxy extends ProxyConfiguration {
      * @return all the available lobby servers
      */
     @Override
-    public Iterator<Object> lobbyServers() {
+    public final <T> Iterator<T> lobbyServers(final Class<T> instance) {
         List<String> lobbies = cfg.getStringList("Servers.Lobby");
-        Set<Object> servers = new LinkedHashSet<>();
-
-        for (String name : lobbies) {
-            Optional<RegisteredServer> tmp_server = LockLogin.server.getServer(name);
-            if (tmp_server.isPresent()) {
-                RegisteredServer server = tmp_server.get();
-                servers.add(server);
+        Set<T> servers = new LinkedHashSet<>();
+        if (lobbies.contains("*")) {
+            Collection<RegisteredServer> registered = server.getAllServers();
+            for (RegisteredServer server : registered) {
+                if (isAssignable(instance, server)) {
+                    servers.add(instance.cast(server));
+                }
+            }
+        } else {
+            if (!lobbies.isEmpty() && arrayValid(lobbies)) {
+                for (String name : lobbies) {
+                    if (!name.replaceAll("\\s", "").isEmpty()) {
+                        Optional<RegisteredServer> server = LockLogin.server.getServer(name);
+                        server.ifPresent(val -> {
+                            if (isAssignable(instance, server))
+                                servers.add(instance.cast(val));
+                        });
+                    }
+                }
             }
         }
 
@@ -122,15 +150,27 @@ public final class Proxy extends ProxyConfiguration {
      * @return all the available auth servers
      */
     @Override
-    public Iterator<Object> authServer() {
+    public final <T> Iterator<T> authServer(final Class<T> instance) {
         List<String> auths = cfg.getStringList("Servers.Auth");
-        Set<Object> servers = new LinkedHashSet<>();
-
-        for (String name : auths) {
-            Optional<RegisteredServer> tmp_server = LockLogin.server.getServer(name);
-            if (tmp_server.isPresent()) {
-                RegisteredServer server = tmp_server.get();
-                servers.add(server);
+        Set<T> servers = new LinkedHashSet<>();
+        if (auths.contains("*")) {
+            Collection<RegisteredServer> registered = server.getAllServers();
+            for (RegisteredServer server : registered) {
+                if (isAssignable(instance, server)) {
+                    servers.add(instance.cast(server));
+                }
+            }
+        } else {
+            if (!auths.isEmpty() && arrayValid(auths)) {
+                for (String name : auths) {
+                    if (!name.replaceAll("\\s", "").isEmpty()) {
+                        Optional<RegisteredServer> server = LockLogin.server.getServer(name);
+                        server.ifPresent(val -> {
+                            if (isAssignable(instance, server))
+                                servers.add(instance.cast(val));
+                        });
+                    }
+                }
             }
         }
 
@@ -159,6 +199,70 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
+     * Get if the lobby servers are valid
+     *
+     * @return if the lobby servers are valid
+     */
+    public static boolean lobbiesValid() {
+        List<String> lobbies = cfg.getStringList("Servers.Lobby");
+        return arrayValid(lobbies);
+    }
+
+    /**
+     * Get if the auth servers are valid
+     *
+     * @return if the auth servers are valid
+     */
+    public static boolean authsValid() {
+        List<String> auths = cfg.getStringList("Servers.Auth");
+        return arrayValid(auths);
+    }
+
+    /**
+     * Get if the specified array is valid or not
+     *
+     * @param array the array
+     * @return if the array is valid
+     */
+    private static boolean arrayValid(final List<String> array) {
+        if (!array.isEmpty()) {
+            for (String val : array) {
+                if (!StringUtils.isNullOrEmpty(val))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get if the instance is assignable from
+     * the specified item
+     *
+     * @param instance the instance
+     * @param item the item to check
+     * @return if the item is an instance of the instance
+     */
+    private static boolean isAssignable(final Object instance, final Object item) {
+        if (instance instanceof Class) {
+            Class<?> clazz = (Class<?>) instance;
+            if (item instanceof Class) {
+                Class<?> itemClass = (Class<?>) item;
+                return clazz.isAssignableFrom(itemClass);
+            } else {
+                return clazz.isAssignableFrom(item.getClass());
+            }
+        } else {
+            if (item instanceof Class) {
+                Class<?> itemClass = (Class<?>) item;
+                return instance.getClass().isAssignableFrom(itemClass);
+            } else {
+                return instance.getClass().isAssignableFrom(item.getClass());
+            }
+        }
+    }
+
+    /**
      * Get the proxy configuration manager
      */
     public interface manager {
@@ -183,4 +287,5 @@ public final class Proxy extends ProxyConfiguration {
             }
         }
     }
+
 }

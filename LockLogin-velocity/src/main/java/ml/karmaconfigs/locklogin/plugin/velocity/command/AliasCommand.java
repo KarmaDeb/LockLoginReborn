@@ -7,7 +7,7 @@ import ml.karmaconfigs.api.velocity.Console;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.plugin.common.utils.Alias;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.OfflineClient;
@@ -162,7 +162,113 @@ public final class AliasCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            if (args.length >= 2) {
+                String sub = args[0];
+
+                String name = args[1];
+                Alias alias = new Alias(name);
+                switch (sub.toLowerCase()) {
+                    case "create":
+                        if (!alias.exists()) {
+                            alias.create();
+                            Console.send(messages.prefix() + messages.aliasCreated(alias));
+                        } else {
+                            Console.send(messages.prefix() + messages.aliasExists(alias));
+                        }
+                        break;
+                    case "destroy":
+                        if (alias.exists()) {
+                            alias.destroy();
+                            Console.send(messages.prefix() + messages.aliasDestroyed(alias));
+                        } else {
+                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                        }
+                        break;
+                    case "add":
+                        if (alias.exists()) {
+                            if (args.length >= 3) {
+                                server.getScheduler().buildTask(plugin, () -> {
+                                    String[] names;
+                                    if (args.length == 3) {
+                                        names = new String[]{args[2]};
+                                    } else {
+                                        Set<String> set = new LinkedHashSet<>(Arrays.asList(args).subList(2, args.length));
+                                        names = set.toArray(new String[]{});
+                                    }
+
+                                    String invalid = extract(names);
+                                    if (!invalid.replaceAll("\\s", "").isEmpty())
+                                        Console.send(messages.prefix() + messages.neverPlayer(invalid));
+
+                                    Map<AccountID, String> accounts = parse(names);
+
+                                    Set<String> added = new LinkedHashSet<>(accounts.values());
+                                    Set<String> not_added = alias.addUsers(accounts);
+
+                                    if (!not_added.isEmpty()) {
+                                        added.removeAll(not_added);
+                                        Console.send(messages.prefix() + messages.playerAlreadyIn(alias, not_added.toArray(new String[]{})));
+                                    }
+                                    if (!added.isEmpty()) {
+                                        Console.send(messages.prefix() + messages.addedPlayer(alias, added.toArray(new String[]{})));
+                                    } else {
+                                        if (not_added.isEmpty())
+                                            Console.send(messages.prefix() + messages.addedPlayer(alias, "@nobody"));
+                                    }
+                                }).schedule();
+                            } else {
+                                Console.send(messages.prefix() + messages.alias());
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                        }
+                        break;
+                    case "remove":
+                        if (alias.exists()) {
+                            if (args.length >= 3) {
+                                server.getScheduler().buildTask(plugin, () -> {
+                                    String[] names;
+                                    if (args.length == 3) {
+                                        names = new String[]{args[2]};
+                                    } else {
+                                        Set<String> set = new LinkedHashSet<>(Arrays.asList(args).subList(2, args.length));
+                                        names = set.toArray(new String[]{});
+                                    }
+
+                                    String invalid = extract(names);
+                                    if (!invalid.replaceAll("\\s", "").isEmpty())
+                                        Console.send(messages.prefix() + messages.neverPlayer(invalid));
+
+                                    Map<AccountID, String> accounts = parse(names);
+
+                                    Set<String> removed = new LinkedHashSet<>(accounts.values());
+                                    Set<String> not_removed = alias.delUsers(accounts);
+
+                                    if (!not_removed.isEmpty()) {
+                                        removed.removeAll(not_removed);
+                                        Console.send(messages.prefix() + messages.playerNotIn(alias, not_removed.toArray(new String[]{})));
+                                    }
+                                    if (!removed.isEmpty()) {
+                                        Console.send(messages.prefix() + messages.removedPlayer(alias, removed.toArray(new String[]{})));
+                                    } else {
+                                        if (not_removed.isEmpty())
+                                            Console.send(messages.prefix() + messages.removedPlayer(alias, "@nobody"));
+                                    }
+                                }).schedule();
+                            } else {
+                                Console.send(messages.prefix() + messages.alias());
+                            }
+                        } else {
+                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                        }
+                        break;
+                    default:
+                        Console.send(messages.prefix() + messages.alias());
+                        break;
+                }
+            } else {
+                Console.send(messages.prefix() + messages.alias());
+            }
         }
     }
 

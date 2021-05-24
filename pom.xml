@@ -6,7 +6,7 @@
 
     <groupId>ml.karmaconfigs</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.11.1</version>
+    <version>1.11.8</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -47,12 +47,13 @@
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.properties.version>1.0.0</project.properties.version>
         <project.author>KarmaDev</project.author>
-        <project.buildType>RELEASE</project.buildType>
+        <project.buildType>SNAPSHOT</project.buildType>
         <project.debug>false</project.debug>
-        <project.unsafeUpdate>false</project.unsafeUpdate>
+        <project.unsafeUpdate>true</project.unsafeUpdate>
         <project.logSizeLimit>70</project.logSizeLimit>
-        <project.karmaapi>1.2.0</project.karmaapi>
+        <project.karmaapi>1.2.3</project.karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>
             LockLogin is an advanced login plugin, one of the most secure available,

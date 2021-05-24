@@ -9,12 +9,14 @@ import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPostJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPostJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPreJoinEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.Spawn;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
@@ -27,8 +29,9 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Name;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
-import ml.karmaconfigs.locklogin.plugin.common.utils.UUIDGen;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.UUIDGen;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -222,19 +225,16 @@ public final class JoinListener implements Listener {
 
                         //Allow the player at the eyes of the plugin
                         e.allow();
-
-                        //This is only required while in bungeecord mode
-                        if (config.isBungeeCord()) {
-                            AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, 5, false);
-                            timer.addActionOnEnd(() -> {
-                                Player online = plugin.getServer().getPlayer(e.getUniqueId());
-                                if (online != null && online.isOnline()) {
-                                    User user = new User(online);
-                                    if (!user.getSession().isValid())
-                                        user.kick(messages.bungeeProxy());
-                                }
-                            }).start();
-                        }
+                    } else {
+                        AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, 3, false);
+                        timer.addActionOnEnd(() -> {
+                            Player online = plugin.getServer().getPlayer(e.getUniqueId());
+                            if (online != null && online.isOnline()) {
+                                User user = new User(online);
+                                if (!user.getSession().isValid())
+                                    user.kick(messages.bungeeProxy());
+                            }
+                        }).start();
                     }
                 } else {
                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
@@ -287,6 +287,10 @@ public final class JoinListener implements Listener {
 
                 //Allow the player at the eyes of the plugin
                 e.allow();
+
+                //Check if the player has a session keeper active, if yes, restore his
+                //login status
+                forceSessionLogin(player);
             }
         }
     }
@@ -298,6 +302,7 @@ public final class JoinListener implements Listener {
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
+        ClientSession session = user.getSession();
 
         if (!config.isBungeeCord()) {
             Message messages = new Message();
@@ -317,8 +322,6 @@ public final class JoinListener implements Listener {
                 for (int i = 0; i < 150; i++)
                     plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> player.sendMessage(""));
             }
-
-            ClientSession session = user.getSession();
 
             BarMessage bar = new BarMessage(player, messages.captcha(session.getCaptcha()));
             if (!session.isCaptchaLogged())
@@ -342,7 +345,17 @@ public final class JoinListener implements Listener {
             user.setTempSpectator(true);
 
         ClientVisor visor = new ClientVisor(player);
-        visor.hide();
+        if (!session.isLogged()) {
+            visor.vanish();
+        }
+        visor.checkVanish();
+
+        if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+            if (config.takeBack()) {
+                LastLocation location = new LastLocation(player);
+                location.teleport();
+            }
+        }
     }
 
     /**
@@ -358,5 +371,32 @@ public final class JoinListener implements Listener {
 
         Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
         return matcher.matches();
+    }
+
+    /**
+     * Get if the player has a session and
+     * validate it
+     *
+     * @param player the player
+     */
+    protected void forceSessionLogin(final Player player) {
+        ModulePlayer modulePlayer = fromPlayer(player);
+
+        SessionKeeper keeper = new SessionKeeper(modulePlayer);
+        if (keeper.hasSession()) {
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
+            session.setCaptchaLogged(true);
+            session.setLogged(true);
+            session.setPinLogged(true);
+            session.set2FALogged(true);
+
+            keeper.destroy();
+
+            ClientVisor visor = new ClientVisor(player);
+            visor.unVanish();
+            visor.checkVanish();
+        }
     }
 }

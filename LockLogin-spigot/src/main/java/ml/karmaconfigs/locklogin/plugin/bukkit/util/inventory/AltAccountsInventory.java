@@ -6,6 +6,7 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.OfflineClient;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Button;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.SkullCache;
 import org.bukkit.Bukkit;
@@ -271,7 +272,12 @@ public final class AltAccountsInventory implements InventoryHolder {
      * @return an Inventory
      */
     private Inventory getBlankPage() {
-        String title = StringUtils.toColor(StringUtils.toColor(""));
+        Message messages = new Message();
+
+        String title = StringUtils.toColor(messages.altTitle());
+        if (title.length() > 32)
+            title = title.substring(0, 32);
+
         Inventory inv = plugin.getServer().createInventory(this, 54, title);
 
         inv.setItem(45, Button.back());

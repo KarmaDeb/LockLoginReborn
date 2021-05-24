@@ -124,7 +124,7 @@ public class PinCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(plugin, properties.getProperty("only_console_pin", "&5&oThe console can't have a pin!"), Level.INFO);
+            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
 
         return false;

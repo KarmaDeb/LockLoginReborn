@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.files;
 
 import ml.karmaconfigs.api.bukkit.karmayaml.FileCopy;
+import ml.karmaconfigs.api.bukkit.karmayaml.YamlManager;
 import ml.karmaconfigs.api.bukkit.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.*;
@@ -22,27 +22,26 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 public final class Config extends PluginConfiguration {
 
     private final static File cfg_file = new File(plugin.getDataFolder(), "config.yml");
-    private static final YamlConfiguration persistent_cfg = YamlConfiguration.loadConfiguration(cfg_file);
-    private static YamlConfiguration cfg = YamlConfiguration.loadConfiguration(cfg_file);
+    private static YamlConfiguration persistent_cfg = null;
+    private static YamlConfiguration cfg = null;
 
     /**
      * Initialize configuration
      */
     public Config() {
-        if (!cfg_file.exists()) {
-            FileCopy copy = new FileCopy(plugin, "cfg/config.yml");
-            try {
-                copy.copy(cfg_file);
-                if (!manager.reload())
-                    cfg = YamlConfiguration.loadConfiguration(cfg_file);
-            } catch (Throwable ex) {
-                ex.printStackTrace();
+        if (cfg == null || persistent_cfg == null) {
+            if (!cfg_file.exists()) {
+                FileCopy copy = new FileCopy(plugin, "cfg/config.yml");
+                try {
+                    copy.copy(cfg_file);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
             }
-        }
 
-        //Check values everytime the configuration is called
-        //this will help avoid issues
-        manager.checkValues();
+            cfg = YamlConfiguration.loadConfiguration(cfg_file);
+            persistent_cfg = YamlConfiguration.loadConfiguration(cfg_file);
+        }
     }
 
     /**
@@ -52,14 +51,30 @@ public final class Config extends PluginConfiguration {
      */
     @Override
     public final boolean isBungeeCord() {
-        File spigot = new File(FileUtilities.getServerFolder(), "spigot.yml");
+        try {
+            boolean mode = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
+            if (!mode) {
+                YamlManager manager = new YamlManager(plugin, "force_bungee");
+                manager.save("force_bungee.yml");
 
-        if (spigot.exists()) {
-            YamlConfiguration spigot_yml = YamlConfiguration.loadConfiguration(spigot);
-            return spigot_yml.getBoolean("settings.bungeecord", false);
+                mode = manager.getBoolean("settings.bungeecord");
+            }
+
+            return mode;
+        } catch (Throwable ex) {
+            File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
+            if (!force_bungee.exists()) {
+                try {
+                    FileCopy bungee_cfg = new FileCopy(plugin, "force_bungee.yml");
+                    bungee_cfg.copy(force_bungee);
+                } catch (Throwable exc) {
+                    return false;
+                }
+            }
+
+            YamlManager manager = new YamlManager(plugin, "force_bungee");
+            return manager.getBoolean("settings.bungeecord");
         }
-
-        return false;
     }
 
     @Override
@@ -89,6 +104,32 @@ public final class Config extends PluginConfiguration {
         int interval = cfg.getInt("MessagesInterval.Logging", 5);
 
         return new LoginConfig(boss, blind, nausea, timeout, max, interval);
+    }
+
+    /**
+     * Get if the plugin has sessions enabled
+     *
+     * @return if the plugin has sessions
+     */
+    @Override
+    public boolean enableSessions() {
+        return cfg.getBoolean("Sessions.Enabled", false);
+    }
+
+    /**
+     * Get the session life time
+     *
+     * @return the session life time
+     */
+    @Override
+    public int sessionTime() {
+        int time = cfg.getInt("Sessions.Time", 5);
+        if (time <= 0)
+            time = 1;
+        if (time > 30)
+            time = 5;
+
+        return time;
     }
 
     @Override
@@ -125,7 +166,7 @@ public final class Config extends PluginConfiguration {
 
     @Override
     public final HashType pinEncryption() {
-        String value = cfg.getString("Encryption.Pin", "SHA512");
+        String value = cfg.getString("Encryption.Pins", "SHA512");
 
         switch (value.toLowerCase()) {
             case "256":
@@ -142,6 +183,19 @@ public final class Config extends PluginConfiguration {
             default:
                 return HashType.SHA512;
         }
+    }
+
+    /**
+     * Get if the plugin should block the player
+     * login/register when he has an invalid password.
+     * <p>
+     * Forcing him to change it until it's safe
+     *
+     * @return if the plugin should block unsafe passwords
+     */
+    @Override
+    public boolean blockUnsafePasswords() {
+        return cfg.getBoolean("BlockUnsafePasswords", true);
     }
 
     @Override
@@ -195,7 +249,7 @@ public final class Config extends PluginConfiguration {
 
     @Override
     public final boolean takeBack() {
-        return persistent_cfg.getBoolean("Spawn.Back", false);
+        return persistent_cfg.getBoolean("Spawn.TakeBack", false);
     }
 
     @Override
@@ -317,6 +371,8 @@ public final class Config extends PluginConfiguration {
 
             int login_message_interval = cfg.getInt("MessagesInterval.Logging", 5);
 
+            int session_life_time = cfg.getInt("Sessions.Time", 5);
+
             int captcha_length = cfg.getInt("Captcha.Length", 8);
 
             String password_encryption = cfg.getString("Encryption.Passwords", "SHA512");
@@ -359,6 +415,13 @@ public final class Config extends PluginConfiguration {
             if (login_message_interval < 5 || login_message_interval > login_timeout) {
                 login_message_interval = 5;
                 cfg.set("MessagesInterval.Logging", login_message_interval);
+
+                changes = true;
+            }
+
+            if (session_life_time <= 0 || session_life_time > 30) {
+                session_life_time = 5;
+                cfg.set("Sessions.Time", session_life_time);
 
                 changes = true;
             }

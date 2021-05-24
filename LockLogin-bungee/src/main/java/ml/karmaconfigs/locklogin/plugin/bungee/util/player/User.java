@@ -8,16 +8,19 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.SessionInitializationEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bungee.permissibles.Permission;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
-import net.md_5.bungee.api.Callback;
 import net.md_5.bungee.api.ServerConnectRequest;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -28,8 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.fromPlayer;
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 /**
@@ -39,6 +41,7 @@ public final class User {
 
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static Map<UUID, ClientSession> sessions = new HashMap<>();
+    private final static Map<UUID, AccountManager> managers = new HashMap<>();
 
     private final AccountManager manager;
     private final ProxiedPlayer player;
@@ -91,6 +94,8 @@ public final class User {
                     if (id.getId().replaceAll("\\s", "").isEmpty())
                         manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
                 }
+
+                managers.put(player.getUniqueId(), manager);
             }
         } else {
             throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
@@ -104,6 +109,26 @@ public final class User {
      */
     public static Map<UUID, ClientSession> getSessionMap() {
         return new HashMap<>(sessions);
+    }
+
+    /**
+     * Get the player session
+     *
+     * @param player the player
+     * @return the player session
+     */
+    public static ClientSession getSession(final ProxiedPlayer player) {
+        return sessions.get(player.getUniqueId());
+    }
+
+    /**
+     * Get the player account manager
+     *
+     * @param player the player
+     * @return the player account manager
+     */
+    public static AccountManager getManager(final ProxiedPlayer player) {
+        return managers.get(player.getUniqueId());
     }
 
     /**
@@ -162,48 +187,39 @@ public final class User {
 
             if (session.isValid()) {
                 if (session.isLogged() && session.isCaptchaLogged()) {
-                    if (Proxy.inAuth(player)) {
-                        Iterator<Object> lobbies = proxy.lobbyServers();
+                    if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
+                        Iterator<ServerInfo> lobbies = proxy.lobbyServers(ServerInfo.class);
                         if (lobbies.hasNext()) {
                             do {
-                                Object lobby = lobbies.next();
-                                if (lobby instanceof ServerInfo) {
-                                    ServerInfo lInfo = (ServerInfo) lobby;
-                                    if (!failSet.contains(lInfo.getName())) {
-                                        player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback(new Callback<ServerConnectRequest.Result>() {
-                                            @Override
-                                            public void done(ServerConnectRequest.Result result, Throwable error) {
-                                                if (error != null || result == ServerConnectRequest.Result.FAIL) {
-                                                    failSet.add(lInfo.getName());
+                                ServerInfo lInfo = lobbies.next();
+                                if (!failSet.contains(lInfo.getName())) {
+                                    player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                                        if (error != null || result == ServerConnectRequest.Result.FAIL) {
+                                            failSet.add(lInfo.getName());
 
-                                                    checkServer(failSet.toArray(new String[]{}));
-                                                }
-                                            }
-                                        }).build());
-                                        break;
-                                    }
+                                            checkServer(failSet.toArray(new String[]{}));
+                                        }
+                                    }).build());
+                                    break;
                                 }
                             } while (lobbies.hasNext());
                         }
                     }
                 } else {
-                    if (!Proxy.inAuth(player)) {
-                        Iterator<Object> auths = proxy.authServer();
+                    if (!Proxy.inAuth(player) && Proxy.authsValid()) {
+                        Iterator<ServerInfo> auths = proxy.authServer(ServerInfo.class);
                         if (auths.hasNext()) {
                             do {
-                                Object auth = auths.next();
-                                if (auth instanceof ServerInfo) {
-                                    ServerInfo aInfo = (ServerInfo) auth;
-                                    if (!failSet.contains(aInfo.getName())) {
-                                        player.connect(ServerConnectRequest.builder().target(aInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
-                                            if (error != null || result == ServerConnectRequest.Result.FAIL) {
-                                                failSet.add(aInfo.getName());
+                                ServerInfo aInfo = auths.next();
+                                if (!failSet.contains(aInfo.getName())) {
+                                    player.connect(ServerConnectRequest.builder().target(aInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                                        if (error != null || result == ServerConnectRequest.Result.FAIL) {
+                                            failSet.add(aInfo.getName());
 
-                                                checkServer(failSet.toArray(new String[]{}));
-                                            }
-                                        }).build());
-                                        break;
-                                    }
+                                            checkServer(failSet.toArray(new String[]{}));
+                                        }
+                                    }).build());
+                                    break;
                                 }
                             } while (auths.hasNext());
                         }

@@ -1,12 +1,13 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.karmayaml.FileCopy;
+import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
 import ml.karmaconfigs.api.bukkit.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.Main;
@@ -18,20 +19,29 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.filter.ConsoleFilter;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.filter.PluginFilter;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.Session;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object.Button;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.SessionCheck;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
+import ml.karmaconfigs.locklogin.plugin.common.session.Session;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
-import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionDownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Logger;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.messaging.Messenger;
 import org.bukkit.plugin.messaging.PluginMessageListenerRegistration;
@@ -39,6 +49,7 @@ import org.reflections.Reflections;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -54,81 +65,98 @@ public final class Manager {
     private static int alert_id = 0;
 
     public static void initialize() {
-        int size = 10;
-        String character = "*";
-        try {
-            size = Integer.parseInt(properties.getProperty("ascii_art_size", "10"));
-            character = properties.getProperty("ascii_art_character", "*").substring(0, 1);
-        } catch (Throwable ignored) {
-        }
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            int size = 10;
+            String character = "*";
+            try {
+                size = Integer.parseInt(properties.getProperty("ascii_art_size", "10"));
+                character = properties.getProperty("ascii_art_character", "*").substring(0, 1);
+            } catch (Throwable ignored) {
+            }
 
-        System.out.println();
-        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID);
+            System.out.println();
+            artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+            Console.send("&eversion:&6 {0}", versionID);
 
-        Proxy.scan();
+            Proxy.scan();
 
-        PlayerFile.migrateV1();
-        PlayerFile.migrateV2();
+            PlayerFile.migrateV1();
+            PlayerFile.migrateV2();
 
-        setupFiles();
-        registerCommands();
-        registerListeners();
+            setupFiles();
+            registerCommands();
+            registerListeners();
 
-        Console.send(" ");
-        Console.send("&e-----------------------");
+            Console.send(" ");
+            Console.send("&e-----------------------");
 
-        if (!CurrentPlatform.isValidAccountManager()) {
-            CurrentPlatform.setAccountsManager(PlayerFile.class);
-            Console.send(plugin, "Loaded native player account manager", Level.INFO);
-        } else {
-            Console.send(plugin, "Loaded custom player account manager", Level.INFO);
-        }
-        if (!CurrentPlatform.isValidSessionManager()) {
-            CurrentPlatform.setSessionManager(Session.class);
-            Console.send(plugin, "Loaded native player session manager", Level.INFO);
-        } else {
-            Console.send(plugin, "Loaded custom player session manager", Level.INFO);
-        }
-
-        loadCache();
-
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-        if (config.isBungeeCord()) {
-            Messenger messenger = plugin.getServer().getMessenger();
-            BungeeReceiver receiver = new BungeeReceiver();
-
-            PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
-            PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
-
-            if (registration_account.isValid() && registration_plugin.isValid()) {
-                Console.send(plugin, "Registered plugin message listeners", Level.OK);
+            if (!CurrentPlatform.isValidAccountManager()) {
+                CurrentPlatform.setAccountsManager(PlayerFile.class);
+                Console.send(plugin, "Loaded native player account manager", Level.INFO);
             } else {
-                Console.send(plugin, "Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
+                Console.send(plugin, "Loaded custom player account manager", Level.INFO);
             }
-        }
-
-        AccountManager manager = CurrentPlatform.getAccountManager(null);
-        if (manager != null) {
-            Set<AccountManager> accounts = manager.getAccounts();
-            Set<AccountManager> nonLocked = new HashSet<>();
-            for (AccountManager account : accounts) {
-                LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.getData().isLocked())
-                    nonLocked.add(account);
-            }
-
-            SessionDataContainer.setRegistered(nonLocked.size());
-        }
-
-        if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            PlaceholderExpansion placeholder = new LockLoginPlaceholder();
-            if (placeholder.register()) {
-                Console.send(plugin, "Hooked and loaded placeholder expansion", Level.OK);
+            if (!CurrentPlatform.isValidSessionManager()) {
+                CurrentPlatform.setSessionManager(Session.class);
+                Console.send(plugin, "Loaded native player session manager", Level.INFO);
             } else {
-                Console.send(plugin, "Couldn't hook placeholder expansion", Level.GRAVE);
+                Console.send(plugin, "Loaded custom player session manager", Level.INFO);
             }
-        }
+
+            loadCache();
+
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            if (config.isBungeeCord()) {
+                Messenger messenger = plugin.getServer().getMessenger();
+                BungeeReceiver receiver = new BungeeReceiver();
+
+                PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
+                messenger.registerOutgoingPluginChannel(plugin, "ll:account");
+                PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
+                PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
+                messenger.registerOutgoingPluginChannel(plugin, "ll:access");
+
+                if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
+                    Console.send(plugin, "Registered plugin message listeners", Level.OK);
+                } else {
+                    Console.send(plugin, "Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
+                }
+            }
+
+            AccountManager manager = CurrentPlatform.getAccountManager(null);
+            if (manager != null) {
+                Set<AccountManager> accounts = manager.getAccounts();
+                Set<AccountManager> nonLocked = new HashSet<>();
+                for (AccountManager account : accounts) {
+                    LockedAccount locked = new LockedAccount(account.getUUID());
+                    if (!locked.getData().isLocked())
+                        nonLocked.add(account);
+                }
+
+                SessionDataContainer.setRegistered(nonLocked.size());
+            }
+
+            if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
+                if (placeholder.register()) {
+                    Console.send(plugin, "Hooked and loaded placeholder expansion", Level.OK);
+                } else {
+                    Console.send(plugin, "Couldn't hook placeholder expansion", Level.GRAVE);
+                }
+            }
+
+            if (config.getUpdaterOptions().isEnabled()) {
+                scheduleVersionCheck();
+            } else {
+                performVersionCheck();
+            }
+            scheduleAlertSystem();
+
+            Button.preCache();
+
+            registerMetrics();
+            initPlayers();
+        });
     }
 
     public static void terminate() {
@@ -155,11 +183,27 @@ public final class Manager {
         } catch (Throwable ignored) {
         }
 
+        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
+            if (placeholder.isRegistered()) {
+                if (placeholder.unregister()) {
+                    Console.send(plugin, "Unhooked placeholder expansion", Level.OK);
+                } else {
+                    Console.send(plugin, "Couldn't un-hook placeholder expansion", Level.GRAVE);
+                }
+            }
+        }
+
         System.out.println();
         artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         Console.send("&eversion:&6 {0}", versionID);
         Console.send(" ");
         Console.send("&e-----------------------");
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            User user = new User(player);
+            user.kick("&eLockLogin\n\n&cPlugin shutting down");
+        }
     }
 
     /**
@@ -297,6 +341,22 @@ public final class Manager {
     }
 
     /**
+     * Register plugin metrics
+     */
+    protected static void registerMetrics() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        Metrics metrics = new Metrics(plugin, 6513);
+
+        metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
+        metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
+                .replace("true", "Clear chat")
+                .replace("false", "Don't clear chat")));
+        metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
+                .replace("true", "Sessions enabled")
+                .replace("false", "Sessions disabled")));
+    }
+
+    /**
      * Register the plugin listeners
      */
     protected static void registerListeners() {
@@ -339,9 +399,12 @@ public final class Manager {
             if (changelog_requests <= 0) {
                 changelog_requests = 3;
 
+                Console.send(plugin, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID, checker.getLatestVersion());
                 Console.send(checker.getChangelog());
 
-                if (!VersionDownloader.isDownloading()) {
+                if (VersionDownloader.isDownloading()) {
+                    Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+                } else {
                     VersionDownloader downloader = new VersionDownloader(versionID, config.getUpdaterOptions().getChannel());
                     downloader.download(
                             file -> Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO),
@@ -388,6 +451,73 @@ public final class Manager {
 
         alert_id = timer.getTimerId();
 
+    }
+
+    /**
+     * Initialize already connected players
+     *
+     * This is util after plugin updates or
+     * plugin load using third-party loaders
+     */
+    protected static void initPlayers() {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            Message messages = new Message();
+
+            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                User user = new User(player);
+                ClientSession session = user.getSession();
+                InetSocketAddress ip = player.getAddress();
+
+                if (ip != null) {
+                    IpData data = new IpData(ip.getAddress());
+                    int amount = data.getClonesAmount();
+
+                    if (amount + 1 == config.accountsPerIP()) {
+                        user.kick(StringUtils.toColor(messages.maxIP()));
+                        return;
+                    }
+                    data.addClone();
+                }
+
+                if (!config.isBungeeCord()) {
+                    Proxy proxy = new Proxy(ip);
+                    if (proxy.isProxy()) {
+                        user.kick(messages.ipProxyError());
+                        return;
+                    }
+
+                    user.savePotionEffects();
+                    user.applySessionEffects();
+
+                    if (config.clearChat()) {
+                        for (int i = 0; i < 150; i++)
+                            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> player.sendMessage(""));
+                    }
+
+                    BarMessage bar = new BarMessage(player, messages.captcha(session.getCaptcha()));
+                    if (!session.isCaptchaLogged())
+                        bar.send(true);
+
+                    SessionCheck check = new SessionCheck(player, target -> {
+                        bar.setMessage("");
+                        bar.stop();
+                    }, target -> {
+                        bar.setMessage("");
+                        bar.stop();
+                    });
+
+                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+                }
+
+                if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+                    user.setTempSpectator(true);
+
+                ClientVisor visor = new ClientVisor(player);
+                visor.vanish();
+                visor.checkVanish();
+            }
+        });
     }
 
     /**

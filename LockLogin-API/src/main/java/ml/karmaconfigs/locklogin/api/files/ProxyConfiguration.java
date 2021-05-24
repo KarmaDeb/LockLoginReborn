@@ -22,6 +22,14 @@ public abstract class ProxyConfiguration {
     public abstract boolean sendToServers();
 
     /**
+     * Get the proxy key used to register this
+     * proxy instance
+     *
+     * @return the proxy key
+     */
+    public abstract String proxyKey();
+
+    /**
      * Get the proxy ID
      *
      * @return the proxy server ID
@@ -31,14 +39,18 @@ public abstract class ProxyConfiguration {
     /**
      * Get all the lobby servers
      *
+     * @param <T> the server type
+     * @param instance the server class instance
      * @return all the available lobby servers
      */
-    public abstract Iterator<Object> lobbyServers();
+    public abstract <T> Iterator<T> lobbyServers(final Class<T> instance);
 
     /**
      * Get all the auth servers
      *
+     * @param <T> the server type
+     * @param instance the server class instance
      * @return all the available auth servers
      */
-    public abstract Iterator<Object> authServer();
+    public abstract <T> Iterator<T> authServer(final Class<T> instance);
 }

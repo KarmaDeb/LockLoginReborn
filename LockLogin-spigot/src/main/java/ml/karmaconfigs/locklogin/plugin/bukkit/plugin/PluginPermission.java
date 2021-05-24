@@ -141,4 +141,76 @@ public final class PluginPermission {
     public static Permission alias() {
         return new Permission("locklogin.alias", "The permission to create/destroy or manage aliases", PermissionDefault.FALSE);
     }
+
+    public static Permission modules() {
+        Map<String, Boolean> children = new HashMap<>();
+        children.put("locklogin.module.load", true);
+        children.put("locklogin.module.unload", true);
+        children.put("locklogin.module.list", true);
+
+        Permission permission = new Permission("locklogin.module", "The permission to manage LockLogin modules", PermissionDefault.FALSE, children);
+        permission.recalculatePermissibles();
+
+        return permission;
+    }
+
+    public static Permission loadModules() {
+        Permission permission = new Permission("locklogin.module.load", "The permission to load a module", PermissionDefault.FALSE);
+        permission.addParent(modules(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission unloadModules() {
+        Permission permission = new Permission("locklogin.module.unload", "The permission to unload a module", PermissionDefault.FALSE);
+        permission.addParent(modules(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission listModules() {
+        Permission permission = new Permission("locklogin.module.list", "The permission to list all the modules", PermissionDefault.FALSE);
+        permission.addParent(modules(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission updater() {
+        Map<String, Boolean> children = new HashMap<>();
+        children.put("locklogin.updater.version", true);
+        children.put("locklogin.updater.changelog", true);
+        children.put("locklogin.updater.check", true);
+
+        Permission permission = new Permission("locklogin.updater", "The permission to load a module", PermissionDefault.OP, children);
+        permission.recalculatePermissibles();
+
+        return permission;
+    }
+
+    public static Permission version() {
+        Permission permission = new Permission("locklogin.updater.version", "The permission to retrieve current plugin version and latest plugin version", PermissionDefault.OP);
+        permission.addParent(updater(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission changelog() {
+        Permission permission = new Permission("locklogin.updater.changelog", "The permission to retrieve the latest plugin changelog", PermissionDefault.OP);
+        permission.addParent(updater(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission check() {
+        Permission permission = new Permission("locklogin.updater.check", "The permission to force a version check", PermissionDefault.OP);
+        permission.addParent(updater(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
 }

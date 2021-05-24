@@ -119,7 +119,7 @@ public final class InventoryListener implements Listener {
             ClientSession session = user.getSession();
 
             if (!session.isPinLogged()) {
-                plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     PinInventory pin = new PinInventory(player);
                     pin.open();
                 }, 5);

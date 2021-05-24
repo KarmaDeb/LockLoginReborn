@@ -2,22 +2,24 @@ package ml.karmaconfigs.locklogin.plugin.bukkit;
 
 import ml.karmaconfigs.api.bukkit.Logger;
 import ml.karmaconfigs.api.common.KarmaPlugin;
+import ml.karmaconfigs.api.common.Level;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.client.Player;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.locklogin.plugin.common.utils.ASCIIArtGenerator;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 import ml.karmaconfigs.locklogin.plugin.common.utils.version.VersionID;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.UUID;
 
 public interface LockLogin {
@@ -28,7 +30,7 @@ public interface LockLogin {
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath()));
+            .getPath().replaceAll("%20", " ")));
     String version = KarmaPlugin.getters.getVersion(plugin);
 
     String versionID = new VersionID(version, update).generate().get();
@@ -36,7 +38,7 @@ public interface LockLogin {
     File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath());
+            .getPath().replaceAll("%20", " "));
 
     Logger logger = new Logger(plugin);
 
@@ -69,18 +71,32 @@ public interface LockLogin {
         return any;
     }
 
-    static Player fromPlayer(final org.bukkit.entity.Player player) {
-        User user = new User(player);
-
+    static ModulePlayer fromPlayer(final org.bukkit.entity.Player player) {
         String name = player.getName();
         UUID uuid = player.getUniqueId();
-        ClientSession session = user.getSession();
-        AccountManager manager = user.getManager();
+        ClientSession session = User.getSession(player);
+        AccountManager manager = User.getManager(player);
         InetAddress address = null;
         if (player.getAddress() != null) {
             address = player.getAddress().getAddress();
         }
 
-        return new Player(name, uuid, session, manager, address);
+        return new ModulePlayer(name, uuid, session, manager, address);
+    }
+
+    static void trySync(final Runnable action) {
+        try {
+            plugin.getServer().getScheduler().runTask(plugin, action);
+        } catch (Throwable ex) {
+            action.run();
+        }
+    }
+
+    static void tryAsync(final Runnable action) {
+        try {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, action);
+        } catch (Throwable ex) {
+            action.run();
+        }
     }
 }

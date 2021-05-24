@@ -2,7 +2,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
@@ -29,7 +29,7 @@ public final class ChatListener implements Listener {
         Message messages = new Message();
 
         if (session.isValid()) {
-            if (!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged()) {
+            if (!session.isLogged() || !session.isTempLogged()) {
                 if (user.getManager().has2FA() && session.isLogged()) {
                     e.setCancelled(true);
                     user.send(messages.prefix() + messages.gAuthenticate());
@@ -65,7 +65,7 @@ public final class ChatListener implements Listener {
         Message messages = new Message();
 
         if (session.isValid()) {
-            if (!session.isCaptchaLogged() || !session.isLogged()) {
+            if (!session.isLogged()) {
                 String command = getCommand(e.getMessage());
                 e.setCancelled(!command.equals("register") && !command.equals("login") && !AllowedCommand.isAllowed(command));
 

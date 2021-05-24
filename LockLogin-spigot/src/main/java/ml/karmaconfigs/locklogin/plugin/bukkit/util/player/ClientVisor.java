@@ -1,69 +1,85 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.player;
 
-import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import org.bukkit.entity.Player;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+
+@SuppressWarnings("deprecation")
 public final class ClientVisor {
 
     private final Player player;
 
+    private final static Set<UUID> vanished = new LinkedHashSet<>();
+
     /**
      * Initialize the client visor
      *
-     * @param _player the player to hide/show players
+     * @param _player the player
      */
     public ClientVisor(final Player _player) {
         player = _player;
     }
 
     /**
-     * Hide the player to/from everyone
+     * Vanish the specified player
      */
-    @SuppressWarnings("deprecation")
-    public final void hide() {
-        try {
-            for (Player online : plugin.getServer().getOnlinePlayers()) {
-                if (!online.getUniqueId().equals(player.getUniqueId())) {
-                    online.hidePlayer(plugin, player);
-                    player.hidePlayer(plugin, online);
-                }
-            }
-        } catch (Throwable ex) {
-            for (Player online : plugin.getServer().getOnlinePlayers()) {
-                if (!online.getUniqueId().equals(player.getUniqueId())) {
-                    online.hidePlayer(player);
-                    player.hidePlayer(online);
-                }
-            }
+    public final void vanish() {
+        vanished.add(player.getUniqueId());
+
+        for (Player online : plugin.getServer().getOnlinePlayers()) {
+            player.hidePlayer(online);
+            online.hidePlayer(player);
         }
     }
 
     /**
-     * Re-show the player to authenticated
-     * players
+     * Show the player again
+     * to other players
      */
-    @SuppressWarnings("deprecation")
-    public final void authenticate() {
-        try {
-            for (Player online : plugin.getServer().getOnlinePlayers()) {
-                User user = new User(online);
-                ClientSession session = user.getSession();
-                if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
-                    online.showPlayer(plugin, player);
-                    player.showPlayer(plugin, online);
-                }
-            }
-        } catch (Throwable ex) {
-            for (Player online : plugin.getServer().getOnlinePlayers()) {
-                User user = new User(online);
-                ClientSession session = user.getSession();
-                if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
-                    online.showPlayer(player);
-                    player.showPlayer(online);
-                }
-            }
+    public final void unVanish() {
+        vanished.remove(player.getUniqueId());
+
+        for (Player online : plugin.getServer().getOnlinePlayers()) {
+            player.showPlayer(online);
+            online.showPlayer(player);
         }
+    }
+
+    /**
+     * Check for all vanished players
+     */
+    public final void checkVanish() {
+        tryAsync(() -> {
+            Player last = null;
+
+            for (Player online : plugin.getServer().getOnlinePlayers()) {
+                if (!vanished.contains(online.getUniqueId())) {
+                    for (UUID id : vanished) {
+                        Player vanished = plugin.getServer().getPlayer(id);
+                        if (vanished != null && vanished.isOnline()) {
+                            if (online.canSee(vanished) || vanished.canSee(online)) {
+                                online.hidePlayer(vanished);
+                                vanished.hidePlayer(online);
+                            }
+                        }
+                    }
+                }
+
+                if (last != null) {
+                    if (!vanished.contains(last.getUniqueId()) && !vanished.contains(online.getUniqueId())) {
+                        if (!online.canSee(last) || !last.canSee(online)) {
+                            online.showPlayer(last);
+                            last.showPlayer(online);
+                        }
+                    }
+                }
+
+                last = online;
+            }
+        });
     }
 }

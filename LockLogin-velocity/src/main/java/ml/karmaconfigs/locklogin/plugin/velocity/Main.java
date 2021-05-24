@@ -14,13 +14,14 @@ import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.Console;
 import ml.karmaconfigs.api.velocity.Util;
-import ml.karmaconfigs.locklogin.api.modules.client.MessageSender;
-import ml.karmaconfigs.locklogin.api.modules.client.Player;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleLoader;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.dependencies.Dependency;
-import ml.karmaconfigs.locklogin.api.modules.dependencies.LockLoginDependencies;
-import ml.karmaconfigs.locklogin.api.modules.event.plugin.PluginStatusChangeEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.util.client.MessageSender;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.util.dependencies.Dependency;
+import ml.karmaconfigs.locklogin.api.modules.util.dependencies.LockLoginDependencies;
+import ml.karmaconfigs.locklogin.api.modules.api.event.plugin.PluginStatusChangeEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.api.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
@@ -28,146 +29,160 @@ import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.Manager;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
+import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
 import net.kyori.adventure.text.Component;
+import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.11.1", authors = {"KarmaDev"}, description =
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.11.8", authors = {"KarmaDev"}, description =
         "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +
                 "It has a lot of customization options to not say " +
                 "almost everything is customizable. Regular updates and one of the bests discord supports " +
                 "( according to spigotmc reviews ). LockLogin is a plugin " +
                 "always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute" +
                 "indirectly; A community plugin for the plugin community.", url = "https://karmaconfigs.ml/")
-@KarmaPlugin(plugin_name = "LockLogin", plugin_version = "1.11.1")
+@KarmaPlugin(plugin_name = "LockLogin", plugin_version = "1.11.8")
 public class Main {
 
     private final static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
-            .getPath());
+            .getPath().replaceAll("%20", " "));
+
     static ProxyServer server;
     static PluginContainer plugin;
-    private static Main instance;
+    static Metrics.Factory factory;
+
     private static boolean injected = false;
+    private static Main instance;
 
     @Inject
-    public Main(ProxyServer server, Logger logger) {
+    public Main(ProxyServer server, Logger logger, Metrics.Factory fact) {
         Main.server = server;
+        factory = fact;
     }
 
-    static Main get() {
+    /**
+     * Get a main instance
+     *
+     * @return this instance
+     */
+    public static Main get() {
         return instance;
     }
 
     @Subscribe(order = PostOrder.LAST)
     public void onProxyInitialization(ProxyInitializeEvent e) {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                instance = Main.this;
-                injected = injectAPI();
+        new Thread(() -> {
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    instance = Main.this;
+                    injected = injectAPI();
 
-                if (injected) {
-                    Optional<PluginContainer> container = server.getPluginManager().getPlugin("locklogin");
+                    if (injected) {
+                        Optional<PluginContainer> container = server.getPluginManager().getPlugin("locklogin");
 
-                    if (container.isPresent()) {
-                        plugin = container.get();
+                        if (container.isPresent()) {
+                            plugin = container.get();
 
-                        Util util = new Util(plugin);
-                        util.initialize();
+                            Util util = new Util(plugin);
+                            util.initialize();
 
-                        CurrentPlatform.setPlatform(Platform.VELOCITY);
-                        CurrentPlatform.setMain(Main.class);
-                        CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
-                        CurrentPlatform.setAccountsManager(PlayerFile.class);
+                            CurrentPlatform.setPlatform(Platform.VELOCITY);
+                            CurrentPlatform.setMain(Main.class);
+                            CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
 
-                        Consumer<MessageSender> onMessage = messageSender -> {
-                            Player player = messageSender.getPlayer();
-                            UUID id = player.getUUID();
+                            Consumer<MessageSender> onMessage = messageSender -> {
+                                ModulePlayer modulePlayer = messageSender.getPlayer();
+                                UUID id = modulePlayer.getUUID();
 
-                            Optional<com.velocitypowered.api.proxy.Player> client = server.getPlayer(id);
-                            client.ifPresent(value -> value.sendMessage(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build()));
-                        };
+                                Optional<com.velocitypowered.api.proxy.Player> client = server.getPlayer(id);
+                                client.ifPresent(value -> value.sendMessage(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build()));
+                            };
+                            BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
 
-                        try {
-                            JarManager.changeField(Player.class, "onChat", true, onMessage);
-                        } catch (Throwable ignored) {}
+                            try {
+                                JarManager.changeField(ModulePlayer.class, "onChat", true, onMessage);
+                                JarManager.changeField(ModuleMessageService.class, "onDataSent", true, onDataSend);
+                            } catch (Throwable ignored) {}
 
-                        Console.setOkPrefix(plugin, "&aOk &e>> &7");
-                        Console.setInfoPrefix(plugin, "&7Info &e>> &7");
-                        Console.setWarningPrefix(plugin, "&6Warning &e>> &7");
-                        Console.setGravePrefix(plugin, "&4Grave &e>> &7");
+                            Console.setOkPrefix(plugin, "&aOk &e>> &7");
+                            Console.setInfoPrefix(plugin, "&7Info &e>> &7");
+                            Console.setWarningPrefix(plugin, "&6Warning &e>> &7");
+                            Console.setGravePrefix(plugin, "&4Grave &e>> &7");
 
-                        prepareManager();
+                            prepareManager();
 
-                        Set<Dependency> error = new LinkedHashSet<>();
-                        for (LockLoginDependencies lockloginDependency : LockLoginDependencies.values()) {
-                            Dependency dependency = lockloginDependency.getAsDependency(obj -> {
-                                File target = obj.getLocation();
+                            Set<Dependency> error = new LinkedHashSet<>();
+                            for (LockLoginDependencies lockloginDependency : LockLoginDependencies.values()) {
+                                Dependency dependency = lockloginDependency.getAsDependency(obj -> {
+                                    File target = obj.getLocation();
 
-                                try {
-                                    JarInjector injector = new JarInjector(target);
-                                    if (!injector.inject(plugin))
+                                    try {
+                                        JarInjector injector = new JarInjector(target);
+                                        if (!injector.inject(plugin))
+                                            error.add(obj);
+                                    } catch (Throwable ex) {
                                         error.add(obj);
-                                } catch (Throwable ex) {
-                                    error.add(obj);
+                                    }
+                                });
+
+                                if (dependency != null)
+                                    dependency.inject();
+                            }
+
+                            if (!error.isEmpty()) {
+                                for (Dependency dependency : error) {
+                                    try {
+                                        File target = dependency.getLocation();
+
+                                        JarInjector injector = new JarInjector(target);
+                                        injector.download(dependency.getDownloadURL());
+
+                                        injector.inject(plugin);
+                                    } catch (Throwable ex) {
+                                        sendInjectionError(dependency.getName());
+                                        break;
+                                    }
                                 }
-                            });
 
-                            if (dependency != null)
-                                dependency.inject();
-                        }
+                                error.clear();
+                            }
 
-                        if (!error.isEmpty()) {
-                            for (Dependency dependency : error) {
-                                try {
-                                    File target = dependency.getLocation();
+                            LockLogin.logger.setMaxSize(FileInfo.logFileSize(lockloginFile));
+                            LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
-                                    JarInjector injector = new JarInjector(target);
-                                    injector.download(dependency.getDownloadURL());
-
-                                    injector.inject(plugin);
-                                } catch (Throwable ex) {
-                                    sendInjectionError(dependency.getName());
-                                    break;
+                            File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
+                            if (moduleFiles != null) {
+                                for (File module : moduleFiles) {
+                                    if (!JavaModuleLoader.isLoaded(module.getName()))
+                                        LockLogin.getLoader().loadModule(module.getName());
                                 }
                             }
 
-                            error.clear();
+                            PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
+                            JavaModuleManager.callEvent(event);
+
+                            AllowedCommand.scan();
+
+                            Manager.initialize();
+                        } else {
+                            server.getConsoleCommandSource().sendMessage(Component.text().content(StringUtils.toColor("&cTried to load LockLogin but is not even loaded by velocity!")).build());
                         }
-
-                        LockLogin.logger.setMaxSize(FileInfo.logFileSize(lockloginFile));
-                        LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
-
-                        File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-                        if (moduleFiles != null) {
-                            for (File module : moduleFiles) {
-                                if (!JavaModuleLoader.isLoaded(module.getName()))
-                                    LockLogin.getLoader().loadModule(module.getName());
-                            }
-                        }
-
-                        PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-                        JavaModuleManager.callEvent(event);
-
-                        AllowedCommand.scan();
-
-                        Manager.initialize();
                     } else {
-                        server.getConsoleCommandSource().sendMessage(Component.text().content(StringUtils.toColor("&cTried to load LockLogin but is not even loaded by velocity!")).build());
+                        sendInjectionError("KarmaAPI");
                     }
-                } else {
-                    sendInjectionError("KarmaAPI");
                 }
-            }
-        }, TimeUnit.SECONDS.convert(5, TimeUnit.MILLISECONDS));
+            }, TimeUnit.SECONDS.convert(5, TimeUnit.MILLISECONDS));
+        }).start();
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -203,7 +218,6 @@ public class Main {
      * Inject the plugin required API
      */
     private boolean injectAPI() {
-
         String version = FileInfo.getKarmaVersion(lockloginFile);
         File dest_file = new File(lockloginFile.getParentFile() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "api" + File.separator + "KarmaAPI" + File.separator + "custom", "KarmaAPI-Bundle.jar");
 

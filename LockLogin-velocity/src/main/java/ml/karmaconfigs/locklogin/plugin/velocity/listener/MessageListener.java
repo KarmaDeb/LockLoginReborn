@@ -7,15 +7,21 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.api.common.Level;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.velocity.Console;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.encryption.HashType;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 
@@ -27,27 +33,21 @@ import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
 @SuppressWarnings("UnstableApiUsage")
 public final class MessageListener {
 
-    private static String token = "";
-
     @Subscribe(order = PostOrder.FIRST)
     public final void onMessageReceive(PluginMessageEvent e) {
         if (e.getResult().isAllowed()) {
             Message messages = new Message();
+            Proxy proxy = new Proxy();
+
             ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
 
-            //LockLogin bungeecord is only supposed to listen account channel
-            if (e.getIdentifier().getId().equalsIgnoreCase("ll:account")) {
-                String sub = input.readUTF();
-                String key = input.readUTF();
+            DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
+            String id = input.readUTF();
 
-                if (token.replaceAll("\\s", "").isEmpty()) {
-                    token = CryptoUtil.getBuilder().withPassword(key).build().hash(HashType.SHA512, true);
-                }
+            switch (e.getIdentifier().getId().toLowerCase()) {
+                case "ll:account":
+                    if (sub == DataType.PIN) {
 
-                //LockLogin bungeecord is also only supposed to listen pin sub channel
-                if (sub.equalsIgnoreCase("pin")) {
-                    if (CryptoUtil.getBuilder().withPassword(key).withToken(token).build().validate()) {
-                        String id = input.readUTF();
                         UUID uuid = UUID.fromString(id);
                         String pin = input.readUTF();
 
@@ -94,11 +94,89 @@ public final class MessageListener {
                                 }
                             }
                         }
-                    } else {
-                        logger.scheduleLog(Level.GRAVE, "Someone tried to access the plugin message channel with an invalid key ( {0} )", key);
-                        e.setResult(PluginMessageEvent.ForwardResult.handled());
                     }
-                }
+                    break;
+                case "ll:plugin":
+                    switch (sub) {
+                        case PLAYER:
+                            if (!id.equalsIgnoreCase(proxy.getProxyID().toString())) {
+                                ModulePlayer modulePlayer = StringUtils.loadUnsafe(input.readUTF());
+                                if (modulePlayer != null) {
+                                    AccountManager manager = modulePlayer.getAccount();
+
+                                    if (manager != null) {
+                                        AccountManager newManager = new PlayerFile(manager.getUUID());
+
+                                        if (!newManager.exists())
+                                            newManager.create();
+
+                                        newManager.setName(manager.getName());
+                                        newManager.setPassword(manager.getPassword());
+                                        newManager.setPin(manager.getPin());
+                                        newManager.set2FA(manager.has2FA());
+                                        newManager.setGAuth(manager.getGAuth());
+                                    }
+                                }
+                            }
+                            break;
+                        case MODULE:
+                            int byteLength = input.readInt();
+                            byte[] bytes = new byte[byteLength];
+
+                            int i = 0;
+                            while (i < byteLength) {
+                                bytes[i] = input.readByte();
+                                i++;
+                            }
+
+                            ModuleMessageService.listenMessage(id, bytes);
+                            break;
+                    }
+                case "ll:access":
+                    String name = input.readUTF();
+
+                    switch (sub) {
+                        case KEY:
+                            if (!id.equalsIgnoreCase("invalid")) {
+                                //As the key should be global, when a proxy registers a key, all the proxies should know that
+                                Console.send(plugin, "Registered proxy key into server {0}", Level.INFO, name);
+                                ServerDataStorager.setKeyRegistered(name);
+                            } else {
+                                Console.send(plugin, "Failed to set proxy key in {0}", Level.GRAVE, name);
+                                e.setResult(PluginMessageEvent.ForwardResult.handled());
+                            }
+                            break;
+                        case REGISTER:
+                            if (!id.equalsIgnoreCase("invalid")) {
+                                //Only listen if the proxy id is this one
+                                if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
+                                    Console.send(plugin, "Registered this proxy into server {0}", Level.INFO, name);
+                                    ServerDataStorager.setProxyRegistered(name);
+                                } else {
+                                    e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                }
+                            } else {
+                                Console.send(plugin, "Failed to register this proxy in {0}", Level.GRAVE, name);
+                                e.setResult(PluginMessageEvent.ForwardResult.handled());
+                            }
+                            break;
+                        case REMOVE:
+                            if (!id.equalsIgnoreCase("invalid")) {
+                                //Only listen if the proxy id is this one
+                                if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
+                                    Console.send(plugin, "Removed ths proxy from server {0}", Level.INFO, name);
+                                    ServerDataStorager.removeProxyRegistered(name);
+                                } else {
+                                    ServerDataStorager.removeKeyRegistered(name);
+                                    e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                }
+                            } else {
+                                Console.send(plugin, "Failed to remove this proxy from server {0}", Level.GRAVE, name);
+                                e.setResult(PluginMessageEvent.ForwardResult.handled());
+                            }
+                            break;
+                    }
+                    break;
             }
         }
     }

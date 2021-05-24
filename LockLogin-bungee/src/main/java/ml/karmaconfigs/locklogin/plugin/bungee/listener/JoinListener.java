@@ -8,13 +8,16 @@ import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPostJoinEvent;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPostJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPreJoinEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedData;
@@ -28,10 +31,12 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.Name;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
-import ml.karmaconfigs.locklogin.plugin.common.utils.UUIDGen;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.UUIDGen;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -238,6 +243,21 @@ public final class JoinListener implements Listener {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
 
+            Server server = player.getServer();
+            if (server != null) {
+                ServerInfo info = server.getInfo();
+                ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
+
+                if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                    if (ServerDataStorager.needsRegister(info.getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
+
+                    if (ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
+                    }
+                }
+            }
+
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
@@ -295,11 +315,9 @@ public final class JoinListener implements Listener {
 
             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
-
             user.checkServer();
-        }, 2, TimeUnit.SECONDS);
+            forceSessionLogin(player);
+        }, (long) 1.5, TimeUnit.SECONDS);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -307,6 +325,20 @@ public final class JoinListener implements Listener {
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             ProxiedPlayer player = e.getPlayer();
             User user = new User(player);
+
+            Server server = player.getServer();
+            if (server != null) {
+                ServerInfo info = server.getInfo();
+                ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
+
+                if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                    if (ServerDataStorager.needsRegister(info.getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
+
+                    if (ServerDataStorager.needsProxyKnowledge(info.getName()))
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
+                }
+            }
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
@@ -326,11 +358,8 @@ public final class JoinListener implements Listener {
                     .addBoolData(user.isRegistered()).build();
             DataSender.send(player, join);
 
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
-
             user.checkServer();
-        }, 2, TimeUnit.SECONDS);
+        }, (long) 1.5, TimeUnit.SECONDS);
     }
 
     /**
@@ -346,5 +375,36 @@ public final class JoinListener implements Listener {
 
         Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
         return matcher.matches();
+    }
+
+    /**
+     * Get if the player has a session and
+     * validate it
+     *
+     * @param player the player
+     */
+    protected void forceSessionLogin(final ProxiedPlayer player) {
+        ModulePlayer modulePlayer = fromPlayer(player);
+
+        SessionKeeper keeper = new SessionKeeper(modulePlayer);
+        if (keeper.hasSession()) {
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
+            session.setCaptchaLogged(true);
+            session.setLogged(true);
+            session.setPinLogged(true);
+            session.set2FALogged(true);
+
+            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER).build();
+            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("close").build();
+            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER).build();
+
+            DataSender.send(player, login);
+            DataSender.send(player, pin);
+            DataSender.send(player, gauth);
+
+            keeper.destroy();
+        }
     }
 }

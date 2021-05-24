@@ -27,8 +27,8 @@ BungeeProxy: "&5&oPor favor, entra a través del proxy BungeeCord!"
 
 #Inventories messages
 PinTitle: "&8&lLockLogin pinner"
-AltLookup: "&8&lAlt accounts lookup"
-InfoGUI: "&8&lBundled player info"
+AltTitle: "&8&lAlt accounts lookup"
+InfoTitle: "&8&lBundled player info"
 Next: "&eNext"
 Back: "&eBack"
 
@@ -45,11 +45,9 @@ TargetAccessError: "&5&oEl jugador {player} no está verificado"
 IncorrectPassword: "&5&oLa contraseña especificada no es correcta!"
 Captcha: "&7Tu código captcha es: &e{captcha}"
 InvalidCaptcha: "&5&oEl código captcha especificado no es válido"
-OnlyAzuriom:
-  - "{ServerName}"
-  - ""
-  - "&cPor favor, registra tu cuenta desde:"
-  - "&7https://myazuriomwebsite.com/user/register"
+SessionServerDisabled: "&5&oLas sesiones persistentes están deshabilitadas en el servidor"
+SessionEnabled: "&dSe ha activado la sesión persistente en tu cuenta"
+SessionDisabled: "&5&oSe ha desactivado la sesión persistente en tu cuenta"
 
 #Session messages - Register
 Register: "&5&oPor favor, usa /register <contraseña> <contraseña> <captcha>"

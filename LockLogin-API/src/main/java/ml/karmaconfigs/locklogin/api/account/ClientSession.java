@@ -1,12 +1,13 @@
 package ml.karmaconfigs.locklogin.api.account;
 
+import java.io.Serializable;
 import java.time.Instant;
 
-public abstract class ClientSession {
+public abstract class ClientSession implements Serializable {
 
     /**
      * Initialize the session
-     * <p>
+     *
      * In this process the captcha and instant
      * are generated, with boolean values ( all
      * should be false by default )

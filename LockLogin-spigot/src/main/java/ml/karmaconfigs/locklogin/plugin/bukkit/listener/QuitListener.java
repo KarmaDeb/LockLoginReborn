@@ -1,11 +1,13 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.listener;
 
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.modules.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.event.user.UserQuitEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserQuitEvent;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -43,6 +45,12 @@ public final class QuitListener implements Listener {
                 data.delClone();
             }
 
+            Config config = new Config();
+            if (!config.isBungeeCord()) {
+                SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+                keeper.store();
+            }
+
             //Last location will be always saved since if the server
             //owner wants to enable it, it would be good to see
             //the player last location has been stored to avoid
@@ -72,6 +80,12 @@ public final class QuitListener implements Listener {
             if (ip != null) {
                 IpData data = new IpData(ip.getAddress());
                 data.delClone();
+            }
+
+            Config config = new Config();
+            if (!config.isBungeeCord()) {
+                SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+                keeper.store();
             }
 
             //Last location will be always saved since if the server

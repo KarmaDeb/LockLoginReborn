@@ -118,7 +118,52 @@ public final class LastLocationCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("console_is_restricted", "&5&oFor security reasons, this command is restricted to players only"));
+            if (args.length == 2) {
+                String target = args[0];
+                String action = args[1];
+                LastLocation location;
+
+                if (target.equalsIgnoreCase("@all")) {
+                    switch (action.toLowerCase()) {
+                        case "remove":
+                            LastLocation.removeAll();
+                            Console.send(messages.prefix() + messages.locationsReset());
+                            break;
+                        case "fix":
+                            LastLocation.fixAll();
+                            Console.send(messages.prefix() + messages.locationsFixed());
+                            break;
+                        default:
+                            Console.send(messages.prefix() + messages.resetLocUsage());
+                            break;
+                    }
+                } else {
+                    OfflineClient offline = new OfflineClient(target);
+                    AccountManager manager = offline.getAccount();
+
+                    if (manager != null) {
+                        location = new LastLocation(manager.getUUID());
+
+                        switch (action.toLowerCase()) {
+                            case "remove":
+                                location.remove();
+                                Console.send(messages.prefix() + messages.locationReset(target));
+                                break;
+                            case "fix":
+                                location.fix();
+                                Console.send(messages.prefix() + messages.locationFixed(target));
+                                break;
+                            default:
+                                Console.send(messages.prefix() + messages.resetLocUsage());
+                                break;
+                        }
+                    } else {
+                        Console.send(messages.prefix() + messages.neverPlayer(target));
+                    }
+                }
+            } else {
+                Console.send(messages.prefix() + messages.resetLocUsage());
+            }
         }
 
         return false;

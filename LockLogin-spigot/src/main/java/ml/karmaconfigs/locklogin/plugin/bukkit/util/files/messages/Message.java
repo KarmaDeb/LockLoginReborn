@@ -9,7 +9,7 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.Main;
-import ml.karmaconfigs.locklogin.plugin.common.utils.Alias;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
@@ -29,7 +29,7 @@ import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 public final class Message {
 
     private static File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
-    private static YamlConfiguration msg = YamlConfiguration.loadConfiguration(msg_file);
+    private static YamlConfiguration msg = null;
 
     private static boolean alerted = false;
 
@@ -37,46 +37,45 @@ public final class Message {
      * Initialize messages file
      */
     public Message() {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (msg == null) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        String country = config.getLang().country(config.getLangName());
-        msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
-        msg = YamlConfiguration.loadConfiguration(msg_file);
+            String country = config.getLang().country(config.getLangName());
+            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+            msg = YamlConfiguration.loadConfiguration(msg_file);
 
-        InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
-        //Check if the file exists inside the plugin as an official language
-        if (internal != null) {
-            if (!msg_file.exists()) {
-                FileCopy copy = new FileCopy(plugin, "lang/messages_" + country + ".yml");
-
-                try {
-                    copy.copy(msg_file);
-                    msg = YamlConfiguration.loadConfiguration(msg_file);
-                } catch (Throwable ignored) {
-                }
-
-                manager.reload();
-            }
-        } else {
-            if (!msg_file.exists()) {
-                if (!alerted) {
-                    Console.send(plugin, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
-                    alerted = true;
-                }
-
-                msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
-
+            InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
+            //Check if the file exists inside the plugin as an official language
+            if (internal != null) {
                 if (!msg_file.exists()) {
-                    FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
+                    FileCopy copy = new FileCopy(plugin, "lang/messages_" + country + ".yml");
 
                     try {
                         copy.copy(msg_file);
+                        msg = YamlConfiguration.loadConfiguration(msg_file);
                     } catch (Throwable ignored) {
                     }
                 }
+            } else {
+                if (!msg_file.exists()) {
+                    if (!alerted) {
+                        Console.send(plugin, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
+                        alerted = true;
+                    }
 
-                msg = YamlConfiguration.loadConfiguration(msg_file);
-                manager.reload();
+                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+
+                    if (!msg_file.exists()) {
+                        FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
+
+                        try {
+                            copy.copy(msg_file);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+
+                    msg = YamlConfiguration.loadConfiguration(msg_file);
+                }
             }
         }
     }
@@ -91,6 +90,36 @@ public final class Message {
 
     public final String bungeeProxy() {
         return parse(msg.getString("BungeeProxy", "&5&oPlease, connect through bungee proxy!"));
+    }
+
+    public final String pinTitle() {
+        String str = msg.getString("PinTitle", "&eLockLogin pinner");
+
+        return parse(str);
+    }
+
+    public final String altTitle() {
+        String str = msg.getString("AltTitle", "&8&lAlt accounts lookup");
+
+        return parse(str);
+    }
+
+    public final String infoTitle() {
+        String str = msg.getString("InfoTitle", "&8&lBundled player info");
+
+        return parse(str);
+    }
+
+    public final String nextButton() {
+        String str = msg.getString("Next", "&eNext");
+
+        return parse(str);
+    }
+
+    public final String backButton() {
+        String str = msg.getString("Back", "&eBack");
+
+        return parse(str);
     }
 
     public final String notVerified(final Player target) {
@@ -177,6 +206,24 @@ public final class Message {
 
     public final String invalidCaptcha() {
         String str = msg.getString("InvalidCaptcha", "&5&oThe specified captcha code is not valid or correct");
+
+        return parse(str);
+    }
+
+    public final String sessionServerDisabled() {
+        String str = msg.getString("SessionServerDisabled", "&5&oPersistent sessions are disabled in this server");
+
+        return parse(str);
+    }
+
+    public final String sessionEnabled() {
+        String str = msg.getString("SessionEnabled", "&dEnabled persistent session for your account ( &e-security&c )");
+
+        return parse(str);
+    }
+
+    public final String sessionDisabled() {
+        String str = msg.getString("SessionDisabled", "&5&oDisabled persistent session for your account ( &e+security&c )");
 
         return parse(str);
     }
@@ -292,12 +339,6 @@ public final class Message {
 
     public final String loginSubtitle(final int time) {
         return parse(msg.getString("LoginSubtitle", "&b{time} &7to login").replace("{time}", String.valueOf(time)));
-    }
-
-    public final String pinTitle() {
-        String str = msg.getString("PinTitle", "&eLockLogin pinner");
-
-        return parse(str);
     }
 
     public final String pinUsages() {

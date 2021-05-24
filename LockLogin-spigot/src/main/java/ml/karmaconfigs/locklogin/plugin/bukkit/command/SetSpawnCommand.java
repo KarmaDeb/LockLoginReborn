@@ -34,11 +34,11 @@ public final class SetSpawnCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        Message messages = new Message();
+
         if (sender instanceof Player) {
             Player player = (Player) sender;
             User user = new User(player);
-
-            Message messages = new Message();
 
             if (player.hasPermission(setSpawn())) {
                 Spawn spawn = new Spawn(player.getWorld());
@@ -49,7 +49,7 @@ public final class SetSpawnCommand implements CommandExecutor {
                 user.send(messages.prefix() + messages.permissionError(setSpawn()));
             }
         } else {
-            Console.send(plugin, properties.getProperty("only_console_spawn", "&5&oThe console does not have a valid location!"), Level.INFO);
+            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
 
         return false;

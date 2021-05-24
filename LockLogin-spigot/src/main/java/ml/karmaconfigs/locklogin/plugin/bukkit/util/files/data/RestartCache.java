@@ -3,22 +3,16 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data;
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.KarmaFile;
 import ml.karmaconfigs.api.common.Level;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -39,8 +33,8 @@ public final class RestartCache {
 
         Map<UUID, ClientSession> sessions = User.getSessionMap();
         Map<UUID, GameMode> spectators = User.getSpectatorMap();
-        String sessions_serialized = serialize(sessions);
-        String spectators_serialized = serialize(spectators);
+        String sessions_serialized = StringUtils.serialize(sessions);
+        String spectators_serialized = StringUtils.serialize(spectators);
 
         if (sessions_serialized != null) {
             cache.set("SESSIONS", sessions_serialized);
@@ -65,10 +59,32 @@ public final class RestartCache {
 
         try {
             Class<?> storagerClass = BungeeDataStorager.class;
-            Field keyField = storagerClass.getDeclaredField("key");
+            Field ownerField = storagerClass.getDeclaredField("proxyKey");
 
-            String key = (String) keyField.get(null);
-            cache.set("KEY", key);
+            String owner = (String) ownerField.get(null);
+            cache.set("KEY", owner);
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            Class<?> storagerClass = BungeeDataStorager.class;
+            Field proxyField = storagerClass.getDeclaredField("proxies");
+
+            Object proxies = proxyField.get(null);
+            String serialized = StringUtils.serialize(proxies);
+
+            if (serialized != null)
+                cache.set("PROXIES", serialized);
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            Class<?> storagerClass = BungeeDataStorager.class;
+            Field bungeeField = storagerClass.getDeclaredField("multiBungee");
+
+            boolean multiple = (boolean) bungeeField.get(null);
+
+            cache.set("MULTIBUNGEE", multiple);
         } catch (Throwable ignored) {
         }
     }
@@ -82,7 +98,7 @@ public final class RestartCache {
             String spectator_serialized = cache.getString("SPECTATORS", "");
 
             if (!sessions_serialized.replaceAll("\\s", "").isEmpty()) {
-                Map<UUID, ClientSession> sessions = unSerializeMap(sessions_serialized);
+                Map<UUID, ClientSession> sessions = StringUtils.loadUnsafe(sessions_serialized);
                 Map<UUID, ClientSession> fixedSessions = new HashMap<>();
                 if (sessions != null) {
                     //Remove offline player sessions to avoid security issues
@@ -107,7 +123,7 @@ public final class RestartCache {
             }
 
             if (!spectator_serialized.replaceAll("\\s", "").isEmpty()) {
-                Map<UUID, GameMode> spectators = unSerializeMap(spectator_serialized);
+                Map<UUID, GameMode> spectators = StringUtils.loadUnsafe(spectator_serialized);
                 Map<UUID, GameMode> fixedSpectators = new HashMap<>();
                 if (spectators != null) {
                     //Remove offline player sessions to avoid security issues
@@ -140,10 +156,27 @@ public final class RestartCache {
                 String key = cache.getString("KEY", "");
 
                 if (!key.replaceAll("\\s", "").isEmpty()) {
-                    JarManager.changeField(BungeeDataStorager.class, "key", true, key);
+                    JarManager.changeField(BungeeDataStorager.class, "proxyKey", true, key);
                 }
             } catch (Throwable ignored) {
             }
+
+            try {
+                String proxies = cache.getString("PROXIES", "");
+
+                if (!proxies.replaceAll("\\s", "").isEmpty()) {
+                    Map<String, String> map = StringUtils.loadUnsafe(proxies);
+
+                    if (map != null)
+                        JarManager.changeField(BungeeDataStorager.class, "proxies", true, map);
+                }
+            } catch (Throwable ignored) {}
+
+            try {
+                boolean multiple = cache.getBoolean("MULTIBUNGEE", false);
+
+                JarManager.changeField(BungeeDataStorager.class, "multiBungee", true, multiple);
+            } catch (Throwable ignored) {}
         }
     }
 
@@ -154,58 +187,6 @@ public final class RestartCache {
         try {
             Files.delete(cache.getFile().toPath());
         } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * Serialize the object into a string
-     *
-     * @param object the object to serialize
-     * @return the serialized object
-     */
-    @Nullable
-    private String serialize(final Object object) {
-        try {
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            ObjectOutputStream obj_out = new ObjectOutputStream(output);
-            obj_out.writeObject(object);
-            obj_out.flush();
-            return Base64.getEncoder().encodeToString(output.toString().getBytes(StandardCharsets.UTF_8));
-        } catch (Throwable e) {
-            return null;
-        }
-    }
-
-    /**
-     * Un-serialize the object
-     *
-     * @param serialized the serialized object
-     * @param <K>        the map key type
-     * @param <V>        the map value type
-     * @return the un-serialized object
-     */
-    @Nullable
-    private <K, V> Map<K, V> unSerializeMap(String serialized) {
-        try {
-            serialized = new String(Base64.getDecoder().decode(serialized.getBytes(StandardCharsets.UTF_8)));
-            ByteArrayInputStream input = new ByteArrayInputStream(serialized.getBytes(StandardCharsets.UTF_8));
-            ObjectInputStream obj_input = new ObjectInputStream(input);
-            Object obj = obj_input.readObject();
-
-            if (obj instanceof Map) {
-                Map<K, V> returnMap = new HashMap<>();
-                Map<?, ?> map = (Map<?, ?>) obj;
-
-                for (Object key : map.keySet()) {
-                    returnMap.put((K) key, (V) map.get(key));
-                }
-
-                return returnMap;
-            }
-
-            return null;
-        } catch (Throwable ex) {
-            return null;
         }
     }
 }
