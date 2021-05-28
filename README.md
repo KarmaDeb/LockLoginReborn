@@ -4,5 +4,5 @@ LockLogin reborn repository
 
 ```yaml
 TODO:
-  - Polish version and publish release
+  - Small improvements and publish version
 ```
