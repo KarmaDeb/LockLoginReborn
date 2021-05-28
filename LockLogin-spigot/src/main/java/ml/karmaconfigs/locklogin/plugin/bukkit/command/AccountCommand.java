@@ -151,8 +151,10 @@ public class AccountCommand implements CommandExecutor {
                                     if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
                                         user.setTempSpectator(true);
 
-                                    ClientVisor visor = new ClientVisor(player);
-                                    visor.vanish();
+                                    if (config.hideNonLogged()) {
+                                        ClientVisor visor = new ClientVisor(player);
+                                        visor.vanish();
+                                    }
 
                                     user.send(messages.prefix() + messages.closed());
                                     SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);

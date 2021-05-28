@@ -56,7 +56,7 @@ public final class QuitListener implements Listener {
                 session.setPinLogged(false);
                 session.set2FALogged(false);
 
-                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
         }
     }
@@ -82,7 +82,7 @@ public final class QuitListener implements Listener {
                 session.setPinLogged(false);
                 session.set2FALogged(false);
 
-                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
         }
     }

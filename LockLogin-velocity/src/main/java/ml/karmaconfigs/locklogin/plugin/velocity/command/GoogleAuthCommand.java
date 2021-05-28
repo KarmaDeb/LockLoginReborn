@@ -165,7 +165,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                             ScratchCodes codes = new ScratchCodes(player);
 
                                             if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER).build());
+                                                DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build());
 
                                                 session.set2FALogged(true);
                                                 session.setPinLogged(true);

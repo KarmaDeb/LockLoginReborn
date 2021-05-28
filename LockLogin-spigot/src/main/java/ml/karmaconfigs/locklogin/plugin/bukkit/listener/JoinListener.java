@@ -66,38 +66,6 @@ public final class JoinListener implements Listener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void onPreLogin_APICall(AsyncPlayerPreLoginEvent e) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        if (!config.isBungeeCord()) {
-            UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
-            JavaModuleManager.callEvent(event);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void onLogin_APICall(PlayerLoginEvent e) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        if (!config.isBungeeCord()) {
-            OfflinePlayer offline = plugin.getServer().getOfflinePlayer(e.getPlayer().getUniqueId());
-
-            UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
-            JavaModuleManager.callEvent(event);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void onPostLogin_APICall(PlayerJoinEvent e) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        if (!config.isBungeeCord()) {
-            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            JavaModuleManager.callEvent(event);
-        }
-    }
-
     @EventHandler(priority = EventPriority.HIGHEST)
     public final void onServerPing(ServerListPingEvent e) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -236,6 +204,11 @@ public final class JoinListener implements Listener {
                             }
                         }).start();
                     }
+
+                    if (!config.isBungeeCord()) {
+                        UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
+                        JavaModuleManager.callEvent(event);
+                    }
                 } else {
                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
                     logger.scheduleLog(Level.GRAVE, "Player {0} tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", e.getName(), address);
@@ -292,11 +265,20 @@ public final class JoinListener implements Listener {
                 //login status
                 forceSessionLogin(player);
             }
+
+            if (!config.isBungeeCord()) {
+                OfflinePlayer offline = plugin.getServer().getOfflinePlayer(e.getPlayer().getUniqueId());
+
+                UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
+                JavaModuleManager.callEvent(event);
+            }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPostLogin(PlayerJoinEvent e) {
+        String join_message = e.getJoinMessage();
+        e.setJoinMessage("");
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         Player player = e.getPlayer();
@@ -306,8 +288,6 @@ public final class JoinListener implements Listener {
 
         if (!config.isBungeeCord()) {
             Message messages = new Message();
-
-            String join_message = e.getJoinMessage();
 
             Proxy proxy = new Proxy(ip);
             if (proxy.isProxy()) {
@@ -344,17 +324,24 @@ public final class JoinListener implements Listener {
         if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
             user.setTempSpectator(true);
 
-        ClientVisor visor = new ClientVisor(player);
-        if (!session.isLogged()) {
-            visor.vanish();
+        if (config.hideNonLogged()) {
+            ClientVisor visor = new ClientVisor(player);
+            if (!session.isLogged()) {
+                visor.vanish();
+            }
+            visor.checkVanish();
         }
-        visor.checkVanish();
 
         if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
             if (config.takeBack()) {
                 LastLocation location = new LastLocation(player);
                 location.teleport();
             }
+        }
+
+        if (!config.isBungeeCord()) {
+            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
+            JavaModuleManager.callEvent(event);
         }
     }
 
@@ -380,6 +367,7 @@ public final class JoinListener implements Listener {
      * @param player the player
      */
     protected void forceSessionLogin(final Player player) {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
         ModulePlayer modulePlayer = fromPlayer(player);
 
         SessionKeeper keeper = new SessionKeeper(modulePlayer);
@@ -394,9 +382,11 @@ public final class JoinListener implements Listener {
 
             keeper.destroy();
 
-            ClientVisor visor = new ClientVisor(player);
-            visor.unVanish();
-            visor.checkVanish();
+            if (config.hideNonLogged()) {
+                ClientVisor visor = new ClientVisor(player);
+                visor.unVanish();
+                visor.checkVanish();
+            }
         }
     }
 }

@@ -2,8 +2,11 @@ package ml.karmaconfigs.locklogin.plugin.velocity.plugin;
 
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.api.velocity.Console;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.api.command.help.HelpPage;
 import ml.karmaconfigs.locklogin.api.modules.api.event.plugin.PluginStatusChangeEvent;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.PluginPermission;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
@@ -34,6 +37,9 @@ public class FileReloader {
                         Config.manager.checkValues();
 
                         user.send(message.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+
+                        PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        CurrentPlatform.setPrefix(config.getModulePrefix());
                     }
                 }
                 if (user.hasPermission(reload_messages())) {
@@ -56,6 +62,9 @@ public class FileReloader {
                 Config.manager.checkValues();
 
                 Console.send(message.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+
+                PluginConfiguration config = CurrentPlatform.getConfiguration();
+                CurrentPlatform.setPrefix(config.getModulePrefix());
             }
             if (Message.manager.reload()) {
                 Console.send(message.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
@@ -65,6 +74,8 @@ public class FileReloader {
 
             Manager.restartVersionChecker();
             Manager.restartAlertSystem();
+
+            HelpPage.updatePagesPrefix();
         }
 
         PluginStatusChangeEvent reload_finish = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_END, null);

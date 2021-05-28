@@ -1,7 +1,6 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.plugin;
 
 import com.velocitypowered.api.command.SimpleCommand;
-import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
@@ -15,11 +14,15 @@ import ml.karmaconfigs.api.velocity.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserHookEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserUnHookEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.session.Session;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
@@ -131,12 +134,12 @@ public final class Manager {
                     switch (data.getDataType()) {
                         case LOGIN:
                             for (RegisteredServer server : servers) {
-                                DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
+                                DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
                             }
                             break;
                         case REGISTER:
                             for (RegisteredServer server : servers) {
-                                DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+                                DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
                             }
                             break;
                         default:
@@ -157,6 +160,8 @@ public final class Manager {
 
         registerMetrics();
         initPlayers();
+
+        CurrentPlatform.setPrefix(config.getModulePrefix());
     }
 
     public static void terminate() {
@@ -189,12 +194,7 @@ public final class Manager {
         Console.send(" ");
         Console.send("&e-----------------------");
 
-        ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy();
-
-        for (Player player : server.getAllPlayers()) {
-            User user = new User(player);
-            user.kick("&eLockLogin\n\n&cPlugin shutting down");
-        }
+        endPlayers();
     }
 
     /**
@@ -217,9 +217,7 @@ public final class Manager {
                     if (instance instanceof BungeeLikeCommand) {
                         BungeeLikeCommand executor = (BungeeLikeCommand) instance;
 
-                        server.getCommandManager().register(command, (SimpleCommand) invocation -> {
-                            executor.execute(invocation.source(), invocation.arguments());
-                        });
+                        server.getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()));
 
                         registered.add("/" + command);
                     } else {
@@ -463,19 +461,19 @@ public final class Manager {
 
                         if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
                             if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
-                                DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+                                DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
                             if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
-                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
                         }
                     }
 
-                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
 
-                    DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+                    DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                     DataSender.send(player, validation);
 
                     Proxy proxy = new Proxy(ip);
@@ -503,7 +501,7 @@ public final class Manager {
                         tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                     }
 
-                    MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+                    MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
                             .addBoolData(session.isLogged())
                             .addBoolData(session.is2FALogged())
                             .addBoolData(session.isPinLogged())
@@ -524,9 +522,44 @@ public final class Manager {
                     server.getScheduler().buildTask(plugin, check).schedule();
 
                     user.checkServer();
+
+                    UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
+                    JavaModuleManager.callEvent(event);
                 }).delay(2, TimeUnit.SECONDS).schedule();
             }
         }).schedule();
+    }
+
+    /**
+     * Finalize connected players sessions
+     *
+     * This is util after plugin updates or
+     * plugin unload using third-party loaders
+     */
+    protected static void endPlayers() {
+        for (Player player : server.getAllPlayers()) {
+            InetSocketAddress ip = player.getRemoteAddress();
+            User user = new User(player);
+
+            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            keeper.store();
+
+            if (ip != null) {
+                IpData data = new IpData(ip.getAddress());
+                data.delClone();
+
+                ClientSession session = user.getSession();
+                session.invalidate();
+                session.setLogged(false);
+                session.setPinLogged(false);
+                session.set2FALogged(false);
+
+                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
+            }
+
+            UserUnHookEvent event = new UserUnHookEvent(fromPlayer(player), null);
+            JavaModuleManager.callEvent(event);
+        }
     }
 
     /**

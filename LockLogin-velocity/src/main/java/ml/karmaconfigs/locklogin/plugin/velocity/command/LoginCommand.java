@@ -106,7 +106,7 @@ public final class LoginCommand extends BungeeLikeCommand {
 
                                 CryptoUtil utils = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (utils.validate()) {
-                                    MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER).build();
+                                    MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
 
                                     if (utils.needsRehash(config.passwordEncryption())) {
                                         //Set the player password again to update his hash
@@ -120,8 +120,8 @@ public final class LoginCommand extends BungeeLikeCommand {
                                     if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
                                         JavaModuleManager.callEvent(event);
-                                        MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("close").build();
-                                        MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER).build();
+                                        MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                        MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
                                         DataSender.send(player, pin);
                                         DataSender.send(player, gauth);
@@ -139,7 +139,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         if (!manager.getPin().replaceAll("\\s", "").isEmpty()) {
                                             session.setPinLogged(false);
 
-                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("open").build());
+                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
                                         } else {
                                             user.send(messages.prefix() + event.getAuthMessage());
                                             user.send(messages.prefix() + messages.gAuthInstructions());
@@ -190,7 +190,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("login " + password);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER).build());
+                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

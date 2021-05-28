@@ -49,6 +49,16 @@ public abstract class PluginConfiguration {
     public abstract int sessionTime();
 
     /**
+     * Get if the non-logged players
+     * should be hidden from logged players
+     * and logged players from non-logged
+     *
+     * @return if the non-logged players should
+     * be hidden
+     */
+    public abstract boolean hideNonLogged();
+
+    /**
      * Get the captcha options
      *
      * @return the captcha options

@@ -71,24 +71,6 @@ public final class JoinListener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
-    @Subscribe(order = PostOrder.LAST)
-    public final void onPreLogin_APICall(PreLoginEvent e) {
-        UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), null, e.getUsername(), e);
-        JavaModuleManager.callEvent(event);
-    }
-
-    @Subscribe(order = PostOrder.LAST)
-    public final void onLogin_APICall(LoginEvent e) {
-        UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
-        JavaModuleManager.callEvent(event);
-    }
-
-    @Subscribe(order = PostOrder.LAST)
-    public final void onPostLogin_APICall(PostLoginEvent e) {
-        UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-        JavaModuleManager.callEvent(event);
-    }
-
     @Subscribe(order = PostOrder.FIRST)
     public final void onServerPing(ProxyPingEvent e) {
         verified.put(e.getConnection().getRemoteAddress().getAddress(), "");
@@ -199,6 +181,9 @@ public final class JoinListener {
                             return;
                         }
                     }
+
+                    UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), null, e.getUsername(), e);
+                    JavaModuleManager.callEvent(event);
                 } else {
                     e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipProxyError())).build()));
                     logger.scheduleLog(Level.GRAVE, "Player {0}[{2}] tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", conn_name, address, tar_uuid);
@@ -213,7 +198,7 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.LAST)
     public final void onLogin(LoginEvent e) {
-        if (!e.getResult().isAllowed()) {
+        if (e.getResult().isAllowed()) {
             Player player = e.getPlayer();
             Message messages = new Message();
             PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -226,6 +211,9 @@ public final class JoinListener {
                 return;
             }
             data.addClone();
+
+            UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
+            JavaModuleManager.callEvent(event);
         }
     }
 
@@ -247,19 +235,19 @@ public final class JoinListener {
 
                 if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
                     if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
                     if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
                 }
             }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
 
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
             DataSender.send(player, validation);
 
             Message messages = new Message();
@@ -289,7 +277,7 @@ public final class JoinListener {
                 tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
             }
 
-            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
                     .addBoolData(session.isLogged())
                     .addBoolData(session.is2FALogged())
                     .addBoolData(session.isPinLogged())
@@ -311,6 +299,11 @@ public final class JoinListener {
 
             user.checkServer();
             forceSessionLogin(player);
+
+            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
+
+            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
+            JavaModuleManager.callEvent(event);
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
@@ -329,25 +322,25 @@ public final class JoinListener {
 
                 if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
                     if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
                     if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
                 }
             }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL).addIntData(SessionDataContainer.getRegistered()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
 
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER).build();
+            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
             DataSender.send(player, validation);
 
             ClientSession session = user.getSession();
             session.validate();
 
-            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER)
+            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
                     .addBoolData(session.isLogged())
                     .addBoolData(session.is2FALogged())
                     .addBoolData(session.isPinLogged())
@@ -355,6 +348,8 @@ public final class JoinListener {
             DataSender.send(player, join);
 
             user.checkServer();
+
+            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
@@ -392,9 +387,9 @@ public final class JoinListener {
             session.setPinLogged(true);
             session.set2FALogged(true);
 
-            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER).build();
-            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("close").build();
-            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER).build();
+            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
             DataSender.send(player, login);
             DataSender.send(player, pin);

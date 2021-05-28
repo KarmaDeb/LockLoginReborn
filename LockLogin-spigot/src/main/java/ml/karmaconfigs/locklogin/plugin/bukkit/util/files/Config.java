@@ -132,6 +132,19 @@ public final class Config extends PluginConfiguration {
         return time;
     }
 
+    /**
+     * Get if the non-logged players
+     * should be hidden from logged players
+     * and logged players from non-logged
+     *
+     * @return if the non-logged players should
+     * be hidden
+     */
+    @Override
+    public boolean hideNonLogged() {
+        return cfg.getBoolean("HideNonLogged", false);
+    }
+
     @Override
     public final CaptchaConfig captchaOptions() {
         boolean enabled = cfg.getBoolean("Captcha.Enabled", true);
@@ -315,11 +328,35 @@ public final class Config extends PluginConfiguration {
          * @return if the configuration could be reloaded
          */
         static boolean reload() {
+            boolean bungeecord = false;
+
+            try {
+                boolean mode = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
+                if (!mode) {
+                    YamlManager manager = new YamlManager(plugin, "force_bungee");
+                    manager.save("force_bungee.yml");
+
+                    mode = manager.getBoolean("settings.bungeecord");
+                }
+
+                bungeecord = mode;
+            } catch (Throwable ex) {
+                File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
+                if (!force_bungee.exists()) {
+                    try {
+                        FileCopy bungee_cfg = new FileCopy(plugin, "force_bungee.yml");
+                        bungee_cfg.copy(force_bungee);
+                    } catch (Throwable ignored) {}
+                }
+
+                YamlManager manager = new YamlManager(plugin, "force_bungee");
+                bungeecord = manager.getBoolean("settings.bungeecord");
+            }
+
             try {
                 YamlReloader reloader = new YamlReloader(plugin, cfg_file, "cfg/config.yml");
                 if (reloader.reloadAndCopy()) {
-                    PluginConfiguration config = CurrentPlatform.getConfiguration();
-                    if (!config.isBungeeCord()) {
+                    if (!bungeecord) {
                         cfg.loadFromString(reloader.getYamlString());
                     }
                     persistent_cfg.loadFromString(reloader.getYamlString());

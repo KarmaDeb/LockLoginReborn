@@ -9,6 +9,9 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserHookEvent;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserUnHookEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bukkit.Main;
 import ml.karmaconfigs.locklogin.plugin.bukkit.command.util.SystemCommand;
@@ -17,6 +20,7 @@ import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
@@ -30,6 +34,7 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.session.Session;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
 import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
 import ml.karmaconfigs.locklogin.plugin.common.web.VersionChecker;
@@ -145,10 +150,9 @@ public final class Manager {
                 }
             }
 
+            performVersionCheck();
             if (config.getUpdaterOptions().isEnabled()) {
                 scheduleVersionCheck();
-            } else {
-                performVersionCheck();
             }
             scheduleAlertSystem();
 
@@ -156,6 +160,8 @@ public final class Manager {
 
             registerMetrics();
             initPlayers();
+
+            CurrentPlatform.setPrefix(config.getModulePrefix());
         });
     }
 
@@ -200,10 +206,7 @@ public final class Manager {
         Console.send(" ");
         Console.send("&e-----------------------");
 
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            User user = new User(player);
-            user.kick("&eLockLogin\n\n&cPlugin shutting down");
-        }
+        endPlayers();
     }
 
     /**
@@ -513,11 +516,66 @@ public final class Manager {
                 if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
                     user.setTempSpectator(true);
 
-                ClientVisor visor = new ClientVisor(player);
-                visor.vanish();
-                visor.checkVanish();
+                if (config.hideNonLogged()) {
+                    ClientVisor visor = new ClientVisor(player);
+                    visor.vanish();
+                    visor.checkVanish();
+                }
+
+                UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
+                JavaModuleManager.callEvent(event);
             }
         });
+    }
+
+    /**
+     * Finalize connected players sessions
+     *
+     * This is util after plugin updates or
+     * plugin unload using third-party loaders
+     */
+    protected static void endPlayers() {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            InetSocketAddress ip = player.getAddress();
+            User user = new User(player);
+
+            if (user.isLockLoginUser()) {
+                if (ip != null) {
+                    IpData data = new IpData(ip.getAddress());
+                    data.delClone();
+                }
+
+                Config config = new Config();
+                if (!config.isBungeeCord()) {
+                    SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+                    keeper.store();
+                }
+
+                //Last location will be always saved since if the server
+                //owner wants to enable it, it would be good to see
+                //the player last location has been stored to avoid
+                //location problems
+                LastLocation last_loc = new LastLocation(player);
+                last_loc.save();
+
+                ClientSession session = user.getSession();
+                session.invalidate();
+                session.setLogged(false);
+                session.setPinLogged(false);
+                session.set2FALogged(false);
+
+                user.removeLockLoginUser();
+            }
+
+            user.setTempSpectator(false);
+
+            ClientVisor visor = new ClientVisor(player);
+            visor.unVanish();
+            visor.checkVanish();
+
+            UserUnHookEvent event = new UserUnHookEvent(fromPlayer(player), null);
+            JavaModuleManager.callEvent(event);
+        }
     }
 
     /**

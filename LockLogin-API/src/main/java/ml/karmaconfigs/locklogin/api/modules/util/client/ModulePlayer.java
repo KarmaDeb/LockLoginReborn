@@ -18,6 +18,10 @@ public final class ModulePlayer implements Serializable {
 
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<MessageSender> onChat = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<ModulePlayer> onLogin = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<ModulePlayer> onClose = null;
 
     /**
      * Initialize the player object
@@ -87,6 +91,24 @@ public final class ModulePlayer implements Serializable {
     public final void sendMessage(final String message) {
         if (onChat != null) {
             onChat.accept(new MessageSender(this, message));
+        }
+    }
+
+    /**
+     * Request client force-login
+     */
+    public final void requestLogin() {
+        if (onLogin != null) {
+            onLogin.accept(this);
+        }
+    }
+
+    /**
+     * Request client close session
+     */
+    public final void requestUnlogin() {
+        if (onClose != null) {
+            onClose.accept(this);
         }
     }
 }

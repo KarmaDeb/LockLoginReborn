@@ -122,7 +122,7 @@ public final class InventoryListener implements Listener {
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     PinInventory pin = new PinInventory(player);
                     pin.open();
-                }, 5);
+                }, 10);
             }
         }
     }

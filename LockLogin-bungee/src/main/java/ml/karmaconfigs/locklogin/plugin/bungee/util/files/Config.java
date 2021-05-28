@@ -104,6 +104,19 @@ public final class Config extends PluginConfiguration {
         return time;
     }
 
+    /**
+     * Get if the non-logged players
+     * should be hidden from logged players
+     * and logged players from non-logged
+     *
+     * @return if the non-logged players should
+     * be hidden
+     */
+    @Override
+    public boolean hideNonLogged() {
+        return cfg.getBoolean("HideNonLogged", false);
+    }
+
     @Override
     public final CaptchaConfig captchaOptions() {
         boolean enabled = cfg.getBoolean("Captcha.Enabled", true);

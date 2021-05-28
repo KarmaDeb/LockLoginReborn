@@ -129,7 +129,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                     session.setPinLogged(false);
                                     session.set2FALogged(false);
 
-                                    DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER).build());
+                                    DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
 
                                     user.applySessionEffects();
 
@@ -215,7 +215,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
                                             if (online.isPresent()) {
-                                                DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER).build());
+                                                DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
                                                 User onlineUser = new User(online.get());
 
                                                 onlineUser.kick(messages.forcedAccountRemoval(player.getUsername()));
@@ -320,7 +320,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                         }
 
                                         AccountParser parser = new AccountParser(accounts);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                        DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                     } else {
                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                     }
@@ -428,7 +428,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                 Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
                                 if (online.isPresent()) {
-                                    DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER).build());
+                                    DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
                                     User onlineUser = new User(online.get());
 
                                     onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));

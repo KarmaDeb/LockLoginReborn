@@ -107,9 +107,9 @@ public final class RegisterCommand extends BungeeLikeCommand {
 
                                         user.restorePotionEffects();
 
-                                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER).build();
-                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER).addTextData("close").build();
-                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER).build();
+                                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
                                         DataSender.send(player, login);
 
@@ -138,7 +138,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("register " + password + " " + confirmation);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER).build());
+                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

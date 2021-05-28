@@ -10,14 +10,10 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
-import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
-import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
-import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.Permission;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -262,7 +258,7 @@ public final class User {
      */
     public synchronized final void applySessionEffects() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        MessageDataBuilder builder = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER);
+        MessageDataBuilder builder = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER, player);
         if (isRegistered()) {
             LoginConfig login = config.loginOptions();
 
@@ -280,7 +276,7 @@ public final class User {
      * Restore the player potion effects
      */
     public synchronized final void restorePotionEffects() {
-        MessageData data = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER)
+        MessageData data = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER, player)
                 .addBoolData(false).build();
         DataSender.send(player, data);
     }

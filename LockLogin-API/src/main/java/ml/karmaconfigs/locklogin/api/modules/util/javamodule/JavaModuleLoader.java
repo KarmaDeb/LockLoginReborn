@@ -1,5 +1,6 @@
 package ml.karmaconfigs.locklogin.api.modules.util.javamodule;
 
+import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.modules.util.ModuleDependencyLoader;
 import ml.karmaconfigs.locklogin.api.modules.PluginModule;
@@ -12,9 +13,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -137,7 +140,7 @@ public final class JavaModuleLoader {
 
                                                 if (class_name != null && !class_name.replaceAll("\\s", "").isEmpty()) {
                                                     URLClassLoader loader = new URLClassLoader(
-                                                            new URL[]{new URL("file:///" + moduleFile.getAbsolutePath())}, main.getClassLoader());
+                                                            new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, main.getClassLoader());
 
                                                     Class<?> module_main = Class.forName(class_name, true, loader);
                                                     Class<? extends PluginModule> module_class = module_main.asSubclass(PluginModule.class);
@@ -145,17 +148,38 @@ public final class JavaModuleLoader {
                                                     File lockloginFile = new File(main.getProtectionDomain()
                                                             .getCodeSource()
                                                             .getLocation()
-                                                            .getPath());
+                                                            .getPath().replaceAll("%20", " "));
                                                     ModuleDependencyLoader manager = new ModuleDependencyLoader(lockloginFile);
                                                     ModuleDependencyLoader subManager = new ModuleDependencyLoader(moduleFile);
 
-                                                    manager.inject(module_class);
+                                                    manager.inject(module_main);
                                                     subManager.inject(main);
-
-                                                    loader.close();
 
                                                     PluginModule module = module_class.getDeclaredConstructor().newInstance();
                                                     loaded.add(module);
+
+                                                    Package pack = module_main.getPackage();
+                                                    String package_name = pack.getName();
+                                                    for (Enumeration<JarEntry> en = jar.entries(); en.hasMoreElements(); ) {
+                                                        JarEntry e = en.nextElement();
+                                                        String flName = e.getName();
+                                                        if (flName.endsWith(".class")) {
+                                                            String javaName = flName.substring(0, flName.lastIndexOf('.')).replace('/', '.');
+                                                            if (javaName.startsWith(package_name)) {
+                                                                Class<?> cls;
+                                                                try {
+                                                                    cls = Class.forName(javaName);
+                                                                    manager.inject(cls);
+
+                                                                    Console.send("&aLoaded sub-class {0} of module {1}", cls.getName(), name);
+                                                                } catch (Throwable ex) {
+                                                                    //System.out.println("Failed to register class " + javaName + " ( " + ex.fillInStackTrace() + " )");
+                                                                    ex.printStackTrace();
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    loader.close();
 
                                                     ModuleStatusChangeEvent event = new ModuleStatusChangeEvent(ModuleStatusChangeEvent.Status.LOAD, module, this, null);
                                                     JavaModuleManager.callEvent(event);

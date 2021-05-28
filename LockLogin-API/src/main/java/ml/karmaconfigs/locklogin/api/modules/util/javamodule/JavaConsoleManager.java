@@ -27,7 +27,7 @@ public final class JavaConsoleManager {
      */
     public final void sendMessage(final String message, final Object... replaces) {
         if (JavaModuleLoader.isLoaded(module)) {
-            Console.send(message, replaces);
+            Console.send(getPrefixManager().getPrefix() +  message, replaces);
         }
     }
 

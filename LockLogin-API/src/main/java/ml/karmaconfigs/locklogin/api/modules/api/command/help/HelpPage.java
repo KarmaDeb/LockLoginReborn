@@ -86,4 +86,18 @@ public final class HelpPage {
 
         return last_page;
     }
+
+    /**
+     * Get and update all the pages command
+     * prefix in case the module command prefix has changed
+     */
+    public static void updatePagesPrefix() {
+        for (int page : pages.keySet()) {
+            List<String> info = new ArrayList<>(new LinkedHashSet<>(pages.getOrDefault(page, new LinkedHashSet<>())));
+            for (int i = 0; i < info.size(); i++) {
+                info.set(i, CurrentPlatform.getPrefix() + info.get(i).substring(1));
+            }
+            pages.put(page, new LinkedHashSet<>(info));
+        }
+    }
 }

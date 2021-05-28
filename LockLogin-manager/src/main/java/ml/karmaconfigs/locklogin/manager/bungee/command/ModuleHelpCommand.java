@@ -1,8 +1,8 @@
 package ml.karmaconfigs.locklogin.manager.bungee.command;
 
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.locklogin.api.modules.api.command.Command;
 import ml.karmaconfigs.locklogin.api.modules.api.command.help.HelpPage;
+import ml.karmaconfigs.locklogin.manager.bungee.Main;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -56,13 +56,13 @@ public final class ModuleHelpCommand extends Command {
                 }
             }
         } else {
-            Console.send("&5&m--------------&r&e LockLogin module commands &5&m--------------");
+            Main.manager.getConsoleSender().sendMessage("&5&m--------------&r&e LockLogin module commands &5&m--------------");
 
             if (parameters.length == 0) {
                 HelpPage page = new HelpPage(0);
                 page.scan();
 
-                for (String str : page.getHelp()) Console.send(str);
+                for (String str : page.getHelp()) Main.manager.getConsoleSender().sendMessage(str);
             } else {
                 try {
                     int pageNumber = Integer.parseInt(parameters[0]);
@@ -74,12 +74,12 @@ public final class ModuleHelpCommand extends Command {
                     HelpPage page = new HelpPage(pageNumber);
                     page.scan();
 
-                    for (String str : page.getHelp()) Console.send(str);
+                    for (String str : page.getHelp()) Main.manager.getConsoleSender().sendMessage(str);
                 } catch (Throwable ex) {
                     HelpPage page = new HelpPage(0);
                     page.scan();
 
-                    for (String str : page.getHelp()) Console.send(str);
+                    for (String str : page.getHelp()) Main.manager.getConsoleSender().sendMessage(str);
                 }
             }
         }

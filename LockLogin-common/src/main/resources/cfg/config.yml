@@ -80,7 +80,7 @@ Sessions:
 #Hide non logged players from
 #logged ones and logged players from
 #non logged.
-HideNonLogged: true
+HideNonLogged: false
 
 #Login/Register messages in chat
 #interval, minimum is 5, maximum is

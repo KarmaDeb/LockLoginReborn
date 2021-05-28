@@ -5,7 +5,9 @@ import ml.karmaconfigs.api.common.JarInjector;
 import ml.karmaconfigs.api.common.KarmaPlugin;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.modules.util.client.MessageSender;
 import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
@@ -17,8 +19,10 @@ import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.api.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.Manager;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 import net.md_5.bungee.api.ChatColor;
@@ -33,6 +37,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.fromPlayer;
+import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @KarmaPlugin
 public final class Main extends Plugin {
@@ -51,7 +58,7 @@ public final class Main extends Plugin {
         if (injected) {
             getProxy().getScheduler().runAsync(this, () -> {
                 CurrentPlatform.setPlatform(Platform.BUNGEE);
-                CurrentPlatform.setMain(Main.class);
+                CurrentPlatform.setMain(this.getClass());
                 CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
 
                 Consumer<MessageSender> onMessage = messageSender -> {
@@ -62,10 +69,46 @@ public final class Main extends Plugin {
                     if (client != null)
                         client.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
                 };
+                Consumer<ModulePlayer> onLogin = modulePlayer -> {
+                    UUID id = modulePlayer.getUUID();
+
+                    ProxiedPlayer player = getProxy().getPlayer(id);
+                    if (player != null) {
+                        User user = new User(player);
+                        ClientSession session = user.getSession();
+
+                        session.setCaptchaLogged(true);
+                        session.setLogged(true);
+                        session.setPinLogged(true);
+                        session.set2FALogged(true);
+
+                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+
+                        DataSender.send(player, login);
+                        DataSender.send(player, pin);
+                        DataSender.send(player, gauth);
+
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                        JavaModuleManager.callEvent(event);
+                    }
+                };
+                Consumer<ModulePlayer> onClose = modulePlayer -> {
+                    UUID id = modulePlayer.getUUID();
+
+                    ProxiedPlayer player = getProxy().getPlayer(id);
+                    if (player != null) {
+                        User user = new User(player);
+                        user.performCommand("account close");
+                    }
+                };
                 BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
 
                 try {
                     JarManager.changeField(ModulePlayer.class, "onChat", true, onMessage);
+                    JarManager.changeField(ModulePlayer.class, "onLogin", true, onLogin);
+                    JarManager.changeField(ModulePlayer.class, "onClose", true, onClose);
                     JarManager.changeField(ModuleMessageService.class, "onDataSent", true, onDataSend);
                 } catch (Throwable ignored) {}
 

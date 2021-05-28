@@ -13,6 +13,7 @@ import net.md_5.bungee.api.connection.Server;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.logger;
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
@@ -32,22 +33,18 @@ public final class DataSender {
      * @param player the player
      */
     public static void send(final ProxiedPlayer player, final MessageData data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
-            if (player != null && player.getServer() != null && player.isConnected()) {
-                try {
-                    ServerInfo server = player.getServer().getInfo();
-                    if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
-                        server.sendData(data.getChannel(), data.getData().toByteArray());
-                } catch (Throwable e) {
-                    logger.scheduleLog(Level.GRAVE, e);
-                    logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
-                }
-            } else {
-                logger.scheduleLog(Level.INFO, "Failed to send plugin message: ");
-                logger.scheduleLog(Level.INFO, "\n```yaml\nPlayer null: {0}\nServer null: {1}\nConnected: {2}\n```\n\n", player == null, (player == null || player.getServer() == null), (player != null && player.isConnected()));
-            }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        if (key.replaceAll("\\s", "").isEmpty()) {
+            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
+        }
+
+        try {
+            ServerInfo server = player.getServer().getInfo();
+            if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+                server.sendData(data.getChannel(), data.getData().toByteArray());
+        } catch (Throwable e) {
+            logger.scheduleLog(Level.GRAVE, e);
+            logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
         }
     }
 
@@ -57,16 +54,17 @@ public final class DataSender {
      * @param server the server
      */
     public static void send(final ServerInfo server, final MessageData data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
-            try {
-                if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
-                    server.sendData(data.getChannel(), data.getData().toByteArray());
-            } catch (Throwable e) {
-                logger.scheduleLog(Level.GRAVE, e);
-                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
-            }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        if (key.replaceAll("\\s", "").isEmpty()) {
+            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
+        }
+
+        try {
+            if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+                server.sendData(data.getChannel(), data.getData().toByteArray());
+        } catch (Throwable e) {
+            logger.scheduleLog(Level.GRAVE, e);
+            logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
         }
     }
 
@@ -77,41 +75,42 @@ public final class DataSender {
      * @param data the data to send
      */
     public static void sendModule(final String channel, final byte[] data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
-            try {
-                Set<String> server_sents = new HashSet<>();
+        if (key.replaceAll("\\s", "").isEmpty()) {
+            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
+        }
 
-                for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                    Server server = player.getServer();
+        try {
+            Set<String> server_sents = new HashSet<>();
 
-                    if (server != null) {
-                        ServerInfo info = server.getInfo();
+            for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                Server server = player.getServer();
 
-                        if (!server_sents.contains(info.getName().toLowerCase())) {
-                            server_sents.add(info.getName().toLowerCase());
+                if (server != null) {
+                    ServerInfo info = server.getInfo();
 
-                            if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
-                                ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                                Proxy proxy = new Proxy();
+                    if (!server_sents.contains(info.getName().toLowerCase())) {
+                        server_sents.add(info.getName().toLowerCase());
 
-                                output.writeUTF(DataType.MODULE.name().toLowerCase());
-                                output.writeUTF(proxy.getProxyID().toString());
-                                output.writeUTF(key);
-                                output.writeUTF(channel);
-                                output.writeInt(data.length);
-                                output.write(data);
+                        if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
+                            ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                            Proxy proxy = new Proxy();
 
-                                server.sendData(PLUGIN_CHANNEL, output.toByteArray());
-                            }
+                            output.writeUTF(DataType.MODULE.name().toLowerCase());
+                            output.writeUTF(proxy.getProxyID().toString());
+                            output.writeUTF(key);
+                            output.writeUTF(channel);
+                            output.writeInt(data.length);
+                            output.write(data);
+
+                            server.sendData(PLUGIN_CHANNEL, output.toByteArray());
                         }
                     }
                 }
-            } catch (Throwable e) {
-                logger.scheduleLog(Level.GRAVE, e);
-                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
             }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        } catch (Throwable e) {
+            logger.scheduleLog(Level.GRAVE, e);
+            logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
         }
     }
 
@@ -119,11 +118,12 @@ public final class DataSender {
      * Get a message data builder instance
      *
      * @param type    the message type
+     * @param owner the message owner
      * @param channel the message channel name
      * @return a new message data builder instance
      */
-    public static MessageDataBuilder getBuilder(final DataType type, final String channel) {
-        return new MessageDataBuilder(type).setChannel(channel);
+    public static MessageDataBuilder getBuilder(final DataType type, final String channel, final ProxiedPlayer owner) {
+        return new MessageDataBuilder(type, owner).setChannel(channel);
     }
 
     public static class MessageDataBuilder {
@@ -137,12 +137,22 @@ public final class DataSender {
          *
          * @param data the data type to send
          */
-        MessageDataBuilder(final DataType data) {
+        MessageDataBuilder(final DataType data, final ProxiedPlayer owner) {
+            if (key.replaceAll("\\s", "").isEmpty()) {
+                key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+                logger.scheduleLog(Level.INFO, "Generated proxy communication key");
+            }
+
             Proxy proxy = new Proxy();
 
             output.writeUTF(data.name().toLowerCase());
             output.writeUTF(proxy.getProxyID().toString());
             output.writeUTF(key);
+            if (owner != null) {
+                output.writeUTF(owner.getUniqueId().toString());
+            } else {
+                output.writeUTF(UUID.randomUUID().toString());
+            }
         }
 
         /**

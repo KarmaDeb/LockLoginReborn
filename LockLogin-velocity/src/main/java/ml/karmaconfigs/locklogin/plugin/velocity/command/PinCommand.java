@@ -66,7 +66,7 @@ public class PinCommand extends BungeeLikeCommand {
 
                                             session.setPinLogged(false);
 
-                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER).addTextData("open").build());
+                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
 
                                             SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
                                         } else {

@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import ml.karmaconfigs.api.common.JarInjector;
 import ml.karmaconfigs.api.common.KarmaPlugin;
@@ -14,7 +15,9 @@ import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.Console;
 import ml.karmaconfigs.api.velocity.Util;
+import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.modules.util.client.MessageSender;
 import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
@@ -26,10 +29,12 @@ import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.api.utils.platform.Platform;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.Manager;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
@@ -40,14 +45,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.11.8", authors = {"KarmaDev"}, description =
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.1", authors = {"KarmaDev"}, description =
         "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +
                 "It has a lot of customization options to not say " +
                 "almost everything is customizable. Regular updates and one of the bests discord supports " +
                 "( according to spigotmc reviews ). LockLogin is a plugin " +
                 "always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute" +
                 "indirectly; A community plugin for the plugin community.", url = "https://karmaconfigs.ml/")
-@KarmaPlugin(plugin_name = "LockLogin", plugin_version = "1.11.8")
+@KarmaPlugin(plugin_name = "LockLogin", plugin_version = "1.12.1")
 public class Main {
 
     private final static File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -107,10 +112,48 @@ public class Main {
                                 Optional<com.velocitypowered.api.proxy.Player> client = server.getPlayer(id);
                                 client.ifPresent(value -> value.sendMessage(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build()));
                             };
+                            Consumer<ModulePlayer> onLogin = modulePlayer -> {
+                                UUID id = modulePlayer.getUUID();
+
+                                Optional<Player> tmp_player = server.getPlayer(id);
+                                if (tmp_player.isPresent()) {
+                                    Player player = tmp_player.get();
+                                    User user = new User(player);
+                                    ClientSession session = user.getSession();
+
+                                    session.setCaptchaLogged(true);
+                                    session.setLogged(true);
+                                    session.setPinLogged(true);
+                                    session.set2FALogged(true);
+
+                                    DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, DataSender.CHANNEL_PLAYER, player).build();
+                                    DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build();
+                                    DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build();
+
+                                    DataSender.send(player, login);
+                                    DataSender.send(player, pin);
+                                    DataSender.send(player, gauth);
+
+                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, LockLogin.fromPlayer(player), "", null);
+                                    JavaModuleManager.callEvent(event);
+                                }
+                            };
+                            Consumer<ModulePlayer> onClose = modulePlayer -> {
+                                UUID id = modulePlayer.getUUID();
+
+                                Optional<Player> tmp_player = server.getPlayer(id);
+                                if (tmp_player.isPresent()) {
+                                    Player player = tmp_player.get();
+                                    User user = new User(player);
+                                    user.performCommand("account close");
+                                }
+                            };
                             BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
 
                             try {
                                 JarManager.changeField(ModulePlayer.class, "onChat", true, onMessage);
+                                JarManager.changeField(ModulePlayer.class, "onLogin", true, onLogin);
+                                JarManager.changeField(ModulePlayer.class, "onClose", true, onClose);
                                 JarManager.changeField(ModuleMessageService.class, "onDataSent", true, onDataSend);
                             } catch (Throwable ignored) {}
 

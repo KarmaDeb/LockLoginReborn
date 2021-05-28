@@ -5,6 +5,7 @@ import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserQuitEvent;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data.LastLocation;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.ClientVisor;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
@@ -68,6 +69,10 @@ public final class QuitListener implements Listener {
         }
 
         user.setTempSpectator(false);
+
+        ClientVisor visor = new ClientVisor(player);
+        visor.unVanish();
+        visor.checkVanish();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -105,5 +110,9 @@ public final class QuitListener implements Listener {
         }
 
         user.setTempSpectator(false);
+
+        ClientVisor visor = new ClientVisor(player);
+        visor.unVanish();
+        visor.checkVanish();
     }
 }

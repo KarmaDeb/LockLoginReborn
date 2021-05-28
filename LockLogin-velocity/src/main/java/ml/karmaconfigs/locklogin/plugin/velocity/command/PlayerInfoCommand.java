@@ -86,7 +86,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
-                                                DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                             } else {
                                                 user.send(messages.prefix() + messages.aliasNotFound(name));
                                             }
@@ -104,10 +104,10 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                     }
 
                                                     parser = new AccountParser(everyoneAccounts);
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                 case "persistent":
                                                     parser = new AccountParser(PersistentSessionData.getPersistentAccounts());
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                     break;
                                                 default:
                                                     String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
@@ -124,7 +124,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                     }
 
                                                     parser = new AccountParser(permissionAccounts);
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                     break;
                                             }
                                         }
@@ -141,7 +141,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                             }
 
                                             AccountParser parser = new AccountParser(accounts);
-                                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                         } else {
                                             user.send(messages.prefix() + messages.aliasNotFound(name));
                                         }
@@ -202,7 +202,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                             }
 
                             AccountParser parser = new AccountParser(accounts);
-                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL).addTextData(parser.toString()).build());
+                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                             break;
                     }
                 } else {

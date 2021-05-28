@@ -16,6 +16,7 @@ import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.logger;
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.server;
@@ -36,20 +37,15 @@ public final class DataSender {
      */
     public static void send(final Player player, final MessageData data) {
         if (!key.replaceAll("\\s", "").isEmpty()) {
-            if (player != null && player.getCurrentServer().isPresent() && player.isActive()) {
-                try {
-                    ServerConnection server = player.getCurrentServer().get();
-                    ServerInfo info = server.getServerInfo();
+            try {
+                ServerConnection server = player.getCurrentServer().get();
+                ServerInfo info = server.getServerInfo();
 
-                    if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL))
-                        server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
-                } catch (Throwable e) {
-                    logger.scheduleLog(Level.GRAVE, e);
-                    logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
-                }
-            } else {
-                logger.scheduleLog(Level.INFO, "Failed to send plugin message: ");
-                logger.scheduleLog(Level.INFO, "\n```yaml\nPlayer null: {0}\nServer null: {1}\nConnected: {2}\n```\n\n", player == null, (player == null || !player.getCurrentServer().isPresent()), (player != null && player.isActive()));
+                if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL))
+                    server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
+            } catch (Throwable e) {
+                logger.scheduleLog(Level.GRAVE, e);
+                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
             }
         } else {
             logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
@@ -127,11 +123,12 @@ public final class DataSender {
      * Get a message data builder instance
      *
      * @param type    the message type
+     * @param owner the message owner
      * @param channel the message channel name
      * @return a new message data builder instance
      */
-    public static MessageDataBuilder getBuilder(final DataType type, final String channel) {
-        return new MessageDataBuilder(type).setChannel(channel);
+    public static MessageDataBuilder getBuilder(final DataType type, final String channel, final Player owner) {
+        return new MessageDataBuilder(type, owner).setChannel(channel);
     }
 
     public static class MessageDataBuilder {
@@ -145,12 +142,17 @@ public final class DataSender {
          *
          * @param data the data type to send
          */
-        MessageDataBuilder(final DataType data) throws IllegalArgumentException {
+        MessageDataBuilder(final DataType data, final Player owner) throws IllegalArgumentException {
             Proxy proxy = new Proxy();
 
             output.writeUTF(data.name().toLowerCase());
             output.writeUTF(proxy.getProxyID().toString());
             output.writeUTF(key);
+            if (owner != null) {
+                output.writeUTF(owner.getGameProfile().getId().toString());
+            } else {
+                output.writeUTF(UUID.randomUUID().toString());
+            }
         }
 
         /**
