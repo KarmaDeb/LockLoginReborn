@@ -9,7 +9,7 @@ currently supported
 | -------   | ------------------ |
 | 1.1.0.9   | :white_check_mark: |
 | 1.12.1    | :white_check_mark: |
-| < 1.1.0.9 | :x:                |
+| < 1.1.0.8 | :x:                |
 
 ## Reporting a Vulnerability
 
