@@ -5,7 +5,8 @@
 The following version of LockLogin are
 currently supported
 
-### NS = Non release ( Snapshot - Release Candidate - Support build )
+### NS = Non release ( Snapshot - Release Candidate )
+### SB - Support build
 
 |     Version     |         Supported        |
 | ----------------|--------------------------|
@@ -13,6 +14,7 @@ currently supported
 |     1.12.1      | :white_check_mark:       |
 |     NS 1.12.1   | :white_check_mark:       |
 |     < 1.1.0.8   | :x:                      |
+|     SB X.X.X    | :x:                      |
 
 ## Reporting a Vulnerability
 
