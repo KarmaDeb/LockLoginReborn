@@ -1,0 +1,16 @@
+# Security Policy
+
+## Supported Versions
+
+The following version of LockLogin are
+currently supported
+
+| Version   | Supported          |
+| -------   | ------------------ |
+| 1.1.0.9   | :white_check_mark: |
+| 1.12.1    | :x:                |
+| < 1.1.0.9 | :x:                |
+
+## Reporting a Vulnerability
+
+To report issues, simply go to [GSA discord](https://discord.gg/jRFfsdxnJR) and open a ticket
