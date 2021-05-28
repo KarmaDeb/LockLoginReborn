@@ -68,7 +68,7 @@ jobs:
        #make release
     - name: Autobuild
       run: |
-        maven clean deploy
+        mvn clean deploy
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
