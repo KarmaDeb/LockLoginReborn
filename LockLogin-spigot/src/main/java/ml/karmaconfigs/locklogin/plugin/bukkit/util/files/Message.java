@@ -1,35 +1,49 @@
-package ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages;
+package ml.karmaconfigs.locklogin.plugin.bukkit.util.files;
 
-import com.velocitypowered.api.proxy.Player;
-import ml.karmaconfigs.api.bungee.Configuration;
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
+import ml.karmaconfigs.api.bukkit.Console;
+import ml.karmaconfigs.api.bukkit.karmayaml.FileCopy;
+import ml.karmaconfigs.api.bukkit.karmayaml.YamlReloader;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.rgb.RGBTextComponent;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.velocity.Console;
-import ml.karmaconfigs.api.velocity.Util;
-import ml.karmaconfigs.api.velocity.karmayaml.FileCopy;
-import ml.karmaconfigs.api.velocity.karmayaml.YamlManager;
-import ml.karmaconfigs.api.velocity.karmayaml.YamlReloader;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
+import ml.karmaconfigs.locklogin.plugin.bukkit.Main;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
-import ml.karmaconfigs.locklogin.plugin.velocity.Main;
-import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.Permission;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class Message {
 
-    private final static Util util = new Util(plugin);
-
-    private static File msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
-    private static Configuration msg = null;
+    private static File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+    private static YamlConfiguration msg = null;
 
     private static boolean alerted = false;
 
@@ -41,8 +55,8 @@ public final class Message {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             String country = config.getLang().country(config.getLangName());
-            msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
-            msg = new YamlManager(plugin, "messages_" + country, "lang", "v2").getBungeeManager();
+            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+            msg = YamlConfiguration.loadConfiguration(msg_file);
 
             InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
             //Check if the file exists inside the plugin as an official language
@@ -52,7 +66,7 @@ public final class Message {
 
                     try {
                         copy.copy(msg_file);
-                        msg = new YamlManager(plugin, "messages_" + country, "lang", "v2").getBungeeManager();
+                        msg = YamlConfiguration.loadConfiguration(msg_file);
                     } catch (Throwable ignored) {
                     }
                 }
@@ -63,7 +77,7 @@ public final class Message {
                         alerted = true;
                     }
 
-                    msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                     if (!msg_file.exists()) {
                         FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
@@ -74,7 +88,7 @@ public final class Message {
                         }
                     }
 
-                    msg = new YamlManager(plugin, "messages_en", "lang", "v2").getBungeeManager();
+                    msg = YamlConfiguration.loadConfiguration(msg_file);
                 }
             }
         }
@@ -86,6 +100,52 @@ public final class Message {
 
     public final String permissionError(final Permission permission) {
         return parse(msg.getString("PermissionError", "&5&oYou do not have the permission {permission}").replace("{permission}", permission.getName()));
+    }
+
+    public final String bungeeProxy() {
+        return parse(msg.getString("BungeeProxy", "&5&oPlease, connect through bungee proxy!"));
+    }
+
+    public final String pinTitle() {
+        String str = msg.getString("PinTitle", "&eLockLogin pinner");
+
+        return parse(str);
+    }
+
+    public final String altTitle() {
+        String str = msg.getString("AltTitle", "&8&lAlt accounts lookup");
+
+        return parse(str);
+    }
+
+    public final String infoTitle() {
+        String str = msg.getString("InfoTitle", "&8&lBundled player info");
+
+        return parse(str);
+    }
+
+    public final String nextButton() {
+        String str = msg.getString("Next", "&eNext");
+
+        return parse(str);
+    }
+
+    public final String backButton() {
+        String str = msg.getString("Back", "&eBack");
+
+        return parse(str);
+    }
+
+    public final String notVerified(final Player target) {
+        String str = msg.getString("PlayerNotVerified", "&5&oYou can't fight against {player} while he's not logged/registered");
+
+        return parse(str.replace("{player}", StringUtils.stripColor(target.getDisplayName())));
+    }
+
+    public final String alreadyPlaying() {
+        String str = msg.getString("AlreadyPlaying", "&5&oThat player is already playing");
+
+        return parse(str);
     }
 
     public final String maxIP() {
@@ -353,6 +413,12 @@ public final class Message {
         return parse(str);
     }
 
+    public final String pinLength() {
+        String str = msg.getString("PinLength", "&5&oPin must have 4 digits");
+
+        return parse(str);
+    }
+
     public final String incorrectPin() {
         String str = msg.getString("IncorrectPin", "&5&oThe specified pin is not correct!");
 
@@ -538,7 +604,7 @@ public final class Message {
     public final String forcedCloseAdmin(final Player target) {
         String str = msg.getString("ForcedCloseAdmin", "&dSession of {player} closed");
 
-        return parse(str.replace("{player}", StringUtils.stripColor(target.getGameProfile().getName())));
+        return parse(str.replace("{player}", StringUtils.stripColor(target.getDisplayName())));
     }
 
     public final String remove() {
@@ -574,6 +640,42 @@ public final class Message {
         String str = msg.getString("ForcedAccountRemovalAdmin", "&dAccount of {player} removed, don't forget to run /account unlock {player}!");
 
         return parse(str.replace("{player}", StringUtils.stripColor(target)));
+    }
+
+    public final String spawnSet() {
+        String str = msg.getString("SpawnSet", "&dThe login spawn location have been set");
+
+        return parse(str);
+    }
+
+    public final String locationsReset() {
+        String str = msg.getString("LocationsReset", "&dAll last locations have been reset");
+
+        return parse(str);
+    }
+
+    public final String locationReset(final String name) {
+        String str = msg.getString("LocationReset", "&dLast location of {player} has been reset");
+
+        return parse(str.replace("{player}", StringUtils.stripColor(name)));
+    }
+
+    public final String locationsFixed() {
+        String str = msg.getString("LocationsFixed", "&dAll last locations have been fixed");
+
+        return parse(str);
+    }
+
+    public final String locationFixed(final String name) {
+        String str = msg.getString("LocationFixed", "&dLocation of {player} has been fixed");
+
+        return parse(str.replace("{player}", StringUtils.stripColor(name)));
+    }
+
+    public final String resetLocUsage() {
+        String str = msg.getString("ResetLastLocUsage", "&5&oPlease, use /locations [player|@all|@me] <remove|fix>");
+
+        return parse(str);
     }
 
     public final String alias() {
@@ -748,7 +850,7 @@ public final class Message {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             String country = config.getLang().country(config.getLangName());
-            msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
             InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
             //Check if the file exists inside the plugin as an official language
@@ -758,7 +860,7 @@ public final class Message {
 
                     try {
                         copy.copy(msg_file);
-                        msg = new YamlManager(plugin, "messages_" + country, "lang", "v2").getBungeeManager();
+                        msg = YamlConfiguration.loadConfiguration(msg_file);
                     } catch (Throwable ignored) {
                     }
 
@@ -766,9 +868,8 @@ public final class Message {
                 } else {
                     try {
                         YamlReloader reloader = new YamlReloader(plugin, msg_file, "lang/messages_" + country + ".yml");
-                        Configuration result = reloader.reloadAndCopy();
-                        if (result != null) {
-                            msg = result;
+                        if (reloader.reloadAndCopy()) {
+                            msg.loadFromString(reloader.getYamlString());
                             return true;
                         }
                     } catch (Throwable ignored) {
@@ -781,7 +882,7 @@ public final class Message {
                         alerted = true;
                     }
 
-                    msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                     if (!msg_file.exists()) {
                         FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
@@ -792,7 +893,7 @@ public final class Message {
                         }
                     }
 
-                    msg = new YamlManager(plugin, "messages_en", "lang", "v2").getBungeeManager();
+                    msg = YamlConfiguration.loadConfiguration(msg_file);
                 }
             }
 
@@ -800,11 +901,26 @@ public final class Message {
         }
 
         /**
-         * Parse the yaml file into a string, read-able by
-         * spigot
+         * Tries to load bungeecord messages
+         *
+         * @param yaml the bungeecord messages yml
          */
-        static String getMessages() {
-            return StringUtils.readFrom(msg_file);
+        static void loadBungee(final String yaml) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            if (config.isBungeeCord()) {
+                try {
+                    msg.loadFromString(yaml);
+                } catch (Throwable ex) {
+                    try {
+                        Path tmp_file = Files.createTempFile(plugin.getDataFolder().toPath(), "bungeecord", "messages");
+                        Files.write(tmp_file, yaml.getBytes(StandardCharsets.UTF_8), StandardOpenOption.DSYNC);
+                        File file = tmp_file.toFile();
+
+                        msg = YamlConfiguration.loadConfiguration(file);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
         }
     }
 }

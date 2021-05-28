@@ -1,16 +1,28 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
 
 import java.time.Instant;
-import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.TextStyle;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
+/**
+ * LockLogin instant parser
+ */
 public final class InstantParser {
 
     private final Instant instant;

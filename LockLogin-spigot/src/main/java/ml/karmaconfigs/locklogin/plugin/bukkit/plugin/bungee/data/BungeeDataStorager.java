@@ -1,14 +1,27 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 import ml.karmaconfigs.locklogin.api.encryption.HashType;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
 
 public final class BungeeDataStorager {
 

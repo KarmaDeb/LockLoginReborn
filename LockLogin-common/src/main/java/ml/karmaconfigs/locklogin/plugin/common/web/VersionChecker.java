@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.common.web;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 
@@ -12,6 +23,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * LockLogin version checker
+ */
 public final class VersionChecker {
 
     private static String latest_version = "";

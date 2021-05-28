@@ -1,5 +1,19 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.listener;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import ml.karmaconfigs.api.bungee.Console;
@@ -9,17 +23,17 @@ import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
 import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
-import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
-import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -28,7 +42,8 @@ import net.md_5.bungee.event.EventPriority;
 
 import java.util.UUID;
 
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.fromPlayer;
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class MessageListener implements Listener {

@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import ml.karmaconfigs.api.velocity.KarmaFile;
 import ml.karmaconfigs.api.velocity.Util;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
@@ -12,7 +23,6 @@ import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.plugin;
 
 public final class LockedAccount {
 
-    private final Util util = new Util(plugin);
     private final KarmaFile lockedFile;
 
     /**
@@ -21,6 +31,7 @@ public final class LockedAccount {
      * @param id the account id
      */
     public LockedAccount(final AccountID id) {
+        Util util = new Util(plugin);
         File file = new File(util.getDataFolder() + File.separator + "data" + File.separator + "accounts", id.getId() + ".locked");
         lockedFile = new KarmaFile(file);
     }

@@ -1,5 +1,19 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.listener;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
@@ -19,11 +33,11 @@ import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
-import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
-import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserJoinEvent;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPostJoinEvent;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPreJoinEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.client.ModulePlayer;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.BruteForce;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
@@ -37,10 +51,10 @@ import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
 import ml.karmaconfigs.locklogin.plugin.common.utils.other.UUIDGen;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedData;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.SessionCheck;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 import net.kyori.adventure.text.Component;

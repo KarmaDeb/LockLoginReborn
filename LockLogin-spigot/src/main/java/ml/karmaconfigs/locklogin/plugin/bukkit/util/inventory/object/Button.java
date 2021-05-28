@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.inventory.object;
 
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Message;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;

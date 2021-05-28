@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.common;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,6 +25,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.security.cert.X509Certificate;
 
+/**
+ * LockLogin jar manager, from KarmaAPI
+ */
 public final class JarManager {
 
     private final File jarFile;

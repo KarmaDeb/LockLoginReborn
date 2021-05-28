@@ -1,22 +1,36 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.command;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import ml.karmaconfigs.api.bungee.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
-import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
-import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.bungee.command.util.SystemCommand;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.ScratchCodes;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ComponentFactory;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;

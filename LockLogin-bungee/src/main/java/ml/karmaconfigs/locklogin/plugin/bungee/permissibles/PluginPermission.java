@@ -1,7 +1,15 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.permissibles;
 
-import java.util.HashMap;
-import java.util.Map;
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
 
 public final class PluginPermission {
 

@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.util.files.data;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -13,7 +24,10 @@ import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
 

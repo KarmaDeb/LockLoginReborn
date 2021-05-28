@@ -1,19 +1,34 @@
-package ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages;
+package ml.karmaconfigs.locklogin.plugin.velocity.util.files;
 
-import ml.karmaconfigs.api.bungee.Console;
-import ml.karmaconfigs.api.bungee.karmayaml.FileCopy;
-import ml.karmaconfigs.api.bungee.karmayaml.YamlManager;
-import ml.karmaconfigs.api.bungee.karmayaml.YamlReloader;
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
+import com.velocitypowered.api.proxy.Player;
+import ml.karmaconfigs.api.bungee.Configuration;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.rgb.RGBTextComponent;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.velocity.Console;
+import ml.karmaconfigs.api.velocity.Util;
+import ml.karmaconfigs.api.velocity.karmayaml.FileCopy;
+import ml.karmaconfigs.api.velocity.karmayaml.YamlManager;
+import ml.karmaconfigs.api.velocity.karmayaml.YamlReloader;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
-import ml.karmaconfigs.locklogin.plugin.bungee.Main;
-import ml.karmaconfigs.locklogin.plugin.bungee.permissibles.Permission;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.config.Configuration;
+import ml.karmaconfigs.locklogin.plugin.velocity.Main;
+import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.Permission;
 
 import java.io.File;
 import java.io.InputStream;
@@ -21,11 +36,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.plugin;
 
 public final class Message {
 
-    private static File msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+    private final static Util util = new Util(plugin);
+
+    private static File msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
     private static Configuration msg = null;
 
     private static boolean alerted = false;
@@ -38,7 +55,7 @@ public final class Message {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             String country = config.getLang().country(config.getLangName());
-            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+            msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
             msg = new YamlManager(plugin, "messages_" + country, "lang", "v2").getBungeeManager();
 
             InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
@@ -60,7 +77,7 @@ public final class Message {
                         alerted = true;
                     }
 
-                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+                    msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                     if (!msg_file.exists()) {
                         FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
@@ -532,10 +549,10 @@ public final class Message {
         return parse(str);
     }
 
-    public final String forcedCloseAdmin(final ProxiedPlayer target) {
+    public final String forcedCloseAdmin(final Player target) {
         String str = msg.getString("ForcedCloseAdmin", "&dSession of {player} closed");
 
-        return parse(str.replace("{player}", StringUtils.stripColor(target.getDisplayName())));
+        return parse(str.replace("{player}", StringUtils.stripColor(target.getGameProfile().getName())));
     }
 
     public final String remove() {
@@ -745,7 +762,7 @@ public final class Message {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             String country = config.getLang().country(config.getLangName());
-            msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+            msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
             InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
             //Check if the file exists inside the plugin as an official language
@@ -778,7 +795,7 @@ public final class Message {
                         alerted = true;
                     }
 
-                    msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+                    msg_file = new File(util.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                     if (!msg_file.exists()) {
                         FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");

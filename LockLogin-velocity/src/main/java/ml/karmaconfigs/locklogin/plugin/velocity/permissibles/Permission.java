@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.permissibles;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +21,7 @@ public final class Permission {
 
     private final Map<String, Boolean> nodes_child = new HashMap<>();
     private final Map<String, Boolean> nodes_parent = new HashMap<>();
-    private String node;
+    private final String node;
 
     /**
      * Initialize the plugin permission
@@ -58,8 +69,17 @@ public final class Permission {
             return true;
 
         for (String permission : nodes_child.keySet()) {
-            if (player.hasPermission(permission)) {
-                return true;
+            if (nodes_child.getOrDefault(permission, false)) {
+                if (player.hasPermission(permission)) {
+                    return true;
+                }
+            }
+        }
+        for (String permission : nodes_parent.keySet()) {
+            if (nodes_parent.getOrDefault(permission, false)) {
+                if (player.hasPermission(permission)) {
+                    return true;
+                }
             }
         }
 

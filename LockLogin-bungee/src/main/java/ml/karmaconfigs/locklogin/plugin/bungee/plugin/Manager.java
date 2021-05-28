@@ -1,5 +1,19 @@
 package ml.karmaconfigs.locklogin.plugin.bungee.plugin;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import ml.karmaconfigs.api.bungee.Console;
 import ml.karmaconfigs.api.bungee.karmayaml.FileCopy;
 import ml.karmaconfigs.api.bungee.timer.AdvancedPluginTimer;
@@ -19,20 +33,20 @@ import ml.karmaconfigs.locklogin.plugin.bungee.listener.JoinListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.listener.MessageListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.listener.QuitListener;
 import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.messages.Message;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.player.SessionCheck;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
-import ml.karmaconfigs.locklogin.plugin.common.session.Session;
-import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
-import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
-import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Config;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Message;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.filter.PluginFilter;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.player.SessionCheck;
+import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.locklogin.plugin.common.security.client.IpData;
 import ml.karmaconfigs.locklogin.plugin.common.security.client.Proxy;
+import ml.karmaconfigs.locklogin.plugin.common.session.Session;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
+import ml.karmaconfigs.locklogin.plugin.common.session.SessionKeeper;
+import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.other.ASCIIArtGenerator;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.locklogin.plugin.common.web.AlertSystem;
@@ -62,7 +76,6 @@ import java.util.concurrent.TimeUnit;
 import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.*;
-import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 public final class Manager {
 

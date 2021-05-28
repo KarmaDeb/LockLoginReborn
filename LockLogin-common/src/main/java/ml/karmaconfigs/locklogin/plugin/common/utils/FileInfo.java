@@ -1,6 +1,5 @@
 package ml.karmaconfigs.locklogin.plugin.common.utils;
 
-import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 import org.yaml.snakeyaml.Yaml;
 

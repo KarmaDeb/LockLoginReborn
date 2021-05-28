@@ -1,21 +1,38 @@
 package ml.karmaconfigs.locklogin.api.modules.util.javamodule;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
-import ml.karmaconfigs.locklogin.api.modules.util.ModuleDependencyLoader;
 import ml.karmaconfigs.locklogin.api.modules.PluginModule;
+import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
 import ml.karmaconfigs.locklogin.api.modules.api.command.Command;
 import ml.karmaconfigs.locklogin.api.modules.api.command.CommandData;
-import ml.karmaconfigs.locklogin.api.modules.util.dependencies.Dependency;
 import ml.karmaconfigs.locklogin.api.modules.api.event.ModuleEventHandler;
 import ml.karmaconfigs.locklogin.api.modules.api.event.util.Event;
 import ml.karmaconfigs.locklogin.api.modules.api.event.util.EventListener;
+import ml.karmaconfigs.locklogin.api.modules.util.ModuleDependencyLoader;
+import ml.karmaconfigs.locklogin.api.modules.util.dependencies.Dependency;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.updater.JavaModuleVersion;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
+/**
+ * LockLogin java module manager
+ */
 public final class JavaModuleManager {
 
     private final static Map<PluginModule, Set<EventListener>> module_listeners = new LinkedHashMap<>();

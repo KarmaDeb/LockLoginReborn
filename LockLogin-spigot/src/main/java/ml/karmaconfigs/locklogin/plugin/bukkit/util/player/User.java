@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.player;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
 import ml.karmaconfigs.api.common.Level;
@@ -10,10 +21,10 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
-import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.messages.Message;
+import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;

@@ -1,7 +1,7 @@
 package ml.karmaconfigs.locklogin.api.files;
 
-import ml.karmaconfigs.locklogin.api.files.options.*;
 import ml.karmaconfigs.locklogin.api.encryption.HashType;
+import ml.karmaconfigs.locklogin.api.files.options.*;
 import ml.karmaconfigs.locklogin.api.utils.enums.Lang;
 
 public abstract class PluginConfiguration {

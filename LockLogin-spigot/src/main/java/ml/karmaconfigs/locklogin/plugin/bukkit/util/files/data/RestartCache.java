@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.bukkit.util.files.data;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.bukkit.KarmaFile;
 import ml.karmaconfigs.api.common.Level;

@@ -1,5 +1,19 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.plugin;
 
+/*
+ * GNU LESSER GENERAL PUBLIC LICENSE
+ * Version 2.1, February 1999
+ * <p>
+ * Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Everyone is permitted to copy and distribute verbatim copies
+ * of this license document, but changing it is not allowed.
+ * <p>
+ * [This is the first released version of the Lesser GPL.  It also counts
+ * as the successor of the GNU Library Public License, version 2, hence
+ * the version number 2.1.]
+ */
+
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -37,11 +51,11 @@ import ml.karmaconfigs.locklogin.plugin.velocity.listener.JoinListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.MessageListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.QuitListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Config;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Message;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.RestartCache;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.filter.ConsoleFilter;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.filter.PluginFilter;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.player.SessionCheck;
@@ -63,7 +77,6 @@ import java.util.concurrent.TimeUnit;
 import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.*;
-import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 public final class Manager {
 

@@ -9,9 +9,9 @@ import ml.karmaconfigs.api.velocity.karmayaml.YamlManager;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.AzuriomId;
-import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.encryption.CryptTarget;
 import ml.karmaconfigs.locklogin.api.encryption.CryptoUtil;
+import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 
 import java.io.File;

@@ -1,5 +1,16 @@
 package ml.karmaconfigs.locklogin.plugin.velocity.util.player;
 
+/*
+ * Private GSA code
+ *
+ * The use of this code
+ * without GSA team authorization
+ * will be a violation of
+ * terms of use determined
+ * in <a href="http://karmaconfigs.cf/license/"> here </a>
+ * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
+ */
+
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -10,15 +21,15 @@ import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.files.options.LoginConfig;
 import ml.karmaconfigs.locklogin.api.files.options.RegisterConfig;
-import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.SessionInitializationEvent;
+import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
 import ml.karmaconfigs.locklogin.plugin.common.security.GoogleAuthFactory;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.Permission;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy;
-import ml.karmaconfigs.locklogin.plugin.velocity.util.files.messages.Message;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
