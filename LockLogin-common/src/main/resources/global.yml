@@ -7,3 +7,4 @@ project_unsafeUpdate: ${project.unsafeUpdate}
 project_logSizeLimit: ${project.logSizeLimit}
 project_karmaapi: ${project.karmaapi}
 project_update: ${project.update}
+download_jar: ${project.autodl}

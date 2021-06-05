@@ -53,7 +53,11 @@ public enum LockLoginDependencies {
     /**
      * LockLogin dependency
      */
-    GUAVA;
+    GUAVA,
+    /**
+     * LockLogin dependency
+     */
+    GSON;
 
     /**
      * Get the dependency as a dependency object
@@ -114,6 +118,13 @@ public enum LockLoginDependencies {
                 };
             case GUAVA:
                 return new Dependency("Google Guava", "https://repo1.maven.org/maven2/com/google/guava/guava/30.1.1-jre/guava-30.1.1-jre.jar") {
+                    @Override
+                    public void inject() {
+                        onInject.accept(this);
+                    }
+                };
+            case GSON:
+                return new Dependency("Google Gson", "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.7/gson-2.8.7.jar") {
                     @Override
                     public void inject() {
                         onInject.accept(this);

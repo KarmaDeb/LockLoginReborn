@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -135,6 +136,21 @@ public final class JarManager {
      */
     public final boolean inject(final Class<?> target) {
         try {
+            final Class<?> moduleClass = Class.forName("java.lang.Module");
+            final Method getModuleMethod = Class.class.getMethod("getModule");
+            final Method addOpensMethod = moduleClass.getMethod("addOpens", String.class, moduleClass);
+            final Object urlClassLoaderModule = getModuleMethod.invoke(URLClassLoader.class);
+            final Object thisModule = getModuleMethod.invoke(target);
+            addOpensMethod.invoke(
+                    urlClassLoaderModule, URLClassLoader.class.getPackage().getName(), thisModule);
+        } catch (final ClassNotFoundException
+                | NoSuchMethodException
+                | IllegalAccessException
+                | InvocationTargetException ex) {
+            ex.printStackTrace();
+        }
+
+        try {
             URLClassLoader cl = (URLClassLoader) target.getClassLoader();
             Class<?> clazz = URLClassLoader.class;
 
@@ -178,5 +194,10 @@ public final class JarManager {
         public boolean verify(String hostname, SSLSession session) {
             return true;
         }
+    }
+
+    private static class interceptor {
+
+        public final void doNothing() {}
     }
 }

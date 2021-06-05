@@ -26,7 +26,6 @@ import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
 
@@ -87,9 +86,27 @@ public final class Proxy extends ProxyConfiguration {
         String key = cfg.getString("ProxyKey", "");
         if (StringUtils.isNullOrEmpty(key)) {
             key = StringUtils.randomString(32, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+
+            cfg.set("ProxyKey", key);
+            try {
+                YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+            manager.reload();
         }
 
         return key;
+    }
+
+    /**
+     * Get the servers check interval
+     *
+     * @return the servers check interval time
+     */
+    @Override
+    public int proxyLifeCheck() {
+        return cfg.getInt("ServerLifeCheck", 5);
     }
 
     /**
@@ -144,16 +161,8 @@ public final class Proxy extends ProxyConfiguration {
                     if (!name.replaceAll("\\s", "").isEmpty()) {
                         ServerInfo server = plugin.getProxy().getServerInfo(name);
                         if (server != null) {
-                            AtomicBoolean online = new AtomicBoolean(false);
-                            server.ping((result, error) -> {
-                                if (error != null)
-                                    online.set(true);
-                            });
-
-                            if (online.get()) {
-                                if (isAssignable(instance, server)) {
-                                    servers.add(instance.cast(server));
-                                }
+                            if (isAssignable(instance, server)) {
+                                servers.add(instance.cast(server));
                             }
                         }
                     }
@@ -190,16 +199,8 @@ public final class Proxy extends ProxyConfiguration {
                     if (!name.replaceAll("\\s", "").isEmpty()) {
                         ServerInfo server = plugin.getProxy().getServerInfo(name);
                         if (server != null) {
-                            AtomicBoolean online = new AtomicBoolean(false);
-                            server.ping((result, error) -> {
-                                if (error != null)
-                                    online.set(true);
-                            });
-
-                            if (online.get()) {
-                                if (isAssignable(instance, server)) {
-                                    servers.add(instance.cast(server));
-                                }
+                            if (isAssignable(instance, server)) {
+                                servers.add(instance.cast(server));
                             }
                         }
                     }
@@ -217,17 +218,7 @@ public final class Proxy extends ProxyConfiguration {
      * @return if the player is in an auth server
      */
     public static boolean inAuth(final ProxiedPlayer player) {
-        List<String> auths = cfg.getStringList("Servers.Auth");
-        if (arrayValid(auths)) {
-            for (String str : auths) {
-                if (player.getServer().getInfo().getName().equalsIgnoreCase(str))
-                    return true;
-            }
-
-            return false;
-        }
-
-        return true;
+        return isAuth(player.getServer().getInfo());
     }
 
     /**
@@ -248,6 +239,25 @@ public final class Proxy extends ProxyConfiguration {
     public static boolean authsValid() {
         List<String> auths = cfg.getStringList("Servers.Auth");
         return arrayValid(auths);
+    }
+
+    /**
+     * Get if the specified server is an auth server
+     *
+     * @param server the server to check
+     * @return if the server is an auth server
+     */
+    public static boolean isAuth(final ServerInfo server) {
+        if (server != null) {
+            List<String> auths = cfg.getStringList("Servers.Auth");
+            if (arrayValid(auths)) {
+                return auths.contains(server.getName());
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**

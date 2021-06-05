@@ -20,11 +20,15 @@ import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import org.bukkit.entity.Player;
 
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
+import java.util.UUID;
+
+import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeSender {
+
+    private static int proxy_tries = 0;
+    private static int inst_tries = 0;
 
     /**
      * Send the player pin input to BungeeCord
@@ -50,43 +54,68 @@ public final class BungeeSender {
      * Send to the proxy the feedback
      * of access channel
      *
-     * @param recipient the player used to send the message
+     * @param uuid the player id used to send the message
      * @param name this server name
      * @param id the proxy id
      * @param sub the proxy sub channel
      */
-    public static void sendProxyStatus(final Player recipient, final String id, final String name, final String sub) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
-        try {
-            output.writeUTF(sub);
-            output.writeUTF(id);
-            output.writeUTF(name);
+    public static void sendProxyStatus(final String uuid, final String id, final String name, final String sub) {
+        if (uuid != null) {
+            Player recipient = plugin.getServer().getPlayer(UUID.fromString(uuid));
 
-            recipient.sendPluginMessage(plugin, "ll:access", output.toByteArray());
-        } catch (Throwable ex) {
-            logger.scheduleLog(Level.GRAVE, ex);
-            logger.scheduleLog(Level.INFO, "Error while sending proxy status to bungee");
+            if (recipient != null) {
+                proxy_tries = 0;
+                ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                try {
+                    output.writeUTF(sub);
+                    output.writeUTF(id);
+                    output.writeUTF(name);
+
+                    recipient.sendPluginMessage(plugin, "ll:access", output.toByteArray());
+                } catch (Throwable ex) {
+                    logger.scheduleLog(Level.GRAVE, ex);
+                    logger.scheduleLog(Level.INFO, "Error while sending proxy status to bungee");
+                }
+            } else {
+                if (proxy_tries != 3) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> sendProxyStatus(uuid, id, name, sub), 20 * 3);
+                    proxy_tries++;
+                }
+            }
         }
     }
 
     /**
      * Send a module player object to all bungeecord instance
      *
-     * @param recipient the player used to send the message
+     * @param uuid the player uuid used to send the message
      * @param player the module player serialized string
      * @param id the server id who originally sent the module player object
      */
-    public static void sendPlayerInstance(final Player recipient, final String player, final String id) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
-        try {
-            output.writeUTF(DataType.PLAYER.name().toLowerCase());
-            output.writeUTF(id);
-            output.writeUTF(player);
+    public static void sendPlayerInstance(final String uuid, final String player, final String id) {
+        if (uuid != null) {
+            Player recipient = plugin.getServer().getPlayer(UUID.fromString(uuid));
 
-            recipient.sendPluginMessage(plugin, "ll:plugin", output.toByteArray());
-        } catch (Throwable ex) {
-            logger.scheduleLog(Level.GRAVE, ex);
-            logger.scheduleLog(Level.INFO, "Error while sending player instance to bungee");
+            if (recipient != null) {
+                inst_tries = 0;
+
+                ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                try {
+                    output.writeUTF(DataType.PLAYER.name().toLowerCase());
+                    output.writeUTF(id);
+                    output.writeUTF(player);
+
+                    recipient.sendPluginMessage(plugin, "ll:plugin", output.toByteArray());
+                } catch (Throwable ex) {
+                    logger.scheduleLog(Level.GRAVE, ex);
+                    logger.scheduleLog(Level.INFO, "Error while sending player instance to bungee");
+                }
+            } else {
+                if (inst_tries != 3) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> sendPlayerInstance(uuid, id, name), 20 * 3);
+                    inst_tries++;
+                }
+            }
         }
     }
 

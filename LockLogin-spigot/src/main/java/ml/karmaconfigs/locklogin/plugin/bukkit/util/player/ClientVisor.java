@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
-import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.tryAsync;
 
 @SuppressWarnings("deprecation")
 public final class ClientVisor {
@@ -68,33 +67,31 @@ public final class ClientVisor {
      * Check for all vanished players
      */
     public final void checkVanish() {
-        tryAsync(() -> {
-            Player last = null;
+        Player last = null;
 
-            for (Player online : plugin.getServer().getOnlinePlayers()) {
-                if (!vanished.contains(online.getUniqueId())) {
-                    for (UUID id : vanished) {
-                        Player vanished = plugin.getServer().getPlayer(id);
-                        if (vanished != null && vanished.isOnline()) {
-                            if (online.canSee(vanished) || vanished.canSee(online)) {
-                                online.hidePlayer(vanished);
-                                vanished.hidePlayer(online);
-                            }
+        for (Player online : plugin.getServer().getOnlinePlayers()) {
+            if (!vanished.contains(online.getUniqueId())) {
+                for (UUID id : vanished) {
+                    Player vanished = plugin.getServer().getPlayer(id);
+                    if (vanished != null && vanished.isOnline()) {
+                        if (online.canSee(vanished) || vanished.canSee(online)) {
+                            online.hidePlayer(vanished);
+                            vanished.hidePlayer(online);
                         }
                     }
                 }
-
-                if (last != null) {
-                    if (!vanished.contains(last.getUniqueId()) && !vanished.contains(online.getUniqueId())) {
-                        if (!online.canSee(last) || !last.canSee(online)) {
-                            online.showPlayer(last);
-                            last.showPlayer(online);
-                        }
-                    }
-                }
-
-                last = online;
             }
-        });
+
+            if (last != null) {
+                if (!vanished.contains(last.getUniqueId()) && !vanished.contains(online.getUniqueId())) {
+                    if (!online.canSee(last) || !last.canSee(online)) {
+                        online.showPlayer(last);
+                        last.showPlayer(online);
+                    }
+                }
+            }
+
+            last = online;
+        }
     }
 }

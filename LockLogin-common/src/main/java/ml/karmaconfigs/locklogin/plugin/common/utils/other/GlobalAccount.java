@@ -1,52 +1,36 @@
-package ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data;
-
-/*
- * Private GSA code
- *
- * The use of this code
- * without GSA team authorization
- * will be a violation of
- * terms of use determined
- * in <a href="http://karmaconfigs.cf/license/"> here </a>
- * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
- */
+package ml.karmaconfigs.locklogin.plugin.common.utils.other;
 
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class BungeeAccount extends AccountManager {
+/**
+ * LockLogin global account
+ */
+public class GlobalAccount extends AccountManager {
 
-    private final Instant created;
-    private AccountID accountID;
-    private String accountName;
-    private String accountPassword;
-    private String accountPin;
-    private String accountToken;
-    private boolean account2FA;
+    private String name, password, pin, gauth;
+    private AccountID uuid;
+    private boolean enableFA;
+    private final Instant creation;
 
     /**
-     * Initialize the bungeecord account
+     * Initialize the LockLogin global account
      *
-     * @param name     the bungee account name
-     * @param id       the bungee account id
-     * @param password the bungee account password
-     * @param pin      the bungee account pin
-     * @param token    the bungee account google auth token
-     * @param gAuth    the bungee account google auth status
-     * @param date     the bungee account creation date
+     * @param importFrom the account to import from
      */
-    public BungeeAccount(final String name, final AccountID id, final String password, final String pin, final String token, final boolean gAuth, final Instant date) {
-        accountID = id;
-        accountName = name;
-        accountPassword = password;
-        accountPin = pin;
-        accountToken = token;
-        account2FA = gAuth;
-        created = date;
+    public GlobalAccount(final AccountManager importFrom) {
+        name = importFrom.getName();
+        password = importFrom.getPassword();
+        pin = importFrom.getPin();
+        gauth = importFrom.getGAuth();
+        uuid = importFrom.getUUID();
+        enableFA = importFrom.has2FA();
+        creation = importFrom.getCreationTime();
     }
 
     /**
@@ -86,7 +70,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void saveUUID(AccountID id) {
-        accountID = id;
+        uuid = id;
     }
 
     /**
@@ -96,7 +80,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void set2FA(boolean status) {
-        account2FA = status;
+        enableFA = status;
     }
 
     /**
@@ -106,7 +90,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public AccountID getUUID() {
-        return accountID;
+        return uuid;
     }
 
     /**
@@ -116,7 +100,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public String getName() {
-        return accountName;
+        return name;
     }
 
     /**
@@ -126,7 +110,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void setName(String name) {
-        accountName = name;
+        this.name = name;
     }
 
     /**
@@ -136,7 +120,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public String getPassword() {
-        return accountPassword;
+        return password;
     }
 
     /**
@@ -146,7 +130,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void setPassword(String password) {
-        accountPassword = password;
+        this.password = password;
     }
 
     /**
@@ -157,7 +141,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public String getGAuth() {
-        return accountToken;
+        return gauth;
     }
 
     /**
@@ -168,7 +152,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void setGAuth(String token) {
-        accountToken = token;
+        gauth = token;
     }
 
     /**
@@ -178,7 +162,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public String getPin() {
-        return accountPin;
+        return pin;
     }
 
     /**
@@ -188,7 +172,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public void setPin(String pin) {
-        accountPin = pin;
+        this.pin = pin;
     }
 
     /**
@@ -198,7 +182,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public boolean has2FA() {
-        return account2FA;
+        return enableFA;
     }
 
     /**
@@ -208,7 +192,7 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public Instant getCreationTime() {
-        return created;
+        return creation;
     }
 
     /**
@@ -219,6 +203,6 @@ public class BungeeAccount extends AccountManager {
      */
     @Override
     public Set<AccountManager> getAccounts() {
-        return Collections.emptySet();
+        return new LinkedHashSet<>(Collections.singleton(this));
     }
 }

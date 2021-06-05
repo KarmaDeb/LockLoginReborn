@@ -43,6 +43,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.forceFA;
 
 @SystemCommand(command = "login")
 public final class LoginCommand implements CommandExecutor {
@@ -164,6 +165,11 @@ public final class LoginCommand implements CommandExecutor {
                                     session.setLogged(true);
                                     if (protection != null)
                                         protection.success();
+
+                                    if (!manager.has2FA()) {
+                                        if (player.hasPermission(forceFA()))
+                                            player.performCommand("2fa setup " + password);
+                                    }
                                 } else {
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
                                     JavaModuleManager.callEvent(event);
@@ -221,9 +227,9 @@ public final class LoginCommand implements CommandExecutor {
                     }
                 } else {
                     if (session.isTempLogged()) {
-                        user.send(messages.prefix() + messages.gAuthenticate());
-                    } else {
                         user.send(messages.prefix() + messages.alreadyLogged());
+                    } else {
+                        user.send(messages.prefix() + messages.gAuthenticate());
                     }
                 }
             } else {

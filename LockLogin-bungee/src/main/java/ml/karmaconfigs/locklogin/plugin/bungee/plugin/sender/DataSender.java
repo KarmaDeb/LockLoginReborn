@@ -11,20 +11,20 @@ package ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.MessagePool;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.ServerDataStorager;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.logger;
 import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
@@ -37,6 +37,8 @@ public final class DataSender {
     public final static String ACCESS_CHANNEL = "ll:access";
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static String key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+
+    private static final ConcurrentHashMultiset<MessagePool> data_pool = ConcurrentHashMultiset.create();
 
     /**
      * Send a plugin message on the player server
@@ -51,8 +53,11 @@ public final class DataSender {
 
         try {
             ServerInfo server = player.getServer().getInfo();
-            if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+            if (ServerDataStorager.needsRegister(server.getName()) && ServerDataStorager.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                data_pool.add(new MessagePool(server, data));
+            } else {
                 server.sendData(data.getChannel(), data.getData().toByteArray());
+            }
         } catch (Throwable e) {
             logger.scheduleLog(Level.GRAVE, e);
             logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
@@ -71,8 +76,11 @@ public final class DataSender {
         }
 
         try {
-            if (!ServerDataStorager.needsRegister(server.getName()) && !ServerDataStorager.needsProxyKnowledge(server.getName()) || data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL))
+            if (ServerDataStorager.needsRegister(server.getName()) && ServerDataStorager.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                data_pool.add(new MessagePool(server, data));
+            } else {
                 server.sendData(data.getChannel(), data.getData().toByteArray());
+            }
         } catch (Throwable e) {
             logger.scheduleLog(Level.GRAVE, e);
             logger.scheduleLog(Level.INFO, "Error while sending a plugin message from BungeeCord");
@@ -83,7 +91,7 @@ public final class DataSender {
      * Send a plugin message to the server
      *
      * @param channel the channel name
-     * @param data the data to send
+     * @param data    the data to send
      */
     public static void sendModule(final String channel, final byte[] data) {
         if (key.replaceAll("\\s", "").isEmpty()) {
@@ -126,10 +134,27 @@ public final class DataSender {
     }
 
     /**
+     * Update data pool message
+     *
+     * @param name the server name that just registered
+     */
+    public static void updateDataPool(final String name) {
+        for (MessagePool message : data_pool) {
+            ServerInfo server = (ServerInfo) message.getServer();
+            MessageData data = (MessageData) message.getMessage();
+
+            if (server.getName().equals(name)) {
+                data_pool.remove(message);
+                send(server, data);
+            }
+        }
+    }
+
+    /**
      * Get a message data builder instance
      *
      * @param type    the message type
-     * @param owner the message owner
+     * @param owner   the message owner
      * @param channel the message channel name
      * @return a new message data builder instance
      */

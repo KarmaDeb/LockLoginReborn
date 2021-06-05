@@ -71,11 +71,11 @@ public final class AltAccountsInventory implements InventoryHolder {
                         ItemMeta meta = item.getItemMeta();
                         assert meta != null;
 
-                        meta.setDisplayName(StringUtils.toColor("&f" + player.getName()));
+                        meta.setDisplayName(StringUtils.toColor("&f" + manager.getName()));
                         if (player.getUniqueId().toString().equals(manager.getUUID().getId())) {
-                            meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + player.getUniqueId()), StringUtils.toColor("&8&l&o( &cYOU &8&l&o)")));
+                            meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID().getId()), StringUtils.toColor("&8&l&o( &cYOU &8&l&o)")));
                         } else {
-                            meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID())));
+                            meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID().getId())));
                         }
 
                         item.setItemMeta(meta);
@@ -110,15 +110,15 @@ public final class AltAccountsInventory implements InventoryHolder {
                 Inventory page = getBlankPage();
 
                 for (AccountManager manager : managers) {
-                    ItemStack item = getPlayerHead(player.getName());
+                    ItemStack item = getPlayerHead(manager.getName());
                     ItemMeta meta = item.getItemMeta();
                     assert meta != null;
 
-                    meta.setDisplayName(StringUtils.toColor("&f" + player.getName()));
+                    meta.setDisplayName(StringUtils.toColor("&f" + manager.getName()));
                     if (player.getUniqueId().toString().equals(manager.getUUID().getId())) {
-                        meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + player.getUniqueId()), StringUtils.toColor("&8&l&o( &cYOU &8&l&o)")));
+                        meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID().getId()), StringUtils.toColor("&8&l&o( &cYOU &8&l&o)")));
                     } else {
-                        meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID())));
+                        meta.setLore(Arrays.asList("\n", StringUtils.toColor("&7UUID: &e" + manager.getUUID().getId())));
                     }
 
                     item.setItemMeta(meta);

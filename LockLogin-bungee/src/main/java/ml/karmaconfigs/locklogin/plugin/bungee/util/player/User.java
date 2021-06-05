@@ -12,6 +12,7 @@ package ml.karmaconfigs.locklogin.plugin.bungee.util.player;
  */
 
 import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
+import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
@@ -38,8 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.fromPlayer;
-import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.plugin;
+import static ml.karmaconfigs.locklogin.plugin.bungee.LockLogin.*;
 import static ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 /**
@@ -194,7 +194,7 @@ public final class User {
             ClientSession session = getSession();
 
             if (session.isValid()) {
-                if (session.isLogged() && session.isCaptchaLogged()) {
+                if (session.isLogged() && session.isTempLogged()) {
                     if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
                         Iterator<ServerInfo> lobbies = proxy.lobbyServers(ServerInfo.class);
                         if (lobbies.hasNext()) {
@@ -204,8 +204,12 @@ public final class User {
                                     player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
                                         if (error != null || result == ServerConnectRequest.Result.FAIL) {
                                             failSet.add(lInfo.getName());
-
                                             checkServer(failSet.toArray(new String[]{}));
+
+                                            if (error != null) {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                            }
+                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
                                         }
                                     }).build());
                                     break;
@@ -223,8 +227,12 @@ public final class User {
                                     player.connect(ServerConnectRequest.builder().target(aInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
                                         if (error != null || result == ServerConnectRequest.Result.FAIL) {
                                             failSet.add(aInfo.getName());
-
                                             checkServer(failSet.toArray(new String[]{}));
+
+                                            if (error != null) {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                            }
+                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), aInfo.getName());
                                         }
                                     }).build());
                                     break;

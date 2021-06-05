@@ -105,6 +105,7 @@ Disabled2FA: "&5&o2FA inaktiviert, Ihr Konto ist jetzt weniger sicher"
 Enabled2FA: "&d2FA aktiviert, Ihr Konto ist wieder sicher"
 2FaAccountDisabled: "&5&o2FA ist in Ihrem Konto inaktiviert"
 2FAServerDisabled: "&5&o2FA ist in diesem Server derzeit inaktiviert"
+2FaLocked: "&5&oDieser Server möchte, dass Sie 2FA aktiviert haben"
 2FAScratchCodes:
   - "&7Hey! &b{player}&7, das sind Ihre Wiederherstellungscodes,"
   - "&7stellen sicher, dass sie nicht verloren gehen, da dies der letzte sein wird"

@@ -18,7 +18,6 @@ import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleLoader;
 import ml.karmaconfigs.locklogin.api.modules.util.javamodule.JavaModuleManager;
-import org.apache.commons.lang.Validate;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -39,16 +38,20 @@ public abstract class PluginModule {
      * main class
      *
      * @param clazz the main class
-     * @param <T>   class type
      * @return the main class module object
      */
-    public static <T extends PluginModule> T getModule(final Class<T> clazz) {
-        Validate.notNull(clazz, "Null class cannot be a java module instance");
+    public static PluginModule getModule(final Class<?> clazz) {
         if (!PluginModule.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException(clazz + " is not an instance of " + PluginModule.class);
         }
 
-        return clazz.cast(PluginModule.class);
+        Class<? extends PluginModule> moduleClazz = clazz.asSubclass(PluginModule.class);
+        try {
+            return moduleClazz.getConstructor().newInstance();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -80,13 +83,14 @@ public abstract class PluginModule {
             JavaModuleLoader loader = new JavaModuleLoader(modulesFolder);
 
             PluginModule module = getModule(this.getClass());
-            if (JavaModuleLoader.isLoaded(module.name())) {
-                loader.unloadModule(module.name());
+            if (module != null) {
+                if (JavaModuleLoader.isLoaded(module.name())) {
+                    loader.unloadModule(module.name());
 
-                return true;
+                    return true;
+                }
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
 
         return false;
     }
@@ -103,13 +107,14 @@ public abstract class PluginModule {
             JavaModuleLoader loader = new JavaModuleLoader(modulesFolder);
 
             PluginModule module = getModule(this.getClass());
-            if (!JavaModuleLoader.isLoaded(module.name())) {
-                loader.loadModule(module.name());
+            if (module != null) {
+                if (!JavaModuleLoader.isLoaded(module.name())) {
+                    loader.loadModule(module.name());
 
-                return true;
+                    return true;
+                }
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
 
         return false;
     }

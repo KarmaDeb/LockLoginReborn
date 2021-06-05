@@ -134,6 +134,8 @@ public final class RegisterCommand extends Command {
                                             DataSender.send(player, gauth);
 
                                         SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() + 1);
+
+                                        user.checkServer();
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

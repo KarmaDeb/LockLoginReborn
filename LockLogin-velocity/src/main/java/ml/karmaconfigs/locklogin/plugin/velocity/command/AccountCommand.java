@@ -333,6 +333,15 @@ public class AccountCommand extends BungeeLikeCommand {
                                                 accounts.add(manager);
                                         }
 
+                                        int sent = 0;
+                                        int max = accounts.size();
+                                        for (AccountManager account : accounts) {
+                                            player.sendActionBar(Component.text().content(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")).build());
+
+                                            DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                            sent++;
+                                        }
+
                                         AccountParser parser = new AccountParser(accounts);
                                         DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                     } else {

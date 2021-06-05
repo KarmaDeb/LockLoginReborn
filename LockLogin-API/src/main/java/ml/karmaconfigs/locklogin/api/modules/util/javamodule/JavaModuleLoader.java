@@ -97,6 +97,81 @@ public final class JavaModuleLoader {
                 return module;
         }
 
+        if (modulesFolder != null) {
+            File[] files = modulesFolder.listFiles();
+
+            if (files != null) {
+                if (!isLoaded(name)) {
+                    for (File moduleFile : files) {
+                        if (moduleFile.isFile()) {
+                            if (!load_queue.contains(moduleFile.getName())) {
+                                try {
+                                    JarFile jar = new JarFile(moduleFile);
+
+                                    ZipEntry module_yml = jar.getEntry("module.yml");
+                                    if (module_yml != null) {
+                                        InputStream module_stream = jar.getInputStream(module_yml);
+                                        if (module_stream != null) {
+                                            Yaml yaml = new Yaml();
+                                            Map<String, Object> values = yaml.load(module_stream);
+
+                                            String module_name = values.getOrDefault("name", "").toString();
+                                            if (module_name.equalsIgnoreCase(name) || moduleFile.getName().replace(".jar", "").equalsIgnoreCase(name.replace(".jar", ""))) {
+                                                String class_name = null;
+                                                Class<?> main = CurrentPlatform.getMain();
+
+                                                switch (CurrentPlatform.getPlatform()) {
+                                                    case BUKKIT:
+                                                        class_name = values.getOrDefault("loader_bukkit", "").toString();
+                                                        break;
+                                                    case BUNGEE:
+                                                        class_name = values.getOrDefault("loader_bungee", "").toString();
+                                                        break;
+                                                    case VELOCITY:
+                                                        class_name = values.getOrDefault("loader_velocity", "").toString();
+                                                        break;
+                                                }
+
+                                                if (class_name != null && !class_name.replaceAll("\\s", "").isEmpty()) {
+                                                    URLClassLoader loader = new URLClassLoader(
+                                                            new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, main.getClassLoader());
+                                                    Class<?> module_main = Class.forName(class_name, true, loader);
+                                                    Class<? extends PluginModule> module_class = module_main.asSubclass(PluginModule.class);
+
+                                                    File lockloginFile = new File(main.getProtectionDomain()
+                                                            .getCodeSource()
+                                                            .getLocation()
+                                                            .getPath().replaceAll("%20", " "));
+                                                    ModuleDependencyLoader manager = new ModuleDependencyLoader(lockloginFile);
+                                                    ModuleDependencyLoader subManager = new ModuleDependencyLoader(moduleFile);
+
+                                                    manager.inject(module_main);
+                                                    subManager.inject(main);
+
+                                                    PluginModule module = module_class.getDeclaredConstructor().newInstance();
+                                                    loader.close();
+
+                                                    jar.close();
+
+                                                    return module;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    jar.close();
+                                } catch (Throwable ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    throw new IllegalStateException("Tried to load module " + name + " but it's already loaded!");
+                }
+            }
+        }
+
         return null;
     }
 

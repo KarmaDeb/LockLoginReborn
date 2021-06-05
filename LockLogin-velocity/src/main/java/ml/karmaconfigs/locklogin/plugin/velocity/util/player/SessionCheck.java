@@ -120,28 +120,29 @@ public final class SessionCheck implements Runnable {
                     timer.setCancelled();
                 }
             }).addActionOnEnd(() -> {
+                if (boss != null)
+                    boss.cancel();
+
                 ClientSession session = user.getSession();
 
                 if (!session.isLogged())
                     user.kick((user.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+
                 user.restorePotionEffects();
 
                 under_check.remove(player.getUniqueId());
 
                 if (failAction != null)
                     failAction.accept(player);
-
+            }).addActionOnCancel(() -> {
                 if (boss != null)
                     boss.cancel();
-            }).addActionOnCancel(() -> {
+
                 user.restorePotionEffects();
                 under_check.remove(player.getUniqueId());
 
                 if (authAction != null)
                     authAction.accept(player);
-
-                if (boss != null)
-                    boss.cancel();
             });
 
             timer.start();
@@ -166,9 +167,9 @@ public final class SessionCheck implements Runnable {
         timer.addActionOnEnd(() -> {
             ClientSession session = user.getSession();
             if (!session.isLogged()) {
-                if (user.isRegistered())
+                if (user.isRegistered() && !session.isLogged())
                     user.send(messages.prefix() + messages.login());
-                else
+                else if (!user.isRegistered())
                     user.send(messages.prefix() + messages.register());
             } else {
                 timer.setCancelled();

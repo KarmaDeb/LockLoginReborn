@@ -50,7 +50,9 @@ import ml.karmaconfigs.locklogin.plugin.velocity.listener.ChatListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.JoinListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.MessageListener;
 import ml.karmaconfigs.locklogin.plugin.velocity.listener.QuitListener;
+import ml.karmaconfigs.locklogin.plugin.velocity.permissibles.PluginPermission;
 import ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender;
+import ml.karmaconfigs.locklogin.plugin.velocity.util.ServerLifeChecker;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.Message;
 import ml.karmaconfigs.locklogin.plugin.velocity.util.files.client.PlayerFile;
@@ -101,6 +103,7 @@ public final class Manager {
 
         PlayerFile.migrateV1();
         PlayerFile.migrateV2();
+        PlayerFile.migrateV3();
 
         setupFiles();
         registerCommands();
@@ -175,6 +178,9 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
+
+        ServerLifeChecker checker = new ServerLifeChecker();
+        checker.startCheck();
     }
 
     public static void terminate() {
@@ -390,19 +396,49 @@ public final class Manager {
             if (changelog_requests <= 0) {
                 changelog_requests = 3;
 
+                Console.send(plugin, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID, checker.getLatestVersion());
                 Console.send(checker.getChangelog());
 
-                if (!VersionDownloader.isDownloading()) {
-                    VersionDownloader downloader = new VersionDownloader(versionID, config.getUpdaterOptions().getChannel());
-                    downloader.download(
-                            file -> Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO),
-                            error -> {
-                                if (error != null) {
-                                    logger.scheduleLog(Level.GRAVE, error);
-                                    logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                    Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
-                                }
-                            });
+                Message messages = new Message();
+                for (Player player : server.getAllPlayers()) {
+                    User user = new User(player);
+                    if (user.hasPermission(PluginPermission.applyUpdates())) {
+                        user.send(messages.prefix() + "&dNew LockLogin version available, current is " + versionID + ", but latest is " + checker.getLatestVersion());
+                        user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
+                    }
+                }
+
+                if (VersionDownloader.downloadUpdates()) {
+                    if (!VersionDownloader.isDownloading()) {
+                        VersionDownloader downloader = new VersionDownloader(versionID, config.getUpdaterOptions().getChannel());
+                        downloader.download(
+                                file -> {
+                                    Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+
+                                    for (Player player : server.getAllPlayers()) {
+                                        User user = new User(player);
+                                        if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                            user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
+                                        }
+                                    }
+                                },
+                                error -> {
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                        logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
+                                        Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
+                                    }
+                                });
+                    }
+                } else {
+                    Console.send(plugin, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, checker.getDownloadURL());
+
+                    for (Player player : server.getAllPlayers()) {
+                        User user = new User(player);
+                        if (user.hasPermission(PluginPermission.applyUpdates())) {
+                            user.send(messages.prefix() + "&dFollow console instructions to update");
+                        }
+                    }
                 }
             } else {
                 changelog_requests--;

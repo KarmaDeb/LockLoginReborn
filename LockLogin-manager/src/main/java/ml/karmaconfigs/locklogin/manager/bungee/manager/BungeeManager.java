@@ -268,13 +268,7 @@ public class BungeeManager {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
-        if (update_issuer instanceof ProxiedPlayer) {
-            ProxiedPlayer player = (ProxiedPlayer) update_issuer;
-            if (!player.isConnected())
-                update_issuer = issuer;
-        }
-
-        if (update_issuer == null && update_issuer != issuer) {
+        if (update_issuer == null) {
             update_issuer = issuer;
 
             FileData last_jar = getUpdateJar();
@@ -339,7 +333,7 @@ public class BungeeManager {
 
             update_issuer = null;
         } else {
-            if (update_issuer != null && update_issuer != issuer)
+            if (update_issuer != issuer)
                 issuer.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_already_updating", "&5&oUpdate process is already being processed by {0}"), update_issuer.getName()))));
         }
     }

@@ -37,6 +37,7 @@ import ml.karmaconfigs.locklogin.plugin.common.security.client.AccountData;
 import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
 import ml.karmaconfigs.locklogin.plugin.common.session.SessionDataContainer;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.GlobalAccount;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -320,12 +321,26 @@ public class AccountCommand extends Command {
                                         Set<AccountID> ids = data.getReverseAlts();
                                         Set<AccountManager> accounts = new HashSet<>();
 
+                                        Set<String> added_ids = new HashSet<>();
                                         for (AccountID id : ids) {
-                                            offline = new OfflineClient(id);
-                                            manager = offline.getAccount();
+                                            if (!added_ids.contains(id.getId())) {
+                                                added_ids.add(id.getId());
 
-                                            if (manager != null)
-                                                accounts.add(manager);
+                                                offline = new OfflineClient(id);
+                                                manager = offline.getAccount();
+
+                                                if (manager != null)
+                                                    accounts.add(new GlobalAccount(manager));
+                                            }
+                                        }
+
+                                        int sent = 0;
+                                        int max = accounts.size();
+                                        for (AccountManager account : accounts) {
+                                            player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                            DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                            sent++;
                                         }
 
                                         AccountParser parser = new AccountParser(accounts);

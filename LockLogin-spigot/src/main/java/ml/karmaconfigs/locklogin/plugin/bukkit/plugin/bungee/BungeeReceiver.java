@@ -2,14 +2,15 @@ package ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
+import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
 import ml.karmaconfigs.locklogin.api.modules.api.channel.ModuleMessageService;
 import ml.karmaconfigs.locklogin.api.utils.platform.CurrentPlatform;
-import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data.AccountParser;
 import ml.karmaconfigs.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Config;
 import ml.karmaconfigs.locklogin.plugin.bukkit.util.files.Message;
@@ -27,15 +28,15 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.logger;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeReceiver implements PluginMessageListener {
+
+    private static final Map<String, AccountManager> accounts = new HashMap<>();
 
     /**
      * Listens for incoming plugin messages
@@ -201,31 +202,29 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     break;
                                 case INFOGUI:
                                     String infoMessage = input.readUTF();
-                                    infoMessage = StringUtils.replaceLast(infoMessage.replaceFirst("AccountParser\\(", ""), "\\)", "");
 
                                     String[] infoData = infoMessage.split(";");
                                     Set<AccountManager> infoAccounts = new HashSet<>();
                                     for (String str : infoData) {
-                                        AccountParser parser = new AccountParser(str);
-                                        AccountManager manager = parser.parse();
+                                        AccountManager manager = accounts.getOrDefault(str.replace("-", "").toLowerCase(), null);
+
                                         if (manager != null) {
-                                            infoAccounts.add(parser.parse());
+                                            infoAccounts.add(manager);
                                         }
                                     }
 
                                     new PlayersInfoInventory(infoAccounts, player);
                                     break;
                                 case LOOKUPGUI:
-                                    String lookupMessage = input.readUTF().replaceFirst("AccountParser\\(", "");
-                                    lookupMessage = StringUtils.replaceLast(lookupMessage, "\\)", "");
+                                    String lookupMessage = input.readUTF();
 
                                     String[] lookupData = lookupMessage.split(";");
                                     Set<AccountManager> lookupAccounts = new HashSet<>();
                                     for (String str : lookupData) {
-                                        AccountParser parser = new AccountParser(str);
-                                        AccountManager manager = parser.parse();
+                                        AccountManager manager = accounts.getOrDefault(str.replace("-", "").toLowerCase(), null);
+
                                         if (manager != null) {
-                                            lookupAccounts.add(parser.parse());
+                                            lookupAccounts.add(manager);
                                         }
                                     }
 
@@ -233,7 +232,20 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     break;
                                 case PLAYER:
                                     String serialized = input.readUTF();
-                                    BungeeSender.sendPlayerInstance(player, serialized, id.toString());
+
+                                    AccountManager manager = StringUtils.loadUnsafe(serialized);
+                                    if (manager != null) {
+                                        if (!accounts.containsKey(manager.getUUID().getId().replace("-", "").toLowerCase())) {
+                                            Console.send(plugin, "Stored temp account of client {0}", Level.INFO, manager.getName());
+                                        } else {
+                                            Console.send(plugin, "Updated temp account of client {0}", Level.INFO, manager.getName());
+                                        }
+
+                                        accounts.put(manager.getUUID().getId().replace("-", "").toLowerCase(), manager);
+                                        BungeeSender.sendPlayerInstance(clientUUID, serialized, id.toString());
+                                    } else {
+                                        Console.send(plugin, "Received null serialized player account from proxy with id {0}", Level.INFO, id);
+                                    }
                                     break;
                                 case MODULE:
                                     String name = input.readUTF();
@@ -269,20 +281,20 @@ public final class BungeeReceiver implements PluginMessageListener {
                         //so we will just use it as a "emptyProxyOwner" check
                         if (storager.isProxyKey(proxyKey)) {
                             storager.setProxyKey(proxyKey);
-                            BungeeSender.sendProxyStatus(player, id.toString(), serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
 
                             storager.setMultiBungee(input.readBoolean());
                         } else {
-                            BungeeSender.sendProxyStatus(player, "invalid", serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
                             logger.scheduleLog(Level.GRAVE, "Proxy with id {0} tried to register a key but the key is already registered and the specified one is incorrect", id.toString());
                         }
                         break;
                     case REGISTER:
                         if (storager.isProxyKey(proxyKey) && storager.canRegister()) {
                             storager.addProxy(id);
-                            BungeeSender.sendProxyStatus(player, id.toString(), serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
                         } else {
-                            BungeeSender.sendProxyStatus(player, "invalid", serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
                             logger.scheduleLog(Level.GRAVE, "Proxy with id {0} to register itself with an invalid access key", id.toString());
                         }
                         break;
@@ -293,9 +305,9 @@ public final class BungeeReceiver implements PluginMessageListener {
                         //access key and won't be able to access anymore
                         if (storager.isProxyKey(proxyKey) && storager.validate(id)) {
                             storager.delProxy(id);
-                            BungeeSender.sendProxyStatus(player, id.toString(), serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
                         } else {
-                            BungeeSender.sendProxyStatus(player, "invalid", serverName, sub.name().toLowerCase());
+                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
                             logger.scheduleLog(Level.GRAVE, "Tried to remove proxy with id {0} using an invalid key", id.toString());
                         }
                         break;
@@ -305,5 +317,21 @@ public final class BungeeReceiver implements PluginMessageListener {
             logger.scheduleLog(Level.GRAVE, ex);
             logger.scheduleLog(Level.INFO, "Failed to read bungeecord message");
         }
+    }
+
+    private UUID fromTrimmed(String trimmedUUID) throws IllegalArgumentException{
+        if(trimmedUUID == null) throw new IllegalArgumentException();
+        StringBuilder builder = new StringBuilder(trimmedUUID.trim());
+
+        try {
+            builder.insert(20, "-");
+            builder.insert(16, "-");
+            builder.insert(12, "-");
+            builder.insert(8, "-");
+        } catch (StringIndexOutOfBoundsException e){
+            throw new IllegalArgumentException();
+        }
+
+        return UUID.fromString(builder.toString());
     }
 }

@@ -68,9 +68,6 @@ public final class LockLoginCommand implements CommandExecutor {
             User user = new User(player);
 
             switch (args.length) {
-                case 0:
-                    user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
-                    break;
                 case 1:
                     switch (args[0].toLowerCase()) {
                         case "reload":
@@ -158,15 +155,63 @@ public final class LockLoginCommand implements CommandExecutor {
                             break;
                     }
                     break;
+                case 3:
+                    if (args[0].equalsIgnoreCase("modules")) {
+                        String moduleName = args[2];
+                        PluginModule module = JavaModuleLoader.getByName(moduleName);
+
+                        if (module != null) {
+                            switch (args[1].toLowerCase()) {
+                                case "load":
+                                    if (player.hasPermission(loadModules())) {
+                                        if (module.load()) {
+                                            user.send("&aModule " + moduleName + " has been loaded successfully");
+                                        } else {
+                                            user.send("&cModule " + moduleName + " failed to load, maybe is already loaded?");
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.permissionError(loadModules()));
+                                    }
+                                    break;
+                                case "unload":
+                                    if (player.hasPermission(unloadModules())) {
+                                        if (module.unload()) {
+                                            user.send("&aModule " + moduleName + " has been unloaded successfully");
+                                        } else {
+                                            user.send("&cModule " + moduleName + " failed to unload, maybe is not loaded?");
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.permissionError(unloadModules()));
+                                    }
+                                    break;
+                                case "reload":
+                                    if (player.hasPermission(reload())) {
+                                        if (module.reload()) {
+                                            user.send("&aModule " + moduleName + " has been reloaded successfully");
+                                        } else {
+                                            user.send("&cModule " + moduleName + " failed to reload");
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.permissionError(reload()));
+                                    }
+                                    break;
+                                default:
+                                    user.send("&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
+                                    break;
+                            }
+                        } else {
+                            user.send("&cModule " + moduleName + " is not loaded or does not exist!");
+                        }
+                    } else {
+                        user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                    }
+                    break;
                 default:
                     user.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                     break;
             }
         } else {
             switch (args.length) {
-                case 0:
-                    Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
-                    break;
                 case 1:
                     switch (args[0].toLowerCase()) {
                         case "reload":
@@ -216,6 +261,45 @@ public final class LockLoginCommand implements CommandExecutor {
                         default:
                             Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                             break;
+                    }
+                    break;
+                case 3:
+                    if (args[0].equalsIgnoreCase("modules")) {
+                        String moduleName = args[2];
+                        PluginModule module = JavaModuleLoader.getByName(moduleName);
+
+                        if (module != null) {
+                            switch (args[1].toLowerCase()) {
+                                case "load":
+                                    if (module.load()) {
+                                        Console.send("&aModule " + moduleName + " has been loaded successfully");
+                                    } else {
+                                        Console.send("&cModule " + moduleName + " failed to load, maybe is already loaded?");
+                                    }
+                                    break;
+                                case "unload":
+                                    if (module.unload()) {
+                                        Console.send("&aModule " + moduleName + " has been unloaded successfully");
+                                    } else {
+                                        Console.send("&cModule " + moduleName + " failed to unload, maybe is not loaded?");
+                                    }
+                                    break;
+                                case "reload":
+                                    if (module.reload()) {
+                                        Console.send("&aModule " + moduleName + " has been reloaded successfully");
+                                    } else {
+                                        Console.send("&cModule " + moduleName + " failed to reload");
+                                    }
+                                    break;
+                                default:
+                                    Console.send("&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
+                                    break;
+                            }
+                        } else {
+                            Console.send("&cModule " + moduleName + " is not loaded or does not exist!");
+                        }
+                    } else {
+                        Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                     }
                     break;
                 default:

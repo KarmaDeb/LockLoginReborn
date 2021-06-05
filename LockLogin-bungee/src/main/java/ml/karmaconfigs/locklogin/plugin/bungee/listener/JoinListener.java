@@ -260,98 +260,103 @@ public final class JoinListener implements Listener {
                 }
             }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+            plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
 
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-            DataSender.send(player, validation);
+                MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
+                DataSender.send(player, validation);
 
-            Message messages = new Message();
+                Message messages = new Message();
 
-            Proxy proxy = new Proxy(ip);
-            if (proxy.isProxy()) {
-                user.kick(messages.ipProxyError());
-                return;
-            }
+                Proxy proxy = new Proxy(ip);
+                if (proxy.isProxy()) {
+                    user.kick(messages.ipProxyError());
+                    return;
+                }
 
-            user.applySessionEffects();
+                user.applySessionEffects();
 
-            if (config.clearChat()) {
-                for (int i = 0; i < 150; i++)
-                    plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
-            }
+                if (config.clearChat()) {
+                    for (int i = 0; i < 150; i++)
+                        plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                }
 
-            ClientSession session = user.getSession();
-            session.validate();
+                ClientSession session = user.getSession();
+                session.validate();
 
-            if (!config.captchaOptions().isEnabled())
-                session.setCaptchaLogged(true);
+                if (!config.captchaOptions().isEnabled())
+                    session.setCaptchaLogged(true);
 
-            AdvancedPluginTimer tmp_timer = null;
-            if (!session.isCaptchaLogged()) {
-                tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
-                tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
-            }
+                AdvancedPluginTimer tmp_timer = null;
+                if (!session.isCaptchaLogged()) {
+                    tmp_timer = new AdvancedPluginTimer(plugin, 1, true);
+                    tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                }
 
-            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                    .addBoolData(session.isLogged())
-                    .addBoolData(session.is2FALogged())
-                    .addBoolData(session.isPinLogged())
-                    .addBoolData(user.isRegistered()).build();
-            DataSender.send(player, join);
+                MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
+                        .addBoolData(session.isLogged())
+                        .addBoolData(session.is2FALogged())
+                        .addBoolData(session.isPinLogged())
+                        .addBoolData(user.isRegistered()).build();
+                DataSender.send(player, join);
 
-            AdvancedPluginTimer timer = tmp_timer;
-            SessionCheck check = new SessionCheck(player, target -> {
-                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-                if (timer != null)
-                    timer.setCancelled();
-            }, target -> {
-                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-                if (timer != null)
-                    timer.setCancelled();
-            });
+                AdvancedPluginTimer timer = tmp_timer;
+                SessionCheck check = new SessionCheck(player, target -> {
+                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+                    if (timer != null)
+                        timer.setCancelled();
+                }, target -> {
+                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+                    if (timer != null)
+                        timer.setCancelled();
+                });
 
-            plugin.getProxy().getScheduler().runAsync(plugin, check);
+                plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-            user.checkServer();
-            forceSessionLogin(player);
+                forceSessionLogin(player);
 
-            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
-            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            JavaModuleManager.callEvent(event);
-        }, (long) 1.5, TimeUnit.SECONDS);
+                UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
+                JavaModuleManager.callEvent(event);
+
+                if (!ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy.isAuth(e.getPlayer().getServer().getInfo())) {
+                    user.checkServer();
+                }
+            }, (long) 1.5, TimeUnit.SECONDS);
+        }, (long) 0.5, TimeUnit.SECONDS);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public final void onSwitch(ServerSwitchEvent e) {
-        plugin.getProxy().getScheduler().schedule(plugin, () -> {
-            ProxiedPlayer player = e.getPlayer();
-            User user = new User(player);
+        ProxiedPlayer player = e.getPlayer();
+        User user = new User(player);
 
-            Server server = player.getServer();
-            if (server != null) {
-                ServerInfo info = server.getInfo();
-                ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
+        Server server = player.getServer();
+        if (server != null) {
+            ServerInfo info = server.getInfo();
+            ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy proxy = new ml.karmaconfigs.locklogin.plugin.bungee.util.files.Proxy();
 
-                if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
-                    if (ServerDataStorager.needsRegister(info.getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
+            if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                if (ServerDataStorager.needsRegister(info.getName()))
+                    DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
 
-                    if (ServerDataStorager.needsProxyKnowledge(info.getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
-                }
+                if (ServerDataStorager.needsProxyKnowledge(info.getName()))
+                    DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
             }
+        }
+
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
+            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
+            DataSender.send(player, validation);
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
-
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-            DataSender.send(player, validation);
 
             ClientSession session = user.getSession();
             session.validate();
@@ -363,9 +368,8 @@ public final class JoinListener implements Listener {
                     .addBoolData(user.isRegistered()).build();
             DataSender.send(player, join);
 
-            user.checkServer();
-
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+            user.checkServer();
         }, (long) 1.5, TimeUnit.SECONDS);
     }
 
@@ -398,23 +402,25 @@ public final class JoinListener implements Listener {
             User user = new User(player);
             ClientSession session = user.getSession();
 
-            session.setCaptchaLogged(true);
-            session.setLogged(true);
-            session.setPinLogged(true);
-            session.set2FALogged(true);
+            if (!session.isLogged() || !session.isTempLogged()) {
+                session.setCaptchaLogged(true);
+                session.setLogged(true);
+                session.setPinLogged(true);
+                session.set2FALogged(true);
 
-            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
-            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
-            DataSender.send(player, login);
-            DataSender.send(player, pin);
-            DataSender.send(player, gauth);
+                DataSender.send(player, login);
+                DataSender.send(player, pin);
+                DataSender.send(player, gauth);
 
-            keeper.destroy();
+                keeper.destroy();
 
-            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-            JavaModuleManager.callEvent(event);
+                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                JavaModuleManager.callEvent(event);
+            }
         }
     }
 }

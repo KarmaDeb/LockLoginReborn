@@ -28,7 +28,6 @@ import java.util.function.Consumer;
  */
 public final class VersionDownloader {
 
-    private static String download_url = "https://karmaconfigs.github.io/updates/LockLogin/release/LockLogin.jar";
     private static double percentage = 0D;
     private static boolean downloading = false;
 
@@ -41,22 +40,8 @@ public final class VersionDownloader {
      * @param channel the version update channel
      */
     public VersionDownloader(final String version, final UpdateChannel channel) {
-        String name = "release/LockLogin.jar";
-        switch (channel) {
-            case SNAPSHOT:
-                name = "snapshot/LockLogin.jar";
-                break;
-            case RC:
-                name = "rc/LockLogin.jar";
-                break;
-            default:
-                break;
-        }
-
         checker = new VersionChecker(version);
         checker.checkVersion(channel);
-
-        download_url = "https://karmaconfigs.github.io/updates/LockLogin/" + name;
     }
 
     /**
@@ -95,7 +80,7 @@ public final class VersionDownloader {
             downloading = true;
 
             try {
-                URL url = new URL(download_url);
+                URL url = new URL(VersionChecker.download_url);
                 URLConnection connection = url.openConnection();
 
                 int size = connection.getContentLength();
@@ -154,7 +139,7 @@ public final class VersionDownloader {
      */
     @Nullable
     private File getDownloaded() {
-        File updater_folder = new File(FileUtilities.getPluginsFolder() + File.separator + "plugin" + File.separator + "updater");
+        File updater_folder = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater");
         File[] files = updater_folder.listFiles();
 
         if (files != null) {
@@ -163,7 +148,7 @@ public final class VersionDownloader {
                 if (!file.isDirectory() && file.getName().endsWith(".jar")) {
                     if (file.getName().endsWith(checker.getLatestVersion().replace(":", ";") + ".jar")) {
                         try {
-                            URL url = new URL(download_url);
+                            URL url = new URL(VersionChecker.download_url);
                             URLConnection connection = url.openConnection();
 
                             if (file.length() == connection.getContentLengthLong()) {
@@ -176,5 +161,17 @@ public final class VersionDownloader {
         }
 
         return null;
+    }
+
+    /**
+     * Get if the server owner wants the plugin to download
+     * automatically the new jars
+     *
+     * @return if the server owner wants to download
+     * automatically the new jars
+     */
+    public static boolean downloadUpdates() {
+        File no_download = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater", ".no_download");
+        return !no_download.exists();
     }
 }

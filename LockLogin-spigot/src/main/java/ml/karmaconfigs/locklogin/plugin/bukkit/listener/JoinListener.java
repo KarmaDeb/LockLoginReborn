@@ -208,7 +208,7 @@ public final class JoinListener implements Listener {
                         //Allow the player at the eyes of the plugin
                         e.allow();
                     } else {
-                        AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, 3, false);
+                        AdvancedPluginTimer timer = new AdvancedPluginTimer(plugin, 5, false);
                         timer.addActionOnEnd(() -> {
                             Player online = plugin.getServer().getPlayer(e.getUniqueId());
                             if (online != null && online.isOnline()) {

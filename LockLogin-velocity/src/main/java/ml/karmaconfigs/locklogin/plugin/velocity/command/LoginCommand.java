@@ -42,6 +42,7 @@ import ml.karmaconfigs.locklogin.plugin.velocity.util.player.User;
 import java.net.InetAddress;
 
 import static ml.karmaconfigs.locklogin.plugin.velocity.LockLogin.*;
+import static ml.karmaconfigs.locklogin.plugin.velocity.permissibles.PluginPermission.forceFA;
 import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static ml.karmaconfigs.locklogin.plugin.velocity.plugin.sender.DataSender.MessageData;
 
@@ -131,6 +132,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                                 config.passwordEncryption().name());
                                     }
 
+                                    boolean checkServer = false;
                                     if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
                                         JavaModuleManager.callEvent(event);
@@ -144,8 +146,9 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         session.setPinLogged(true);
 
                                         user.send(messages.prefix() + event.getAuthMessage());
-
                                         SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+
+                                        checkServer = true;
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
                                         JavaModuleManager.callEvent(event);
@@ -167,6 +170,14 @@ public final class LoginCommand extends BungeeLikeCommand {
                                     user.restorePotionEffects();
 
                                     DataSender.send(player, login);
+
+                                    if (checkServer)
+                                        user.checkServer();
+
+                                    if (!manager.has2FA()) {
+                                        if (user.hasPermission(forceFA()))
+                                            user.performCommand("2fa setup " + password);
+                                    }
                                 } else {
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
                                     JavaModuleManager.callEvent(event);
@@ -225,9 +236,9 @@ public final class LoginCommand extends BungeeLikeCommand {
                     }
                 } else {
                     if (session.isTempLogged()) {
-                        user.send(messages.prefix() + messages.gAuthenticate());
-                    } else {
                         user.send(messages.prefix() + messages.alreadyLogged());
+                    } else {
+                        user.send(messages.prefix() + messages.gAuthenticate());
                     }
                 }
             } else {

@@ -107,7 +107,7 @@ public final class QuitListener implements Listener {
                 keeper.store();
             }
 
-            //Last location will be always saved since if the server
+            //Last location will be always save since if the server
             //owner wants to enable it, it would be good to see
             //the player last location has been stored to avoid
             //location problems

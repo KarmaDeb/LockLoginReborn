@@ -11,11 +11,14 @@ package ml.karmaconfigs.locklogin.plugin.common.web;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import com.google.gson.*;
+import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.locklogin.api.utils.enums.UpdateChannel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +33,7 @@ public final class VersionChecker {
 
     private static String latest_version = "";
     private static String latest_changelog = "";
+    static String download_url = "";
     private static boolean can_check = true;
     private final String current_version;
 
@@ -60,37 +64,48 @@ public final class VersionChecker {
                 }
             }, wait);
 
-            String name = "release/latest.txt";
+            String name;
             switch (channel) {
                 case SNAPSHOT:
-                    name = "snapshot/latest.txt";
+                    name = "snapshot";
                     break;
                 case RC:
-                    name = "rc/latest.txt";
+                    name = "rc";
                     break;
+                case RELEASE:
                 default:
+                    name = "release";
                     break;
             }
 
+            String check_url = "https://locklogin.eu/version/?channel=" + name;
             try {
-                URL url = new URL("https://karmaconfigs.github.io/updates/LockLogin/" + name);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-                String word;
-                List<String> lines = new ArrayList<>();
-                while ((word = reader.readLine()) != null) {
-                    lines.add((word.replaceAll("\\s", "").isEmpty() ? "&f" : word));
-                }
+                URL url = new URL(check_url);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                //connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
 
-                reader.close();
-                StringBuilder changelog_builder = new StringBuilder();
-                for (int i = 1; i < lines.size(); i++) {
-                    String line = lines.get(i);
-                    changelog_builder.append(line.replace("_", "&")).append("\n");
-                }
+                int response = connection.getResponseCode();
+                if (response == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
-                latest_changelog = StringUtils.replaceLast(changelog_builder.toString(), "\n", "");
-                latest_version = StringUtils.stripColor(lines.get(0));
+                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                    JsonObject value = gson.fromJson(reader, JsonObject.class);
+
+                    latest_version = value.get("version").getAsString();
+                    download_url = value.get("download").getAsString();
+                    JsonArray changelog = value.getAsJsonArray("changelog");
+                    List<String> lines = new ArrayList<>();
+                    for (JsonElement object : changelog)
+                        lines.add(object.getAsString().replace("_", "&"));
+
+                    latest_changelog = StringUtils.listToString(lines,false);
+                } else {
+                    can_check = true;
+                    Console.send("&cFailed to check for updates at locklogin.eu host, response code: ({0} - {1})", response, connection.getResponseMessage());
+                }
             } catch (Throwable ex) {
+                can_check = true;
                 ex.printStackTrace();
             }
         }
@@ -124,5 +139,14 @@ public final class VersionChecker {
      */
     public final String getChangelog() {
         return latest_changelog;
+    }
+
+    /**
+     * Get the latest download url
+     *
+     * @return the plugin latest download url
+     */
+    public final String getDownloadURL() {
+        return download_url;
     }
 }

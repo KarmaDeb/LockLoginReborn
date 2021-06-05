@@ -33,6 +33,7 @@ import ml.karmaconfigs.locklogin.api.account.AccountID;
 import ml.karmaconfigs.locklogin.api.account.AccountManager;
 import ml.karmaconfigs.locklogin.api.account.ClientSession;
 import ml.karmaconfigs.locklogin.api.files.PluginConfiguration;
+import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserAuthenticateEvent;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserJoinEvent;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPostJoinEvent;
 import ml.karmaconfigs.locklogin.api.modules.api.event.user.UserPreJoinEvent;
@@ -310,11 +311,15 @@ public final class JoinListener {
             });
 
             server.getScheduler().buildTask(plugin, check).schedule();
-
-            user.checkServer();
             forceSessionLogin(player);
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
+
+            e.getPlayer().getCurrentServer().ifPresent(server -> {
+                if (ml.karmaconfigs.locklogin.plugin.velocity.util.files.Proxy.isAuth(server.getServerInfo())) {
+                    user.checkServer();
+                }
+            });
 
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
             JavaModuleManager.callEvent(event);
@@ -361,9 +366,9 @@ public final class JoinListener {
                     .addBoolData(user.isRegistered()).build();
             DataSender.send(player, join);
 
-            user.checkServer();
-
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+
+            user.checkServer();
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
@@ -410,6 +415,11 @@ public final class JoinListener {
             DataSender.send(player, gauth);
 
             keeper.destroy();
+
+            user.checkServer();
+
+            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+            JavaModuleManager.callEvent(event);
         }
     }
 }

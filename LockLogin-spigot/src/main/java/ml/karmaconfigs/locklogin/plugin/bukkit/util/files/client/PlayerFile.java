@@ -15,6 +15,7 @@ import org.bukkit.OfflinePlayer;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -233,6 +234,37 @@ public final class PlayerFile extends AccountManager {
         }
     }
 
+    /**
+     * Migrate from LockLogin v3 player database
+     */
+    public static void migrateV3() {
+        File v2DataFolder = new File(plugin.getDataFolder() + File.separator + "playerdata");
+        File[] files = v2DataFolder.listFiles();
+
+        if (files != null) {
+            Console.send(plugin, "Initializing LockLogin v3 player database migration", Level.INFO);
+
+            for (File file : files) {
+                if (file.getName().endsWith(".lldb")) {
+                    Console.send(plugin, "Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
+                    YamlManager oldManager = new YamlManager(plugin, file.getName(), "playerdata");
+
+                    File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName());
+                    KarmaFile user = new KarmaFile(newFile);
+
+                    try {
+                        Files.move(file.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (Throwable ignored) {}
+                }
+
+                try {
+                    Files.delete(v2DataFolder.toPath());
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+    }
+
     @Override
     public boolean exists() {
         return manager.exists();
@@ -368,7 +400,12 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final String getPin() {
-        return manager.getString("PIN", "").replace("PIN:", "");
+        PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+        if (configuration.enablePin()) {
+            return manager.getString("PIN", "").replace("PIN:", "");
+        }
+
+        return "";
     }
 
     /**
@@ -395,7 +432,12 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final boolean has2FA() {
-        return manager.getBoolean("2FA", false);
+        PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+        if (configuration.enable2FA()) {
+            return manager.getBoolean("2FA", false);
+        }
+
+        return false;
     }
 
     /**

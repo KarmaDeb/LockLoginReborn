@@ -6,7 +6,7 @@
 
     <groupId>ml.karmaconfigs</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.12.1</version>
+    <version>1.12.7</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -41,7 +41,7 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLogin.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLogin.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLogin/tree/master</url>
-        <tag>1.11.1-SNAPSHOT</tag>
+        <tag>1.12.0-SNAPSHOT</tag>
     </scm>
 
     <properties>
@@ -49,7 +49,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.properties.version>1.0.0</project.properties.version>
         <project.author>KarmaDev</project.author>
-        <project.buildType>SNAPSHOT</project.buildType>
+        <project.buildType>RC</project.buildType>
         <project.debug>false</project.debug>
         <project.unsafeUpdate>true</project.unsafeUpdate>
         <project.logSizeLimit>70</project.logSizeLimit>

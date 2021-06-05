@@ -73,7 +73,7 @@ public final class MessageListener {
                             AccountManager manager = user.getManager();
 
                             if (session.isValid()) {
-                                if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                if (manager.getPin().replaceAll("\\s", "").isEmpty() || CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
                                     DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
 
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
@@ -83,28 +83,18 @@ public final class MessageListener {
 
                                     user.send(messages.prefix() + event.getAuthMessage());
                                     session.setPinLogged(true);
+
+                                    if (!manager.has2FA())
+                                        SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+
+                                    user.checkServer();
                                 } else {
-                                    if (CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
-                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
+                                    DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
 
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
-                                                (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                        JavaModuleManager.callEvent(event);
+                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
+                                    JavaModuleManager.callEvent(event);
 
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                        session.setPinLogged(true);
-
-                                        if (!manager.has2FA())
-                                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
-                                    } else {
-                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
-
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
-                                        JavaModuleManager.callEvent(event);
-
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                    }
+                                    user.send(messages.prefix() + event.getAuthMessage());
                                 }
                             }
                         }
@@ -166,6 +156,7 @@ public final class MessageListener {
                                 if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
                                     Console.send(plugin, "Registered this proxy into server {0}", Level.INFO, name);
                                     ServerDataStorager.setProxyRegistered(name);
+                                    DataSender.updateDataPool(name);
                                 } else {
                                     e.setResult(PluginMessageEvent.ForwardResult.handled());
                                 }

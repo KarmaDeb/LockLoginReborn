@@ -105,6 +105,7 @@ Disabled2FA: "&5&o2FA disabled, your account is now less secure"
 Enabled2FA: "&d2FA enabled, your account is secure again"
 2FaAccountDisabled: "&5&o2FA is disabled in your account"
 2FAServerDisabled: "&5&o2FA is currently disabled in this server"
+2FaLocked: "&5&oThis server wants you to have 2FA enabled"
 2FAScratchCodes:
   - "&7Hey! &b{player}&7, these are your recovery codes,"
   - "&7make sure to not lose them as this will be the last"

@@ -42,6 +42,7 @@ import java.util.List;
 
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 import static ml.karmaconfigs.locklogin.plugin.bukkit.LockLogin.properties;
+import static ml.karmaconfigs.locklogin.plugin.bukkit.plugin.PluginPermission.forceFA;
 
 @SystemCommand(command = "2fa")
 public final class GoogleAuthCommand implements CommandExecutor {
@@ -125,37 +126,41 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                 }
                                 break;
                             case "remove":
-                                if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
-                                    if (args.length >= 3) {
-                                        if (manager.has2FA()) {
-                                            String password = args[1];
+                                if (player.hasPermission(forceFA())) {
+                                    user.send(messages.prefix() + messages.gauthLocked());
+                                } else {
+                                    if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+                                        if (args.length >= 3) {
+                                            if (manager.has2FA()) {
+                                                String password = args[1];
 
-                                            StringBuilder codeBuilder = new StringBuilder();
-                                            for (int i = 2; i < args.length; i++)
-                                                codeBuilder.append(args[i]);
+                                                StringBuilder codeBuilder = new StringBuilder();
+                                                for (int i = 2; i < args.length; i++)
+                                                    codeBuilder.append(args[i]);
 
-                                            try {
-                                                int code = Integer.parseInt(codeBuilder.toString());
+                                                try {
+                                                    int code = Integer.parseInt(codeBuilder.toString());
 
-                                                CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                                GoogleAuthFactory factory = user.getTokenFactory();
+                                                    CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                                    GoogleAuthFactory factory = user.getTokenFactory();
 
-                                                if (util.validate() && factory.validate(manager.getGAuth(), code)) {
-                                                    manager.set2FA(false);
-                                                    manager.setGAuth(null);
+                                                    if (util.validate() && factory.validate(manager.getGAuth(), code)) {
+                                                        manager.set2FA(false);
+                                                        manager.setGAuth(null);
 
-                                                    user.send(messages.prefix() + messages.gAuthDisabled());
-                                                } else {
-                                                    user.send(messages.prefix() + messages.gAuthToggleError());
+                                                        user.send(messages.prefix() + messages.gAuthDisabled());
+                                                    } else {
+                                                        user.send(messages.prefix() + messages.gAuthToggleError());
+                                                    }
+                                                } catch (Throwable ex) {
+                                                    user.send(messages.prefix() + messages.gAuthIncorrect());
                                                 }
-                                            } catch (Throwable ex) {
-                                                user.send(messages.prefix() + messages.gAuthIncorrect());
+                                            } else {
+                                                user.send(messages.prefix() + messages.gAuthNotEnabled());
                                             }
                                         } else {
-                                            user.send(messages.prefix() + messages.gAuthNotEnabled());
+                                            user.send(messages.prefix() + messages.gAuthRemoveUsage());
                                         }
-                                    } else {
-                                        user.send(messages.prefix() + messages.gAuthRemoveUsage());
                                     }
                                 }
                                 break;

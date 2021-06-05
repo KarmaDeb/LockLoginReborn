@@ -16,6 +16,7 @@ package ml.karmaconfigs.locklogin.plugin.bukkit;
 
 import ml.karmaconfigs.api.bukkit.Console;
 import ml.karmaconfigs.api.common.JarInjector;
+import ml.karmaconfigs.api.common.KarmaAPI;
 import ml.karmaconfigs.api.common.KarmaPlugin;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -61,6 +62,8 @@ public final class Main extends JavaPlugin {
         injected = injectAPI();
 
         if (injected) {
+            Console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+
             getServer().getScheduler().runTaskAsynchronously(this, () -> {
                 CurrentPlatform.setPlatform(Platform.BUKKIT);
                 CurrentPlatform.setMain(Main.class);

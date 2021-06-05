@@ -448,6 +448,12 @@ public final class Message {
         return parse(str);
     }
 
+    public final String gauthLocked() {
+        String str = msg.getString("2FaLocked", "&5&oThis server wants you to have 2FA enabled");
+
+        return parse(str);
+    }
+
     public final String gAuthScratchCodes(final List<Integer> codes) {
         List<String> messages = msg.getStringList("2FAScratchCodes");
         StringBuilder builder = new StringBuilder();

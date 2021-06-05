@@ -16,6 +16,7 @@ package ml.karmaconfigs.locklogin.plugin.bungee;
 
 import ml.karmaconfigs.api.bungee.Console;
 import ml.karmaconfigs.api.common.JarInjector;
+import ml.karmaconfigs.api.common.KarmaAPI;
 import ml.karmaconfigs.api.common.KarmaPlugin;
 import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -36,6 +37,7 @@ import ml.karmaconfigs.locklogin.plugin.bungee.plugin.sender.DataSender;
 import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.JarManager;
 import ml.karmaconfigs.locklogin.plugin.common.security.AllowedCommand;
+import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.FileInfo;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Messages;
@@ -70,6 +72,8 @@ public final class Main extends Plugin {
         injected = injectAPI();
 
         if (injected) {
+            Console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+
             getProxy().getScheduler().runAsync(this, () -> {
                 CurrentPlatform.setPlatform(Platform.BUNGEE);
                 CurrentPlatform.setMain(this.getClass());
@@ -91,21 +95,25 @@ public final class Main extends Plugin {
                         User user = new User(player);
                         ClientSession session = user.getSession();
 
-                        session.setCaptchaLogged(true);
-                        session.setLogged(true);
-                        session.setPinLogged(true);
-                        session.set2FALogged(true);
+                        if (!session.isLogged() || !session.isTempLogged()) {
+                            session.setCaptchaLogged(true);
+                            session.setLogged(true);
+                            session.setPinLogged(true);
+                            session.set2FALogged(true);
 
-                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
-                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                            DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                            DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                            DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
-                        DataSender.send(player, login);
-                        DataSender.send(player, pin);
-                        DataSender.send(player, gauth);
+                            DataSender.send(player, login);
+                            DataSender.send(player, pin);
+                            DataSender.send(player, gauth);
 
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-                        JavaModuleManager.callEvent(event);
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                            JavaModuleManager.callEvent(event);
+
+                            user.checkServer();
+                        }
                     }
                 };
                 Consumer<ModulePlayer> onClose = modulePlayer -> {

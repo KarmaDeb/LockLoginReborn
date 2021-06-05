@@ -30,8 +30,11 @@ import ml.karmaconfigs.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.locklogin.plugin.common.session.PersistentSessionData;
 import ml.karmaconfigs.locklogin.plugin.common.utils.DataType;
 import ml.karmaconfigs.locklogin.plugin.common.utils.InstantParser;
+import ml.karmaconfigs.locklogin.plugin.common.utils.other.GlobalAccount;
 import ml.karmaconfigs.locklogin.plugin.common.utils.plugin.Alias;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -70,6 +73,10 @@ public final class PlayerInfoCommand extends Command {
             ProxiedPlayer player = (ProxiedPlayer) sender;
             User user = new User(player);
 
+            Set<AccountManager> accounts = new HashSet<>();
+            int sent = 0;
+            int max = 0;
+
             if (user.getSession().isValid()) {
                 if (user.hasPermission(infoRequest())) {
                     OfflineClient offline;
@@ -90,13 +97,19 @@ public final class PlayerInfoCommand extends Command {
                                             Alias alias = new Alias(name);
                                             if (alias.exists()) {
                                                 Set<AccountID> ids = alias.getUsers();
-                                                Set<AccountManager> accounts = new HashSet<>();
                                                 for (AccountID id : ids) {
                                                     offline = new OfflineClient(id);
                                                     manager = offline.getAccount();
 
                                                     if (manager != null)
-                                                        accounts.add(manager);
+                                                        accounts.add(new GlobalAccount(manager));
+                                                }
+
+                                                for (AccountManager account : accounts) {
+                                                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                    sent++;
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
@@ -109,35 +122,53 @@ public final class PlayerInfoCommand extends Command {
 
                                             switch (name) {
                                                 case "everyone":
-                                                    Set<AccountManager> everyoneAccounts = new LinkedHashSet<>();
-
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                                         manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
                                                         if (manager != null)
-                                                            everyoneAccounts.add(manager);
+                                                            accounts.add(new GlobalAccount(manager));
                                                     }
 
-                                                    parser = new AccountParser(everyoneAccounts);
+                                                    for (AccountManager account : accounts) {
+                                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                        sent++;
+                                                    }
+
+                                                    parser = new AccountParser(accounts);
                                                     DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                 case "persistent":
-                                                    parser = new AccountParser(PersistentSessionData.getPersistentAccounts());
+                                                    accounts = PersistentSessionData.getPersistentAccounts();
+                                                    for (AccountManager account : accounts) {
+                                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(new GlobalAccount(account))).build());
+                                                        sent++;
+                                                    }
+
+                                                    parser = new AccountParser(accounts);
                                                     DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                     break;
                                                 default:
                                                     String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
-
-                                                    Set<AccountManager> permissionAccounts = new LinkedHashSet<>();
 
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                                         if (online.hasPermission(permission)) {
 
                                                             manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
                                                             if (manager != null)
-                                                                permissionAccounts.add(manager);
+                                                                accounts.add(new GlobalAccount(manager));
                                                         }
                                                     }
 
-                                                    parser = new AccountParser(permissionAccounts);
+                                                    for (AccountManager account : accounts) {
+                                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                        sent++;
+                                                    }
+
+                                                    parser = new AccountParser(accounts);
                                                     DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                                     break;
                                             }
@@ -148,10 +179,16 @@ public final class PlayerInfoCommand extends Command {
                                         ServerInfo info = plugin.getProxy().getServerInfo(name);
 
                                         if (info != null) {
-                                            Set<AccountManager> accounts = new HashSet<>();
                                             for (ProxiedPlayer connection : info.getPlayers()) {
                                                 User conUser = new User(connection);
-                                                accounts.add(conUser.getManager());
+                                                accounts.add(new GlobalAccount(conUser.getManager()));
+                                            }
+
+                                            for (AccountManager account : accounts) {
+                                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                sent++;
                                             }
 
                                             AccountParser parser = new AccountParser(accounts);
@@ -182,6 +219,9 @@ public final class PlayerInfoCommand extends Command {
 
                                     List<String> parsed = parseMessages(data.isLocked());
 
+                                    InstantParser creation_parser = new InstantParser(manager.getCreationTime());
+                                    String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
+
                                     int msg = -1;
                                     user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
                                     if (data.isLocked()) {
@@ -199,21 +239,27 @@ public final class PlayerInfoCommand extends Command {
                                     user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                                     user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
                                     user.send(StringUtils.formatString(parsed.get(++msg), (!manager.getPin().replaceAll("\\s", "").isEmpty())));
+                                    user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
                                 } else {
                                     user.send(messages.prefix() + messages.neverPlayer(target));
                                 }
                             }
                             break;
                         default:
-                            Set<AccountManager> accounts = new LinkedHashSet<>();
-
                             for (String name : args) {
                                 offline = new OfflineClient(name);
                                 manager = offline.getAccount();
 
                                 if (manager != null) {
-                                    accounts.add(manager);
+                                    accounts.add(new GlobalAccount(manager));
                                 }
+                            }
+
+                            for (AccountManager account : accounts) {
+                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                sent++;
                             }
 
                             AccountParser parser = new AccountParser(accounts);
@@ -239,7 +285,7 @@ public final class PlayerInfoCommand extends Command {
      * @return the parsed player info message
      */
     private List<String> parseMessages(final boolean condition) {
-        String[] propData = properties.getProperty("player_information_message", "&7Locked: &d{0},condition=&7Locked by: &d{0}%&7Locked since: &d{0};,&7Name: &d{0},&7Account ID: &d{0},&7Registered: &d{0},&7Logged: &d{0},&7Temp logged: &d{0},&72FA: &d{0},&7Pin: &d{0}").split(",");
+        String[] propData = properties.getProperty("player_information_message", "&7Locked: &d{0},condition=&7Locked by: &d{0}%&7Locked since: &d{0};,&7Name: &d{0},&7Account ID: &d{0},&7Registered: &d{0},&7Logged: &d{0},&7Temp logged: &d{0},&72FA: &d{0},&7Pin: &d{0},&7Created on: &d{0} ( {1} ago )").split(",");
         List<String> cmdMessages = new ArrayList<>();
 
         for (String propMSG : propData) {

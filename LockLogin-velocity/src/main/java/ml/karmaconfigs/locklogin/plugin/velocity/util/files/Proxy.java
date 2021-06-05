@@ -17,6 +17,7 @@ package ml.karmaconfigs.locklogin.plugin.velocity.util.files;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 import ml.karmaconfigs.api.bungee.Configuration;
 import ml.karmaconfigs.api.bungee.YamlConfiguration;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -92,9 +93,27 @@ public final class Proxy extends ProxyConfiguration {
         String key = cfg.getString("ProxyKey", "");
         if (StringUtils.isNullOrEmpty(key)) {
             key = StringUtils.randomString(32, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
+
+            cfg.set("ProxyKey", key);
+            try {
+                YamlConfiguration.getProvider(YamlConfiguration.class).save(cfg, cfg_file);
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+            manager.reload();
         }
 
         return key;
+    }
+
+    /**
+     * Get the servers check interval
+     *
+     * @return the servers check interval time
+     */
+    @Override
+    public int proxyLifeCheck() {
+        return cfg.getInt("ServerLifeCheck", 5);
     }
 
     /**
@@ -230,6 +249,25 @@ public final class Proxy extends ProxyConfiguration {
     public static boolean authsValid() {
         List<String> auths = cfg.getStringList("Servers.Auth");
         return arrayValid(auths);
+    }
+
+    /**
+     * Get if the specified server is an auth server
+     *
+     * @param server the server to check
+     * @return if the server is an auth server
+     */
+    public static boolean isAuth(final ServerInfo server) {
+        if (server != null) {
+            List<String> auths = cfg.getStringList("Servers.Auth");
+            if (arrayValid(auths)) {
+                return auths.contains(server.getName());
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**

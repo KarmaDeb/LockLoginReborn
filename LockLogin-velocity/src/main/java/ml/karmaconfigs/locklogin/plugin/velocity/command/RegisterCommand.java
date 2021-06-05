@@ -131,6 +131,8 @@ public final class RegisterCommand extends BungeeLikeCommand {
                                             DataSender.send(player, pin);
                                         if (session.is2FALogged())
                                             DataSender.send(player, gauth);
+
+                                        user.checkServer();
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

@@ -27,18 +27,8 @@ public final class AccountParser {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("AccountParser(");
-        for (AccountManager account : managers) {
-            builder
-                    .append(account.getName()).append(" $ ")
-                    .append(account.getUUID().getId()).append(" $ ")
-                    .append(account.getPassword()).append(" $ ")
-                    .append(account.getPin()).append(" $ ")
-                    .append(account.getGAuth()).append(" $ ")
-                    .append(account.has2FA()).append(" $ ")
-                    .append(account.getCreationTime().toString().replace(";", ":")).append(";");
-        }
-        builder.append(")");
+        for (AccountManager account : managers)
+            builder.append(account.getUUID().getId()).append(";");
 
         return StringUtils.replaceLast(builder.toString(), ";", "");
     }

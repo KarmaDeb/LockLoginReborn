@@ -13,6 +13,7 @@ package ml.karmaconfigs.locklogin.plugin.velocity.util.player;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import ml.karmaconfigs.api.common.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import ml.karmaconfigs.locklogin.api.account.AccountID;
@@ -190,7 +191,7 @@ public final class User {
             ClientSession session = getSession();
 
             if (session.isValid()) {
-                if (session.isLogged() && session.isCaptchaLogged()) {
+                if (session.isLogged() && session.isTempLogged()) {
                     if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
                         Iterator<RegisteredServer> lobbies = proxy.lobbyServers(RegisteredServer.class);
                         if (lobbies.hasNext()) {
@@ -200,8 +201,12 @@ public final class User {
                                     player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
                                         if (error != null || !result.isSuccessful()) {
                                             failSet.add(lInfo.getServerInfo().getName());
-
                                             checkServer(failSet.toArray(new String[]{}));
+
+                                            if (error != null) {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                            }
+                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getServerInfo().getName());
                                         }
                                     });
                                     break;
@@ -219,8 +224,12 @@ public final class User {
                                     player.createConnectionRequest(aInfo).connect().whenComplete((result, error) -> {
                                         if (error != null || !result.isSuccessful()) {
                                             failSet.add(aInfo.getServerInfo().getName());
-
                                             checkServer(failSet.toArray(new String[]{}));
+
+                                            if (error != null) {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                            }
+                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), aInfo.getServerInfo().getName());
                                         }
                                     });
                                     break;
