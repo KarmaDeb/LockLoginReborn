@@ -17,7 +17,7 @@
   <dependency>
     <groupId>ml.karmaconfigs</groupId>
     <artifactId>LockLogin-API</artifactId>
-    <version>1.11.3-SNAPSHOT</version>
+    <version>1.12.8-SNAPSHOT</version>
     <scope>provided</scope>
   </dependency>
 </dependencies>
@@ -31,6 +31,6 @@ repositories {
 }
 
 dependencies {
-    compile "ml.karmaconfigs:LockLogin-API:1.11.3-SNAPSHOT"
+    compile "ml.karmaconfigs:LockLogin-API:1.12.8-SNAPSHOT"
 }
 ```
