@@ -6,18 +6,11 @@
 ## Maven
 
 ```xml
-<repositories>
-  <repository>
-    <id>locklogin-repo</id>
-    <url>https://oss.sonatype.org/content/groups/public/</url>
-  </repository>
-</repositories>
-
 <dependencies>
   <dependency>
-    <groupId>ml.karmaconfigs</groupId>
+    <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin-API</artifactId>
-    <version>1.12.8-SNAPSHOT</version>
+    <version>1.12.11-SNAPSHOT</version>
     <scope>provided</scope>
   </dependency>
 </dependencies>
@@ -26,11 +19,7 @@
 ## Gradle
 
 ```gradle
-repositories {
-    maven { url "https://oss.sonatype.org/content/groups/public/" }
-}
-
 dependencies {
-    compile "ml.karmaconfigs:LockLogin-API:1.12.8-SNAPSHOT"
+    compile "eu.locklogin:LockLogin-API:1.12.11-SNAPSHOT"
 }
 ```
