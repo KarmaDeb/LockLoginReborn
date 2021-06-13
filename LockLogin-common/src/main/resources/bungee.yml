@@ -1,3 +1,5 @@
 name: LockLogin
 version: ${project.version}
-main: ml.karmaconfigs.locklogin.plugin.bungee.Main
+main: eu.locklogin.plugin.bungee.Main
+author: ${project.author}
+description: ${project.description}

@@ -14,12 +14,12 @@
 </repositories>
 
 <dependencies>
-  <dependency>
+  <pluginDependency>
     <groupId>ml.karmaconfigs</groupId>
     <artifactId>LockLogin-API</artifactId>
     <version>1.11.3-SNAPSHOT</version>
     <scope>provided</scope>
-  </dependency>
+  </pluginDependency>
 </dependencies>
 ```
 

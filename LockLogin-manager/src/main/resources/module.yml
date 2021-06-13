@@ -5,5 +5,6 @@ description:
   - "to self update at runtime"
 author: KarmaDev
 update_url: ""
-loader_bukkit: ml.karmaconfigs.locklogin.manager.bukkit.Main
-loader_bungee: ml.karmaconfigs.locklogin.manager.bungee.Main
+loader_bukkit: eu.locklogin.module.manager.bukkit.Main
+loader_bungee: eu.locklogin.module.manager.bungee.Main
+loader_velocity: eu.locklogin.module.manager.velocity.Main

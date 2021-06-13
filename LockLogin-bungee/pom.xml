@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ml.karmaconfigs</groupId>
+        <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.7</version>
+        <version>1.12.16</version>
     </parent>
 
     <artifactId>LockLogin-bungee</artifactId>
@@ -80,25 +80,25 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-API</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-Common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-common</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-API</artifactId>
                 </exclusion>
             </exclusions>
@@ -119,12 +119,6 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-web</artifactId>
             <version>2.14.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

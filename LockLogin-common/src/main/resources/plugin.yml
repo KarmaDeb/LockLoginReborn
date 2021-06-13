@@ -13,7 +13,7 @@ version: ${project.version}
 author: ${project.author}
 description: ${project.description}
 website: ${project.url}
-main: ml.karmaconfigs.locklogin.plugin.bukkit.Main
+main: eu.locklogin.plugin.bukkit.Main
 database: false
 api-version: 1.13
 softdepend:

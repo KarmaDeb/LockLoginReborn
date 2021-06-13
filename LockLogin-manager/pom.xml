@@ -3,9 +3,9 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
+        <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <groupId>ml.karmaconfigs</groupId>
-        <version>1.12.7</version>
+        <version>1.12.16</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,11 +24,41 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>ml.karmaconfigs.api</pattern>
+                            <shadedPattern>eu.locklogin.module.manager.shaded</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>velocitypowered-repo</id>
+            <url>https://repo.velocitypowered.com/releases/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-API</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
@@ -37,25 +67,33 @@
                     <groupId>ml.karmaconfigs</groupId>
                     <artifactId>LockLogin-Common</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>KarmaAPI-Bundle</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-common</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-API</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>KarmaAPI-Bundle</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Common</artifactId>
+            <artifactId>KarmaAPI-Bundle</artifactId>
             <version>${project.karmaapi}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -70,34 +108,68 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>com.velocitypowered</groupId>
+            <artifactId>velocity-api</artifactId>
+            <version>1.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-spigot</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-API</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-Common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>KarmaAPI-Bukkit</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-bungee</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-API</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-Common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ml.karmaconfigs</groupId>
+                    <artifactId>KarmaAPI-Bungee</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>eu.locklogin</groupId>
+            <artifactId>LockLogin-velocity</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>eu.locklogin</groupId>
+                    <artifactId>LockLogin-API</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.locklogin</groupId>
+                    <artifactId>LockLogin-Common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.locklogin</groupId>
+                    <artifactId>KarmaAPI-Bukkit</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

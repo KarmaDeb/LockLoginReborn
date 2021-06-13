@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ml.karmaconfigs</groupId>
+        <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.7</version>
+        <version>1.12.16</version>
     </parent>
 
     <artifactId>LockLogin-velocity</artifactId>
@@ -86,6 +86,30 @@
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <relocations>
+                        <relocation>
+                            <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
+                            <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -176,25 +200,25 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-API</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-Common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
+            <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-common</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>ml.karmaconfigs</groupId>
+                    <groupId>eu.locklogin</groupId>
                     <artifactId>LockLogin-API</artifactId>
                 </exclusion>
             </exclusions>
@@ -215,12 +239,6 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-web</artifactId>
             <version>2.14.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
