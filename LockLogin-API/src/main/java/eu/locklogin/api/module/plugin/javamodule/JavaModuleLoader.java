@@ -132,16 +132,27 @@ public final class JavaModuleLoader {
                                                 }
 
                                                 if (class_name != null && !class_name.replaceAll("\\s", "").isEmpty()) {
-                                                    URLClassLoader loader = new URLClassLoader(
-                                                            new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, main.getClassLoader());
-                                                    Class<?> module_main = Class.forName(class_name, true, loader);
-                                                    Class<? extends PluginModule> module_class = module_main.asSubclass(PluginModule.class);
+                                                    JarAppender appender = CurrentPlatform.getPluginAppender();
+                                                    appender.addJarToClasspath(moduleFile);
+
+                                                    Class<? extends PluginModule> module_class;
+                                                    boolean pluginAppender = false;
+                                                    if (appender.getLoader() != null) {
+                                                        module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+                                                    } else {
+                                                        URLClassLoader loader = new URLClassLoader(
+                                                                new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, main.getClassLoader());
+
+                                                        module_class = loader.loadClass(class_name).asSubclass(PluginModule.class);
+                                                        pluginAppender = true;
+                                                    }
 
                                                     CurrentPlatform.getPluginAppender().addJarToClasspath(moduleFile);
 
                                                     PluginModule module = module_class.getDeclaredConstructor().newInstance();
-                                                    loader.close();
-
+                                                    if (pluginAppender)
+                                                        module.setAppender(CurrentPlatform.getPluginAppender());
+                                                    
                                                     jar.close();
 
                                                     return module;
@@ -234,13 +245,25 @@ public final class JavaModuleLoader {
                                                     JarAppender appender = CurrentPlatform.getPluginAppender();
                                                     appender.addJarToClasspath(moduleFile);
 
-                                                    /*URLClassLoader loader = new URLClassLoader(
-                                                            new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, appender.getClass().getClassLoader());*/
+                                                    Class<? extends PluginModule> module_class;
+                                                    boolean pluginAppender = false;
+                                                    if (appender.getLoader() != null) {
+                                                       module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+                                                    } else {
+                                                        URLClassLoader loader = new URLClassLoader(
+                                                                new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, main.getClassLoader());
 
-                                                    Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+                                                        module_class = loader.loadClass(class_name).asSubclass(PluginModule.class);
+                                                        pluginAppender = true;
+                                                    }
+
+                                                    CurrentPlatform.getPluginAppender().addJarToClasspath(moduleFile);
 
                                                     PluginModule module = module_class.getDeclaredConstructor().newInstance();
                                                     loaded.add(module);
+
+                                                    if (pluginAppender)
+                                                        module.setAppender(CurrentPlatform.getPluginAppender());
 
                                                     module.getAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 

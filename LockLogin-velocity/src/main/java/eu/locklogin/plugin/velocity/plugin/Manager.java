@@ -19,6 +19,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.listener.ChatListener;
@@ -95,6 +96,7 @@ public final class Manager {
         System.out.println();
         artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         Console.send("&eversion:&6 {0}", versionID);
+        Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
         Proxy.scan();
 

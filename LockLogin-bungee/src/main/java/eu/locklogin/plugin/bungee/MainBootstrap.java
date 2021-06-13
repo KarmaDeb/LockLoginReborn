@@ -9,6 +9,7 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -52,7 +53,9 @@ public class MainBootstrap implements KarmaBootstrap {
         loader = (Main) main;
 
         ChecksumTables tables = new ChecksumTables();
+        STFetcher fetcher = new STFetcher();
         tables.checkTables();
+        fetcher.check();
 
         try {
             JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());

@@ -2,6 +2,7 @@ package eu.locklogin.plugin.bukkit;
 
 import eu.locklogin.api.common.injector.dependencies.DependencyManager;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
@@ -44,7 +45,9 @@ public class MainBootstrap implements KarmaBootstrap {
         loader = (Main) main;
 
         ChecksumTables tables = new ChecksumTables();
+        STFetcher fetcher = new STFetcher();
         tables.checkTables();
+        fetcher.check();
 
         try {
             JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());
@@ -109,7 +112,6 @@ public class MainBootstrap implements KarmaBootstrap {
 
             prepareManager();
 
-            LockLogin.logger.setMaxSize(FileInfo.logFileSize(lockloginFile));
             LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();

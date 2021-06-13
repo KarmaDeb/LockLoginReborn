@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.*;
@@ -95,6 +96,7 @@ public final class Manager {
             System.out.println();
             artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
             Console.send("&eversion:&6 {0}", versionID);
+            Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
             Proxy.scan();
 

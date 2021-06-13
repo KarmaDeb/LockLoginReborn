@@ -10,7 +10,7 @@
   <dependency>
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin-API</artifactId>
-    <version>1.12.11-SNAPSHOT</version>
+    <version>1.12.17-SNAPSHOT</version>
     <scope>provided</scope>
   </dependency>
 </dependencies>
@@ -20,6 +20,6 @@
 
 ```gradle
 dependencies {
-    compile "eu.locklogin:LockLogin-API:1.12.11-SNAPSHOT"
+    compile "eu.locklogin:LockLogin-API:1.12.17-SNAPSHOT"
 }
 ```

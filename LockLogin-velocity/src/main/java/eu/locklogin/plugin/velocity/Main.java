@@ -17,6 +17,7 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -48,7 +49,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.16", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contributeindirectly; A community plugin for the plugin community.", url = "https://karmaconfigs.ml/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.17", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contributeindirectly; A community plugin for the plugin community.", url = "https://karmaconfigs.ml/")
 @KarmaPlugin
 public class Main implements KarmaBootstrap, KarmaSource {
 
@@ -73,7 +74,9 @@ public class Main implements KarmaBootstrap, KarmaSource {
         CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
 
         ChecksumTables tables = new ChecksumTables();
+        STFetcher fetcher = new STFetcher();
         tables.checkTables();
+        fetcher.check();
 
         Main.server = server;
         factory = fact;
@@ -230,6 +233,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     private void prepareManager() {
         PluginDependency dependency = Dependency.MANAGER.getAsDependency();
+
         if (FileInfo.showChecksums(lockloginFile)) {
             System.out.println("Current checksum for " + dependency.getName());
             System.out.println("Adler32: " + dependency.getAdlerCheck());
@@ -238,8 +242,10 @@ public class Main implements KarmaBootstrap, KarmaSource {
             System.out.println("Adler32: " + ChecksumTables.getAdler(dependency));
             System.out.println("CRC32: " + ChecksumTables.getCRC(dependency));
         }
+
         JarManager manager = new JarManager(dependency);
         manager.process(true);
+
         JarManager.downloadAll();
     }
 
