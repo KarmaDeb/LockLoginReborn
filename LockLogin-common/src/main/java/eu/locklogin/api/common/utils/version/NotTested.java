@@ -114,14 +114,5 @@ public class NonTested {
             return result;
         }
     }
-    
-    public static void main(String[] args) {
-        VersionID id = new VersionID("1.12.13", "RemasteringUpdate").generate();
-        String idVersion = id.get();
-        
-        System.out.println(idVersion);
-        
-        VersionID resolved = new VersionID(idVersion, "RemateringUpdate");
-        System.out.println(resolved.getVersion());
-    }
+   
 }
