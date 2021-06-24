@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.17</version>
+        <version>1.12.20</version>
     </parent>
 
     <artifactId>LockLogin-velocity</artifactId>
@@ -95,6 +95,10 @@
                         <relocation>
                             <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
                             <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>eu.locklogin.api.common.utils.filter.ConsoleFilter</pattern>
+                            <shadedPattern>eu.locklogin.plugin.velocity.util.filter.ConsoleFilter</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

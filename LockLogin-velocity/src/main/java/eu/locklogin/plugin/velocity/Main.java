@@ -18,6 +18,9 @@ import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.module.LoadRule;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -31,26 +34,26 @@ import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.karma.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.17", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contributeindirectly; A community plugin for the plugin community.", url = "https://karmaconfigs.ml/")
-@KarmaPlugin
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.20", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -96,7 +99,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Override
     public void enable() {
-        new AdvancedPluginTimer(1, false).setAsync(true).addActionOnEnd(() -> {
+        new AdvancedSimpleTimer(this, 1, false).setAsync(true).addActionOnEnd(() -> {
             Main.instance = Main.this;
             Console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
             Optional<PluginContainer> container = Main.server.getPluginManager().getPlugin("locklogin");
@@ -168,7 +171,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, LockLogin.fromPlayer(player), "", null);
                             JavaModuleManager.callEvent(event);
 
-                            user.checkServer();
+                            user.checkServer(0);
                         }
                     }
                 };
@@ -196,18 +199,26 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
                 File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-                if (moduleFiles != null)
-                    for (File module : moduleFiles) {
-                        if (!JavaModuleLoader.isLoaded(module.getName()))
-                            LockLogin.getLoader().loadModule(module.getName());
+                Set<PluginModule> wait = new HashSet<>();
+                if (moduleFiles != null) {
+                    for (File file : moduleFiles) {
+                        PluginModule module = JavaModuleLoader.getByName(file.getName().replace(".jar", ""));
+                        if (module != null) {
+                            if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
+                                module.load();
+                            } else {
+                                wait.add(module);
+                            }
+                        }
                     }
+                }
 
                 PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
                 JavaModuleManager.callEvent(event);
 
                 AllowedCommand.scan();
 
-                Manager.initialize();
+                Manager.initialize(wait);
             } else {
                 Main.server.getConsoleCommandSource().sendMessage(Component.text().content(StringUtils.toColor("&cTried to load LockLogin but is not even loaded by velocity!")).build());
             }
@@ -229,6 +240,11 @@ public class Main implements KarmaBootstrap, KarmaSource {
     @Override
     public JarAppender getAppender() {
         return appender;
+    }
+
+    @Override
+    public KarmaSource getSource() {
+        return this;
     }
 
     private void prepareManager() {
@@ -277,6 +293,20 @@ public class Main implements KarmaBootstrap, KarmaSource {
             return authors.replaceAll("\\s", "").split(",");
         } else {
             return new String[]{authors};
+        }
+    }
+
+    @Override
+    public String updateURL() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        switch (config.getUpdaterOptions().getChannel()) {
+            case SNAPSHOT:
+                return "https://locklogin.eu/version/snapshot.kupdter";
+            case RC:
+                return "https://locklogin.eu/version/candidate.kupdter";
+            case RELEASE:
+            default:
+                return "https://locklogin.eu/version/release.kupdter";
         }
     }
 }

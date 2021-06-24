@@ -24,6 +24,7 @@ import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.SessionCheck;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -45,6 +46,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 @SystemCommand(command = "account")
 public class AccountCommand implements CommandExecutor {
@@ -145,7 +148,13 @@ public class AccountCommand implements CommandExecutor {
                                             LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, () -> player.sendMessage(""));
                                     }
 
-                                    BarMessage bar = new BarMessage(player, messages.captcha(session.getCaptcha()));
+                                    String barMessage = messages.captcha(session.getCaptcha());
+                                    try {
+                                        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                                            barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                                    } catch (Throwable ignored) {}
+
+                                    BarMessage bar = new BarMessage(player, barMessage);
                                     if (!session.isCaptchaLogged())
                                         bar.send(true);
 
@@ -201,6 +210,7 @@ public class AccountCommand implements CommandExecutor {
                             }
                             break;
                         case "remove":
+                        case "delete":
                             switch (args.length) {
                                 case 2:
                                     if (player.hasPermission(PluginPermission.account())) {
@@ -375,6 +385,7 @@ public class AccountCommand implements CommandExecutor {
                         }
                         break;
                     case "remove":
+                    case "delete":
                         if (args.length == 2) {
                             String target = args[1];
                             Player online = LockLogin.plugin.getServer().getPlayer(target);

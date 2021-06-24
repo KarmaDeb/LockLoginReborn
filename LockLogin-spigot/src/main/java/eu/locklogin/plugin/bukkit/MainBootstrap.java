@@ -3,9 +3,12 @@ package eu.locklogin.plugin.bukkit;
 import eu.locklogin.api.common.injector.dependencies.DependencyManager;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.module.LoadRule;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -27,6 +30,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -115,10 +120,17 @@ public class MainBootstrap implements KarmaBootstrap {
             LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
+            Set<PluginModule> wait = new HashSet<>();
             if (moduleFiles != null) {
-                for (File module : moduleFiles) {
-                    if (!JavaModuleLoader.isLoaded(module.getName()))
-                        LockLogin.getLoader().loadModule(module.getName());
+                for (File file : moduleFiles) {
+                    PluginModule module = JavaModuleLoader.getByName(file.getName().replace(".jar", ""));
+                    if (module != null) {
+                        if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
+                            module.load();
+                        } else {
+                            wait.add(module);
+                        }
+                    }
                 }
             }
 
@@ -127,7 +139,7 @@ public class MainBootstrap implements KarmaBootstrap {
 
             AllowedCommand.scan();
 
-            Manager.initialize();
+            Manager.initialize(wait);
         });
     }
 
@@ -145,6 +157,11 @@ public class MainBootstrap implements KarmaBootstrap {
 
         Manager.terminate();
         getAppender().close();
+    }
+
+    @Override
+    public KarmaSource getSource() {
+        return loader;
     }
 
     /**

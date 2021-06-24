@@ -57,7 +57,10 @@ public final class UpdateRequestEvent extends Event {
      *
      * @return if the update issuer has unsafe
      * update permission
+     * @deprecated unsafe updates are no longer
+     * an option
      */
+    @Deprecated
     public final boolean canPerformUnsafeUpdate() {
         return isUnsafe;
     }

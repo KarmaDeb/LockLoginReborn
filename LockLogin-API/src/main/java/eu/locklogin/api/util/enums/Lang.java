@@ -87,6 +87,10 @@ public enum Lang {
      * @return the country
      */
     public String country(final String communityLang) {
-        return countryLocalizer(communityLang).split("_")[0].toLowerCase();
+        if (this.equals(COMMUNITY)) {
+            return countryLocalizer(communityLang).replaceFirst("community_", "");
+        } else {
+            return countryLocalizer(communityLang).split("_")[0].toLowerCase();
+        }
     }
 }

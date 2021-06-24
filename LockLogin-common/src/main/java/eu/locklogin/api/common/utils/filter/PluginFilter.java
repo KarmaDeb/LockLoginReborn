@@ -1,4 +1,4 @@
-package eu.locklogin.plugin.bungee.util.filter;
+package eu.locklogin.api.common.utils.filter;
 
 /*
  * Private GSA code

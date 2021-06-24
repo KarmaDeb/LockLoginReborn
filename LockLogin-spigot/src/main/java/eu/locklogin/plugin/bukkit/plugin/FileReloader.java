@@ -50,6 +50,7 @@ public class FileReloader {
                         user.send(message.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
 
                         PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        CurrentPlatform.setConfigManager(new Config());
                         CurrentPlatform.setPrefix(config.getModulePrefix());
                     }
                 }

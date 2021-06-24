@@ -19,6 +19,8 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
@@ -117,7 +119,7 @@ public final class DataSender {
 
                             if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName())) {
                                 ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                                Proxy proxy = new Proxy();
+                                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                                 output.writeUTF(DataType.MODULE.name().toLowerCase());
                                 output.writeUTF(proxy.getProxyID().toString());
@@ -181,7 +183,7 @@ public final class DataSender {
          * @param data the data type to send
          */
         MessageDataBuilder(final DataType data, final Player owner) throws IllegalArgumentException {
-            Proxy proxy = new Proxy();
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
             output.writeUTF(data.name().toLowerCase());
             output.writeUTF(proxy.getProxyID().toString());

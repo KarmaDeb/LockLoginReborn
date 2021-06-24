@@ -172,7 +172,7 @@ public final class LoginCommand extends Command {
                                     DataSender.send(player, login);
 
                                     if (checkServer)
-                                        user.checkServer();
+                                        user.checkServer(0);
 
                                     if (!manager.has2FA()) {
                                         if (user.hasPermission(PluginPermission.forceFA()))

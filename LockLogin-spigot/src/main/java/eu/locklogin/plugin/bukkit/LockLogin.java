@@ -16,7 +16,6 @@ package eu.locklogin.plugin.bukkit;
 
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Logger;
-import ml.karmaconfigs.api.common.utils.ReflectionUtil;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
@@ -38,14 +37,14 @@ public interface LockLogin {
 
     Main plugin = (Main) JavaPlugin.getProvidingPlugin(Main.class);
 
-    String name = ReflectionUtil.getName(plugin);
+    String name = plugin.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " ")));
-    String version = ReflectionUtil.getVersion(plugin);
+    String version = plugin.version();
 
-    String versionID = new VersionID(version, update).generate().get();
+    VersionID versionID = new VersionID(version, update).generate();
 
     File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()

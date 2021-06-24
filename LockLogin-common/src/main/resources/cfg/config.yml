@@ -77,6 +77,16 @@ Sessions:
   Enabled: false
   Time: 5
 
+#Toggle plugin IP health check
+# While enabled, the plugin will
+# reject incoming connections of
+# IPS with these conditions:
+#
+# - Is null or invalid
+# - Is in the plugin's proxy list
+# - Can't be resolved by the server
+IpHealthCheck: true
+
 #Hide non logged players from
 #logged ones and logged players from
 #non logged.

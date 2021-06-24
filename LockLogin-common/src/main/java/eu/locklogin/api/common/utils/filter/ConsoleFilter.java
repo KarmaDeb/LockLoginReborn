@@ -1,4 +1,4 @@
-package eu.locklogin.plugin.bungee.util.filter;
+package eu.locklogin.api.common.utils.filter;
 
 import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;

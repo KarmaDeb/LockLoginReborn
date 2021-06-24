@@ -15,7 +15,6 @@ package eu.locklogin.module.manager.velocity;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.module.manager.velocity.command.ModuleHelpCommand;
 import eu.locklogin.module.manager.velocity.listener.UpdateRequestListener;
 

@@ -25,6 +25,6 @@ public class UpdateRequestListener implements EventListener {
     @ModuleEventHandler
     public final void onRequest(final UpdateRequestEvent e) {
         CommandSender issuer = (CommandSender) e.getSender();
-        BungeeManager.update(issuer, e.canPerformUnsafeUpdate());
+        BungeeManager.update(issuer);
     }
 }

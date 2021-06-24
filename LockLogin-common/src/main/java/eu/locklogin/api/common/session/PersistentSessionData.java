@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public final class PersistentSessionData {
 
-    private final static File folder = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin", "data");
+    private final static File folder = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "data");
     private final static File file = new File(folder, "sessions.lldb");
 
     private final static KarmaFile sessions = new KarmaFile(file);

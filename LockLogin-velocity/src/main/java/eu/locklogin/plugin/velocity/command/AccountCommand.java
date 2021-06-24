@@ -23,7 +23,7 @@ import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import eu.locklogin.plugin.velocity.util.player.SessionCheck;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
@@ -158,13 +158,13 @@ public class AccountCommand extends BungeeLikeCommand {
                                     if (!config.captchaOptions().isEnabled())
                                         session.setCaptchaLogged(true);
 
-                                    AdvancedPluginTimer tmp_timer = null;
+                                    AdvancedSimpleTimer tmp_timer = null;
                                     if (!session.isCaptchaLogged()) {
-                                        tmp_timer = new AdvancedPluginTimer(1, true);
+                                        tmp_timer = new AdvancedSimpleTimer(main, 1, true);
                                         tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                                     }
 
-                                    AdvancedPluginTimer timer = tmp_timer;
+                                    AdvancedSimpleTimer timer = tmp_timer;
                                     SessionCheck check = new SessionCheck(player, target -> {
                                         player.sendActionBar(Component.text().content("").build());
                                         if (timer != null)
@@ -211,6 +211,7 @@ public class AccountCommand extends BungeeLikeCommand {
                             }
                             break;
                         case "remove":
+                        case "delete":
                             switch (args.length) {
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
@@ -282,13 +283,13 @@ public class AccountCommand extends BungeeLikeCommand {
                                             if (!config.captchaOptions().isEnabled())
                                                 session.setCaptchaLogged(true);
 
-                                            AdvancedPluginTimer tmp_timer = null;
+                                            AdvancedSimpleTimer tmp_timer = null;
                                             if (!session.isCaptchaLogged()) {
-                                                tmp_timer = new AdvancedPluginTimer(1, true);
+                                                tmp_timer = new AdvancedSimpleTimer(main, 1, true);
                                                 tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                                             }
 
-                                            AdvancedPluginTimer timer = tmp_timer;
+                                            AdvancedSimpleTimer timer = tmp_timer;
                                             SessionCheck check = new SessionCheck(player, target -> {
                                                 player.sendActionBar(Component.text().content("").build());
                                                 if (timer != null)
@@ -435,6 +436,7 @@ public class AccountCommand extends BungeeLikeCommand {
                         }
                         break;
                     case "remove":
+                    case "delete":
                         if (args.length == 2) {
                             String target = args[1];
                             Optional<Player> online = server.getPlayer(target);

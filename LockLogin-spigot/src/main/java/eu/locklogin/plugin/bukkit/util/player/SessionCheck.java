@@ -11,10 +11,11 @@ package eu.locklogin.plugin.bukkit.util.player;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -71,13 +72,25 @@ public final class SessionCheck implements Runnable {
                 tmp_time = config.loginOptions().timeOut();
                 user.send(messages.prefix() + messages.login());
 
+                String barMessage = messages.loginBar(BAR_COLOR, tmp_time);
+                try {
+                    if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                        barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                } catch (Throwable ignored) {}
+
                 if (config.loginOptions().hasBossBar())
-                    boss = new BossMessage(plugin, messages.loginBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    boss = new BossMessage(plugin, barMessage, tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             } else {
                 user.send(messages.prefix() + messages.register());
 
+                String barMessage = messages.registerBar(BAR_COLOR, tmp_time);
+                try {
+                    if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                        barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                } catch (Throwable ignored) {}
+
                 if (config.registerOptions().hasBossBar())
-                    boss = new BossMessage(plugin, messages.registerBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    boss = new BossMessage(plugin, barMessage, tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             }
 
             if (boss != null) {
@@ -85,7 +98,7 @@ public final class SessionCheck implements Runnable {
             }
 
             int time = tmp_time;
-            AdvancedPluginTimer timer = new AdvancedPluginTimer(time, false).setAsync(false);
+            AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, time, false).setAsync(false);
             timer.addAction(() -> {
                 ClientSession session = user.getSession();
                 if (!session.isLogged() && player.isOnline()) {
@@ -164,7 +177,7 @@ public final class SessionCheck implements Runnable {
         if (user.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(time, true);
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, time, true);
         timer.addActionOnEnd(() -> {
             ClientSession session = user.getSession();
             if (!session.isLogged()) {

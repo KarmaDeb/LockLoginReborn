@@ -135,31 +135,30 @@ public final class Proxy extends ProxyConfiguration {
      * @return all the available lobby servers
      */
     @Override
-    public final <T> Iterator<T> lobbyServers(final Class<T> instance) {
+    public final <T> List<T> lobbyServers(final Class<T> instance) {
         List<String> lobbies = cfg.getStringList("Servers.Lobby");
-        Set<T> servers = new LinkedHashSet<>();
+        List<T> servers = Collections.synchronizedList(new ArrayList<>());
         if (lobbies.contains("*")) {
             Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
             for (RegisteredServer server : registered) {
-                if (isAssignable(instance, server)) {
+                if (isAssignable(server.getClass(), instance)) {
                     servers.add(instance.cast(server));
                 }
             }
         } else {
             if (!lobbies.isEmpty() && arrayValid(lobbies)) {
-                for (String name : lobbies) {
-                    if (!name.replaceAll("\\s", "").isEmpty()) {
-                        Optional<RegisteredServer> server = LockLogin.server.getServer(name);
-                        server.ifPresent(val -> {
-                            if (isAssignable(instance, server))
-                                servers.add(instance.cast(val));
-                        });
+                Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+                for (RegisteredServer server : registered) {
+                    if (lobbies.contains(server.getServerInfo().getName())) {
+                        if (isAssignable(server.getClass(), instance)) {
+                            servers.add(instance.cast(server));
+                        }
                     }
                 }
             }
         }
 
-        return servers.iterator();
+        return servers;
     }
 
     /**
@@ -168,31 +167,30 @@ public final class Proxy extends ProxyConfiguration {
      * @return all the available auth servers
      */
     @Override
-    public final <T> Iterator<T> authServer(final Class<T> instance) {
+    public final <T> List<T> authServer(final Class<T> instance) {
         List<String> auths = cfg.getStringList("Servers.Auth");
-        Set<T> servers = new LinkedHashSet<>();
+        List<T> servers = Collections.synchronizedList(new ArrayList<>());
         if (auths.contains("*")) {
             Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
             for (RegisteredServer server : registered) {
-                if (isAssignable(instance, server)) {
+                if (isAssignable(server.getClass(), instance)) {
                     servers.add(instance.cast(server));
                 }
             }
         } else {
             if (!auths.isEmpty() && arrayValid(auths)) {
-                for (String name : auths) {
-                    if (!name.replaceAll("\\s", "").isEmpty()) {
-                        Optional<RegisteredServer> server = LockLogin.server.getServer(name);
-                        server.ifPresent(val -> {
-                            if (isAssignable(instance, server))
-                                servers.add(instance.cast(val));
-                        });
+                Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+                for (RegisteredServer server : registered) {
+                    if (auths.contains(server.getServerInfo().getName())) {
+                        if (isAssignable(server.getClass(), instance)) {
+                            servers.add(instance.cast(server));
+                        }
                     }
                 }
             }
         }
 
-        return servers.iterator();
+        return servers;
     }
 
     /**
@@ -203,17 +201,19 @@ public final class Proxy extends ProxyConfiguration {
      */
     public static boolean inAuth(final Player player) {
         List<String> auths = cfg.getStringList("Servers.Auth");
-        for (String str : auths) {
-            Optional<ServerConnection> tmp_server = player.getCurrentServer();
+        Optional<ServerConnection> tmp_server = player.getCurrentServer();
 
-            if (tmp_server.isPresent()) {
+        boolean in = false;
+        if (tmp_server.isPresent()) {
+            for (String str : auths) {
                 ServerConnection server = tmp_server.get();
-                if (server.getServer().getServerInfo().getName().equalsIgnoreCase(str))
-                    return true;
+                if (server.getServer().getServerInfo().getName().equalsIgnoreCase(str)) {
+                    in = true;
+                }
             }
         }
 
-        return false;
+        return in;
     }
 
     /**
@@ -276,27 +276,12 @@ public final class Proxy extends ProxyConfiguration {
      * Get if the instance is assignable from
      * the specified item
      *
-     * @param instance the instance
-     * @param item the item to check
+     * @param check the item to check
+     * @param type the instance
      * @return if the item is an instance of the instance
      */
-    private static boolean isAssignable(final Object instance, final Object item) {
-        if (instance instanceof Class) {
-            Class<?> clazz = (Class<?>) instance;
-            if (item instanceof Class) {
-                Class<?> itemClass = (Class<?>) item;
-                return clazz.isAssignableFrom(itemClass);
-            } else {
-                return clazz.isAssignableFrom(item.getClass());
-            }
-        } else {
-            if (item instanceof Class) {
-                Class<?> itemClass = (Class<?>) item;
-                return instance.getClass().isAssignableFrom(itemClass);
-            } else {
-                return instance.getClass().isAssignableFrom(item.getClass());
-            }
-        }
+    private static boolean isAssignable(final Class<?> check, final Class<?> type) {
+        return type.isAssignableFrom(check);
     }
 
     /**

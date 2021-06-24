@@ -3,7 +3,7 @@
   <parent>
     <artifactId>LockLogin</artifactId>
     <groupId>eu.locklogin</groupId>
-    <version>1.12.17</version>
+    <version>1.12.20</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>LockLogin-velocity</artifactId>
@@ -36,6 +36,10 @@
             <relocation>
               <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
               <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>eu.locklogin.api.common.utils.filter.ConsoleFilter</pattern>
+              <shadedPattern>eu.locklogin.plugin.velocity.util.filter.ConsoleFilter</shadedPattern>
             </relocation>
           </relocations>
         </configuration>
@@ -162,7 +166,7 @@
     <dependency>
       <groupId>ml.karmaconfigs</groupId>
       <artifactId>KarmaAPI-Velocity</artifactId>
-      <version>1.2.6</version>
+      <version>1.2.8</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

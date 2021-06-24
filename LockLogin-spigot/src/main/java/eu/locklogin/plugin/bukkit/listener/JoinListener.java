@@ -21,9 +21,10 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.SessionCheck;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
@@ -42,7 +43,7 @@ import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.Proxy;
+import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
@@ -97,8 +98,7 @@ public final class JoinListener implements Listener {
         String address = "null";
         try {
             address = ip.getHostAddress();
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
             try {
                 if (validateIP(ip)) {
@@ -208,7 +208,7 @@ public final class JoinListener implements Listener {
                         //Allow the player at the eyes of the plugin
                         e.allow();
                     } else {
-                        AdvancedPluginTimer timer = new AdvancedPluginTimer(5, false);
+                        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 5, false);
                         timer.addActionOnEnd(() -> {
                             Player online = plugin.getServer().getPlayer(e.getUniqueId());
                             if (online != null && online.isOnline()) {
@@ -304,7 +304,7 @@ public final class JoinListener implements Listener {
         if (!config.isBungeeCord()) {
             Message messages = new Message();
 
-            Proxy proxy = new Proxy(ip);
+            ProxyCheck proxy = new ProxyCheck(ip);
             if (proxy.isProxy()) {
                 user.kick(messages.ipProxyError());
                 return;
@@ -318,7 +318,13 @@ public final class JoinListener implements Listener {
                     plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> player.sendMessage(""));
             }
 
-            BarMessage bar = new BarMessage(player, messages.captcha(session.getCaptcha()));
+            String barMessage = messages.captcha(session.getCaptcha());
+            try {
+                if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                    barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+            } catch (Throwable ignored) {}
+
+            BarMessage bar = new BarMessage(player, barMessage);
             if (!session.isCaptchaLogged())
                 bar.send(true);
 
@@ -367,12 +373,17 @@ public final class JoinListener implements Listener {
      * @return if the ip is valid
      */
     private boolean validateIP(final InetAddress ip) {
-        if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
-            return false;
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.ipHealthCheck()) {
+            if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
+                return false;
+            }
+
+            Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
+            return matcher.matches();
         }
 
-        Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
-        return matcher.matches();
+        return true;
     }
 
     /**

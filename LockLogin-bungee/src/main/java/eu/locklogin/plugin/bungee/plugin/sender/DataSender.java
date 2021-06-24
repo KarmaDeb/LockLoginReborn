@@ -14,6 +14,8 @@ package eu.locklogin.plugin.bungee.plugin.sender;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
@@ -113,7 +115,7 @@ public final class DataSender {
 
                         if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                            Proxy proxy = new Proxy();
+                            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                             output.writeUTF(DataType.MODULE.name().toLowerCase());
                             output.writeUTF(proxy.getProxyID().toString());
@@ -179,7 +181,7 @@ public final class DataSender {
                 logger.scheduleLog(Level.INFO, "Generated proxy communication key");
             }
 
-            Proxy proxy = new Proxy();
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
             output.writeUTF(data.name().toLowerCase());
             output.writeUTF(proxy.getProxyID().toString());

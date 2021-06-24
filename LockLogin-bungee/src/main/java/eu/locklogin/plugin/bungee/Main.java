@@ -16,10 +16,10 @@ package eu.locklogin.plugin.bungee;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.karma.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
@@ -28,7 +28,6 @@ import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
 
-@KarmaPlugin
 public final class Main extends Plugin implements KarmaSource {
 
     private final KarmaBootstrap plugin;
@@ -47,14 +46,14 @@ public final class Main extends Plugin implements KarmaSource {
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
-        String downloadURL = "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLogin.jar";
+        String downloadURL = "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar";
         ResourceDownloader downloader = ResourceDownloader.toCache(
                 this,
                 "locklogin.injar",
                 downloadURL,
                 "plugin", getDescription().getVersion());
-        if (!downloader.isDownloaded(downloadURL))
-            downloader.download(downloadURL);
+        if (!downloader.isDownloaded())
+            downloader.download();
 
         SubJarLoader loader = new SubJarLoader(getClass().getClassLoader(), downloader.getDestFile());
         plugin = loader.instantiate("eu.locklogin.plugin.bungee.MainBootstrap", Plugin.class, this);
@@ -88,5 +87,19 @@ public final class Main extends Plugin implements KarmaSource {
     @Override
     public String[] authors() {
         return new String[]{getDescription().getAuthor()};
+    }
+
+    @Override
+    public String updateURL() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        switch (config.getUpdaterOptions().getChannel()) {
+            case SNAPSHOT:
+                return "https://locklogin.eu/version/snapshot.kupdter";
+            case RC:
+                return "https://locklogin.eu/version/candidate.kupdter";
+            case RELEASE:
+            default:
+                return "https://locklogin.eu/version/release.kupdter";
+        }
     }
 }

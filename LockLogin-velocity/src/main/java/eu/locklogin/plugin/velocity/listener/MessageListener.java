@@ -20,6 +20,8 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountManager;
@@ -51,7 +53,7 @@ public final class MessageListener {
     public final void onMessageReceive(PluginMessageEvent e) {
         if (e.getResult().isAllowed()) {
             Message messages = new Message();
-            Proxy proxy = new Proxy();
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
             ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
 
@@ -87,7 +89,7 @@ public final class MessageListener {
                                     if (!manager.has2FA())
                                         SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
 
-                                    user.checkServer();
+                                    user.checkServer(0);
                                 } else {
                                     DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
 

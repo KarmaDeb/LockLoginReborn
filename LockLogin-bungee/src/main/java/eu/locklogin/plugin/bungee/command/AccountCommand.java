@@ -18,7 +18,7 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
@@ -153,13 +153,13 @@ public class AccountCommand extends Command {
                                             plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
                                     }
 
-                                    AdvancedPluginTimer tmp_timer = null;
+                                    AdvancedSimpleTimer tmp_timer = null;
                                     if (!session.isCaptchaLogged()) {
-                                        tmp_timer = new AdvancedPluginTimer(1, true);
+                                        tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
                                         tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(messages.captcha(session.getCaptcha())))).start();
                                     }
 
-                                    AdvancedPluginTimer timer = tmp_timer;
+                                    AdvancedSimpleTimer timer = tmp_timer;
                                     SessionCheck check = new SessionCheck(player, target -> {
                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
 
@@ -276,13 +276,13 @@ public class AccountCommand extends Command {
                                                     plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
                                             }
 
-                                            AdvancedPluginTimer tmp_timer = null;
+                                            AdvancedSimpleTimer tmp_timer = null;
                                             if (!session.isCaptchaLogged()) {
-                                                tmp_timer = new AdvancedPluginTimer(1, true);
+                                                tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
                                                 tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                                             }
 
-                                            AdvancedPluginTimer timer = tmp_timer;
+                                            AdvancedSimpleTimer timer = tmp_timer;
                                             SessionCheck check = new SessionCheck(player, target -> {
                                                 player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
 

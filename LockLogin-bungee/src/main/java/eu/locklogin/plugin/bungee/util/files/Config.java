@@ -100,6 +100,17 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin should check if an
+     * IP is healthy for the server integrity
+     *
+     * @return if the plugin has IP checks enabled
+     */
+    @Override
+    public boolean ipHealthCheck() {
+        return cfg.getBoolean("IpHealthCheck", true);
+    }
+
+    /**
      * Get the session life time
      *
      * @return the session life time

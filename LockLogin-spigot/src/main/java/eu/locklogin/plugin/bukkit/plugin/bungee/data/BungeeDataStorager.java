@@ -16,10 +16,10 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.common.session.SessionDataContainer;
+import org.bukkit.entity.Player;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.logger;
 
@@ -30,7 +30,9 @@ public final class BungeeDataStorager {
     private static String proxyKey = "";
     private static boolean multiBungee = false;
     @SuppressWarnings("FieldMayBeFinal")
-    private static Map<UUID, String> proxies = new LinkedHashMap<>();
+    private static Map<UUID, String> proxies = new ConcurrentHashMap<>();
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Set<UUID> pin_confirmation = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final String provided;
 
     /**
@@ -39,7 +41,11 @@ public final class BungeeDataStorager {
      * @param providedKey the bungeecord key
      */
     public BungeeDataStorager(final String providedKey) {
-        provided = providedKey;
+        if (providedKey != null) {
+            provided = providedKey;
+        } else {
+            provided = "";
+        }
     }
 
     /**
@@ -90,6 +96,30 @@ public final class BungeeDataStorager {
             return proxies.size() <= 0;
         } else {
             return true;
+        }
+    }
+
+    /**
+     * Get if the player needs a pin confirmation
+     *
+     * @param player the player
+     * @return if the player needs pin confirmation
+     */
+    public final boolean needsPinConfirmation(final Player player) {
+        return pin_confirmation.contains(player.getUniqueId());
+    }
+
+    /**
+     * Set the player pin status
+     *
+     * @param player the player
+     * @param status the pin status
+     */
+    public final void setPinConfirmation(final Player player, final boolean status) {
+        if (status) {
+            pin_confirmation.add(player.getUniqueId());
+        } else {
+            pin_confirmation.remove(player.getUniqueId());
         }
     }
 

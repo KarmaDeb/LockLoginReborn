@@ -64,7 +64,7 @@ public final class JavaModuleVersion {
     public final String getLatest() {
         try {
             if (updaterEnabled().get()) {
-                String update_url = module.update_url().replaceAll("\\s", "") + "latest.txt";
+                String update_url = module.updateURL().replaceAll("\\s", "") + "latest.txt";
                 URL url = new URL(update_url);
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -89,7 +89,7 @@ public final class JavaModuleVersion {
     public final String getDownloadURL() {
         try {
             if (updaterEnabled().get()) {
-                String update_url = module.update_url().replaceAll("\\s", "") + "latest.txt";
+                String update_url = module.updateURL().replaceAll("\\s", "") + "latest.txt";
                 URL url = new URL(update_url);
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -117,7 +117,7 @@ public final class JavaModuleVersion {
         CompletableFuture<Boolean> result = new CompletableFuture<>();
 
         if (last_try <= 0) {
-            String update_url = module.update_url().replaceAll("\\s", "");
+            String update_url = module.updateURL().replaceAll("\\s", "");
 
             new Thread(() -> {
                 try {

@@ -14,13 +14,15 @@ package eu.locklogin.plugin.bungee.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
+import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
@@ -42,7 +44,7 @@ import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.Proxy;
+import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
@@ -249,7 +251,7 @@ public final class JoinListener implements Listener {
             Server server = player.getServer();
             if (server != null) {
                 ServerInfo info = server.getInfo();
-                eu.locklogin.plugin.bungee.util.files.Proxy proxy = new eu.locklogin.plugin.bungee.util.files.Proxy();
+                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                 if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
                     if (ServerDataStorager.needsRegister(info.getName()))
@@ -272,7 +274,7 @@ public final class JoinListener implements Listener {
 
                 Message messages = new Message();
 
-                Proxy proxy = new Proxy(ip);
+                ProxyCheck proxy = new ProxyCheck(ip);
                 if (proxy.isProxy()) {
                     user.kick(messages.ipProxyError());
                     return;
@@ -291,9 +293,9 @@ public final class JoinListener implements Listener {
                 if (!config.captchaOptions().isEnabled())
                     session.setCaptchaLogged(true);
 
-                AdvancedPluginTimer tmp_timer = null;
+                AdvancedSimpleTimer tmp_timer = null;
                 if (!session.isCaptchaLogged()) {
-                    tmp_timer = new AdvancedPluginTimer(1, true);
+                    tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
                     tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                 }
 
@@ -304,7 +306,7 @@ public final class JoinListener implements Listener {
                         .addBoolData(user.isRegistered()).build();
                 DataSender.send(player, join);
 
-                AdvancedPluginTimer timer = tmp_timer;
+                AdvancedSimpleTimer timer = tmp_timer;
                 SessionCheck check = new SessionCheck(player, target -> {
                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
                     if (timer != null)
@@ -324,8 +326,8 @@ public final class JoinListener implements Listener {
                 UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
                 JavaModuleManager.callEvent(event);
 
-                if (!eu.locklogin.plugin.bungee.util.files.Proxy.isAuth(e.getPlayer().getServer().getInfo())) {
-                    user.checkServer();
+                if (!Proxy.isAuth(e.getPlayer().getServer().getInfo())) {
+                    user.checkServer(0);
                 }
             }, (long) 1.5, TimeUnit.SECONDS);
         }, (long) 0.5, TimeUnit.SECONDS);
@@ -339,7 +341,7 @@ public final class JoinListener implements Listener {
         Server server = player.getServer();
         if (server != null) {
             ServerInfo info = server.getInfo();
-            eu.locklogin.plugin.bungee.util.files.Proxy proxy = new eu.locklogin.plugin.bungee.util.files.Proxy();
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
             if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
                 if (ServerDataStorager.needsRegister(info.getName()))
@@ -370,7 +372,9 @@ public final class JoinListener implements Listener {
             DataSender.send(player, join);
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
-            user.checkServer();
+
+            if (!user.hasPermission(PluginPermission.limbo()))
+                user.checkServer(0);
         }, (long) 1.5, TimeUnit.SECONDS);
     }
 
@@ -381,12 +385,18 @@ public final class JoinListener implements Listener {
      * @return if the ip is valid
      */
     private boolean validateIP(final InetAddress ip) {
-        if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
-            return false;
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        if (config.ipHealthCheck()) {
+            if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
+                return false;
+            }
+
+            Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
+            return matcher.matches();
         }
 
-        Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
-        return matcher.matches();
+        return true;
     }
 
     /**
@@ -418,6 +428,8 @@ public final class JoinListener implements Listener {
                 DataSender.send(player, gauth);
 
                 keeper.destroy();
+
+                user.checkServer(0);
 
                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
                 JavaModuleManager.callEvent(event);

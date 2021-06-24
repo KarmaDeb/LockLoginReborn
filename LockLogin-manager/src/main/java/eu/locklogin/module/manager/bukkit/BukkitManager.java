@@ -26,7 +26,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.RestartCache;
 import eu.locklogin.api.common.utils.FileInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -40,7 +39,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.*;
 
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.applyUnsafeUpdates;
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public class BukkitManager {
@@ -174,51 +172,52 @@ public class BukkitManager {
      *
      * @return the update LockLogin instance
      */
-    private static FileData getUpdateJar() {
-        File update_folder = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "plugin", "updater");
+    private static File getUpdateJar() {
+        File update_folder = new File(plugin.getDataFolder() + File.separator + "plugin", "updater");
         if (update_folder.exists()) {
-            File[] files = update_folder.listFiles();
-            if (files != null) {
-                File mostRecent = null;
-                Instant lastInstant = null;
-                String last_update_id = "";
-                for (File file : files) {
-                    if (!file.isDirectory()) {
-                        String ext = FileUtilities.getExtension(file);
-                        //We want this to only take jar files
-                        if (ext.equals("jar")) {
-                            String name = file.getName();
-                            //LockLogin updater will always download LockLogin_<download time instant>_<version id>.jar
-                            if (name.contains("_")) {
-                                String[] nameData = name.split("_");
+            Set<File> major_files = new LinkedHashSet<>();
+            File[] update_files = update_folder.listFiles();
+            if (update_files != null) {
+                for (File file : update_files) {
+                    String extension = FileUtilities.getExtension(file);
+                    if (extension.equals("jar")) {
+                        String version = FileInfo.getJarVersion(file);
+                        String current = versionID.resolve(versionID.getVersionID());
 
-                                //If the data of jar name is not an instant, ignore it
-                                try {
-                                    Instant instant = Instant.parse(nameData[1].replace(";", ":"));
-                                    String versionId = nameData[2];
-
-                                    if (lastInstant != null) {
-                                        if (instant.isAfter(lastInstant)) {
-                                            mostRecent = file;
-                                            last_update_id = versionId;
-                                        }
-                                    } else {
-                                        lastInstant = instant;
-                                        mostRecent = file;
-                                        last_update_id = versionId;
-                                    }
-                                } catch (Throwable ex) {
-                                    ex.printStackTrace();
-                                }
-                            }
+                        if (StringUtils.compareTo(version, current) > 0) {
+                            major_files.add(file);
+                        } else {
+                            try {
+                                Files.deleteIfExists(file.toPath());
+                            } catch (Throwable ignored) {}
                         }
                     }
                 }
+            }
 
-                if (mostRecent != null && lastInstant != null && !last_update_id.replaceAll("\\s", "").isEmpty())
-                    return new FileData(mostRecent, lastInstant, last_update_id);
-                else
-                    return null;
+            if (major_files.size() > 0) {
+                if (major_files.size() == 1) {
+                    return major_files.toArray(new File[0])[0];
+                } else {
+                    File latest_major = null;
+                    for (File major : major_files) {
+                        if (latest_major != null) {
+                            String latest_major_version = FileInfo.getJarVersion(latest_major);
+                            String current_major_version = FileInfo.getJarVersion(major);
+
+                            if (StringUtils.compareTo(latest_major_version, current_major_version) > 0) {
+                                try {
+                                    Files.deleteIfExists(latest_major.toPath());
+                                } catch (Throwable ignored) {}
+                                latest_major = major;
+                            }
+                        } else {
+                            latest_major = major;
+                        }
+                    }
+
+                    return latest_major;
+                }
             }
         }
 
@@ -229,73 +228,49 @@ public class BukkitManager {
      * Completely update the plugin
      *
      * @param issuer the issuer that called the update
-     * @param unsafe if the issuer is able to perform unsafe updates
      */
-    public static void update(final CommandSender issuer, final boolean unsafe) {
+    public static void update(final CommandSender issuer) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
         if (update_issuer == null) {
             update_issuer = issuer;
 
-            FileData last_jar = getUpdateJar();
-            File curr_jar = new File(FileUtilities.getPluginsFolder(), lockloginFile.getName());
+            File last_jar = getUpdateJar();
+            File curr_jar = new File(FileUtilities.getProjectFolder(), lockloginFile.getName());
 
             if (last_jar != null) {
                 UpdateChannel current_channel = config.getUpdaterOptions().getChannel();
-                UpdateChannel update_channel = FileInfo.getChannel(last_jar.getFile());
-                String last_version = FileInfo.getJarVersion(last_jar.getFile());
-
-                int latest = parseInteger(last_version);
-                int current = parseInteger(version);
-
-                boolean versionCriteria = latest == current || latest > current;
-                if (!versionCriteria) {
-                    if (FileInfo.unsafeUpdates(last_jar.getFile())) {
-                        if (update_issuer instanceof Player || update_issuer instanceof RemoteConsoleCommandSender) {
-                            if (unsafe) {
-                                versionCriteria = true;
-                            } else {
-                                update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + messages.permissionError(applyUnsafeUpdates())));
-                            }
-                        } else {
-                            versionCriteria = true;
-                        }
-                    }
-                }
+                UpdateChannel update_channel = FileInfo.getChannel(last_jar);
 
                 //Make sure the latest jar version id is not the current one
-                if (!last_jar.getVersion().equals(versionID) && versionCriteria) {
-                    switch (current_channel) {
-                        case RELEASE:
-                            if (update_channel.equals(UpdateChannel.RELEASE)) {
-                                update(last_jar.getFile(), curr_jar);
-                            } else {
+                switch (current_channel) {
+                    case RELEASE:
+                        if (update_channel.equals(UpdateChannel.RELEASE)) {
+                            update(last_jar, curr_jar);
+                        } else {
+                            update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "update channel is over the current one", "no second reason")));
+                        }
+                        break;
+                    case RC:
+                        switch (update_channel) {
+                            case RELEASE:
+                            case RC:
+                                update(last_jar, curr_jar);
+                                break;
+                            default:
                                 update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "update channel is over the current one", "no second reason")));
-                            }
-                            break;
-                        case RC:
-                            switch (update_channel) {
-                                case RELEASE:
-                                case RC:
-                                    update(last_jar.getFile(), curr_jar);
-                                    break;
-                                default:
-                                    update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "update channel is over the current one", "no second reason")));
-                                    break;
-                            }
-                        case SNAPSHOT:
-                            update(last_jar.getFile(), curr_jar);
-                            break;
-                        default:
-                            update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "unknown update channel", "no second reason")));
-                    }
-                } else {
-                    update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"),
-                            !last_jar.getVersion().equals(versionID), versionCriteria)));
+                                break;
+                        }
+                    case SNAPSHOT:
+                        update(last_jar, curr_jar);
+                        break;
+                    default:
+                        update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "unknown update channel", "no second reason")));
+                        break;
                 }
             } else {
-                update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file could not be found, or version is lower and unsafe updates are disabled )"), "jar file is null", "no second reason")));
+                update_issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_not_available", "&5&oUpdate process is not available ( jar file is null or jar version is lower than current )"))));
             }
 
             update_issuer = null;
@@ -303,28 +278,6 @@ public class BukkitManager {
             if (update_issuer != issuer)
                 issuer.sendMessage(StringUtils.toColor(messages.prefix() + StringUtils.formatString(properties.getProperty("updater_already_updating", "&5&oUpdate process is already being processed by {0}"), update_issuer.getName())));
         }
-    }
-
-    /**
-     * Parse only the integer values of the
-     * string
-     *
-     * @param input the string input
-     * @return the numbers of the string
-     */
-    private static int parseInteger(final String input) {
-        StringBuilder builder = new StringBuilder();
-        //Append 0 value in case the string does not have
-        //any number
-        builder.append("0");
-
-        for (int i = 0; i < input.length(); i++) {
-            char character = input.charAt(i);
-            if (Character.isDigit(character))
-                builder.append(character);
-        }
-
-        return Integer.parseInt(builder.toString());
     }
 
     /**

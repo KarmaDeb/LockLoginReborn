@@ -16,6 +16,8 @@ package eu.locklogin.plugin.bungee.listener;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
@@ -53,7 +55,7 @@ public final class MessageListener implements Listener {
         if (!e.isCancelled()) {
             try {
                 Message messages = new Message();
-                Proxy proxy = new Proxy();
+                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                 ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
 
@@ -86,7 +88,7 @@ public final class MessageListener implements Listener {
                                         if (!manager.has2FA())
                                             SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
 
-                                        user.checkServer();
+                                        user.checkServer(0);
                                     } else {
                                         DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
 

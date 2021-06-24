@@ -17,6 +17,10 @@ public enum HashType {
     /**
      * LockLogin compatible hash type
      */
+    LS_SHA256,
+    /**
+     * LockLogin compatible hash type
+     */
     SHA256,
     /**
      * LockLogin compatible hash type

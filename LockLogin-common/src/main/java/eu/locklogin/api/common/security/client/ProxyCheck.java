@@ -14,6 +14,8 @@ package eu.locklogin.api.common.security.client;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 
 import java.io.BufferedReader;
@@ -28,7 +30,7 @@ import java.util.Set;
 /**
  * LockLogin proxy checker
  */
-public final class Proxy {
+public final class ProxyCheck {
 
     private final static Set<String> proxies = new LinkedHashSet<>();
     private final InetSocketAddress ip;
@@ -38,7 +40,7 @@ public final class Proxy {
      *
      * @param address the ip address
      */
-    public Proxy(final InetSocketAddress address) {
+    public ProxyCheck(final InetSocketAddress address) {
         ip = address;
     }
 
@@ -49,7 +51,7 @@ public final class Proxy {
     public static void scan() {
         if (proxies.isEmpty()) {
             try {
-                InputStream input = Proxy.class.getResourceAsStream("/security/proxies.txt");
+                InputStream input = ProxyCheck.class.getResourceAsStream("/security/proxies.txt");
                 if (input != null) {
                     InputStreamReader inReader = new InputStreamReader(input, StandardCharsets.UTF_8);
                     BufferedReader reader = new BufferedReader(inReader);
@@ -72,36 +74,42 @@ public final class Proxy {
      * @return if the address is a proxy
      */
     public final boolean isProxy() {
-        if (ip != null) {
-            String address = ip.getHostString();
-            int port = ip.getPort();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-            if (address.contains(":"))
-                address = address.split(":")[0];
+        if (config.ipHealthCheck()) {
+            if (ip != null) {
+                String address = ip.getHostString();
+                int port = ip.getPort();
 
-            for (String proxy : proxies) {
-                if (proxy.contains(":")) {
-                    String proxy_address = proxy.split(":")[0];
-                    String proxy_port_string = proxy.replace(proxy_address + ":", "");
+                if (address.contains(":"))
+                    address = address.split(":")[0];
 
-                    try {
-                        int proxy_port = Integer.parseInt(proxy_port_string);
+                for (String proxy : proxies) {
+                    if (proxy.contains(":")) {
+                        String proxy_address = proxy.split(":")[0];
+                        String proxy_port_string = proxy.replace(proxy_address + ":", "");
 
-                        if (proxy_address.equals(address))
-                            if (proxy_port == port)
-                                return true;
-                    } catch (Throwable ignored) {
+                        try {
+                            int proxy_port = Integer.parseInt(proxy_port_string);
+
+                            if (proxy_address.equals(address))
+                                if (proxy_port == port)
+                                    return true;
+                        } catch (Throwable ignored) {
+                        }
+                    } else {
+                        if (proxy.equals(address))
+                            return true;
                     }
-                } else {
-                    if (proxy.equals(address))
-                        return true;
                 }
+
+                return false;
             }
 
+            Console.send("Couldn't process null ip proxy check at {0}", Instant.now().toString());
             return false;
         }
 
-        Console.send("Couldn't process null ip proxy check at {0}", Instant.now().toString());
         return false;
     }
 }

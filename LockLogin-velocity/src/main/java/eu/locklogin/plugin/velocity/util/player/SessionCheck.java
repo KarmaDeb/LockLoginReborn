@@ -14,7 +14,7 @@ package eu.locklogin.plugin.velocity.util.player;
 import com.velocitypowered.api.proxy.Player;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.velocity.makeiteasy.BossMessage;
 import eu.locklogin.api.account.ClientSession;
@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.velocity.LockLogin.plugin;
+import static eu.locklogin.plugin.velocity.LockLogin.*;
 
 public final class SessionCheck implements Runnable {
 
@@ -72,12 +72,12 @@ public final class SessionCheck implements Runnable {
                 user.send(messages.prefix() + messages.login());
 
                 if (config.loginOptions().hasBossBar())
-                    boss = new BossMessage(plugin, messages.loginBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    boss = new BossMessage(main, messages.loginBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             } else {
                 user.send(messages.prefix() + messages.register());
 
                 if (config.registerOptions().hasBossBar())
-                    boss = new BossMessage(plugin, messages.registerBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    boss = new BossMessage(main, messages.registerBar(BAR_COLOR, tmp_time), tmp_time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
             }
 
             if (boss != null) {
@@ -85,7 +85,7 @@ public final class SessionCheck implements Runnable {
             }
 
             int time = tmp_time;
-            AdvancedPluginTimer timer = new AdvancedPluginTimer(time, false).setAsync(false);
+            AdvancedSimpleTimer timer = new AdvancedSimpleTimer(main, time, false).setAsync(false);
             timer.addAction(() -> {
                 ClientSession session = user.getSession();
                 if (!session.isLogged() && player.isActive()) {
@@ -163,7 +163,7 @@ public final class SessionCheck implements Runnable {
         if (user.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(time, true);
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(main, time, true);
         timer.addActionOnEnd(() -> {
             ClientSession session = user.getSession();
             if (!session.isLogged()) {

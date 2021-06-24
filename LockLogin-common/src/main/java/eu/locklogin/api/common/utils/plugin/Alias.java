@@ -42,7 +42,7 @@ public final class Alias {
     public Alias(final String _name) {
         name = StringUtils.stripColor(_name.toLowerCase().replace(" ", "_"));
 
-        File aliases = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "data", "aliases");
+        File aliases = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data", "aliases");
         File alias = new File(aliases, name + ".alias");
 
         file = new KarmaFile(alias);

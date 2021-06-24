@@ -1,18 +1,21 @@
 package eu.locklogin.plugin.bungee.util;
 
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.LockLogin;
-import eu.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static eu.locklogin.plugin.bungee.LockLogin.*;
+
 public final class ServerLifeChecker {
 
-    private final Proxy proxy = new Proxy();
+    private final ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
     private static boolean restart = false;
 
@@ -22,7 +25,7 @@ public final class ServerLifeChecker {
      * Start checking for the servers
      */
     public final void startCheck() {
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(proxy.proxyLifeCheck(), true).setAsync(true);
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, proxy.proxyLifeCheck(), true).setAsync(true);
         timer.addAction(() -> {
             if (restart) {
                 restart = false;

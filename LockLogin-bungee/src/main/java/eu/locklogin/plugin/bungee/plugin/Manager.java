@@ -14,18 +14,23 @@ package eu.locklogin.plugin.bungee.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.utils.filter.ConsoleFilter;
+import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.listener.ChatListener;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
+import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
@@ -41,11 +46,10 @@ import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.listener.QuitListener;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
-import eu.locklogin.plugin.bungee.util.filter.PluginFilter;
 import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.client.IpData;
-import eu.locklogin.api.common.security.client.Proxy;
+import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.session.SessionKeeper;
@@ -53,8 +57,9 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
 import eu.locklogin.api.common.web.AlertSystem;
-import eu.locklogin.api.common.web.VersionChecker;
 import eu.locklogin.api.common.web.VersionDownloader;
+import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -70,7 +75,6 @@ import org.bstats.charts.SimplePie;
 
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +89,7 @@ public final class Manager {
     private static int updater_id = 0;
     private static int alert_id = 0;
 
-    public static void initialize() {
+    public static void initialize(final Set<PluginModule> load) {
         int size = 10;
         String character = "*";
         try {
@@ -96,10 +100,10 @@ public final class Manager {
 
         System.out.println();
         artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID);
+        Console.send("&eversion:&6 {0}", versionID.getVersionID());
         Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
-        Proxy.scan();
+        ProxyCheck.scan();
 
         PlayerFile.migrateV1();
         PlayerFile.migrateV2();
@@ -167,10 +171,9 @@ public final class Manager {
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
+        performVersionCheck();
         if (config.getUpdaterOptions().isEnabled()) {
             scheduleVersionCheck();
-        } else {
-            performVersionCheck();
         }
         registerMetrics();
 
@@ -181,6 +184,9 @@ public final class Manager {
 
         ServerLifeChecker checker = new ServerLifeChecker();
         checker.startCheck();
+
+        for (PluginModule module : load)
+            module.load();
     }
 
     public static void terminate() {
@@ -209,7 +215,7 @@ public final class Manager {
 
         System.out.println();
         artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID);
+        Console.send("&eversion:&6 {0}", versionID.getVersionID());
         Console.send(" ");
         Console.send("&e-----------------------");
 
@@ -221,6 +227,7 @@ public final class Manager {
      */
     protected static void registerCommands() {
         Set<String> unregistered = new LinkedHashSet<>();
+        Set<String> registered = new HashSet<>();
 
         for (Class<?> clazz : SystemCommand.manager.recognizedClasses()) {
             if (clazz.isAnnotationPresent(SystemCommand.class)) {
@@ -233,6 +240,7 @@ public final class Manager {
                         if (instance instanceof Command) {
                             Command executor = (Command) instance;
                             plugin.getProxy().getPluginManager().registerCommand(plugin, executor);
+                            registered.add("/" + command);
                         } else {
                             unregistered.add(command);
                         }
@@ -250,15 +258,12 @@ public final class Manager {
             Console.send(plugin, properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
 
             try {
-                Object coreLogger = LogManager.getRootLogger();
+                ConsoleFilter filter = new ConsoleFilter(registered);
 
-                Method fatalMethod = coreLogger.getClass().getMethod("fatal", String.class);
-                fatalMethod.invoke(coreLogger, "Please do not report commands are being shown in BungeeCord console, BungeeCord logger shouldn't show player commands");
+                Logger coreLogger = (Logger) LogManager.getRootLogger();
+                coreLogger.addFilter(filter);
             } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
-                logger.scheduleLog(Level.INFO, "Failed to register console filter");
-
-                Console.send(plugin, properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
+                Console.send(plugin, "LockLogin tried to hook into console filter, but as expected, BungeeCord or this BungeeCord fork doesn't has a valid logger, please do not report the commands are being shown in console", Level.GRAVE);
             }
         }
     }
@@ -286,7 +291,7 @@ public final class Manager {
         }
 
         Config config = new Config();
-        eu.locklogin.plugin.bungee.util.files.Proxy proxy_cfg = new eu.locklogin.plugin.bungee.util.files.Proxy();
+        Proxy proxy_cfg = new Proxy();
         CurrentPlatform.setConfigManager(config);
         CurrentPlatform.setProxyManager(proxy_cfg);
 
@@ -379,63 +384,69 @@ public final class Manager {
      * Perform a version check
      */
     protected static void performVersionCheck() {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+        updater.fetch(true).whenComplete((fetch, trouble) -> {
+            if (trouble == null) {
+                if (!fetch.isUpdated()) {
+                    if (changelog_requests <= 0) {
+                        changelog_requests = 3;
 
-        VersionChecker checker = new VersionChecker(versionID);
-        checker.checkVersion(config.getUpdaterOptions().getChannel());
+                        Console.send(plugin, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
+                        for (String line : fetch.getChangelog())
+                            Console.send(line);
 
-        if (checker.isOutdated()) {
-            if (changelog_requests <= 0) {
-                changelog_requests = 3;
-
-                Console.send(plugin, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID, checker.getLatestVersion());
-                Console.send(checker.getChangelog());
-
-                Message messages = new Message();
-                for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                    User user = new User(player);
-                    if (user.hasPermission(PluginPermission.applyUpdates())) {
-                        user.send(messages.prefix() + "&dNew LockLogin version available, current is " + versionID + ", but latest is " + checker.getLatestVersion());
-                        user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
-                    }
-                }
-
-                if (VersionDownloader.downloadUpdates()) {
-                    if (!VersionDownloader.isDownloading()) {
-                        VersionDownloader downloader = new VersionDownloader(versionID, config.getUpdaterOptions().getChannel());
-                        downloader.download(
-                                file -> {
-                                    Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
-
-                                    for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                                        User user = new User(player);
-                                        if (user.hasPermission(PluginPermission.applyUpdates())) {
-                                            user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
-                                        }
-                                    }
-                                },
-                                error -> {
-                                    if (error != null) {
-                                        logger.scheduleLog(Level.GRAVE, error);
-                                        logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                        Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
-                                    }
-                                });
-                    }
-                } else {
-                    Console.send(plugin, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, checker.getDownloadURL());
-
-                    for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                        User user = new User(player);
-                        if (user.hasPermission(PluginPermission.applyUpdates())) {
-                            user.send(messages.prefix() + "&dFollow console instructions to update");
+                        Message messages = new Message();
+                        for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                            User user = new User(player);
+                            if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                user.send(messages.prefix() + "&dNew LockLogin version available, current is " + versionID.getVersionID() + ", but latest is " + fetch.getLatest());
+                                user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
+                            }
                         }
+
+                        if (VersionDownloader.downloadUpdates()) {
+                            if (VersionDownloader.isDownloading()) {
+                                Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+                            } else {
+                                VersionDownloader downloader = new VersionDownloader(fetch);
+                                downloader.download(
+                                        file -> {
+                                            Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+
+                                            for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                                                User user = new User(player);
+                                                if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                                    user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
+                                                }
+                                            }
+                                        },
+                                        error -> {
+                                            if (error != null) {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                                logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
+                                                Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
+                                            }
+                                        });
+                            }
+                        } else {
+                            Console.send(plugin, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
+
+                            for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                                User user = new User(player);
+                                if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                    user.send(messages.prefix() + "&dFollow console instructions to update");
+                                }
+                            }
+                        }
+                    } else {
+                        changelog_requests--;
                     }
                 }
             } else {
-                changelog_requests--;
+                logger.scheduleLog(Level.GRAVE, trouble);
+                logger.scheduleLog(Level.INFO, "Failed to check for updates");
             }
-        }
+        });
     }
 
     /**
@@ -444,7 +455,7 @@ public final class Manager {
     protected static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(config.getUpdaterOptions().getInterval(), true).setAsync(true).addActionOnEnd(Manager::performVersionCheck);
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, config.getUpdaterOptions().getInterval(), true).setAsync(true).addActionOnEnd(Manager::performVersionCheck);
         if (config.getUpdaterOptions().isEnabled()) {
             timer.start();
         } else {
@@ -459,7 +470,7 @@ public final class Manager {
      * Schedule the alert system
      */
     protected static void scheduleAlertSystem() {
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(30, true).setAsync(true).addActionOnEnd(() -> {
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 30, true).setAsync(true).addActionOnEnd(() -> {
             AlertSystem system = new AlertSystem();
             system.checkAlerts();
 
@@ -502,7 +513,7 @@ public final class Manager {
                     Server server = player.getServer();
                     if (server != null) {
                         ServerInfo info = server.getInfo();
-                        eu.locklogin.plugin.bungee.util.files.Proxy proxy = new eu.locklogin.plugin.bungee.util.files.Proxy();
+                        ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                         if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
                             if (ServerDataStorager.needsRegister(info.getName()))
@@ -522,7 +533,7 @@ public final class Manager {
                     DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                     DataSender.send(player, validation);
 
-                    Proxy proxy = new Proxy(ip);
+                    ProxyCheck proxy = new ProxyCheck(ip);
                     if (proxy.isProxy()) {
                         user.kick(messages.ipProxyError());
                         return;
@@ -541,9 +552,9 @@ public final class Manager {
                     if (!config.captchaOptions().isEnabled())
                         session.setCaptchaLogged(true);
 
-                    AdvancedPluginTimer tmp_timer = null;
+                    AdvancedSimpleTimer tmp_timer = null;
                     if (!session.isCaptchaLogged()) {
-                        tmp_timer = new AdvancedPluginTimer(1, true);
+                        tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
                         tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                     }
 
@@ -554,7 +565,7 @@ public final class Manager {
                             .addBoolData(user.isRegistered()).build();
                     DataSender.send(player, join);
 
-                    AdvancedPluginTimer timer = tmp_timer;
+                    AdvancedSimpleTimer timer = tmp_timer;
                     SessionCheck check = new SessionCheck(player, target -> {
                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
                         if (timer != null)
@@ -567,7 +578,7 @@ public final class Manager {
 
                     plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                    user.checkServer();
+                    user.checkServer(0);
 
                     UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
                     JavaModuleManager.callEvent(event);
@@ -613,7 +624,7 @@ public final class Manager {
      */
     public static void restartVersionChecker() {
         try {
-            AdvancedPluginTimer timer = AdvancedPluginTimer.getManager.getTimer(updater_id);
+            AdvancedSimpleTimer timer = AdvancedSimpleTimer.getManager.getTimer(updater_id);
             timer.setCancelled();
         } catch (Throwable ignored) {
         }
@@ -626,7 +637,7 @@ public final class Manager {
      */
     public static void restartAlertSystem() {
         try {
-            AdvancedPluginTimer timer = AdvancedPluginTimer.getManager.getTimer(alert_id);
+            AdvancedSimpleTimer timer = AdvancedSimpleTimer.getManager.getTimer(alert_id);
             timer.setCancelled();
         } catch (Throwable ignored) {
         }

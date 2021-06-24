@@ -28,7 +28,7 @@ import java.util.Properties;
 public final class Messages {
 
     public final String getProperty(final String name, final String def) {
-        File propFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
+        File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
         propFile = FileUtilities.getFixedFile(propFile);
         try {
             if (propFile.exists()) {
@@ -81,7 +81,7 @@ public final class Messages {
                 "#   PLEASE DO NOT MODIFY properties_lang_version VALUE";
 
         InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
-        File propFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "lang", "plugin_messages.properties");
+        File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "lang", "plugin_messages.properties");
         propFile = FileUtilities.getFixedFile(propFile);
         if (in != null && propFile.exists()) {
             InputStream inFile = new FileInputStream(propFile);
@@ -99,7 +99,7 @@ public final class Messages {
 
             if (inSize != outSize) {
                 if (inSize > outSize) {
-                    File oldProp = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "lang" + File.separator + "old" + File.separator + outVersion, "plugin_messages.properties");
+                    File oldProp = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "lang" + File.separator + "old" + File.separator + outVersion, "plugin_messages.properties");
                     oldProp = FileUtilities.getFixedFile(oldProp);
 
                     Files.move(propFile.toPath(), oldProp.toPath(), StandardCopyOption.REPLACE_EXISTING);

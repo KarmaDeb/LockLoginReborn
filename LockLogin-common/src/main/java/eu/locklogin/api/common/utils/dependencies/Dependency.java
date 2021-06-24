@@ -59,11 +59,7 @@ public enum Dependency {
     /**
      * LockLogin dependency
      */
-    MANAGER,
-    /**
-     * LockLogin dependency
-     */
-    KARMAAPI;
+    MANAGER;
 
 
     /**
@@ -91,29 +87,13 @@ public enum Dependency {
             case GSON:
                 return PluginDependency.of("Google Gson", "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.7/gson-2.8.7.jar", true);
             case MANAGER:
+            default:
                 String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 return PluginDependency.of("LockLoginManager",
                         "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar",
                         true,
                         true);
-            case KARMAAPI:
-            default:
-                //Enable compatibility with custom KarmaAPI version
-                PluginDependency custom = PluginDependency.of("KarmaAPI",
-                        "https://raw.githubusercontent.com/KarmaConfigs/project_c/main/src/libs/KarmaAPI/" + CurrentPlatform.getKarmaAPI() + "/KarmaAPI-Bundle.jar",
-                        false,
-                        "KarmaAPI", "custom");
-
-                if (!custom.getLocation().exists()) {
-                    return PluginDependency.of(
-                            "KarmaAPI",
-                            "https://raw.githubusercontent.com/KarmaConfigs/project_c/main/src/libs/KarmaAPI/" + CurrentPlatform.getKarmaAPI() + "/KarmaAPI-Bundle.jar",
-                            true,
-                            "KarmaAPI", CurrentPlatform.getKarmaAPI());
-                } else {
-                    return custom;
-                }
         }
     }
 }

@@ -14,6 +14,8 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.bukkit.soundutil.Sound;
@@ -134,8 +136,12 @@ public final class InventoryListener implements Listener {
 
             if (!session.isPinLogged()) {
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                    PinInventory pin = new PinInventory(player);
-                    pin.open();
+                    BungeeDataStorager storager = new BungeeDataStorager(null);
+
+                    if (!StringUtils.isNullOrEmpty(user.getManager().getPin()) || storager.needsPinConfirmation(player)) {
+                        PinInventory pin = new PinInventory(player);
+                        pin.open();
+                    }
                 }, 10);
             }
         }

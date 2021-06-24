@@ -28,7 +28,8 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.common.web.VersionChecker;
+import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -59,10 +60,9 @@ public final class LockLoginCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
-        VersionChecker checker = new VersionChecker(versionID);
+        VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof Player) {
             Player player = (Player) sender;
             User user = new User(player);
@@ -97,7 +97,7 @@ public final class LockLoginCommand implements CommandExecutor {
 
                                     ComponentFactory factory = new ComponentFactory("&e" + StringUtils.stripColor(module.name()) + (id == modules.size() - 1 ? "" : "&7, "));
 
-                                    String hoverText = "\n&7Owner: &e" + module.author() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
+                                    String hoverText = "\n&7Owner(s): &e" + module.singleAuthors() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
 
                                     try {
                                         if (version.updaterEnabled().get()) {
@@ -123,28 +123,24 @@ public final class LockLoginCommand implements CommandExecutor {
                             break;
                         case "version":
                             if (player.hasPermission(version())) {
-                                if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                    plugin.getServer().dispatchCommand(sender, "locklogin check");
-
-                                user.send("&7Current version:&e " + versionID);
-                                user.send("&7Latest version:&e " + checker.getLatestVersion());
+                                user.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                                user.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(version()));
                             }
                             break;
                         case "changelog":
                             if (player.hasPermission(changelog())) {
-                                if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                    plugin.getServer().dispatchCommand(sender, "locklogin check");
-
-                                user.send(checker.getChangelog().replace("\n", "{newline}"));
+                                for (String str : updater.fromCache().getChangelog()) {
+                                    user.send(str);
+                                }
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(changelog()));
                             }
                             break;
                         case "check":
                             if (player.hasPermission(check())) {
-                                checker.checkVersion(config.getUpdaterOptions().getChannel());
+                                updater.fetch(true);
                                 user.send("Checked for updates successfully");
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(check()));
@@ -239,20 +235,16 @@ public final class LockLoginCommand implements CommandExecutor {
                             Console.send(builder.toString());
                             break;
                         case "version":
-                            if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                plugin.getServer().dispatchCommand(sender, "locklogin check");
-
-                            Console.send("&7Current version:&e {0}", versionID);
-                            Console.send("&7Latest version:&e {0}", checker.getLatestVersion());
+                            Console.send("&7Current version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            Console.send("&7Latest version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
-                            if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                plugin.getServer().dispatchCommand(sender, "locklogin check");
-
-                            Console.send(checker.getChangelog());
+                            for (String str : updater.fromCache().getChangelog()) {
+                                Console.send(str);
+                            }
                             break;
                         case "check":
-                            checker.checkVersion(config.getUpdaterOptions().getChannel());
+                            updater.fetch(true);
                             Console.send("Checked for updates successfully");
                             break;
                         default:

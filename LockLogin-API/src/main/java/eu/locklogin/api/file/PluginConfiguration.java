@@ -42,6 +42,14 @@ public abstract class PluginConfiguration {
     public abstract boolean enableSessions();
 
     /**
+     * Get if the plugin should check if an
+     * IP is healthy for the server integrity
+     *
+     * @return if the plugin has IP checks enabled
+     */
+    public abstract boolean ipHealthCheck();
+
+    /**
      * Get the session life time
      *
      * @return the session life time

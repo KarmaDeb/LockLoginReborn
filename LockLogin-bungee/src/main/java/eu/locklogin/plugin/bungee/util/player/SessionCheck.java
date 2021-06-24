@@ -13,9 +13,9 @@ package eu.locklogin.plugin.bungee.util.player;
 
 import eu.locklogin.plugin.bungee.util.files.Message;
 import ml.karmaconfigs.api.bungee.makeiteasy.BossMessage;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -86,7 +86,7 @@ public final class SessionCheck implements Runnable {
             }
 
             int time = tmp_time;
-            AdvancedPluginTimer timer = new AdvancedPluginTimer(time, false).setAsync(false);
+            AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, time, false).setAsync(false);
             timer.addAction(() -> {
                 ClientSession session = user.getSession();
                 if (!session.isLogged() && player.isConnected()) {
@@ -163,7 +163,7 @@ public final class SessionCheck implements Runnable {
         if (user.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
-        AdvancedPluginTimer timer = new AdvancedPluginTimer(time, true);
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, time, true);
         timer.addActionOnEnd(() -> {
             ClientSession session = user.getSession();
             if (!session.isLogged()) {

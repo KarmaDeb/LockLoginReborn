@@ -16,29 +16,27 @@ package eu.locklogin.plugin.bungee.command;
 
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
 import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.common.web.VersionChecker;
+import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.Set;
 
-import static eu.locklogin.plugin.bungee.LockLogin.versionID;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
@@ -61,10 +59,9 @@ public final class LockLoginCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
-        VersionChecker checker = new VersionChecker(versionID);
+        VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;
             User user = new User(player);
@@ -100,7 +97,7 @@ public final class LockLoginCommand extends Command {
                                     JavaModuleVersion version = module.getManager().getVersionManager();
                                     ComponentFactory factory = new ComponentFactory("&e" + StringUtils.stripColor(module.name()) + (id == modules.size() - 1 ? "" : "&7, "));
 
-                                    String hoverText = "\n&7Owner: &e" + module.author() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
+                                    String hoverText = "\n&7Owner(s): &e" + module.singleAuthors() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
 
                                     try {
                                         if (version.updaterEnabled().get()) {
@@ -125,28 +122,24 @@ public final class LockLoginCommand extends Command {
                             break;
                         case "version":
                             if (user.hasPermission(version())) {
-                                if (StringUtils.isNullOrEmpty(checker.getLatestVersion()))
-                                    ProxyServer.getInstance().getPluginManager().dispatchCommand(sender, "locklogin check");
-
-                                user.send("&7Current version:&e " + versionID);
-                                user.send("&7Latest version:&e " + checker.getLatestVersion());
+                                user.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                                user.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(version()));
                             }
                             break;
                         case "changelog":
                             if (user.hasPermission(changelog())) {
-                                if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                    ProxyServer.getInstance().getPluginManager().dispatchCommand(sender, "locklogin check");
-
-                                user.send(checker.getChangelog().replace("\n", "{newline}"));
+                                for (String str : updater.fromCache().getChangelog()) {
+                                    user.send(str);
+                                }
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(changelog()));
                             }
                             break;
                         case "check":
                             if (user.hasPermission(check())) {
-                                checker.checkVersion(config.getUpdaterOptions().getChannel());
+                                updater.fetch(true);
                                 user.send("Checked for updates successfully");
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(check()));
@@ -246,20 +239,16 @@ public final class LockLoginCommand extends Command {
                             Console.send(builder.toString());
                             break;
                         case "version":
-                            if (StringUtils.isNullOrEmpty(checker.getLatestVersion()))
-                                ProxyServer.getInstance().getPluginManager().dispatchCommand(sender, "locklogin check");
-
-                            Console.send("&7Current version:&e {0}", versionID);
-                            Console.send("&7Latest version:&e {0}", checker.getLatestVersion());
+                            Console.send("&7Current version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            Console.send("&7Latest version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
-                            if (StringUtils.isNullOrEmpty(checker.getChangelog()))
-                                ProxyServer.getInstance().getPluginManager().dispatchCommand(sender, "locklogin check");
-
-                            Console.send(checker.getChangelog());
+                            for (String str : updater.fromCache().getChangelog()) {
+                                Console.send(str);
+                            }
                             break;
                         case "check":
-                            checker.checkVersion(config.getUpdaterOptions().getChannel());
+                            updater.fetch(true);
                             Console.send("Checked for updates successfully");
                             break;
                         default:

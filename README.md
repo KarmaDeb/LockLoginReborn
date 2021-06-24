@@ -7,12 +7,19 @@
 
 ```xml
 <dependencies>
-  <dependency>
-    <groupId>eu.locklogin</groupId>
-    <artifactId>LockLogin-API</artifactId>
-    <version>1.12.17-SNAPSHOT</version>
-    <scope>provided</scope>
-  </dependency>
+    <dependency>
+        <groupId>eu.locklogin</groupId>
+        <artifactId>LockLogin-API</artifactId>
+        <version>1.12.19-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
+    <!-- OPTIONAL -->
+    <dependency>
+        <groupId>eu.locklogin</groupId>
+        <artifactId>LockLogin-Common</artifactId>
+        <version>1.12.19-SNAPSHOT</version>
+        <scope>provided</scope>
+    </dependency>
 </dependencies>
 ```
 
@@ -20,6 +27,9 @@
 
 ```gradle
 dependencies {
-    compile "eu.locklogin:LockLogin-API:1.12.17-SNAPSHOT"
+    compile "eu.locklogin:LockLogin-API:1.12.19-SNAPSHOT"
+    
+    //OPTIONAL
+    compile "eu.locklogin:LockLogin-Common:1.12.19-SNAPSHOT"
 }
 ```

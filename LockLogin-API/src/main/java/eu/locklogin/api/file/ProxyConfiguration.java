@@ -1,6 +1,7 @@
 package eu.locklogin.api.file;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class ProxyConfiguration {
@@ -50,7 +51,7 @@ public abstract class ProxyConfiguration {
      * @param instance the server class instance
      * @return all the available lobby servers
      */
-    public abstract <T> Iterator<T> lobbyServers(final Class<T> instance);
+    public abstract <T> List<T> lobbyServers(final Class<T> instance);
 
     /**
      * Get all the auth servers
@@ -59,5 +60,5 @@ public abstract class ProxyConfiguration {
      * @param instance the server class instance
      * @return all the available auth servers
      */
-    public abstract <T> Iterator<T> authServer(final Class<T> instance);
+    public abstract <T> List<T> authServer(final Class<T> instance);
 }

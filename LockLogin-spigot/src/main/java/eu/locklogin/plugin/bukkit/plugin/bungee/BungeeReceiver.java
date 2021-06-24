@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.logger;
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
@@ -35,7 +36,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeReceiver implements PluginMessageListener {
 
-    private static final Map<String, AccountManager> accounts = new HashMap<>();
+    private static final Map<String, AccountManager> accounts = new ConcurrentHashMap<>();
 
     /**
      * Listens for incoming plugin messages
@@ -136,6 +137,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                                 PinInventory pin = new PinInventory(player);
                                                 pin.open();
                                             }
+                                            storager.setPinConfirmation(player, true);
                                             break;
                                         case "close":
                                             if (player.getOpenInventory().getTopInventory().getHolder() instanceof PinInventory) {
@@ -143,6 +145,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                                 inventory.close();
                                             }
                                             session.setPinLogged(true);
+                                            storager.setPinConfirmation(player, false);
                                             break;
                                         default:
                                             logger.scheduleLog(Level.GRAVE, "Unknown pin sub channel: " + pin_sub);
@@ -316,21 +319,5 @@ public final class BungeeReceiver implements PluginMessageListener {
             logger.scheduleLog(Level.GRAVE, ex);
             logger.scheduleLog(Level.INFO, "Failed to read bungeecord message");
         }
-    }
-
-    private UUID fromTrimmed(String trimmedUUID) throws IllegalArgumentException{
-        if(trimmedUUID == null) throw new IllegalArgumentException();
-        StringBuilder builder = new StringBuilder(trimmedUUID.trim());
-
-        try {
-            builder.insert(20, "-");
-            builder.insert(16, "-");
-            builder.insert(12, "-");
-            builder.insert(8, "-");
-        } catch (StringIndexOutOfBoundsException e){
-            throw new IllegalArgumentException();
-        }
-
-        return UUID.fromString(builder.toString());
     }
 }

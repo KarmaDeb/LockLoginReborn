@@ -20,7 +20,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.utils.ReflectionUtil;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
@@ -44,19 +43,14 @@ public interface LockLogin {
     KarmaSource source = Main.source;
     Main main = Main.get();
 
-    String name = ReflectionUtil.getName(plugin);
+    String name = main.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " ")));
-    String version = ReflectionUtil.getVersion(plugin);
+    String version = main.version();
 
-    String versionID = new VersionID(version, update).generate().get();
-
-    File lockloginFile = new File(Main.class.getProtectionDomain()
-            .getCodeSource()
-            .getLocation()
-            .getPath().replaceAll("%20", " "));
+    VersionID versionID = new VersionID(version, update).generate();
 
     Logger logger = new Logger(source);
 

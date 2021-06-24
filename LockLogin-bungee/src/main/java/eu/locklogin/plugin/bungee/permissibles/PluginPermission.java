@@ -176,4 +176,8 @@ public final class PluginPermission {
 
         return permission;
     }
+
+    public static Permission limbo() {
+        return new Permission("locklogin.join.limbo");
+    }
 }

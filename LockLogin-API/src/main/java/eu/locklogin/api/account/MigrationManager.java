@@ -14,6 +14,9 @@ package eu.locklogin.api.account;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.api.event.plugin.MigrationRequestEvent;
+import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+
 /**
  * LockLogin migration manager, used by external modules
  * to migrate from an account manager to a new one
@@ -38,6 +41,9 @@ public final class MigrationManager {
      * Initialize the migration
      */
     public final void startMigration() {
+        MigrationRequestEvent event = new MigrationRequestEvent(current, target, null);
+        JavaModuleManager.callEvent(event);
+
         AccountID uuid = current.getUUID();
         String name = current.getName();
         String password = current.getPassword();

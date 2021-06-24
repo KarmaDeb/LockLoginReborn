@@ -24,8 +24,6 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.plugin.Messages;
 import eu.locklogin.api.common.utils.version.VersionID;
-import ml.karmaconfigs.api.common.karma.KarmaPlugin;
-import ml.karmaconfigs.api.common.utils.ReflectionUtil;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.jetbrains.annotations.Nullable;
@@ -41,14 +39,14 @@ public interface LockLogin {
 
     Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
 
-    String name = ReflectionUtil.getName(plugin);
+    String name = plugin.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " ")));
-    String version = ReflectionUtil.getVersion(plugin);
+    String version = plugin.version();
 
-    String versionID = new VersionID(version, update).generate().get();
+    VersionID versionID = new VersionID(version, update).generate();
 
     File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()

@@ -135,7 +135,7 @@ public final class RegisterCommand extends Command {
 
                                         SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() + 1);
 
-                                        user.checkServer();
+                                        user.checkServer(0);
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

@@ -13,6 +13,7 @@ package eu.locklogin.plugin.velocity.util.player;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.velocity.permissibles.Permission;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -181,60 +182,47 @@ public final class User {
     /**
      * Check the player server
      *
-     * @param failed the failed servers
+     * @param index the server try index
      */
-    public final void checkServer(final String... failed) {
-        Set<String> failSet = new LinkedHashSet<>(Arrays.asList(failed));
+    public final void checkServer(final int index) {
+        ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+        List<RegisteredServer> lobbies = proxy.lobbyServers(RegisteredServer.class);
+        List<RegisteredServer> auths = proxy.authServer(RegisteredServer.class);
 
-        Proxy proxy = new Proxy();
         if (proxy.sendToServers()) {
             ClientSession session = getSession();
 
             if (session.isValid()) {
                 if (session.isLogged() && session.isTempLogged()) {
                     if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
-                        Iterator<RegisteredServer> lobbies = proxy.lobbyServers(RegisteredServer.class);
-                        if (lobbies.hasNext()) {
-                            do {
-                                RegisteredServer lInfo = lobbies.next();
-                                if (!failSet.contains(lInfo.getServerInfo().getName())) {
-                                    player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
-                                        if (error != null || !result.isSuccessful()) {
-                                            failSet.add(lInfo.getServerInfo().getName());
-                                            checkServer(failSet.toArray(new String[]{}));
+                        if (lobbies.size() > index) {
+                            RegisteredServer lInfo = lobbies.get(index);
+                            player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
+                                if (error != null || !result.isSuccessful()) {
+                                    checkServer(index + 1);
 
-                                            if (error != null) {
-                                                logger.scheduleLog(Level.GRAVE, error);
-                                            }
-                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getServerInfo().getName());
-                                        }
-                                    });
-                                    break;
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                    }
+                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getServerInfo().getName());
                                 }
-                            } while (lobbies.hasNext());
+                            });
                         }
                     }
                 } else {
                     if (!Proxy.inAuth(player) && Proxy.authsValid()) {
-                        Iterator<RegisteredServer> auths = proxy.authServer(RegisteredServer.class);
-                        if (auths.hasNext()) {
-                            do {
-                                RegisteredServer aInfo = auths.next();
-                                if (!failSet.contains(aInfo.getServerInfo().getName())) {
-                                    player.createConnectionRequest(aInfo).connect().whenComplete((result, error) -> {
-                                        if (error != null || !result.isSuccessful()) {
-                                            failSet.add(aInfo.getServerInfo().getName());
-                                            checkServer(failSet.toArray(new String[]{}));
+                        if (auths.size() > index) {
+                            RegisteredServer aInfo = auths.get(index);
+                            player.createConnectionRequest(aInfo).connect().whenComplete((result, error) -> {
+                                if (error != null || !result.isSuccessful()) {
+                                    checkServer(index + 1);
 
-                                            if (error != null) {
-                                                logger.scheduleLog(Level.GRAVE, error);
-                                            }
-                                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), aInfo.getServerInfo().getName());
-                                        }
-                                    });
-                                    break;
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                    }
+                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), aInfo.getServerInfo().getName());
                                 }
-                            } while (auths.hasNext());
+                            });
                         }
                     }
                 }

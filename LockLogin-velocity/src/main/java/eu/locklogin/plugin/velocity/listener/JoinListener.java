@@ -25,14 +25,16 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.util.files.Config;
+import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.SessionCheck;
 import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedPluginTimer;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
@@ -48,7 +50,7 @@ import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.Proxy;
+import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
@@ -247,7 +249,7 @@ public final class JoinListener {
                 ServerConnection connection = tmp_server.get();
 
                 RegisteredServer info = connection.getServer();
-                eu.locklogin.plugin.velocity.util.files.Proxy proxy = new eu.locklogin.plugin.velocity.util.files.Proxy();
+                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                 if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
                     if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
@@ -268,7 +270,7 @@ public final class JoinListener {
 
             Message messages = new Message();
 
-            Proxy proxy = new Proxy(ip);
+            ProxyCheck proxy = new ProxyCheck(ip);
             if (proxy.isProxy()) {
                 user.kick(messages.ipProxyError());
                 return;
@@ -287,9 +289,9 @@ public final class JoinListener {
             if (!config.captchaOptions().isEnabled())
                 session.setCaptchaLogged(true);
 
-            AdvancedPluginTimer tmp_timer = null;
+            AdvancedSimpleTimer tmp_timer = null;
             if (!session.isCaptchaLogged()) {
-                tmp_timer = new AdvancedPluginTimer(1, true);
+                tmp_timer = new AdvancedSimpleTimer(main, 1, true);
                 tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
             }
 
@@ -300,7 +302,7 @@ public final class JoinListener {
                     .addBoolData(user.isRegistered()).build();
             DataSender.send(player, join);
 
-            AdvancedPluginTimer timer = tmp_timer;
+            AdvancedSimpleTimer timer = tmp_timer;
             SessionCheck check = new SessionCheck(player, target -> {
                 player.sendActionBar(Component.text().content("").build());
                 if (timer != null)
@@ -317,8 +319,8 @@ public final class JoinListener {
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
 
             e.getPlayer().getCurrentServer().ifPresent(server -> {
-                if (eu.locklogin.plugin.velocity.util.files.Proxy.isAuth(server.getServerInfo())) {
-                    user.checkServer();
+                if (Proxy.isAuth(server.getServerInfo())) {
+                    user.checkServer(0);
                 }
             });
 
@@ -333,20 +335,15 @@ public final class JoinListener {
             Player player = e.getPlayer();
             User user = new User(player);
 
-            Optional<ServerConnection> tmp_server = player.getCurrentServer();
-            if (tmp_server.isPresent()) {
-                ServerConnection connection = tmp_server.get();
+            RegisteredServer server = e.getServer();
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                RegisteredServer info = connection.getServer();
-                eu.locklogin.plugin.velocity.util.files.Proxy proxy = new eu.locklogin.plugin.velocity.util.files.Proxy();
+            if (ServerDataStorager.needsRegister(server.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(server.getServerInfo().getName())) {
+                if (ServerDataStorager.needsRegister(server.getServerInfo().getName()))
+                    DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
-                if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
-                    if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
-
-                    if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
-                }
+                if (ServerDataStorager.needsProxyKnowledge(server.getServerInfo().getName()))
+                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).build());
             }
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
@@ -369,7 +366,8 @@ public final class JoinListener {
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
-            user.checkServer();
+            if (!user.hasPermission(PluginPermission.limbo()))
+                user.checkServer(0);
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
@@ -380,12 +378,18 @@ public final class JoinListener {
      * @return if the ip is valid
      */
     private boolean validateIP(final InetAddress ip) {
-        if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
-            return false;
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        if (config.ipHealthCheck()) {
+            if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
+                return false;
+            }
+
+            Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
+            return matcher.matches();
         }
 
-        Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
-        return matcher.matches();
+        return true;
     }
 
     /**
@@ -417,7 +421,7 @@ public final class JoinListener {
 
             keeper.destroy();
 
-            user.checkServer();
+            user.checkServer(0);
 
             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
             JavaModuleManager.callEvent(event);

@@ -3,6 +3,7 @@ version: ${project.version}
 description:
   - "A module that allows LockLogin"
   - "to self update at runtime"
+load: PREPLUGIN
 author: KarmaDev
 update_url: ""
 loader_bukkit: eu.locklogin.module.manager.bukkit.Main

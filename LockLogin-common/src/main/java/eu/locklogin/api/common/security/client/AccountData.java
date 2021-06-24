@@ -54,15 +54,15 @@ public final class AccountData {
                 addressBuilder.append(bytes);
 
             CryptoUtil util = CryptoUtil.getBuilder().withPassword(addressBuilder.toString()).build();
-            ip = util.hash(HashType.SHA256, true);
+            ip = util.hash(HashType.LS_SHA256, true);
         } else {
             ip = "none";
         }
 
-        File libFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File libFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "lib", ip + ".library");
 
-        File revLibFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File revLibFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "rev_lib", account.getId() + ".library");
 
         lib = new KarmaFile(libFile);
@@ -156,7 +156,7 @@ public final class AccountData {
             Set<String> address = new HashSet<>(rev_lib.getStringList("ASSIGNED"));
 
             for (String libName : address) {
-                File libFile = new File(FileUtilities.getPluginsFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+                File libFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                         "ips" + File.separator + "lib", libName + ".library");
 
                 KarmaFile file = new KarmaFile(libFile);

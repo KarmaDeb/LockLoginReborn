@@ -4,6 +4,7 @@ import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
@@ -111,48 +112,13 @@ public final class PinInventory implements InventoryHolder {
      * Open the inventory to the player
      */
     public final void open() {
-        try {
-            makeInventory();
-            player.openInventory(inventory);
-        } catch (Throwable ex) {
-            logger.scheduleLog(Level.GRAVE, ex);
-            logger.scheduleLog(Level.INFO, "Couldn't open pin GUI to player {0}", StringUtils.stripColor(player.getDisplayName()));
-
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-            Message messages = new Message();
-
-            if (config.isBungeeCord()) {
-                BungeeSender.sendPinInput(player, "error");
-            } else {
-                User user = new User(player);
-
-                ClientSession session = user.getSession();
-                AccountManager manager = user.getManager();
-
-                session.setPinLogged(true);
-
-
-                UserAuthenticateEvent event;
-                event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS)
-                        , fromPlayer(player),
-                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged())
-                        , null);
-
-                if (!manager.has2FA()) {
-                    user.setTempSpectator(false);
-
-                    if (config.takeBack()) {
-                        LastLocation location = new LastLocation(player);
-                        location.teleport();
-                    }
-                }
-
-                JavaModuleManager.callEvent(event);
-
-                user.send(messages.prefix() + event.getAuthMessage());
-            }
-        }
+        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 1, false).setAsync(false);
+        timer.addActionOnEnd(() -> {
+            timer.requestSynchronous(() -> {
+                makeInventory();
+                player.openInventory(inventory);
+            });
+        }).start();
     }
 
     /**

@@ -150,10 +150,11 @@ public final class JavaModuleLoader {
                                                     CurrentPlatform.getPluginAppender().addJarToClasspath(moduleFile);
 
                                                     PluginModule module = module_class.getDeclaredConstructor().newInstance();
+
                                                     if (pluginAppender)
                                                         module.setAppender(CurrentPlatform.getPluginAppender());
-                                                    
-                                                    jar.close();
+
+                                                    module.getAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 
                                                     return module;
                                                 }
@@ -306,6 +307,7 @@ public final class JavaModuleLoader {
                 module.getManager().unregisterListeners();
                 module.getManager().unregisterCommands();
 
+                module.stopTasks();
                 module.disable();
                 module.getAppender().close();
                 loaded.remove(module);

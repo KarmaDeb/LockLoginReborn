@@ -28,10 +28,11 @@ import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.web.VersionChecker;
 import eu.locklogin.plugin.velocity.util.ServerLifeChecker;
 import eu.locklogin.plugin.velocity.util.files.Message;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -61,10 +62,9 @@ public final class LockLoginCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
 
-        VersionChecker checker = new VersionChecker(versionID);
+        VersionUpdater updater = VersionUpdater.createNewBuilder(source).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof Player) {
             Player player = (Player) sender;
             User user = new User(player);
@@ -87,7 +87,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
 
                                     Component factory = Component.text().content("&e" + StringUtils.stripColor(module.name()) + (id == modules.size() - 1 ? "" : "&7, ")).build();
 
-                                    String hoverText = "\n&7Owner: &e" + module.author() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
+                                    String hoverText = "\n&7Owner(s): &e" + module.singleAuthors() + "\n&7Version: &e" + module.version() + "\n&7Description: &e" + module.description();
 
                                     try {
                                         if (version.updaterEnabled().get()) {
@@ -115,22 +115,24 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                             break;
                         case "version":
                             if (user.hasPermission(PluginPermission.version())) {
-                                user.send("&7Current version:&e " + versionID);
-                                user.send("&7Latest version:&e " + checker.getLatestVersion());
+                                user.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                                user.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(PluginPermission.version()));
                             }
                             break;
                         case "changelog":
                             if (user.hasPermission(PluginPermission.changelog())) {
-                                user.send(checker.getChangelog().replace("\n", "{newline}"));
+                                for (String str : updater.fromCache().getChangelog()) {
+                                    user.send(str);
+                                }
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(PluginPermission.changelog()));
                             }
                             break;
                         case "check":
                             if (user.hasPermission(PluginPermission.check())) {
-                                checker.checkVersion(config.getUpdaterOptions().getChannel());
+                                updater.fetch(true);
                                 user.send("Checked for updates successfully");
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(PluginPermission.check()));
@@ -222,14 +224,15 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                             Console.send(builder.toString());
                             break;
                         case "version":
-                            Console.send("&7Current version:&e " + versionID);
-                            Console.send("&7Latest version:&e " + checker.getLatestVersion());
+                            Console.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            Console.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
-                            Console.send(checker.getChangelog());
+                            for (String str : updater.fromCache().getChangelog())
+                                Console.send(str);
                             break;
                         case "check":
-                            checker.checkVersion(config.getUpdaterOptions().getChannel());
+                            updater.fetch(true);
                             Console.send(source, "Checked for updates successfully", Level.OK);
                             break;
                         default:
