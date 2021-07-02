@@ -20,7 +20,10 @@ import java.util.Map;
 
 /**
  * LockLogin ip data
+ *
+ * @deprecated Merged with {@link ClientData}
  */
+@Deprecated
 public final class IpData {
 
     private final static Map<byte[], Integer> clones = new HashMap<>();

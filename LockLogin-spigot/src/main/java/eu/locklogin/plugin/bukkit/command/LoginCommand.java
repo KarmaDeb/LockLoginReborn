@@ -145,8 +145,6 @@ public final class LoginCommand implements CommandExecutor {
                                         visor.checkVanish();
 
                                         user.send(messages.prefix() + event.getAuthMessage());
-
-                                        SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
                                         JavaModuleManager.callEvent(event);

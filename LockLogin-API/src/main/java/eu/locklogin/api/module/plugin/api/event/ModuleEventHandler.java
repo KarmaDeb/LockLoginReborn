@@ -30,6 +30,7 @@ public @interface ModuleEventHandler {
 
     Priority priority() default Priority.NORMAL;
     String after() default "";
+    boolean ignoreHandled() default true;
 
     /**
      * Event listener priority

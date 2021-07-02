@@ -16,6 +16,7 @@ website: ${project.url}
 main: eu.locklogin.plugin.bukkit.Main
 database: false
 api-version: 1.13
+load: STARTUP
 softdepend:
   - PlaceholderAPI
 

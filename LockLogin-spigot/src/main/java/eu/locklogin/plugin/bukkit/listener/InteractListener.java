@@ -19,7 +19,6 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.api.account.ClientSession;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -27,11 +26,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockRedstoneEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class InteractListener implements Listener {
@@ -39,21 +34,19 @@ public class InteractListener implements Listener {
     //Item pickup is handled as interact listener as
     //the player is technically interacting with the
     //dropped item
+    @SuppressWarnings("deprecation")
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onPickup(EntityPickupItemEvent e) {
+    public final void onPickup(PlayerPickupItemEvent e) {
         if (!e.isCancelled()) {
-            Entity entity = e.getEntity();
-            if (entity instanceof Player) {
-                Player player = (Player) entity;
-                User user = new User(player);
-                ClientSession session = user.getSession();
+            Player player = e.getPlayer();
+            User user = new User(player);
+            ClientSession session = user.getSession();
 
-                if (user.isLockLoginUser()) {
-                    if (session.isValid()) {
-                        e.setCancelled(!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged());
-                    } else {
-                        e.setCancelled(true);
-                    }
+            if (user.isLockLoginUser()) {
+                if (session.isValid()) {
+                    e.setCancelled(!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged());
+                } else {
+                    e.setCancelled(true);
                 }
             }
         }

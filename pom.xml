@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.12.20</version>
+    <version>1.12.23</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -41,7 +41,7 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLoginReborn.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLoginReborn.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLoginReborn/tree/master</url>
-        <tag>1.12.19-SNAPSHOT</tag>
+        <tag>1.12.23-SNAPSHOT</tag>
     </scm>
 
     <properties>
@@ -51,9 +51,6 @@
         <project.name>LockLogin</project.name>
         <project.author>KarmaDev</project.author>
         <project.buildType>RC</project.buildType>
-        <project.debug>false</project.debug>
-        <project.unsafeUpdate>true</project.unsafeUpdate>
-        <project.logSizeLimit>70</project.logSizeLimit>
         <project.karmaapi>1.2.8</project.karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>

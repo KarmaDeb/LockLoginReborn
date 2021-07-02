@@ -115,15 +115,15 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                             break;
                         case "version":
                             if (user.hasPermission(PluginPermission.version())) {
-                                user.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                user.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                user.send("&7Current version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                                user.send("&7Latest version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(PluginPermission.version()));
                             }
                             break;
                         case "changelog":
                             if (user.hasPermission(PluginPermission.changelog())) {
-                                for (String str : updater.fromCache().getChangelog()) {
+                                for (String str : updater.get().getChangelog()) {
                                     user.send(str);
                                 }
                             } else {
@@ -224,11 +224,11 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                             Console.send(builder.toString());
                             break;
                         case "version":
-                            Console.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                            Console.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                            Console.send("&7Current version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            Console.send("&7Latest version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
-                            for (String str : updater.fromCache().getChangelog())
+                            for (String str : updater.get().getChangelog())
                                 Console.send(str);
                             break;
                         case "check":

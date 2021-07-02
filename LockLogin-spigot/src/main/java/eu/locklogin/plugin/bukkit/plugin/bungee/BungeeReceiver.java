@@ -2,6 +2,7 @@ package eu.locklogin.plugin.bukkit.plugin.bungee;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -20,7 +21,6 @@ import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.utils.DataType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -89,8 +89,8 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     InetSocketAddress ip = player.getAddress();
                                     if (user.isLockLoginUser()) {
                                         if (ip != null) {
-                                            IpData data = new IpData(ip.getAddress());
-                                            data.delClone();
+                                            ClientData client = new ClientData(ip.getAddress());
+                                            client.removeClient(ClientData.getNameByID(player.getUniqueId()));
                                         }
 
                                         //Last location will be always saved since if the server

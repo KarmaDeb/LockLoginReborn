@@ -89,7 +89,7 @@ public final class SessionCheck implements Runnable {
             timer.addAction(() -> {
                 ClientSession session = user.getSession();
                 if (!session.isLogged() && player.isActive()) {
-                    int timer_time = timer.getTime();
+                    int timer_time = (int) timer.getTime();
 
                     if (boss != null) {
                         if (timer_time == ((int) Math.round(((double) time / 2)))) {

@@ -85,9 +85,6 @@ public final class MessageListener implements Listener {
                                         user.send(messages.prefix() + event.getAuthMessage());
                                         session.setPinLogged(true);
 
-                                        if (!manager.has2FA())
-                                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
-
                                         user.checkServer(0);
                                     } else {
                                         DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());

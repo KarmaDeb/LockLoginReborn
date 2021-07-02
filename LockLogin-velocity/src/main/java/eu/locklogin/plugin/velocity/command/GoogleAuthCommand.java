@@ -201,8 +201,6 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                                     codes.store(newCodes);
                                                 }
 
-                                                SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
-
                                                 user.checkServer(0);
                                             } else {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.gAuthIncorrect(), null);

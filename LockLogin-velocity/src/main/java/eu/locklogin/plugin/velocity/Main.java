@@ -9,9 +9,12 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
@@ -53,7 +56,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.20", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.23", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -106,6 +109,13 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
             if (container.isPresent()) {
                 Main.container = container.get();
+
+                CurrentPlatform.setOnDataContainerUpdate(() -> {
+                    for (RegisteredServer server : server.getAllServers()) {
+                        DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
+                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
+                    }
+                });
 
                 PrefixConsoleData prefixData = new PrefixConsoleData(Main.source);
                 prefixData.setOkPrefix("&aOk &e>> &7");

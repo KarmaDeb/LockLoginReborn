@@ -20,9 +20,9 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -46,8 +46,8 @@ public final class QuitListener {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData data = new ClientData(ip.getAddress());
+                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();
@@ -75,8 +75,8 @@ public final class QuitListener {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData data = new ClientData(ip.getAddress());
+                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();

@@ -14,6 +14,8 @@ package eu.locklogin.plugin.bungee.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
@@ -36,7 +38,6 @@ import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import net.md_5.bungee.api.ChatMessageType;
@@ -175,7 +176,8 @@ public class AccountCommand extends Command {
                                     plugin.getProxy().getScheduler().runAsync(plugin, check);
 
                                     user.send(messages.prefix() + messages.closed());
-                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                    AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), user.getManager().getName(), null);
+                                    JavaModuleManager.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
@@ -191,7 +193,8 @@ public class AccountCommand extends Command {
                                                 target.performCommand("account close");
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
-                                                SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                                AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
+                                                JavaModuleManager.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                             }
@@ -218,11 +221,7 @@ public class AccountCommand extends Command {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-
-                                            manager.set2FA(false);
-                                            manager.setGAuth(null);
-                                            manager.setPassword(null);
-                                            manager.setPin(null);
+                                            manager.remove(manager.getName());
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -234,8 +233,6 @@ public class AccountCommand extends Command {
                                             }
 
                                             account.lock(StringUtils.stripColor(player.getDisplayName()));
-
-                                            SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                                         } else {
                                             user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
@@ -254,11 +251,7 @@ public class AccountCommand extends Command {
                                         CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate()) {
                                             user.send(messages.prefix() + messages.accountRemoved());
-
-                                            manager.setPassword(null);
-                                            manager.setPin(null);
-                                            manager.setGAuth(null);
-                                            manager.set2FA(false);
+                                            manager.remove(player.getName());
 
                                             //Completely restart the client session
                                             session.setPinLogged(false);
@@ -296,7 +289,6 @@ public class AccountCommand extends Command {
                                             });
 
                                             plugin.getProxy().getScheduler().runAsync(plugin, check);
-                                            SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
                                         }
@@ -422,7 +414,8 @@ public class AccountCommand extends Command {
                                     target.performCommand("account close");
                                     Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
-                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                    AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
+                                    JavaModuleManager.callEvent(issuer);
                                 } else {
                                     Console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }
@@ -443,11 +436,7 @@ public class AccountCommand extends Command {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-
-                                manager.set2FA(false);
-                                manager.setGAuth(null);
-                                manager.setPassword(null);
-                                manager.setPin(null);
+                                manager.remove(config.serverName());
 
                                 Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -459,8 +448,6 @@ public class AccountCommand extends Command {
                                 }
 
                                 account.lock(StringUtils.stripColor("{ServerName}"));
-
-                                SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                             } else {
                                 Console.send(messages.prefix() + messages.neverPlayer(target));
                             }

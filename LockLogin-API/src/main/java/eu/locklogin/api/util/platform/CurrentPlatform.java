@@ -22,6 +22,7 @@ import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.util.function.Consumer;
 
 /**
  * Current platform utilities
@@ -43,6 +44,8 @@ public final class CurrentPlatform {
     private static ProxyConfiguration current_proxy;
 
     private static JarAppender current_appender;
+
+    private static Runnable onDataContainerUpdate;
 
     private static boolean online;
 
@@ -83,8 +86,34 @@ public final class CurrentPlatform {
         current_proxy = proxy;
     }
 
+    /**
+     * Set the current KarmaAPI version
+     *
+     * @param version the current KarmaAPI version
+     * @deprecated This is no longer needed as KarmaAPI
+     * is included inside the plugin
+     */
+    @Deprecated
     public static void setKarmaAPI(final String version) {
         karma_api = version;
+    }
+
+    /**
+     * Set the action to perform when session data container
+     * requests update
+     *
+     * @param request the action to perform
+     */
+    public static void setOnDataContainerUpdate(final Runnable request) {
+        onDataContainerUpdate = request;
+    }
+
+    /**
+     * Request the session data container update
+     */
+    public static void requestDataContainerUpdate() {
+        if (onDataContainerUpdate != null)
+            onDataContainerUpdate.run();
     }
 
     /**

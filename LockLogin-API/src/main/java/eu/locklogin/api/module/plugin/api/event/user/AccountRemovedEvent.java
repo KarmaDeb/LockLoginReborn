@@ -14,33 +14,52 @@ package eu.locklogin.api.module.plugin.api.event.user;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * This event is fired when a user quits
- * the server at the eyes of the plugin.
- * <p>
- * This means, this event will be fire when
- * a player quits the server, or it's kicked...
+ * This event is fired when a new account is removed
  */
-public final class UserQuitEvent extends Event {
+public final class AccountRemovedEvent extends Event {
 
-    private final ModulePlayer modulePlayer;
-    private final Object eventObj;
+    private final AccountManager removedAccount;
+    private final String issuer;
+    private final Object event;
 
     private boolean handled = false;
     private String handleReason = "";
 
     /**
-     * Initialize the event
+     * Initialize the account creation event
      *
-     * @param modulePlayerObject the player object
-     * @param event        the event in where this event is fired
+     * @param _removedAccount the account that got removed
+     * @param _issuer the account removal issuer
+     * @param _event  the event owner
      */
-    public UserQuitEvent(final ModulePlayer modulePlayerObject, final Object event) {
-        modulePlayer = modulePlayerObject;
-        eventObj = event;
+    public AccountRemovedEvent(final AccountManager _removedAccount, final String _issuer, final Object _event) {
+        removedAccount = _removedAccount;
+        issuer = _issuer;
+        event = _event;
+    }
+
+    /**
+     * Get the player who created the account
+     *
+     * @return the player who created
+     * the account
+     */
+    public final AccountManager getRemovedAccount() {
+        return removedAccount;
+    }
+
+    /**
+     * Get the account removal issuer
+     *
+     * @return the account remove issuer
+     */
+    public final String getIssuer() {
+        return issuer;
     }
 
     /**
@@ -86,21 +105,13 @@ public final class UserQuitEvent extends Event {
     }
 
     /**
-     * Get the player
-     *
-     * @return the player
-     */
-    public final ModulePlayer getPlayer() {
-        return modulePlayer;
-    }
-
-    /**
      * Get the event instance
      *
      * @return the event instance
      */
     @Override
-    public final Object getEvent() {
-        return eventObj;
+    @Nullable
+    public Object getEvent() {
+        return event;
     }
 }

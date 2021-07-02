@@ -189,34 +189,6 @@ public interface FileInfo {
     }
 
     /**
-     * Check if the specified jar ignores if the update
-     * version is lower or on another update channel
-     *
-     * @param file the jar file
-     * @return if the jar can update unsafely
-     */
-    static boolean unsafeUpdates(final File file) {
-        try {
-            JarFile jar = new JarFile(file);
-            JarEntry jar_info = jar.getJarEntry("global.yml");
-
-            if (jar_info != null) {
-                InputStream yml = jar.getInputStream(jar_info);
-
-                Yaml yaml = new Yaml();
-                Map<String, Object> values = yaml.load(yml);
-                yml.close();
-                return Boolean.parseBoolean(values.getOrDefault("project_unsafeUpdate", false).toString());
-            }
-            jar.close();
-
-            return false;
-        } catch (Throwable ex) {
-            return false;
-        }
-    }
-
-    /**
      * Get if the jar file should show dependencies
      * checksums
      *
@@ -241,33 +213,6 @@ public interface FileInfo {
             return false;
         } catch (Throwable ex) {
             return false;
-        }
-    }
-
-    /**
-     * Get the jar KarmaAPI log max size
-     *
-     * @param file the jar file
-     * @return the jar logs configuration
-     */
-    static int logFileSize(final File file) {
-        try {
-            JarFile jar = new JarFile(file);
-            JarEntry jar_info = jar.getJarEntry("global.yml");
-
-            if (jar_info != null) {
-                InputStream yml = jar.getInputStream(jar_info);
-
-                Yaml yaml = new Yaml();
-                Map<String, Object> values = yaml.load(yml);
-                yml.close();
-                return Integer.parseInt(values.getOrDefault("project_logSizeLimit", 100).toString());
-            }
-            jar.close();
-
-            return 100;
-        } catch (Throwable ex) {
-            return 100;
         }
     }
 

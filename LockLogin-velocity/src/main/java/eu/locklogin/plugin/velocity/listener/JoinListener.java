@@ -25,6 +25,7 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.util.files.Config;
@@ -48,10 +49,8 @@ import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
@@ -67,8 +66,6 @@ import net.kyori.adventure.text.Component;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -80,8 +77,6 @@ import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.*;
 
 public final class JoinListener {
 
-    private final static Map<InetAddress, String> verified = new HashMap<>();
-
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -91,7 +86,9 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.FIRST)
     public final void onServerPing(ProxyPingEvent e) {
-        verified.put(e.getConnection().getRemoteAddress().getAddress(), "");
+        ClientData client = new ClientData(e.getConnection().getRemoteAddress().getAddress());
+        if (!client.isVerified())
+            client.setVerified(true);
     }
 
     @SuppressWarnings("all")
@@ -149,21 +146,17 @@ public final class JoinListener {
                     }
 
                     if (config.antiBot()) {
-                        if (verified.containsKey(ip)) {
-                            String name = verified.getOrDefault(ip, "");
+                        ClientData client = new ClientData(ip);
+                        if (client.isVerified()) {
+                            String name = e.getUsername();
 
-                            if (!name.replaceAll("\\s", "").isEmpty() && !name.equals(conn_name)) {
-                                //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                                //assigned to an IP, so the anti bot security is reinforced
+                            if (client.canAssign(config.accountsPerIP(), name, tar_uuid)) {
+                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), name);
+                            } else {
                                 e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
                                 return;
-                            } else {
-                                if (name.replaceAll("\\s", "").isEmpty())
-                                    verified.put(ip, conn_name);
                             }
                         } else {
-                            //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                            //assigned to an IP, so the anti bot security is reinforced
                             e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
                             return;
                         }
@@ -202,6 +195,11 @@ public final class JoinListener {
 
                     UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), null, e.getUsername(), e);
                     JavaModuleManager.callEvent(event);
+
+                    if (event.isHandled()) {
+                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
+                        return;
+                    }
                 } else {
                     e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipProxyError())).build()));
                     logger.scheduleLog(Level.GRAVE, "Player {0}[{2}] tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", conn_name, address, tar_uuid);
@@ -217,21 +215,12 @@ public final class JoinListener {
     @Subscribe(order = PostOrder.FIRST)
     public final void onLogin(LoginEvent e) {
         if (e.getResult().isAllowed()) {
-            Player player = e.getPlayer();
-            Message messages = new Message();
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-            IpData data = new IpData(player.getRemoteAddress().getAddress());
-            int amount = data.getClonesAmount();
-
-            if (amount + 1 == config.accountsPerIP()) {
-                e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxIP())).build()));
-                return;
-            }
-            data.addClone();
-
             UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
             JavaModuleManager.callEvent(event);
+
+            if (event.isHandled()) {
+                e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
+            }
         }
     }
 
@@ -262,8 +251,7 @@ public final class JoinListener {
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+            CurrentPlatform.requestDataContainerUpdate();
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
             DataSender.send(player, validation);
@@ -326,6 +314,10 @@ public final class JoinListener {
 
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
             JavaModuleManager.callEvent(event);
+
+            if (event.isHandleable()) {
+                user.kick(event.getHandleReason());
+            }
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
@@ -348,8 +340,7 @@ public final class JoinListener {
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+            CurrentPlatform.requestDataContainerUpdate();
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
             DataSender.send(player, validation);

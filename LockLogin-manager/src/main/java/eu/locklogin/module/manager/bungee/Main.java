@@ -15,6 +15,7 @@ package eu.locklogin.module.manager.bungee;
  */
 
 import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.module.manager.UsersListener;
 import eu.locklogin.module.manager.bungee.command.ModuleHelpCommand;
 import eu.locklogin.module.manager.bungee.listener.UpdateRequestListener;
 
@@ -25,6 +26,7 @@ public final class Main extends PluginModule {
         getConsole().sendMessage("&aEnabling LockLogin manager module, to dynamically update LockLogin and enable helpme command");
 
         getManager().registerListener(new UpdateRequestListener());
+        getManager().registerListener(new UsersListener());
         getManager().registerCommand(new ModuleHelpCommand());
     }
 

@@ -27,7 +27,9 @@ import java.util.regex.Pattern;
  */
 public final class VersionID extends VersionResolver {
 
-    private final static Pattern id_pattern = Pattern.compile("[aA-zZ]+:[0-9]+/[0-9]+/[0-9]+:[0-9]+");
+    private final static Pattern old_id_pattern = Pattern.compile("[aA-zZ]+:[0-9]+[0-9]+[0-9]+");
+    private final static Pattern less_new_id_pattern = Pattern.compile("[aA-zZ]+-[0-9]+/[0-9]+/[0-9]+");
+    private final static Pattern new_id_pattern = Pattern.compile("[aA-zZ]+-[0-9]+/[0-9]+/[0-9]+.[0-9]+");
 
     private final static Map<String, String> versionMap = new HashMap<>();
 
@@ -52,7 +54,7 @@ public final class VersionID extends VersionResolver {
      * the current version id string
      */
     public final VersionID generate() {
-        switch (getVersionType()) {
+        switch (getVersionType(rootVersion)) {
             case NUMBER:
                 if (!versionMap.containsKey(keyName)) {
                     String[] version_data = rootVersion.split("\\.");
@@ -124,38 +126,32 @@ public final class VersionID extends VersionResolver {
     public final String resolve(String id) {
         switch (getVersionType(id)) {
             case NUMBER:
-                return rootVersion;
+                return id;
             case ID:
             case RESOLVABLE_ID:
             default:
-                String versionID = rootVersion.split("-")[1].split(":")[0];
-                String[] data = versionID.split("/");
-                int rest = Integer.parseInt(rootVersion.split("-")[1].split("\\.")[1]);
+                if (id.contains("-")) {
+                    String versionID = id.split("-")[1];
+                    if (versionID.contains(".")) {
+                        String[] data = versionID.split("\\.");
+                        versionID = data[0];
+                        int rest = Integer.parseInt(data[1]);
 
-                StringBuilder builder = new StringBuilder();
+                        StringBuilder builder = new StringBuilder();
 
-                for (String str : data) {
-                    int number = Integer.parseInt(str);
-                    builder.append(Math.abs(number - rest)).append(".");
+                        for (String str : versionID.split("/")) {
+                            int number = Integer.parseInt(str);
+                            builder.append(Math.abs(number - rest)).append(".");
+                        }
+
+                        return builder.substring(0, builder.toString().length() - 1);
+                    } else {
+                        return versionID;
+                    }
+                } else {
+                    return id.split(":")[1];
                 }
-
-                return builder.substring(0, builder.toString().length() - 1);
         }
-    }
-
-    /**
-     * Get the version type
-     *
-     * @return the version type
-     */
-    private VersionCheckType getVersionType() {
-        Matcher id_matcher = id_pattern.matcher(rootVersion);
-
-        if (id_matcher.matches()) {
-            return VersionCheckType.RESOLVABLE_ID;
-        }
-
-        return VersionCheckType.NUMBER;
     }
 
     /**
@@ -165,9 +161,11 @@ public final class VersionID extends VersionResolver {
      * @return the version type
      */
     private VersionCheckType getVersionType(final String id) {
-        Matcher id_matcher = id_pattern.matcher(id);
+        Matcher old_id_matcher = old_id_pattern.matcher(id);
+        Matcher new_id_matcher = new_id_pattern.matcher(id);
+        Matcher new_less_id_matcher = less_new_id_pattern.matcher(id);
 
-        if (id_matcher.matches()) {
+        if (old_id_matcher.matches() || new_id_matcher.matches() || new_less_id_matcher.matches()) {
             return VersionCheckType.RESOLVABLE_ID;
         }
 

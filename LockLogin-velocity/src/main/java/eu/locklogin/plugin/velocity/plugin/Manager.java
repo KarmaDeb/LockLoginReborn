@@ -19,6 +19,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.PluginModule;
@@ -48,7 +49,6 @@ import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionDataContainer;
@@ -497,15 +497,16 @@ public final class Manager {
             for (Player player : server.getAllPlayers()) {
                 server.getScheduler().buildTask(plugin, () -> {
                     InetSocketAddress ip = player.getRemoteAddress();
-                    IpData data = new IpData(ip.getAddress());
-                    int amount = data.getClonesAmount();
                     User user = new User(player);
+                    ClientData client = new ClientData(ip.getAddress());
 
-                    if (amount + 1 == config.accountsPerIP()) {
-                        user.kick(messages.maxIP());
+                    if (!client.isVerified())
+                        client.setVerified(true);
+
+                    if (!client.canAssign(config.accountsPerIP(), player.getGameProfile().getName(), player.getUniqueId())) {
+                        user.kick(StringUtils.toColor(messages.maxIP()));
                         return;
                     }
-                    data.addClone();
 
                     Optional<ServerConnection> tmp_server = player.getCurrentServer();
                     if (tmp_server.isPresent()) {
@@ -525,8 +526,7 @@ public final class Manager {
 
                     DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, DataSender.PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
                     DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, DataSender.PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+                    CurrentPlatform.requestDataContainerUpdate();
 
                     DataSender.MessageData validation = DataSender.getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                     DataSender.send(player, validation);
@@ -600,8 +600,8 @@ public final class Manager {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData client = new ClientData(ip.getAddress());
+                client.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();

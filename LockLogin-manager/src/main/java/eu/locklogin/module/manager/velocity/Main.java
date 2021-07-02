@@ -17,6 +17,7 @@ package eu.locklogin.module.manager.velocity;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.module.manager.velocity.command.ModuleHelpCommand;
 import eu.locklogin.module.manager.velocity.listener.UpdateRequestListener;
+import eu.locklogin.module.manager.UsersListener;
 
 public final class Main extends PluginModule {
 
@@ -25,6 +26,7 @@ public final class Main extends PluginModule {
         getConsole().sendMessage("&aEnabling LockLogin manager module, to dynamically update LockLogin and enable helpme command");
 
         getManager().registerListener(new UpdateRequestListener());
+        getManager().registerListener(new UsersListener());
         getManager().registerCommand(new ModuleHelpCommand());
     }
 

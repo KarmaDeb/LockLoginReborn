@@ -198,8 +198,6 @@ public final class GoogleAuthCommand implements CommandExecutor {
 
                                                     codes.store(newCodes);
                                                 }
-
-                                                SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
                                             } else {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.gAuthIncorrect(), null);
                                                 JavaModuleManager.callEvent(event);

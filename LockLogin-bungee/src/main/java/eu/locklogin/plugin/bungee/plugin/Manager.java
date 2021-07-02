@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bungee.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.web.STFetcher;
@@ -48,7 +49,6 @@ import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
 import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionDataContainer;
@@ -499,15 +499,15 @@ public final class Manager {
                     InetSocketAddress ip = getSocketIp(player.getSocketAddress());
                     User user = new User(player);
                     if (ip != null) {
-                        IpData data = new IpData(ip.getAddress());
-                        int amount = data.getClonesAmount();
+                        ClientData client = new ClientData(ip.getAddress());
 
-                        if (amount + 1 == config.accountsPerIP()) {
-                            user.kick(messages.maxIP());
+                        if (!client.isVerified())
+                            client.setVerified(true);
+
+                        if (!client.canAssign(config.accountsPerIP(), player.getName(), player.getUniqueId())) {
+                            user.kick(StringUtils.toColor(messages.maxIP()));
                             return;
                         }
-
-                        data.addClone();
                     }
 
                     Server server = player.getServer();
@@ -527,8 +527,7 @@ public final class Manager {
 
                     DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
                     DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+                    CurrentPlatform.requestDataContainerUpdate();
 
                     DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                     DataSender.send(player, validation);
@@ -602,8 +601,8 @@ public final class Manager {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData data = new ClientData(ip.getAddress());
+                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();

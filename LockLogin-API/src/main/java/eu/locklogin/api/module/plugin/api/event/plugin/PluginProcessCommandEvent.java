@@ -27,7 +27,9 @@ public final class PluginProcessCommandEvent extends Event {
     private final Object sender;
     private final String[] parameters;
     private final Object eventObj;
+
     private boolean handled = false;
+    private String handleReason = "";
 
     /**
      * Initialize the event
@@ -72,23 +74,45 @@ public final class PluginProcessCommandEvent extends Event {
     }
 
     /**
+     * Get if the event is handleable or not
+     *
+     * @return if the event is handleable
+     */
+    @Override
+    public boolean isHandleable() {
+        return true;
+    }
+
+    /**
      * Check if the event has been handled
      *
      * @return if the event has been handled
      */
     @Override
-    public boolean isHandled() {
+    public final boolean isHandled() {
         return handled;
+    }
+
+    /**
+     * Get the reason of why the event has been
+     * marked as handled
+     *
+     * @return the event handle reason
+     */
+    @Override
+    public String getHandleReason() {
+        return handleReason;
     }
 
     /**
      * Set the event handle status
      *
      * @param status the handle status
+     * @param reason the handle reason
      */
-    @Override
-    public void setHandled(boolean status) {
+    public final void setHandled(final boolean status, final String reason) {
         handled = status;
+        handleReason = reason;
     }
 
     /**

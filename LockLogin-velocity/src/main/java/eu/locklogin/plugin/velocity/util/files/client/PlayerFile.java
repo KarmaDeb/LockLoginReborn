@@ -1,10 +1,14 @@
 package eu.locklogin.plugin.velocity.util.files.client;
 
 import com.velocitypowered.api.proxy.Player;
+import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
+import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.plugin.velocity.Main;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
@@ -291,8 +295,11 @@ public final class PlayerFile extends AccountManager {
     }
 
     @Override
-    public boolean remove() {
+    public boolean remove(final String issuer) {
         try {
+            AccountRemovedEvent event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
+            JavaModuleManager.callEvent(event);
+
             return Files.deleteIfExists(manager.getFile().toPath());
         } catch (Throwable ex) {
             return false;
@@ -359,6 +366,16 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
+     * Get if the account is registered
+     *
+     * @return if the account is registered
+     */
+    @Override
+    public boolean isRegistered() {
+        return exists() && !StringUtils.isNullOrEmpty(getPassword());
+    }
+
+    /**
      * Set the player's password
      *
      * @param newPassword the new player password
@@ -414,6 +431,16 @@ public final class PlayerFile extends AccountManager {
         }
 
         return "";
+    }
+
+    /**
+     * Get if the account has pin
+     *
+     * @return if the account has pin
+     */
+    @Override
+    public boolean hasPin() {
+        return exists() && !StringUtils.isNullOrEmpty(getPin());
     }
 
     /**

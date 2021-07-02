@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.web.STFetcher;
@@ -47,7 +48,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.SessionCheck;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionDataContainer;
@@ -154,7 +154,7 @@ public final class Manager {
                 Set<AccountManager> nonLocked = new HashSet<>();
                 for (AccountManager account : accounts) {
                     LockedAccount locked = new LockedAccount(account.getUUID());
-                    if (!locked.getData().isLocked())
+                    if (!locked.getData().isLocked() && account.isRegistered())
                         nonLocked.add(account);
                 }
 
@@ -528,14 +528,15 @@ public final class Manager {
                 InetSocketAddress ip = player.getAddress();
 
                 if (ip != null) {
-                    IpData data = new IpData(ip.getAddress());
-                    int amount = data.getClonesAmount();
+                    ClientData client = new ClientData(ip.getAddress());
 
-                    if (amount + 1 == config.accountsPerIP()) {
+                    if (!client.isVerified())
+                        client.setVerified(true);
+
+                    if (!client.canAssign(config.accountsPerIP(), player.getName(), player.getUniqueId())) {
                         user.kick(StringUtils.toColor(messages.maxIP()));
                         return;
                     }
-                    data.addClone();
                 }
 
                 if (!config.isBungeeCord()) {
@@ -602,8 +603,8 @@ public final class Manager {
 
             if (user.isLockLoginUser()) {
                 if (ip != null) {
-                    IpData data = new IpData(ip.getAddress());
-                    data.delClone();
+                    ClientData client = new ClientData(ip.getAddress());
+                    client.removeClient(ClientData.getNameByID(player.getUniqueId()));
                 }
 
                 Config config = new Config();

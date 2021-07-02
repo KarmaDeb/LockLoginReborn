@@ -114,7 +114,7 @@ public final class PinInventory implements InventoryHolder {
     public final void open() {
         AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 1, false).setAsync(false);
         timer.addActionOnEnd(() -> {
-            timer.requestSynchronous(() -> {
+            timer.requestSync(() -> {
                 makeInventory();
                 player.openInventory(inventory);
             });

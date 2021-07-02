@@ -29,10 +29,10 @@ public final class UserJoinEvent extends Event {
     private final InetAddress address;
     private final UUID id;
     private final String player;
-
     private final Object eventObject;
 
     private boolean handled = false;
+    private String handleReason = "";
 
     /**
      * Initialize event
@@ -87,6 +87,16 @@ public final class UserJoinEvent extends Event {
     }
 
     /**
+     * Get if the event is handleable or not
+     *
+     * @return if the event is handleable
+     */
+    @Override
+    public boolean isHandleable() {
+        return true;
+    }
+
+    /**
      * Check if the event has been handled
      *
      * @return if the event has been handled
@@ -97,12 +107,24 @@ public final class UserJoinEvent extends Event {
     }
 
     /**
+     * Get the reason of why the event has been
+     * marked as handled
+     *
+     * @return the event handle reason
+     */
+    @Override
+    public String getHandleReason() {
+        return handleReason;
+    }
+
+    /**
      * Set the event handle status
      *
      * @param status the handle status
+     * @param reason the handle reason
      */
-    @Override
-    public final void setHandled(boolean status) {
+    public final void setHandled(final boolean status, final String reason) {
         handled = status;
+        handleReason = reason;
     }
 }

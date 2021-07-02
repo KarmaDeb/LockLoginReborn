@@ -34,7 +34,6 @@ import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -146,8 +145,6 @@ public final class LoginCommand extends Command {
                                         session.setPinLogged(true);
 
                                         user.send(messages.prefix() + event.getAuthMessage());
-                                        SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
-
                                         checkServer = true;
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);

@@ -2,6 +2,7 @@ package eu.locklogin.api.common.utils.other;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -56,10 +57,11 @@ public class GlobalAccount extends AccountManager {
     /**
      * Tries to remove the account
      *
+     * @param issuer the account removal issuer
      * @return if the account could be removed
      */
     @Override
-    public boolean remove() {
+    public boolean remove(final String issuer) {
         return false;
     }
 
@@ -124,6 +126,16 @@ public class GlobalAccount extends AccountManager {
     }
 
     /**
+     * Get if the account is registered
+     *
+     * @return if the account is registered
+     */
+    @Override
+    public boolean isRegistered() {
+        return !StringUtils.isNullOrEmpty(password);
+    }
+
+    /**
      * Save the account password
      *
      * @param password the account password
@@ -163,6 +175,16 @@ public class GlobalAccount extends AccountManager {
     @Override
     public String getPin() {
         return pin;
+    }
+
+    /**
+     * Get if the account has pin
+     *
+     * @return if the account has pin
+     */
+    @Override
+    public boolean hasPin() {
+        return !StringUtils.isNullOrEmpty(pin);
     }
 
     /**

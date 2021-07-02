@@ -20,6 +20,13 @@ package eu.locklogin.api.module.plugin.api.event.util;
 public abstract class Event {
 
     /**
+     * Get if the event is handleable or not
+     *
+     * @return if the event is handleable
+     */
+    public abstract boolean isHandleable();
+
+    /**
      * Check if the event has been handled
      *
      * @return if the event has been handled
@@ -27,11 +34,20 @@ public abstract class Event {
     public abstract boolean isHandled();
 
     /**
+     * Get the reason of why the event has been
+     * marked as handled
+     *
+     * @return the event handle reason
+     */
+    public abstract String getHandleReason();
+
+    /**
      * Set the event handle status
      *
      * @param status the handle status
+     * @param reason the handle reason
      */
-    public abstract void setHandled(final boolean status);
+    public abstract void setHandled(final boolean status, final String reason);
 
     /**
      * Get the event instance

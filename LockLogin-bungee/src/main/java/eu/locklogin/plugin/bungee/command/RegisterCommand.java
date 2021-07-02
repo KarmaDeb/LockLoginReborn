@@ -29,7 +29,6 @@ import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -132,8 +131,6 @@ public final class RegisterCommand extends Command {
                                             DataSender.send(player, pin);
                                         if (session.is2FALogged())
                                             DataSender.send(player, gauth);
-
-                                        SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() + 1);
 
                                         user.checkServer(0);
                                     } else {

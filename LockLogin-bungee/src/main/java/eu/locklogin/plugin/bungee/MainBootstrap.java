@@ -4,6 +4,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.injector.dependencies.DependencyManager;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
@@ -31,6 +32,7 @@ import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
@@ -42,7 +44,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
+import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.PLUGIN_CHANNEL;
 
 public class MainBootstrap implements KarmaBootstrap {
 
@@ -89,9 +93,16 @@ public class MainBootstrap implements KarmaBootstrap {
         JarManager.downloadAll();
         manager.loadDependencies();
 
-        Console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+        Console.send("&aUsing KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
 
         loader.getProxy().getScheduler().runAsync(loader, () -> {
+            CurrentPlatform.setOnDataContainerUpdate(() -> {
+                for (ServerInfo server : plugin.getProxy().getServers().values()) {
+                    DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
+                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
+                }
+            });
+
             PrefixConsoleData prefixData = new PrefixConsoleData(loader);
             prefixData.setOkPrefix("&aOk &e>> &7");
             prefixData.setInfoPrefix("&7Info &e>> &7");

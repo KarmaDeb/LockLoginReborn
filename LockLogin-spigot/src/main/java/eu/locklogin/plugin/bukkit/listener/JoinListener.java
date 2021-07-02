@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.client.*;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
@@ -40,10 +41,6 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.IpData;
-import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
@@ -61,8 +58,6 @@ import org.bukkit.event.server.ServerListPingEvent;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,8 +66,6 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altInfo;
 
 public final class JoinListener implements Listener {
-
-    private final static Map<InetAddress, String> verified = new HashMap<>();
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -85,8 +78,11 @@ public final class JoinListener implements Listener {
     public final void onServerPing(ServerListPingEvent e) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        if (!config.isBungeeCord())
-            verified.put(e.getAddress(), "");
+        if (!config.isBungeeCord()) {
+            ClientData client = new ClientData(e.getAddress());
+            if (!client.isVerified())
+                client.setVerified(true);
+        }
     }
 
     @SuppressWarnings("all")
@@ -141,21 +137,17 @@ public final class JoinListener implements Listener {
                         }
 
                         if (config.antiBot()) {
-                            if (verified.containsKey(ip)) {
-                                String name = verified.getOrDefault(ip, "");
+                            ClientData client = new ClientData(ip);
+                            if (client.isVerified()) {
+                                String name = e.getName();
 
-                                if (!name.replaceAll("\\s", "").isEmpty() && !name.equals(e.getName())) {
-                                    //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                                    //assigned to an IP, so the anti bot security is reinforced
-                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.antiBot()));
-                                    return;
+                                if (client.canAssign(config.accountsPerIP(), name, tar_uuid)) {
+                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), name);
                                 } else {
-                                    if (name.replaceAll("\\s", "").isEmpty())
-                                        verified.put(ip, name);
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
+                                    return;
                                 }
                             } else {
-                                //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                                //assigned to an IP, so the anti bot security is reinforced
                                 e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.antiBot()));
                                 return;
                             }
@@ -222,6 +214,11 @@ public final class JoinListener implements Listener {
                     if (!config.isBungeeCord()) {
                         UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
                         JavaModuleManager.callEvent(event);
+
+                        if (event.isHandled()) {
+                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                            return;
+                        }
                     }
                 } else {
                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
@@ -239,7 +236,6 @@ public final class JoinListener implements Listener {
     public final void onLogin(PlayerLoginEvent e) {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
-            Message messages = new Message();
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             User user = new User(player);
@@ -247,15 +243,6 @@ public final class JoinListener implements Listener {
                 user.applyLockLoginUser();
 
             if (!config.isBungeeCord()) {
-                IpData data = new IpData(e.getAddress());
-                int amount = data.getClonesAmount();
-
-                if (amount + 1 == config.accountsPerIP()) {
-                    e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.maxIP()));
-                    return;
-                }
-                data.addClone();
-
                 ClientSession session = user.getSession();
                 session.validate();
                 session.setPinLogged(false);
@@ -286,6 +273,10 @@ public final class JoinListener implements Listener {
 
                 UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
                 JavaModuleManager.callEvent(event);
+
+                if (event.isHandled()) {
+                    e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                }
             }
         }
     }
@@ -363,6 +354,10 @@ public final class JoinListener implements Listener {
         if (!config.isBungeeCord()) {
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
             JavaModuleManager.callEvent(event);
+
+            if (event.isHandled()) {
+                user.kick(event.getHandleReason());
+            }
         }
     }
 

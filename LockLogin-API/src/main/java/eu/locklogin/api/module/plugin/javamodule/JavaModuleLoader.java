@@ -26,9 +26,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -39,7 +41,9 @@ import java.util.zip.ZipEntry;
 public final class JavaModuleLoader {
 
     private final static Set<PluginModule> loaded = new LinkedHashSet<>();
+
     private final static Map<Class<? extends PluginModule>, PluginModule> clazz_map = new ConcurrentHashMap<>();
+
     private final static Set<String> load_queue = new LinkedHashSet<>();
 
     private static File modulesFolder = null;

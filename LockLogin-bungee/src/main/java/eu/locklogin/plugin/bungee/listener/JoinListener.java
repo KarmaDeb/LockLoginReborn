@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bungee.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.client.*;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Config;
@@ -41,11 +42,6 @@ import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.IpData;
-import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.ProxyCheck;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
@@ -64,8 +60,6 @@ import net.md_5.bungee.event.EventPriority;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -76,8 +70,6 @@ import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 public final class JoinListener implements Listener {
 
-    private final static Map<InetAddress, String> verified = new HashMap<>();
-
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -87,7 +79,9 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onServerPing(ProxyPingEvent e) {
-        verified.put(getIp(e.getConnection().getSocketAddress()), "");
+        ClientData client = new ClientData(getIp(e.getConnection().getSocketAddress()));
+        if (!client.isVerified())
+            client.setVerified(true);
     }
 
     @SuppressWarnings("all")
@@ -147,22 +141,18 @@ public final class JoinListener implements Listener {
                     }
 
                     if (config.antiBot()) {
-                        if (verified.containsKey(ip)) {
-                            String name = verified.getOrDefault(ip, "");
+                        ClientData client = new ClientData(ip);
+                        if (client.isVerified()) {
+                            String name = e.getConnection().getName();
 
-                            if (!name.replaceAll("\\s", "").isEmpty() && !name.equals(conn_name)) {
-                                //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                                //assigned to an IP, so the anti bot security is reinforced
-                                e.setCancelled(true);
-                                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.antiBot())));
-                                return;
+                            if (client.canAssign(config.accountsPerIP(), name, tar_uuid)) {
+                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), name);
                             } else {
-                                if (name.replaceAll("\\s", "").isEmpty())
-                                    verified.put(ip, conn_name);
+                                e.setCancelled(true);
+                                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.maxIP())));
+                                return;
                             }
                         } else {
-                            //The anti bot is like a whitelist, only players in a certain list can join, the difference with LockLogin is that players are
-                            //assigned to an IP, so the anti bot security is reinforced
                             e.setCancelled(true);
                             e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.antiBot())));
                             return;
@@ -205,6 +195,12 @@ public final class JoinListener implements Listener {
 
                     UserPreJoinEvent event = new UserPreJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
                     JavaModuleManager.callEvent(event);
+
+                    if (event.isHandled()) {
+                        e.setCancelled(true);
+                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(event.getHandleReason())));
+                        return;
+                    }
                 } else {
                     e.setCancelled(true);
                     e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.ipProxyError())));
@@ -222,21 +218,13 @@ public final class JoinListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onLogin(LoginEvent e) {
         if (!e.isCancelled()) {
-            Message messages = new Message();
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-            IpData data = new IpData(getIp(e.getConnection().getSocketAddress()));
-            int amount = data.getClonesAmount();
-
-            if (amount + 1 == config.accountsPerIP()) {
-                e.setCancelled(true);
-                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.maxIP())));
-                return;
-            }
-            data.addClone();
-
             UserJoinEvent event = new UserJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
             JavaModuleManager.callEvent(event);
+
+            if (event.isHandled()) {
+                e.setCancelled(true);
+                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(event.getHandleReason())));
+            }
         }
     }
 
@@ -266,8 +254,7 @@ public final class JoinListener implements Listener {
             plugin.getProxy().getScheduler().schedule(plugin, () -> {
                 DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
                 DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
-                DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-                DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+                CurrentPlatform.requestDataContainerUpdate();
 
                 MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                 DataSender.send(player, validation);
@@ -323,11 +310,15 @@ public final class JoinListener implements Listener {
 
                 DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
+                if (!Proxy.isAuth(e.getPlayer().getServer().getInfo())) {
+                    user.checkServer(0);
+                }
+
                 UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
                 JavaModuleManager.callEvent(event);
 
-                if (!Proxy.isAuth(e.getPlayer().getServer().getInfo())) {
-                    user.checkServer(0);
+                if (event.isHandled()) {
+                    user.kick(event.getHandleReason());
                 }
             }, (long) 1.5, TimeUnit.SECONDS);
         }, (long) 0.5, TimeUnit.SECONDS);
@@ -358,8 +349,7 @@ public final class JoinListener implements Listener {
 
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getLogged()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, player).addIntData(SessionDataContainer.getRegistered()).build());
+            CurrentPlatform.requestDataContainerUpdate();
 
             ClientSession session = user.getSession();
             session.validate();

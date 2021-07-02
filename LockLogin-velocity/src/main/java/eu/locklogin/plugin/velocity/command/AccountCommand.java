@@ -17,6 +17,8 @@ package eu.locklogin.plugin.velocity.command;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
@@ -33,7 +35,6 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -178,7 +179,9 @@ public class AccountCommand extends BungeeLikeCommand {
                                     server.getScheduler().buildTask(plugin, check);
 
                                     user.send(messages.prefix() + messages.closed());
-                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+
+                                    AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
+                                    JavaModuleManager.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
@@ -194,7 +197,8 @@ public class AccountCommand extends BungeeLikeCommand {
                                                 target.performCommand("account close");
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
 
-                                                SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                                AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
+                                                JavaModuleManager.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                             }
@@ -222,11 +226,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-
-                                            manager.set2FA(false);
-                                            manager.setGAuth(null);
-                                            manager.setPassword(null);
-                                            manager.setPin(null);
+                                            manager.remove(manager.getName());
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -238,8 +238,6 @@ public class AccountCommand extends BungeeLikeCommand {
                                             }
 
                                             account.lock(StringUtils.stripColor(player.getUsername()));
-
-                                            SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                                         } else {
                                             user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
@@ -258,11 +256,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                         CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate()) {
                                             user.send(messages.prefix() + messages.accountRemoved());
-
-                                            manager.setPassword(null);
-                                            manager.setPin(null);
-                                            manager.setGAuth(null);
-                                            manager.set2FA(false);
+                                            manager.remove(player.getGameProfile().getName());
 
                                             //Completely restart the client session
                                             session.setPinLogged(false);
@@ -301,8 +295,6 @@ public class AccountCommand extends BungeeLikeCommand {
                                             });
 
                                             server.getScheduler().buildTask(plugin, check);
-
-                                            SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
                                         }
@@ -423,7 +415,8 @@ public class AccountCommand extends BungeeLikeCommand {
                                     target.performCommand("account close");
                                     Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
 
-                                    SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                    AccountCloseEvent event = new AccountCloseEvent(fromPlayer(tar_p.get()), config.serverName(), null);
+                                    JavaModuleManager.callEvent(event);
                                 } else {
                                     Console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }
@@ -445,11 +438,7 @@ public class AccountCommand extends BungeeLikeCommand {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-
-                                manager.set2FA(false);
-                                manager.setGAuth(null);
-                                manager.setPassword(null);
-                                manager.setPin(null);
+                                manager.remove(config.serverName());
 
                                 Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -461,8 +450,6 @@ public class AccountCommand extends BungeeLikeCommand {
                                 }
 
                                 account.lock(StringUtils.stripColor("{ServerName}"));
-
-                                SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() - 1);
                             } else {
                                 Console.send(messages.prefix() + messages.neverPlayer(target));
                             }

@@ -79,7 +79,7 @@ public class PinCommand extends Command {
                                             session.setPinLogged(false);
 
                                             DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
-                                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
+                                            CurrentPlatform.requestDataContainerUpdate();
                                         } else {
                                             user.send(messages.prefix() + messages.alreadyPin());
                                         }

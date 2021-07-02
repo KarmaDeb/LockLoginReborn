@@ -146,8 +146,6 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         session.setPinLogged(true);
 
                                         user.send(messages.prefix() + event.getAuthMessage());
-                                        SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
-
                                         checkServer = true;
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);

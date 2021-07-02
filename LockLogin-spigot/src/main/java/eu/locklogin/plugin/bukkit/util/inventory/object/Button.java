@@ -15,6 +15,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.tryAsync;
+
 /**
  * Private GSA code
  * <p>
@@ -386,25 +388,27 @@ public class Button {
      */
     @SuppressWarnings("deprecation")
     public static void preCache() {
-        one();
-        two();
-        three();
-        four();
-        five();
-        six();
-        seven();
-        eight();
-        nine();
-        zero();
-        confirm();
-        erase();
-        next();
-        back();
-        
-        try {
-            new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE", true)), 1, (short) 3);
-            new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE")), 1, (short) 3);
-            new ItemStack(Material.LEGACY_STAINED_GLASS_PANE, 1, (short) 3);
-        } catch (Throwable ignored) {}
+        tryAsync(() -> {
+            one();
+            two();
+            three();
+            four();
+            five();
+            six();
+            seven();
+            eight();
+            nine();
+            zero();
+            confirm();
+            erase();
+            next();
+            back();
+
+            try {
+                new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE", true)), 1, (short) 3);
+                new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE")), 1, (short) 3);
+                new ItemStack(Material.LEGACY_STAINED_GLASS_PANE, 1, (short) 3);
+            } catch (Throwable ignored) {}
+        });
     }
 }

@@ -17,13 +17,11 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.util.files.Message;
@@ -123,15 +121,15 @@ public final class LockLoginCommand implements CommandExecutor {
                             break;
                         case "version":
                             if (player.hasPermission(version())) {
-                                user.send("&7Current version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                user.send("&7Latest version:&e " + updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                user.send("&7Current version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                                user.send("&7Latest version:&e " + updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(version()));
                             }
                             break;
                         case "changelog":
                             if (player.hasPermission(changelog())) {
-                                for (String str : updater.fromCache().getChangelog()) {
+                                for (String str : updater.get().getChangelog()) {
                                     user.send(str);
                                 }
                             } else {
@@ -235,11 +233,11 @@ public final class LockLoginCommand implements CommandExecutor {
                             Console.send(builder.toString());
                             break;
                         case "version":
-                            Console.send("&7Current version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                            Console.send("&7Latest version:&e {0}", updater.fromCache().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                            Console.send("&7Current version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            Console.send("&7Latest version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
-                            for (String str : updater.fromCache().getChangelog()) {
+                            for (String str : updater.get().getChangelog()) {
                                 Console.send(str);
                             }
                             break;

@@ -14,12 +14,12 @@ package eu.locklogin.plugin.bungee.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
 import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.security.client.IpData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -48,8 +48,8 @@ public final class QuitListener implements Listener {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData data = new ClientData(ip.getAddress());
+                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();
@@ -77,8 +77,8 @@ public final class QuitListener implements Listener {
             keeper.store();
 
             if (ip != null) {
-                IpData data = new IpData(ip.getAddress());
-                data.delClone();
+                ClientData data = new ClientData(ip.getAddress());
+                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
                 ClientSession session = user.getSession();
                 session.invalidate();
