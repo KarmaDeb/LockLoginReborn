@@ -22,7 +22,7 @@ import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -38,7 +38,7 @@ public class FileReloader {
      */
     public static void reload(final ProxiedPlayer player) {
         PluginStatusChangeEvent reload_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_START, null);
-        JavaModuleManager.callEvent(reload_start);
+        ModulePlugin.callEvent(reload_start);
 
         Message message = new Message();
         if (player != null) {
@@ -98,6 +98,6 @@ public class FileReloader {
         }
 
         PluginStatusChangeEvent reload_finish = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_END, null);
-        JavaModuleManager.callEvent(reload_finish);
+        ModulePlugin.callEvent(reload_finish);
     }
 }

@@ -4,6 +4,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Proxy configuration
+ */
 public abstract class ProxyConfiguration {
 
     /**

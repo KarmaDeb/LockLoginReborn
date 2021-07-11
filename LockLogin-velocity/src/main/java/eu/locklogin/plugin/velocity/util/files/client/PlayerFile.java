@@ -3,7 +3,7 @@ package eu.locklogin.plugin.velocity.util.files.client;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.velocity.Main;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
@@ -298,7 +298,7 @@ public final class PlayerFile extends AccountManager {
     public boolean remove(final String issuer) {
         try {
             AccountRemovedEvent event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             return Files.deleteIfExists(manager.getFile().toPath());
         } catch (Throwable ex) {

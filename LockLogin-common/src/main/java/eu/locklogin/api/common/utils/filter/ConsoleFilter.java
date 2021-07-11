@@ -1,7 +1,7 @@
 package eu.locklogin.api.common.utils.filter;
 
 import eu.locklogin.api.module.plugin.api.command.CommandData;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.core.Filter;
@@ -32,7 +32,7 @@ public class ConsoleFilter implements Filter {
     private static final Set<String> SENSITIVE_COMMANDS = new HashSet<>();
 
     static {
-        for (CommandData command : JavaModuleManager.getCommandsData()) {
+        for (CommandData command : ModulePlugin.getCommandsData()) {
             if (command.getOwner().isSensitive()) {
                 SENSITIVE_COMMANDS.addAll(Arrays.asList(command.getArguments()));
             }

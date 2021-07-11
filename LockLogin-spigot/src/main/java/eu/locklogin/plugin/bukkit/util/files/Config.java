@@ -62,29 +62,24 @@ public final class Config extends PluginConfiguration {
     public final boolean isBungeeCord() {
         File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
 
+        boolean bungeecord = false;
         try {
-            boolean mode = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
-            if (!mode) {
-                KarmaYamlManager manager = new KarmaYamlManager(plugin, "force_bungee");
-                manager.save(force_bungee);
+            bungeecord = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
+        } catch (Throwable ignored) {}
 
-                mode = manager.getBoolean("settings.bungeecord");
+        if (!bungeecord) {
+            try {
+                FileCopy copy = new FileCopy(plugin, "force_bungee.yml");
+                copy.copy(force_bungee);
+            } catch (Throwable ex) {
+                ex.printStackTrace();
             }
 
-            return mode;
-        } catch (Throwable ex) {
-            if (!force_bungee.exists()) {
-                try {
-                    FileCopy bungee_cfg = new FileCopy(plugin, "force_bungee.yml");
-                    bungee_cfg.copy(force_bungee);
-                } catch (Throwable exc) {
-                    return false;
-                }
-            }
-
-            KarmaYamlManager manager = new KarmaYamlManager(plugin, "force_bungee");
-            return manager.getBoolean("settings.bungeecord");
+            KarmaYamlManager manager = new KarmaYamlManager(force_bungee);
+            bungeecord = manager.getBoolean("settings.bungeecord", false);
         }
+
+        return bungeecord;
     }
 
     @Override
@@ -349,30 +344,23 @@ public final class Config extends PluginConfiguration {
          * @return if the configuration could be reloaded
          */
         static boolean reload() {
-            boolean bungeecord;
-
             File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
 
+            boolean bungeecord = false;
             try {
-                boolean mode = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
-                if (!mode) {
-                    KarmaYamlManager manager = new KarmaYamlManager(plugin, "force_bungee");
-                    manager.save(force_bungee);
+                bungeecord = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
+            } catch (Throwable ignored) {}
 
-                    mode = manager.getBoolean("settings.bungeecord");
+            if (!bungeecord) {
+                try {
+                    FileCopy copy = new FileCopy(plugin, "force_bungee.yml");
+                    copy.copy(force_bungee);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
                 }
 
-                bungeecord = mode;
-            } catch (Throwable ex) {
-                if (!force_bungee.exists()) {
-                    try {
-                        FileCopy bungee_cfg = new FileCopy(plugin, "force_bungee.yml");
-                        bungee_cfg.copy(force_bungee);
-                    } catch (Throwable ignored) {}
-                }
-
-                KarmaYamlManager manager = new KarmaYamlManager(plugin, "force_bungee");
-                bungeecord = manager.getBoolean("settings.bungeecord");
+                KarmaYamlManager manager = new KarmaYamlManager(force_bungee);
+                bungeecord = manager.getBoolean("settings.bungeecord", false);
             }
 
             if (bungeecord) {

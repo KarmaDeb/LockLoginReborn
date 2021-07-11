@@ -12,7 +12,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
@@ -162,7 +162,7 @@ public final class PinInventory implements InventoryHolder {
 
                         if (manager.has2FA()) {
                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.gAuthInstructions(), null);
-                            JavaModuleManager.callEvent(event);
+                            ModulePlugin.callEvent(event);
 
                             user.send(messages.prefix() + event.getAuthMessage());
                             session.setPinLogged(true);
@@ -170,7 +170,7 @@ public final class PinInventory implements InventoryHolder {
                             user.setTempSpectator(false);
 
                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
-                            JavaModuleManager.callEvent(event);
+                            ModulePlugin.callEvent(event);
 
                             if (config.takeBack()) {
                                 LastLocation location = new LastLocation(player);
@@ -191,7 +191,7 @@ public final class PinInventory implements InventoryHolder {
                         close();
                     } else {
                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.incorrectPin(), null);
-                        JavaModuleManager.callEvent(event);
+                        ModulePlugin.callEvent(event);
 
                         user.send(messages.prefix() + event.getAuthMessage());
                     }

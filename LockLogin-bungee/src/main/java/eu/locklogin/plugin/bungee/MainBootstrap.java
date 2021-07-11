@@ -18,8 +18,8 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -61,11 +61,6 @@ public class MainBootstrap implements KarmaBootstrap {
     public MainBootstrap(final Plugin main) {
         loader = (Main) main;
 
-        ChecksumTables tables = new ChecksumTables();
-        STFetcher fetcher = new STFetcher();
-        tables.checkTables();
-        fetcher.check();
-
         try {
             JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());
         } catch (Throwable ex) {
@@ -94,6 +89,9 @@ public class MainBootstrap implements KarmaBootstrap {
         manager.loadDependencies();
 
         Console.send("&aUsing KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+
+        STFetcher fetcher = new STFetcher();
+        fetcher.check();
 
         loader.getProxy().getScheduler().runAsync(loader, () -> {
             CurrentPlatform.setOnDataContainerUpdate(() -> {
@@ -148,7 +146,7 @@ public class MainBootstrap implements KarmaBootstrap {
                         DataSender.send(player, gauth);
 
                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-                        JavaModuleManager.callEvent(event);
+                        ModulePlugin.callEvent(event);
 
                         user.checkServer(0);
                     }
@@ -181,7 +179,7 @@ public class MainBootstrap implements KarmaBootstrap {
             Set<PluginModule> wait = new HashSet<>();
             if (moduleFiles != null) {
                 for (File file : moduleFiles) {
-                    PluginModule module = JavaModuleLoader.getByName(file.getName().replace(".jar", ""));
+                    PluginModule module = ModuleLoader.getByName(file.getName().replace(".jar", ""));
                     if (module != null) {
                         if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
                             module.load();
@@ -193,7 +191,7 @@ public class MainBootstrap implements KarmaBootstrap {
             }
 
             PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             AllowedCommand.scan();
 
@@ -204,7 +202,7 @@ public class MainBootstrap implements KarmaBootstrap {
     @Override
     public void disable() {
         PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
-        JavaModuleManager.callEvent(event);
+        ModulePlugin.callEvent(event);
 
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null) {

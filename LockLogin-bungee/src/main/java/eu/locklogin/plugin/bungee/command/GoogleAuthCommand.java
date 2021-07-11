@@ -24,13 +24,12 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.GoogleAuthFactory;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import net.md_5.bungee.api.CommandSender;
@@ -185,7 +184,7 @@ public final class GoogleAuthCommand extends Command {
                                                 session.setPinLogged(true);
 
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.gAuthCorrect(), null);
-                                                JavaModuleManager.callEvent(event);
+                                                ModulePlugin.callEvent(event);
 
                                                 user.send(messages.prefix() + event.getAuthMessage());
 
@@ -199,13 +198,13 @@ public final class GoogleAuthCommand extends Command {
                                                 user.checkServer(0);
                                             } else {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.gAuthIncorrect(), null);
-                                                JavaModuleManager.callEvent(event);
+                                                ModulePlugin.callEvent(event);
 
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                             }
                                         } catch (Throwable ex) {
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.gAuthIncorrect(), null);
-                                            JavaModuleManager.callEvent(event);
+                                            ModulePlugin.callEvent(event);
 
                                             user.send(messages.prefix() + event.getAuthMessage());
                                         }

@@ -18,7 +18,7 @@ import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
@@ -58,7 +58,7 @@ public final class QuitListener implements Listener {
                 session.set2FALogged(false);
 
                 UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
@@ -87,7 +87,7 @@ public final class QuitListener implements Listener {
                 session.set2FALogged(false);
 
                 UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }

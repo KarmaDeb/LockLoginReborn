@@ -141,7 +141,7 @@ public final class JarManager {
             Console.send("&aDownloaded plugin dependency " + valid.getName());
 
         for (PluginDependency failed : error)
-            Console.send("&cFailed to download plugin dependency " + failed.isValid());
+            Console.send("&cFailed to download plugin dependency " + failed.getName());
     }
 
     /**

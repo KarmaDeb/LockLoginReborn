@@ -19,8 +19,8 @@ import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
@@ -79,19 +79,19 @@ public final class LockLoginCommand implements CommandExecutor {
                             if (player.hasPermission(applyUpdates())) {
                                 //BukkitManager.update(sender);
                                 UpdateRequestEvent event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
-                                JavaModuleManager.callEvent(event);
+                                ModulePlugin.callEvent(event);
                             } else {
                                 user.send(messages.prefix() + messages.permissionError(applyUpdates()));
                             }
                             break;
                         case "modules":
                             if (player.hasPermission(modules())) {
-                                Set<PluginModule> modules = JavaModuleLoader.getModules();
+                                Set<PluginModule> modules = ModuleLoader.getModules();
                                 ComponentFactory main = new ComponentFactory("&3Modules &8&o( &a" + modules.size() + " &8&o)&7: ");
 
                                 int id = 0;
                                 for (PluginModule module : modules) {
-                                    JavaModuleVersion version = module.getManager().getVersionManager();
+                                    JavaModuleVersion version = module.getPlugin().getVersionManager();
 
                                     ComponentFactory factory = new ComponentFactory("&e" + StringUtils.stripColor(module.name()) + (id == modules.size() - 1 ? "" : "&7, "));
 
@@ -152,7 +152,7 @@ public final class LockLoginCommand implements CommandExecutor {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = JavaModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByName(moduleName);
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {
@@ -210,16 +210,16 @@ public final class LockLoginCommand implements CommandExecutor {
                             break;
                         case "applyupdates":
                             UpdateRequestEvent event = new UpdateRequestEvent(sender, true, null);
-                            JavaModuleManager.callEvent(event);
+                            ModulePlugin.callEvent(event);
                             break;
                         case "modules":
-                            Set<PluginModule> modules = JavaModuleLoader.getModules();
+                            Set<PluginModule> modules = ModuleLoader.getModules();
 
                             int id = 0;
                             StringBuilder builder = new StringBuilder();
                             builder.append("&3Modules &8&o( &a").append(modules.size()).append(" &8&o)&7: ");
                             for (PluginModule module : modules) {
-                                JavaModuleVersion version = module.getManager().getVersionManager();
+                                JavaModuleVersion version = module.getPlugin().getVersionManager();
                                 try {
                                     if (version.updaterEnabled().get()) {
                                         builder.append("&c").append(StringUtils.stripColor(module.name())).append(" &f( &e").append(version.getDownloadURL()).append(" &f)").append(id == modules.size() - 1 ? "" : "&7, ");
@@ -253,7 +253,7 @@ public final class LockLoginCommand implements CommandExecutor {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = JavaModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByName(moduleName);
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {

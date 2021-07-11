@@ -36,7 +36,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -67,6 +67,9 @@ import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altInfo;
 
 public final class JoinListener implements Listener {
 
+    private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
+    private final static Message messages = new Message();
+
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -76,8 +79,6 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public final void onServerPing(ServerListPingEvent e) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
         if (!config.isBungeeCord()) {
             ClientData client = new ClientData(e.getAddress());
             if (!client.isVerified())
@@ -88,7 +89,6 @@ public final class JoinListener implements Listener {
     @SuppressWarnings("all")
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPreLogin(AsyncPlayerPreLoginEvent e) {
-        Message messages = new Message();
         InetAddress ip = e.getAddress();
 
         String address = "null";
@@ -98,8 +98,6 @@ public final class JoinListener implements Listener {
         if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
             try {
                 if (validateIP(ip)) {
-                    PluginConfiguration config = CurrentPlatform.getConfiguration();
-
                     if (!config.isBungeeCord()) {
                         UUID gen_uuid = UUIDGen.getUUID(e.getName());
                         UUID tar_uuid = e.getUniqueId();
@@ -213,7 +211,7 @@ public final class JoinListener implements Listener {
 
                     if (!config.isBungeeCord()) {
                         UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
-                        JavaModuleManager.callEvent(event);
+                        ModulePlugin.callEvent(event);
 
                         if (event.isHandled()) {
                             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
@@ -236,7 +234,6 @@ public final class JoinListener implements Listener {
     public final void onLogin(PlayerLoginEvent e) {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             User user = new User(player);
             if (!user.isLockLoginUser())
@@ -272,7 +269,7 @@ public final class JoinListener implements Listener {
                 OfflinePlayer offline = plugin.getServer().getOfflinePlayer(e.getPlayer().getUniqueId());
 
                 UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 if (event.isHandled()) {
                     e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
@@ -285,7 +282,6 @@ public final class JoinListener implements Listener {
     public final void onPostLogin(PlayerJoinEvent e) {
         String join_message = e.getJoinMessage();
         e.setJoinMessage("");
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
@@ -293,8 +289,6 @@ public final class JoinListener implements Listener {
         ClientSession session = user.getSession();
 
         if (!config.isBungeeCord()) {
-            Message messages = new Message();
-
             ProxyCheck proxy = new ProxyCheck(ip);
             if (proxy.isProxy()) {
                 user.kick(messages.ipProxyError());
@@ -353,7 +347,7 @@ public final class JoinListener implements Listener {
 
         if (!config.isBungeeCord()) {
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {
                 user.kick(event.getHandleReason());
@@ -368,7 +362,6 @@ public final class JoinListener implements Listener {
      * @return if the ip is valid
      */
     private boolean validateIP(final InetAddress ip) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.ipHealthCheck()) {
             if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
                 return false;
@@ -388,7 +381,6 @@ public final class JoinListener implements Listener {
      * @param player the player
      */
     protected void forceSessionLogin(final Player player) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
         ModulePlayer modulePlayer = fromPlayer(player);
 
         SessionKeeper keeper = new SessionKeeper(modulePlayer);

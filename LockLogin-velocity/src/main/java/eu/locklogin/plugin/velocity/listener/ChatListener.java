@@ -21,7 +21,7 @@ import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.plugin.velocity.util.player.User;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.plugin.velocity.util.files.Message;
 
@@ -56,9 +56,9 @@ public final class ChatListener {
             return;
         }
 
-        if (JavaModuleManager.parseCommand(e.getMessage())) {
+        if (ModulePlugin.parseCommand(e.getMessage())) {
             e.setResult(PlayerChatEvent.ChatResult.denied());
-            JavaModuleManager.fireCommand(player, e.getMessage());
+            ModulePlugin.fireCommand(player, e.getMessage());
         }
     }
 
@@ -97,9 +97,9 @@ public final class ChatListener {
                 return;
             }
 
-            if (JavaModuleManager.parseCommand(e.getCommand())) {
+            if (ModulePlugin.parseCommand(e.getCommand())) {
                 e.setResult(CommandExecuteEvent.CommandResult.denied());
-                JavaModuleManager.fireCommand(player, e.getCommand());
+                ModulePlugin.fireCommand(player, e.getCommand());
             }
         }
     }

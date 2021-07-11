@@ -25,8 +25,18 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
+/**
+ * LockLogin plugin messages
+ */
 public final class Messages {
 
+    /**
+     * Get a plugin message property
+     *
+     * @param name the property name
+     * @param def the default value
+     * @return the messages properties
+     */
     public final String getProperty(final String name, final String def) {
         File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
         propFile = FileUtilities.getFixedFile(propFile);

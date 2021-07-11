@@ -22,7 +22,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.Message;
@@ -74,7 +74,7 @@ public final class RegisterCommand implements CommandExecutor {
                             user.send(messages.prefix() + properties.getProperty("could_not_create_user", "&5&oWe're sorry, but we couldn't create your account"));
                         }
 
-                    if (user.isRegistered()) {
+                    if (manager.isRegistered()) {
                         user.send(messages.alreadyRegistered());
                     } else {
                         switch (args.length) {
@@ -108,11 +108,11 @@ public final class RegisterCommand implements CommandExecutor {
                                                 session.set2FALogged(true);
                                             }
                                         }
-                                        if (manager.getPin().replaceAll("\\s", "").isEmpty())
+                                        if (!manager.hasPin())
                                             session.setPinLogged(true);
 
                                         AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

@@ -63,11 +63,39 @@ public final class SessionChangeData {
         return amount;
     }
 
+    /**
+     * Available session data type
+     */
     public enum DataType {
-        LOGIN, REGISTER;
+        /**
+         * Login data type
+         */
+        LOGIN,
+
+        /**
+         * Register data type
+         */
+        REGISTER;
     }
 
+    /**
+     * Available data change type
+     */
     public enum DataChange {
-        DECREASE, INCREASE, SAME
+        /**
+         * Data decreased by 1
+         */
+        DECREASE,
+
+        /**
+         * Data decreased by 1
+         */
+        INCREASE,
+
+        /**
+         * Data stills the same, nothing
+         * has changed
+         */
+        SAME
     }
 }

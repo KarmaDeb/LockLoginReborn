@@ -17,7 +17,6 @@ package eu.locklogin.api.module.plugin.client;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -122,7 +121,6 @@ public final class ModulePlayer implements Serializable {
             Object plugin;
             Object server;
             Method getPlayer;
-
 
             switch (CurrentPlatform.getPlatform()) {
                 case BUKKIT:

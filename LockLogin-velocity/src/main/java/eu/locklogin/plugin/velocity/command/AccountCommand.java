@@ -18,7 +18,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
@@ -181,7 +181,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                     user.send(messages.prefix() + messages.closed());
 
                                     AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
-                                    JavaModuleManager.callEvent(self);
+                                    ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
@@ -198,7 +198,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
-                                                JavaModuleManager.callEvent(issuer);
+                                                ModulePlugin.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                             }
@@ -416,7 +416,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                     Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
 
                                     AccountCloseEvent event = new AccountCloseEvent(fromPlayer(tar_p.get()), config.serverName(), null);
-                                    JavaModuleManager.callEvent(event);
+                                    ModulePlugin.callEvent(event);
                                 } else {
                                     Console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }

@@ -47,7 +47,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
@@ -579,7 +579,7 @@ public final class Manager {
                     user.checkServer(0);
 
                     UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
-                    JavaModuleManager.callEvent(event);
+                    ModulePlugin.callEvent(event);
                 }).delay(2, TimeUnit.SECONDS).schedule();
             }
         }).schedule();
@@ -613,7 +613,7 @@ public final class Manager {
             }
 
             UserUnHookEvent event = new UserUnHookEvent(fromPlayer(player), null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
         }
     }
 

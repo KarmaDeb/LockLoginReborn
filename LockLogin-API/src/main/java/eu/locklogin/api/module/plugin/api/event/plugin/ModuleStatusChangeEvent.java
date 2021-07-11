@@ -16,7 +16,7 @@ package eu.locklogin.api.module.plugin.api.event.plugin;
 
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,7 +27,7 @@ public final class ModuleStatusChangeEvent extends Event {
 
     private final Status status;
     private final PluginModule target;
-    private final JavaModuleLoader loader;
+    private final ModuleLoader loader;
     private final Object eventObj;
 
     private boolean handled = false;
@@ -41,7 +41,7 @@ public final class ModuleStatusChangeEvent extends Event {
      * @param currentLoader the used loader
      * @param event         the event in where this event is fired
      */
-    public ModuleStatusChangeEvent(final Status _status, final PluginModule module, final JavaModuleLoader currentLoader, final Object event) {
+    public ModuleStatusChangeEvent(final Status _status, final PluginModule module, final ModuleLoader currentLoader, final Object event) {
         status = _status;
         target = module;
         loader = currentLoader;
@@ -113,7 +113,7 @@ public final class ModuleStatusChangeEvent extends Event {
      *
      * @return the loader that performed this action
      */
-    public final JavaModuleLoader getLoader() {
+    public final ModuleLoader getLoader() {
         return loader;
     }
 

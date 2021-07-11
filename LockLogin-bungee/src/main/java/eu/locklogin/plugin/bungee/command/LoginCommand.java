@@ -26,7 +26,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -132,9 +132,9 @@ public final class LoginCommand extends Command {
                                     }
 
                                     boolean checkServer = false;
-                                    if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                    if (!manager.has2FA() && !manager.hasPin()) {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
                                         MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
                                         MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
@@ -148,9 +148,9 @@ public final class LoginCommand extends Command {
                                         checkServer = true;
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
-                                        if (!manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                        if (manager.hasPin()) {
                                             session.setPinLogged(false);
 
                                             DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
@@ -177,7 +177,7 @@ public final class LoginCommand extends Command {
                                     }
                                 } else {
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
-                                    JavaModuleManager.callEvent(event);
+                                    ModulePlugin.callEvent(event);
 
                                     if (protection != null) {
                                         protection.fail();

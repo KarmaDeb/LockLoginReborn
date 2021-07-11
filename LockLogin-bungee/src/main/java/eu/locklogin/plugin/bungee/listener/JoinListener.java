@@ -35,7 +35,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
@@ -194,7 +194,7 @@ public final class JoinListener implements Listener {
                     }
 
                     UserPreJoinEvent event = new UserPreJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
-                    JavaModuleManager.callEvent(event);
+                    ModulePlugin.callEvent(event);
 
                     if (event.isHandled()) {
                         e.setCancelled(true);
@@ -219,7 +219,7 @@ public final class JoinListener implements Listener {
     public final void onLogin(LoginEvent e) {
         if (!e.isCancelled()) {
             UserJoinEvent event = new UserJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {
                 e.setCancelled(true);
@@ -315,7 +315,7 @@ public final class JoinListener implements Listener {
                 }
 
                 UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 if (event.isHandled()) {
                     user.kick(event.getHandleReason());
@@ -422,7 +422,7 @@ public final class JoinListener implements Listener {
                 user.checkServer(0);
 
                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
             }
         }
     }

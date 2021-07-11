@@ -24,7 +24,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.Permission;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
@@ -75,7 +75,7 @@ public final class User {
                     session.initialize();
 
                     SessionInitializationEvent event = new SessionInitializationEvent(fromPlayer(player), session, null);
-                    JavaModuleManager.callEvent(event);
+                    ModulePlugin.callEvent(event);
 
                     sessions.put(player.getUniqueId(), session);
                 }

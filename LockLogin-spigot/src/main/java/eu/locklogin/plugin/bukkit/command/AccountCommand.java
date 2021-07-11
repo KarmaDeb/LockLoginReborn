@@ -15,8 +15,7 @@ package eu.locklogin.plugin.bukkit.command;
  */
 
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
-import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
@@ -181,7 +180,7 @@ public class AccountCommand implements CommandExecutor {
 
                                     user.send(messages.prefix() + messages.closed());
                                     AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), user.getManager().getName(), null);
-                                    JavaModuleManager.callEvent(self);
+                                    ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
                                     if (player.hasPermission(PluginPermission.account())) {
@@ -198,7 +197,7 @@ public class AccountCommand implements CommandExecutor {
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
-                                                JavaModuleManager.callEvent(issuer);
+                                                ModulePlugin.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                             }
@@ -367,7 +366,7 @@ public class AccountCommand implements CommandExecutor {
                                     Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
-                                    JavaModuleManager.callEvent(issuer);
+                                    ModulePlugin.callEvent(issuer);
                                 } else {
                                     Console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }

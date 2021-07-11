@@ -23,13 +23,11 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.isNullOrEmpty;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class Spawn {
 
     private final static KarmaFile spawnFile = new KarmaFile(plugin, "spawn.lldb", "data", "location");
-
     private Location spawn_location;
 
     /**
@@ -49,31 +47,35 @@ public final class Spawn {
      * location
      */
     public final void teleport(final Player player) {
-        assert spawn_location.getWorld() != null;
+        trySync(() -> {
+            assert spawn_location.getWorld() != null;
 
-        Block middle_down = spawn_location.getBlock().getRelative(BlockFace.UP);
-        Block middle_up = middle_down.getRelative(BlockFace.UP);
+            Block middle_down = spawn_location.getBlock().getRelative(BlockFace.UP);
+            Block middle_up = middle_down.getRelative(BlockFace.UP);
 
-        if (!middle_down.getType().equals(Material.AIR) && !middle_up.getType().equals(Material.AIR)) {
-            Block highest = spawn_location.getWorld().getHighestBlockAt(spawn_location);
-            spawn_location = highest.getLocation().add(0D, 1D, 0D);
-        }
+            if (!middle_down.getType().equals(Material.AIR) && !middle_up.getType().equals(Material.AIR)) {
+                Block highest = spawn_location.getWorld().getHighestBlockAt(spawn_location);
+                spawn_location = highest.getLocation().add(0D, 1D, 0D);
+            }
 
-        plugin.getServer().getScheduler().runTask(plugin, () -> player.teleport(spawn_location));
+            plugin.getServer().getScheduler().runTask(plugin, () -> player.teleport(spawn_location));
+        });
     }
 
     /**
      * Save the spawn location
      */
     public final void save(final @NotNull Location location) {
-        if (location.getWorld() != null) {
-            spawnFile.set("X", location.getX());
-            spawnFile.set("Y", location.getY());
-            spawnFile.set("Z", location.getZ());
-            spawnFile.set("PITCH", location.getPitch());
-            spawnFile.set("YAW", location.getYaw());
-            spawnFile.set("WORLD", location.getWorld().getName());
-        }
+        tryAsync(() -> {
+            if (location.getWorld() != null) {
+                spawnFile.set("X", location.getX());
+                spawnFile.set("Y", location.getY());
+                spawnFile.set("Z", location.getZ());
+                spawnFile.set("PITCH", location.getPitch());
+                spawnFile.set("YAW", location.getYaw());
+                spawnFile.set("WORLD", location.getWorld().getName());
+            }
+        });
     }
 
     /**

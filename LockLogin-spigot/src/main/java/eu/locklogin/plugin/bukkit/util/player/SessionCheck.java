@@ -11,6 +11,7 @@ package eu.locklogin.plugin.bukkit.util.player;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import eu.locklogin.api.account.AccountManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
 import ml.karmaconfigs.api.common.boss.BossColor;
@@ -64,11 +65,12 @@ public final class SessionCheck implements Runnable {
             under_check.add(player.getUniqueId());
 
             User user = new User(player);
+            AccountManager manager = user.getManager();
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             Message messages = new Message();
 
             int tmp_time = config.registerOptions().timeOut();
-            if (user.isRegistered()) {
+            if (manager.isRegistered()) {
                 tmp_time = config.loginOptions().timeOut();
                 user.send(messages.prefix() + messages.login());
 
@@ -115,14 +117,14 @@ public final class SessionCheck implements Runnable {
                             BAR_COLOR = "&c";
                         }
 
-                        if (user.isRegistered()) {
+                        if (manager.isRegistered()) {
                             boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
                         } else {
                             boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
                         }
                     }
 
-                    if (user.isRegistered()) {
+                    if (manager.isRegistered()) {
                         if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
                             user.send(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time));
                     } else {
@@ -138,7 +140,7 @@ public final class SessionCheck implements Runnable {
                 ClientSession session = user.getSession();
 
                 if (!session.isLogged())
-                    user.kick((user.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+                    user.kick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
                 user.restorePotionEffects();
 
                 under_check.remove(player.getUniqueId());
@@ -172,16 +174,17 @@ public final class SessionCheck implements Runnable {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Message messages = new Message();
         User user = new User(player);
+        AccountManager manager = user.getManager();
 
         int time = config.registerOptions().getMessageInterval();
-        if (user.isRegistered())
+        if (manager.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
         AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, time, true);
         timer.addActionOnEnd(() -> {
             ClientSession session = user.getSession();
             if (!session.isLogged()) {
-                if (user.isRegistered())
+                if (manager.isRegistered())
                     user.send(messages.prefix() + messages.login());
                 else
                     user.send(messages.prefix() + messages.register());

@@ -22,7 +22,7 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.common.session.SessionKeeper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -76,7 +76,7 @@ public final class QuitListener implements Listener {
         visor.checkVanish();
 
         UserQuitEvent event = new UserQuitEvent(LockLogin.fromPlayer(e.getPlayer()), e);
-        JavaModuleManager.callEvent(event);
+        ModulePlugin.callEvent(event);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -120,6 +120,6 @@ public final class QuitListener implements Listener {
         visor.checkVanish();
 
         UserQuitEvent event = new UserQuitEvent(LockLogin.fromPlayer(e.getPlayer()), e);
-        JavaModuleManager.callEvent(event);
+        ModulePlugin.callEvent(event);
     }
 }

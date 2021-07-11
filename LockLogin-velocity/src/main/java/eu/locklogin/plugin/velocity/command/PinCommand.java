@@ -70,7 +70,7 @@ public class PinCommand extends BungeeLikeCommand {
                             switch (args[0].toLowerCase()) {
                                 case "setup":
                                     if (args.length == 2) {
-                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                        if (!manager.hasPin()) {
                                             String pin = args[1];
 
                                             manager.setPin(pin);
@@ -88,7 +88,7 @@ public class PinCommand extends BungeeLikeCommand {
                                     break;
                                 case "remove":
                                     if (args.length == 2) {
-                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                        if (!manager.hasPin()) {
                                             user.send(messages.prefix() + messages.noPin());
                                         } else {
                                             String current = args[1];
@@ -107,7 +107,7 @@ public class PinCommand extends BungeeLikeCommand {
                                     break;
                                 case "change":
                                     if (args.length == 3) {
-                                        if (manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                        if (!manager.hasPin()) {
                                             user.send(messages.prefix() + messages.noPin());
                                         } else {
                                             String current = args[1];

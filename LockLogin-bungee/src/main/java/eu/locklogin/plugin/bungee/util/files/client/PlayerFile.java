@@ -2,7 +2,7 @@ package eu.locklogin.plugin.bungee.util.files.client;
 
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.Main;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 /**
@@ -299,7 +298,7 @@ public final class PlayerFile extends AccountManager {
     public boolean remove(final String issuer) {
         try {
             AccountRemovedEvent event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             return Files.deleteIfExists(manager.getFile().toPath());
         } catch (Throwable ex) {

@@ -22,7 +22,7 @@ import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -56,7 +56,7 @@ public final class QuitListener {
                 session.set2FALogged(false);
 
                 UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
@@ -85,7 +85,7 @@ public final class QuitListener {
                 session.set2FALogged(false);
 
                 UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }

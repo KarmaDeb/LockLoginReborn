@@ -17,7 +17,7 @@ package eu.locklogin.plugin.bukkit.listener;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.api.common.security.AllowedCommand;
@@ -62,9 +62,9 @@ public final class ChatListener implements Listener {
         }
 
         if (!config.isBungeeCord()) {
-            if (JavaModuleManager.parseCommand(e.getMessage())) {
+            if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                JavaModuleManager.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(player, e.getMessage());
             }
         }
     }
@@ -102,9 +102,9 @@ public final class ChatListener implements Listener {
         }
 
         if (!config.isBungeeCord()) {
-            if (JavaModuleManager.parseCommand(e.getMessage())) {
+            if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                JavaModuleManager.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(player, e.getMessage());
             }
         }
     }
@@ -113,9 +113,9 @@ public final class ChatListener implements Listener {
     public final void onConsoleCommand(ServerCommandEvent e) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (!config.isBungeeCord()) {
-            if (JavaModuleManager.parseCommand(e.getCommand())) {
+            if (ModulePlugin.parseCommand(e.getCommand())) {
                 e.setCancelled(true);
-                JavaModuleManager.fireCommand(e.getSender(), e.getCommand());
+                ModulePlugin.fireCommand(e.getSender(), e.getCommand());
             }
         }
     }

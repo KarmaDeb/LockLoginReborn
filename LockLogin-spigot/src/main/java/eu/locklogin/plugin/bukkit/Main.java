@@ -14,7 +14,7 @@ package eu.locklogin.plugin.bukkit;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
@@ -36,10 +36,12 @@ public final class Main extends JavaPlugin implements KarmaSource {
             .getPath().replaceAll("%20", " "));
 
     public Main() throws Throwable {
-        CurrentPlatform.setKarmaAPI(FileInfo.getKarmaVersion(lockloginFile));
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setPlatform(Platform.BUKKIT);
         CurrentPlatform.setOnline(getServer().getOnlineMode());
+
+        ChecksumTables tables = new ChecksumTables();
+        tables.checkTables();
 
         String downloadURL = "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar";
         ResourceDownloader downloader = ResourceDownloader.toCache(

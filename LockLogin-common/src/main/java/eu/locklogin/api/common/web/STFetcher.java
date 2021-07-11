@@ -12,6 +12,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Donor names fetcher
+ */
 public final class STFetcher {
 
     private final static Set<String> special_thanks = Collections.newSetFromMap(new ConcurrentHashMap<>());

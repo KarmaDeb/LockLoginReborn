@@ -37,7 +37,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import eu.locklogin.plugin.bukkit.util.files.Config;
@@ -77,6 +77,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import static ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT;
 import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
@@ -88,104 +89,102 @@ public final class Manager {
     private static int alert_id = 0;
 
     public static void initialize(final Set<PluginModule> load) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            int size = 10;
-            String character = "*";
-            try {
-                size = Integer.parseInt(properties.getProperty("ascii_art_size", "10"));
-                character = properties.getProperty("ascii_art_character", "*").substring(0, 1);
-            } catch (Throwable ignored) {
-            }
+        int size = 10;
+        String character = "*";
+        try {
+            size = Integer.parseInt(properties.getProperty("ascii_art_size", "10"));
+            character = properties.getProperty("ascii_art_character", "*").substring(0, 1);
+        } catch (Throwable ignored) {
+        }
 
-            System.out.println();
-            artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-            Console.send("&eversion:&6 {0}", versionID.getVersionID());
-            Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
+        System.out.println();
+        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        Console.send("&eversion:&6 {0}", versionID.getVersionID());
+        Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
-            ProxyCheck.scan();
+        ProxyCheck.scan();
 
-            PlayerFile.migrateV1();
-            PlayerFile.migrateV2();
-            PlayerFile.migrateV3();
+        PlayerFile.migrateV1();
+        PlayerFile.migrateV2();
+        PlayerFile.migrateV3();
 
-            setupFiles();
-            registerCommands();
-            registerListeners();
+        setupFiles();
+        registerCommands();
+        registerListeners();
 
-            Console.send(" ");
-            Console.send("&e-----------------------");
+        Console.send(" ");
+        Console.send("&e-----------------------");
 
-            if (!CurrentPlatform.isValidAccountManager()) {
-                CurrentPlatform.setAccountsManager(PlayerFile.class);
-                Console.send(plugin, "Loaded native player account manager", Level.INFO);
+        if (!CurrentPlatform.isValidAccountManager()) {
+            CurrentPlatform.setAccountsManager(PlayerFile.class);
+            Console.send(plugin, "Loaded native player account manager", Level.INFO);
+        } else {
+            Console.send(plugin, "Loaded custom player account manager", Level.INFO);
+        }
+        if (!CurrentPlatform.isValidSessionManager()) {
+            CurrentPlatform.setSessionManager(Session.class);
+            Console.send(plugin, "Loaded native player session manager", Level.INFO);
+        } else {
+            Console.send(plugin, "Loaded custom player session manager", Level.INFO);
+        }
+
+        loadCache();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.isBungeeCord()) {
+            Messenger messenger = plugin.getServer().getMessenger();
+            BungeeReceiver receiver = new BungeeReceiver();
+
+            PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
+            messenger.registerOutgoingPluginChannel(plugin, "ll:account");
+            PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
+            PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
+            messenger.registerOutgoingPluginChannel(plugin, "ll:access");
+
+            if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
+                Console.send(plugin, "Registered plugin message listeners", Level.OK);
             } else {
-                Console.send(plugin, "Loaded custom player account manager", Level.INFO);
+                Console.send(plugin, "Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
             }
-            if (!CurrentPlatform.isValidSessionManager()) {
-                CurrentPlatform.setSessionManager(Session.class);
-                Console.send(plugin, "Loaded native player session manager", Level.INFO);
+        }
+
+        AccountManager manager = CurrentPlatform.getAccountManager(null);
+        if (manager != null) {
+            Set<AccountManager> accounts = manager.getAccounts();
+            Set<AccountManager> nonLocked = new HashSet<>();
+            for (AccountManager account : accounts) {
+                LockedAccount locked = new LockedAccount(account.getUUID());
+                if (!locked.getData().isLocked() && account.isRegistered())
+                    nonLocked.add(account);
+            }
+
+            SessionDataContainer.setRegistered(nonLocked.size());
+        }
+
+        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
+            if (placeholder.register()) {
+                Console.send(plugin, "Hooked and loaded placeholder expansion", Level.OK);
             } else {
-                Console.send(plugin, "Loaded custom player session manager", Level.INFO);
+                Console.send(plugin, "Couldn't hook placeholder expansion", Level.GRAVE);
             }
+        }
 
-            loadCache();
+        performVersionCheck();
+        if (config.getUpdaterOptions().isEnabled()) {
+            scheduleVersionCheck();
+        }
+        scheduleAlertSystem();
 
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-            if (config.isBungeeCord()) {
-                Messenger messenger = plugin.getServer().getMessenger();
-                BungeeReceiver receiver = new BungeeReceiver();
+        Button.preCache();
 
-                PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
-                messenger.registerOutgoingPluginChannel(plugin, "ll:account");
-                PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
-                PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
-                messenger.registerOutgoingPluginChannel(plugin, "ll:access");
+        registerMetrics();
+        initPlayers();
 
-                if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
-                    Console.send(plugin, "Registered plugin message listeners", Level.OK);
-                } else {
-                    Console.send(plugin, "Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
-                }
-            }
+        CurrentPlatform.setPrefix(config.getModulePrefix());
 
-            AccountManager manager = CurrentPlatform.getAccountManager(null);
-            if (manager != null) {
-                Set<AccountManager> accounts = manager.getAccounts();
-                Set<AccountManager> nonLocked = new HashSet<>();
-                for (AccountManager account : accounts) {
-                    LockedAccount locked = new LockedAccount(account.getUUID());
-                    if (!locked.getData().isLocked() && account.isRegistered())
-                        nonLocked.add(account);
-                }
-
-                SessionDataContainer.setRegistered(nonLocked.size());
-            }
-
-            if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-                LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
-                if (placeholder.register()) {
-                    Console.send(plugin, "Hooked and loaded placeholder expansion", Level.OK);
-                } else {
-                    Console.send(plugin, "Couldn't hook placeholder expansion", Level.GRAVE);
-                }
-            }
-
-            performVersionCheck();
-            if (config.getUpdaterOptions().isEnabled()) {
-                scheduleVersionCheck();
-            }
-            scheduleAlertSystem();
-
-            Button.preCache();
-
-            registerMetrics();
-            initPlayers();
-
-            CurrentPlatform.setPrefix(config.getModulePrefix());
-
-            for (PluginModule module : load)
-                module.load();
-        });
+        for (PluginModule module : load)
+            module.load();
     }
 
     public static void terminate() {
@@ -224,7 +223,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print(RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         Console.send("&eversion:&6 {0}", versionID.getVersionID());
         Console.send(" ");
         Console.send("&e-----------------------");
@@ -585,7 +584,7 @@ public final class Manager {
                 }
 
                 UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
             }
         });
     }
@@ -636,7 +635,7 @@ public final class Manager {
             visor.checkVanish();
 
             UserUnHookEvent event = new UserUnHookEvent(fromPlayer(player), null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
         }
     }
 

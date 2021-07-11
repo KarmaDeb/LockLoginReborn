@@ -55,6 +55,8 @@ public final class BruteForce {
 
     /**
      * Block the account
+     *
+     * @param time the block time
      */
     public final void block(final int time) {
         block_time.put(ip, (long) time);

@@ -1,4 +1,4 @@
-package eu.locklogin.api.module.plugin.javamodule;
+package eu.locklogin.api.module.plugin.javamodule.console;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -14,16 +14,15 @@ package eu.locklogin.api.module.plugin.javamodule;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.javamodule.console.ConsolePrefix;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.module.PluginModule;
-import eu.locklogin.api.module.plugin.javamodule.console.MessageLevel;
 
 /**
  * LockLogin module console manager
  */
-public final class JavaConsoleManager {
+public final class ModuleConsole {
 
     private final PluginModule module;
 
@@ -32,7 +31,7 @@ public final class JavaConsoleManager {
      *
      * @param owner the owner module
      */
-    public JavaConsoleManager(final PluginModule owner) {
+    public ModuleConsole(final PluginModule owner) {
         module = owner;
     }
 
@@ -43,7 +42,7 @@ public final class JavaConsoleManager {
      * @param replaces the message replaces
      */
     public final void sendMessage(final String message, final Object... replaces) {
-        if (JavaModuleLoader.isLoaded(module)) {
+        if (ModuleLoader.isLoaded(module)) {
             Console.send(getPrefixManager().getPrefix() +  message, replaces);
         }
     }
@@ -56,7 +55,7 @@ public final class JavaConsoleManager {
      * @param replaces the message replaces
      */
     public final void sendMessage(final MessageLevel level, final String message, final Object... replaces) {
-        if (JavaModuleLoader.isLoaded(module)) {
+        if (ModuleLoader.isLoaded(module)) {
             String prefix = getPrefixManager().forLevel(level);
 
             String final_message = StringUtils.formatString(message, replaces);

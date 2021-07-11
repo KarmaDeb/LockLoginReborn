@@ -45,7 +45,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
@@ -194,7 +194,7 @@ public final class JoinListener {
                     }
 
                     UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), null, e.getUsername(), e);
-                    JavaModuleManager.callEvent(event);
+                    ModulePlugin.callEvent(event);
 
                     if (event.isHandled()) {
                         e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
@@ -216,7 +216,7 @@ public final class JoinListener {
     public final void onLogin(LoginEvent e) {
         if (e.getResult().isAllowed()) {
             UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {
                 e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
@@ -313,7 +313,7 @@ public final class JoinListener {
             });
 
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
 
             if (event.isHandleable()) {
                 user.kick(event.getHandleReason());
@@ -415,7 +415,7 @@ public final class JoinListener {
             user.checkServer(0);
 
             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-            JavaModuleManager.callEvent(event);
+            ModulePlugin.callEvent(event);
         }
     }
 }

@@ -3,7 +3,7 @@
   <parent>
     <artifactId>LockLogin</artifactId>
     <groupId>eu.locklogin</groupId>
-    <version>1.12.23</version>
+    <version>1.12.25</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>LockLogin-velocity</artifactId>
@@ -40,6 +40,10 @@
             <relocation>
               <pattern>eu.locklogin.api.common.utils.filter.ConsoleFilter</pattern>
               <shadedPattern>eu.locklogin.plugin.velocity.util.filter.ConsoleFilter</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>eu.locklogin.api.common.web.STFetcher</pattern>
+              <shadedPattern>eu.locklogin.plugin.velocity.util.STFetcher</shadedPattern>
             </relocation>
           </relocations>
         </configuration>

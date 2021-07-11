@@ -35,6 +35,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class Message {
 
@@ -283,13 +284,43 @@ public final class Message {
     public final String registerTitle(final int time) {
         String str = msg.getString("RegisterTitle", "&7You have");
 
-        return parse(str.replace("{time}", String.valueOf(time)));
+        long seconds = TimeUnit.SECONDS.toSeconds(time);
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (seconds <= 59) {
+            format = seconds + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - seconds) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
     }
 
     public final String registerSubtitle(final int time) {
         String str = msg.getString("RegisterSubtitle", "&b{time} &7to register");
 
-        return parse(str.replace("{time}", String.valueOf(time)));
+        long seconds = TimeUnit.SECONDS.toSeconds(time);
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (seconds <= 59) {
+            format = seconds + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - seconds) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
     }
 
     public final String maxRegisters() {
@@ -344,11 +375,43 @@ public final class Message {
     public final String loginTitle(final int time) {
         String str = msg.getString("LoginTitle", "&7You have");
 
-        return parse(str.replace("{time}", String.valueOf(time)));
+        long seconds = TimeUnit.SECONDS.toSeconds(time);
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (seconds <= 59) {
+            format = seconds + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - seconds) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
     }
 
     public final String loginSubtitle(final int time) {
-        return parse(msg.getString("LoginSubtitle", "&b{time} &7to login").replace("{time}", String.valueOf(time)));
+        String str = msg.getString("LoginSubtitle", "&b{time} &7to login");
+
+        long seconds = TimeUnit.SECONDS.toSeconds(time);
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (seconds <= 59) {
+            format = seconds + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - seconds) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
     }
 
     public final String pinUsages() {
@@ -771,23 +834,19 @@ public final class Message {
         long hours = TimeUnit.SECONDS.toHours(time);
 
         String format;
-        long final_time;
         if (seconds <= 59) {
-            format = "sec(s)";
-            final_time = seconds;
+            format = seconds + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
         } else {
             if (minutes <= 59) {
-                format = "min(s) and " + Math.abs((minutes * 60) - seconds) + " sec(s)";
-                final_time = minutes;
+                format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - seconds) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
             } else {
-                format = "hour(s) " + Math.abs((hours * 60) - minutes) + " min(s)";
-                final_time = hours;
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
             }
         }
 
         for (String str : messages) {
             builder.append(str
-                    .replace("{time}", String.valueOf(final_time))
+                    .replace("{time}", format)
                     .replace("{time_format}", format)).append("\n");
         }
 

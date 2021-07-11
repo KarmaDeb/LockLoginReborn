@@ -20,7 +20,7 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.plugin.Messages;
@@ -57,7 +57,7 @@ public interface LockLogin {
 
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
-    static JavaModuleLoader getLoader() {
+    static ModuleLoader getLoader() {
         File modulesFolder = new File(plugin.getDataFolder() + File.separator + "plugin", "modules");
 
         if (!modulesFolder.exists())
@@ -66,7 +66,7 @@ public interface LockLogin {
             } catch (Throwable ignored) {
             }
 
-        return new JavaModuleLoader(modulesFolder);
+        return new ModuleLoader(modulesFolder);
     }
 
     static boolean isNullOrEmpty(final String... values) {

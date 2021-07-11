@@ -15,7 +15,7 @@ package eu.locklogin.plugin.bungee.listener;
  */
 
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.AllowedCommand;
@@ -59,9 +59,9 @@ public final class ChatListener implements Listener {
                 return;
             }
 
-            if (JavaModuleManager.parseCommand(e.getMessage())) {
+            if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                JavaModuleManager.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(player, e.getMessage());
             }
         }
     }
@@ -101,9 +101,9 @@ public final class ChatListener implements Listener {
             return;
         }
 
-        if (JavaModuleManager.parseCommand(e.getMessage())) {
+        if (ModulePlugin.parseCommand(e.getMessage())) {
             e.setCancelled(true);
-            JavaModuleManager.fireCommand(player, e.getMessage());
+            ModulePlugin.fireCommand(player, e.getMessage());
         }
     }
 

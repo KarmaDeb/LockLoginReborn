@@ -26,11 +26,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -38,7 +36,7 @@ import java.util.zip.ZipEntry;
 /**
  * LockLogin java module loader
  */
-public final class JavaModuleLoader {
+public final class ModuleLoader {
 
     private final static Set<PluginModule> loaded = new LinkedHashSet<>();
 
@@ -53,7 +51,7 @@ public final class JavaModuleLoader {
      *
      * @param modules the modules folder
      */
-    public JavaModuleLoader(final File modules) {
+    public ModuleLoader(final File modules) {
         modulesFolder = modules;
     }
 
@@ -160,6 +158,8 @@ public final class JavaModuleLoader {
 
                                                     module.getAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 
+                                                    //Tries to fix problems when loading/unloading modules using /locklogin modules load/unload/reload
+                                                    CurrentPlatform.getPluginAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
                                                     return module;
                                                 }
                                             }
@@ -273,14 +273,17 @@ public final class JavaModuleLoader {
                                                     module.getAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 
                                                     ModuleStatusChangeEvent event = new ModuleStatusChangeEvent(ModuleStatusChangeEvent.Status.LOAD, module, this, null);
-                                                    JavaModuleManager.callEvent(event);
+                                                    ModulePlugin.callEvent(event);
 
                                                     clazz_map.put(module_class, module);
 
                                                     module.enable();
                                                     //Perform the first updater is enabled check
-                                                    module.getManager().getVersionManager().updaterEnabled();
+                                                    module.getPlugin().getVersionManager().updaterEnabled();
                                                     load_queue.remove(moduleFile.getName());
+
+                                                    //Tries to fix problems when loading/unloading modules using /locklogin modules load/unload/reload
+                                                    CurrentPlatform.getPluginAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
                                                     break;
                                                 }
                                             }
@@ -308,8 +311,8 @@ public final class JavaModuleLoader {
         if (isLoaded(name)) {
             PluginModule module = getByName(name);
             if (module != null) {
-                module.getManager().unregisterListeners();
-                module.getManager().unregisterCommands();
+                module.getPlugin().unregisterListeners();
+                module.getPlugin().unregisterCommands();
 
                 module.stopTasks();
                 module.disable();

@@ -23,7 +23,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -113,11 +113,11 @@ public final class RegisterCommand extends Command {
                                             }
                                         }
 
-                                        if (manager.getPin().replaceAll("\\s", "").isEmpty())
+                                        if (!manager.hasPin())
                                             session.setPinLogged(true);
 
                                         AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
                                         user.restorePotionEffects();
 

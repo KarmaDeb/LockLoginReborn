@@ -18,7 +18,7 @@ import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
@@ -328,7 +328,7 @@ public class BungeeManager {
         cache.storeBungeeKey();
 
         PluginStatusChangeEvent update_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_START, null);
-        JavaModuleManager.callEvent(update_start);
+        ModulePlugin.callEvent(update_start);
 
         Timer load_timer = new Timer();
         load_timer.schedule(new TimerTask() {
@@ -348,7 +348,7 @@ public class BungeeManager {
                             load(current_jar);
 
                             PluginStatusChangeEvent update_end = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_END, null);
-                            JavaModuleManager.callEvent(update_end);
+                            ModulePlugin.callEvent(update_end);
                         } catch (Throwable ex) {
                             ex.printStackTrace();
                             try {

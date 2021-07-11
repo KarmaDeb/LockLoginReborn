@@ -25,9 +25,9 @@ public final class Main extends PluginModule {
     public void enable() {
         getConsole().sendMessage("&aEnabling LockLogin manager module, to dynamically update LockLogin and enable helpme command");
 
-        getManager().registerListener(new UpdateRequestListener());
-        getManager().registerListener(new UsersListener());
-        getManager().registerCommand(new ModuleHelpCommand());
+        getPlugin().registerListener(new UpdateRequestListener());
+        getPlugin().registerListener(new UsersListener());
+        getPlugin().registerCommand(new ModuleHelpCommand());
     }
 
     @Override

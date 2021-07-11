@@ -4,6 +4,9 @@ import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.file.options.*;
 import eu.locklogin.api.util.enums.Lang;
 
+/**
+ * LockLogin configuration
+ */
 public abstract class PluginConfiguration {
 
     /**

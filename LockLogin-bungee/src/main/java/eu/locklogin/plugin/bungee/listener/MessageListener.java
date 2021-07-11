@@ -31,9 +31,7 @@ import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
-import eu.locklogin.plugin.bungee.util.files.Proxy;
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -74,13 +72,13 @@ public final class MessageListener implements Listener {
                                 AccountManager manager = user.getManager();
 
                                 if (session.isValid()) {
-                                    if (manager.getPin().replaceAll("\\s", "").isEmpty() || CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
+                                    if (!manager.hasPin() || CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
                                         DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
 
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                 (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
                                                 (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
                                         user.send(messages.prefix() + event.getAuthMessage());
                                         session.setPinLogged(true);
@@ -90,7 +88,7 @@ public final class MessageListener implements Listener {
                                         DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
 
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
                                         user.send(messages.prefix() + event.getAuthMessage());
                                     }

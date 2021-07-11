@@ -38,7 +38,6 @@ public final class Main extends Plugin implements KarmaSource {
             .getPath().replaceAll("%20", " "));
 
     public Main() throws Throwable {
-        CurrentPlatform.setKarmaAPI(FileInfo.getKarmaVersion(lockloginFile));
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());

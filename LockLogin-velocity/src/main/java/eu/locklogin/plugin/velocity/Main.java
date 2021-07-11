@@ -10,7 +10,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.AllowedCommand;
@@ -29,8 +28,8 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.velocity.plugin.Manager;
@@ -56,7 +55,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.23", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.25", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -74,20 +73,17 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
-        CurrentPlatform.setKarmaAPI(FileInfo.getKarmaVersion(lockloginFile));
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
-
-        ChecksumTables tables = new ChecksumTables();
-        STFetcher fetcher = new STFetcher();
-        tables.checkTables();
-        fetcher.check();
 
         Main.server = server;
         factory = fact;
         appender = new VelocitySubJarAppender(this);
         source = this;
+
+        ChecksumTables tables = new ChecksumTables();
+        tables.checkTables();
 
         try {
             JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());
@@ -108,21 +104,6 @@ public class Main implements KarmaBootstrap, KarmaSource {
             Optional<PluginContainer> container = Main.server.getPluginManager().getPlugin("locklogin");
 
             if (container.isPresent()) {
-                Main.container = container.get();
-
-                CurrentPlatform.setOnDataContainerUpdate(() -> {
-                    for (RegisteredServer server : server.getAllServers()) {
-                        DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
-                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
-                    }
-                });
-
-                PrefixConsoleData prefixData = new PrefixConsoleData(Main.source);
-                prefixData.setOkPrefix("&aOk &e>> &7");
-                prefixData.setInfoPrefix("&7Info &e>> &7");
-                prefixData.setWarnPrefix("&6Warning &e>> &7");
-                prefixData.setGravPrefix("&4Grave &e>> &7");
-
                 for (Dependency pluginDependency : Dependency.values()) {
                     PluginDependency dependency = pluginDependency.getAsDependency();
 
@@ -139,6 +120,24 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     manager.process(false);
                 }
                 JarManager.downloadAll();
+
+                Main.container = container.get();
+
+                STFetcher fetcher = new STFetcher();
+                fetcher.check();
+
+                CurrentPlatform.setOnDataContainerUpdate(() -> {
+                    for (RegisteredServer server : server.getAllServers()) {
+                        DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
+                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
+                    }
+                });
+
+                PrefixConsoleData prefixData = new PrefixConsoleData(Main.source);
+                prefixData.setOkPrefix("&aOk &e>> &7");
+                prefixData.setInfoPrefix("&7Info &e>> &7");
+                prefixData.setWarnPrefix("&6Warning &e>> &7");
+                prefixData.setGravPrefix("&4Grave &e>> &7");
 
                 Consumer<MessageSender> onKick = messageSender -> {
                     ModulePlayer modulePlayer = messageSender.getPlayer();
@@ -179,7 +178,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                             DataSender.send(player, gauth);
 
                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, LockLogin.fromPlayer(player), "", null);
-                            JavaModuleManager.callEvent(event);
+                            ModulePlugin.callEvent(event);
 
                             user.checkServer(0);
                         }
@@ -212,7 +211,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 Set<PluginModule> wait = new HashSet<>();
                 if (moduleFiles != null) {
                     for (File file : moduleFiles) {
-                        PluginModule module = JavaModuleLoader.getByName(file.getName().replace(".jar", ""));
+                        PluginModule module = ModuleLoader.getByName(file.getName().replace(".jar", ""));
                         if (module != null) {
                             if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
                                 module.load();
@@ -224,7 +223,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 }
 
                 PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-                JavaModuleManager.callEvent(event);
+                ModulePlugin.callEvent(event);
 
                 AllowedCommand.scan();
 
@@ -238,7 +237,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
     @Override
     public void disable() {
         PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
-        JavaModuleManager.callEvent(event);
+        ModulePlugin.callEvent(event);
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null)
             for (File module : moduleFiles)

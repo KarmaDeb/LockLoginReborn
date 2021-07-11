@@ -30,11 +30,10 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Message;
@@ -133,9 +132,9 @@ public final class LoginCommand extends BungeeLikeCommand {
                                     }
 
                                     boolean checkServer = false;
-                                    if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                    if (!manager.has2FA() && !manager.hasPin()) {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
                                         MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
                                         MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
@@ -149,9 +148,9 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         checkServer = true;
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
-                                        if (!manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                        if (manager.hasPin()) {
                                             session.setPinLogged(false);
 
                                             DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
@@ -178,7 +177,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                     }
                                 } else {
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
-                                    JavaModuleManager.callEvent(event);
+                                    ModulePlugin.callEvent(event);
 
                                     if (protection != null) {
                                         protection.fail();

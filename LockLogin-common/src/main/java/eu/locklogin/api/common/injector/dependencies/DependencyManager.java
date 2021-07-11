@@ -43,10 +43,18 @@ public class DependencyManager {
     /** A map of dependencies which have already been loaded. */
     private final EnumMap<Dependency, Path> loaded = new EnumMap<>(Dependency.class);
 
+    /**
+     * LockLogin dependency manager
+     *
+     * @param plugin the plugin
+     */
     public DependencyManager(KarmaBootstrap plugin) {
         this.plugin = plugin;
     }
 
+    /**
+     * Load all LockLogin dependencies
+     */
     public void loadDependencies() {
         for (Dependency dependency : Dependency.values()) {
             PluginDependency pd = dependency.getAsDependency();

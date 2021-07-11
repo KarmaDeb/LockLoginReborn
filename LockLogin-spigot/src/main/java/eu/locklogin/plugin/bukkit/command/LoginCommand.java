@@ -30,12 +30,11 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.session.SessionDataContainer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -84,7 +83,7 @@ public final class LoginCommand implements CommandExecutor {
                             return true;
                         }
 
-                    if (!user.isRegistered()) {
+                    if (!manager.isRegistered()) {
                         user.send(messages.prefix() + messages.register());
                     } else {
                         String password;
@@ -126,9 +125,9 @@ public final class LoginCommand implements CommandExecutor {
                                                 config.passwordEncryption().name());
                                     }
 
-                                    if (!manager.has2FA() && manager.getPin().replaceAll("\\s", "").isEmpty()) {
+                                    if (!manager.has2FA() && !manager.hasPin()) {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
                                         user.setTempSpectator(false);
 
@@ -147,7 +146,7 @@ public final class LoginCommand implements CommandExecutor {
                                         user.send(messages.prefix() + event.getAuthMessage());
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
-                                        JavaModuleManager.callEvent(event);
+                                        ModulePlugin.callEvent(event);
 
                                         if (!manager.getPin().replaceAll("\\s", "").isEmpty()) {
                                             session.setPinLogged(false);
@@ -170,7 +169,7 @@ public final class LoginCommand implements CommandExecutor {
                                     }
                                 } else {
                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
-                                    JavaModuleManager.callEvent(event);
+                                    ModulePlugin.callEvent(event);
 
                                     if (protection != null) {
                                         protection.fail();

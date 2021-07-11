@@ -14,6 +14,9 @@ package eu.locklogin.api.util.enums;
  * the version number 2.1.]
  */
 
+/**
+ * Valid LockLogin update channels
+ */
 public enum UpdateChannel {
     /**
      * LockLogin releases ony

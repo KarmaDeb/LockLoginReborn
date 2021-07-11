@@ -36,6 +36,13 @@ public class BruteForceConfig {
         time = blockTime;
     }
 
+    /**
+     * Get the maximum tries the player has before
+     * being blocked
+     *
+     * @return the maximum tries a player has
+     * to login incorrectly after being blocked
+     */
     public final int getMaxTries() {
         return tries;
     }

@@ -15,7 +15,7 @@ package eu.locklogin.plugin.bungee.command;
  */
 
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
-import eu.locklogin.api.module.plugin.javamodule.JavaModuleManager;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
@@ -177,7 +177,7 @@ public class AccountCommand extends Command {
 
                                     user.send(messages.prefix() + messages.closed());
                                     AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), user.getManager().getName(), null);
-                                    JavaModuleManager.callEvent(self);
+                                    ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
@@ -194,7 +194,7 @@ public class AccountCommand extends Command {
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
-                                                JavaModuleManager.callEvent(issuer);
+                                                ModulePlugin.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                             }
@@ -415,7 +415,7 @@ public class AccountCommand extends Command {
                                     Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
-                                    JavaModuleManager.callEvent(issuer);
+                                    ModulePlugin.callEvent(issuer);
                                 } else {
                                     Console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }

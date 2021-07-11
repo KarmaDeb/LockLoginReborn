@@ -36,6 +36,26 @@ public @interface ModuleEventHandler {
      * Event listener priority
      */
     enum Priority {
-        FIRST, NORMAL, LAST, AFTER
+        /**
+         * Run the event as first as possible
+         */
+        FIRST,
+
+        /**
+         * Run the event as the plugin would
+         * run it normally, with no priorities
+         */
+        NORMAL,
+
+        /**
+         * Run the event the latest
+         */
+        LAST,
+
+        /**
+         * Run the event after the specified
+         * module ( after="" )
+         */
+        AFTER
     }
 }
