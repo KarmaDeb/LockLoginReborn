@@ -5,19 +5,21 @@
 
 ## Maven
 
+### API ![Maven Central](https://maven-badges.herokuapp.com/maven-central/eu.locklogin/LockLogin-API/badge.svg?style=flat-square)
+### COMMONS ![Maven Central](https://maven-badges.herokuapp.com/maven-central/eu.locklogin/LockLogin-common/badge.svg?style=flat-square)
 ```xml
 <dependencies>
     <dependency>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin-API</artifactId>
-        <version>1.12.27</version>
+        <version>{api-version}</version>
         <scope>provided</scope>
     </dependency>
     <!-- OPTIONAL -->
     <dependency>
         <groupId>eu.locklogin</groupId>
-        <artifactId>LockLogin-Common</artifactId>
-        <version>1.12.27</version>
+        <artifactId>LockLogin-common</artifactId>
+        <version>{common-version}</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -27,9 +29,9 @@
 
 ```gradle
 dependencies {
-    compile "eu.locklogin:LockLogin-API:1.12.27"
+    compile "eu.locklogin:LockLogin-API:{api-version}"
     
     //OPTIONAL
-    compile "eu.locklogin:LockLogin-Common:1.12.27"
+    compile "eu.locklogin:LockLogin-common:{common-version}"
 }
 ```
