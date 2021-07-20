@@ -16,13 +16,14 @@ package eu.locklogin.plugin.bukkit.util.inventory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.inventory.object.SkullCache;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -286,7 +287,7 @@ public final class AltAccountsInventory implements InventoryHolder {
      * @return an Inventory
      */
     private Inventory getBlankPage() {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         String title = StringUtils.toColor(messages.altTitle());
         if (title.length() > 32)

@@ -11,8 +11,8 @@ package eu.locklogin.plugin.bukkit.util.files.data.lock;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import eu.locklogin.api.account.AccountID;
+import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 
 import java.io.File;
 import java.nio.file.Files;

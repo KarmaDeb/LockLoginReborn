@@ -14,18 +14,20 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import com.sun.org.apache.xpath.internal.operations.Mod;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -58,7 +60,7 @@ public final class LockLoginCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof Player) {
@@ -152,7 +154,7 @@ public final class LockLoginCommand implements CommandExecutor {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {
@@ -253,7 +255,7 @@ public final class LockLoginCommand implements CommandExecutor {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {

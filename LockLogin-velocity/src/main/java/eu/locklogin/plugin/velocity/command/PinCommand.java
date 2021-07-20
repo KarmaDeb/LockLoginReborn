@@ -16,18 +16,17 @@ package eu.locklogin.plugin.velocity.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
-import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.util.player.User;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.session.SessionDataContainer;
-import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
+import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 
 import static eu.locklogin.plugin.velocity.LockLogin.properties;
@@ -53,7 +52,7 @@ public class PinCommand extends BungeeLikeCommand {
     @Override
     public void execute(CommandSource sender, String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

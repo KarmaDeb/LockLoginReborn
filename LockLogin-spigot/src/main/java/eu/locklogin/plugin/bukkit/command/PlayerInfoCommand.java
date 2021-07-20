@@ -14,21 +14,21 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import eu.locklogin.api.common.session.PersistentSessionData;
-import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.plugin.Alias;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -59,7 +59,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

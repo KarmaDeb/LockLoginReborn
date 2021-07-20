@@ -19,13 +19,12 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.MessagePool;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.MessagePool;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
-import eu.locklogin.plugin.velocity.util.files.Proxy;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.util.HashSet;
@@ -58,7 +57,7 @@ public final class DataSender {
                 ServerConnection server = player.getCurrentServer().get();
                 ServerInfo info = server.getServerInfo();
 
-                if (ServerDataStorager.needsRegister(info.getName()) && ServerDataStorager.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
                     data_pool.add(new MessagePool(server.getServer(), data));
                 } else {
                     server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
@@ -82,7 +81,7 @@ public final class DataSender {
             try {
                 ServerInfo info = server.getServerInfo();
 
-                if (ServerDataStorager.needsRegister(info.getName()) && ServerDataStorager.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
                     data_pool.add(new MessagePool(server, data));
                 } else {
                     server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
@@ -117,7 +116,7 @@ public final class DataSender {
                         if (!server_sents.contains(info.getName().toLowerCase())) {
                             server_sents.add(info.getName().toLowerCase());
 
-                            if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                            if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName())) {
                                 ByteArrayDataOutput output = ByteStreams.newDataOutput();
                                 ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 

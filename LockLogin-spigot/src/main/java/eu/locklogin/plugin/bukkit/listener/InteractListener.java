@@ -14,9 +14,9 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import eu.locklogin.api.account.ClientSession;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;

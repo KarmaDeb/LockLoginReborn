@@ -16,7 +16,6 @@ package eu.locklogin.module.manager.bukkit.command;
 
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
-import eu.locklogin.module.manager.bukkit.Main;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
 

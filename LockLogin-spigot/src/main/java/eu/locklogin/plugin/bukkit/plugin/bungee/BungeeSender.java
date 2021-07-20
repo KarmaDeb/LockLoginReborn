@@ -16,9 +16,9 @@ package eu.locklogin.plugin.bukkit.plugin.bungee;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import eu.locklogin.api.common.utils.DataType;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;

@@ -14,17 +14,17 @@ package eu.locklogin.plugin.bukkit;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.version.VersionID;
+import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.common.utils.FileInfo;
-import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
-import eu.locklogin.api.common.utils.plugin.Messages;
-import eu.locklogin.api.common.utils.version.VersionID;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -53,7 +53,7 @@ public interface LockLogin {
 
     Logger logger = new Logger(plugin);
 
-    Messages properties = new Messages();
+    PluginProperties properties = new PluginProperties();
 
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
@@ -66,7 +66,7 @@ public interface LockLogin {
             } catch (Throwable ignored) {
             }
 
-        return new ModuleLoader(modulesFolder);
+        return new ModuleLoader();
     }
 
     static boolean isNullOrEmpty(final String... values) {

@@ -7,19 +7,13 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.25</version>
+        <version>1.12.31</version>
     </parent>
 
     <artifactId>LockLogin-bungee</artifactId>
     <packaging>jar</packaging>
 
     <name>LockLogin BungeeCord</name>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <build>
         <finalName>LockLogin-Bungee</finalName>

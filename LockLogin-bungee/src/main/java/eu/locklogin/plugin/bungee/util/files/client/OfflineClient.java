@@ -53,7 +53,7 @@ public final class OfflineClient {
                 Set<AccountManager> managers = current.getAccounts();
 
                 for (AccountManager manager : managers) {
-                    if (manager.getName().equals(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching))
+                    if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching))
                         return manager;
                 }
             } else {

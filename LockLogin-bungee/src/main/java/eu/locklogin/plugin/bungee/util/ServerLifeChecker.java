@@ -1,17 +1,18 @@
 package eu.locklogin.plugin.bungee.util;
 
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.LockLogin;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 public final class ServerLifeChecker {
 
@@ -25,26 +26,26 @@ public final class ServerLifeChecker {
      * Start checking for the servers
      */
     public final void startCheck() {
-        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, proxy.proxyLifeCheck(), true).setAsync(true);
-        timer.addAction(() -> {
+        SimpleScheduler timer = new SourceSecondsTimer(plugin, proxy.proxyLifeCheck(), true).multiThreading(true);
+        timer.secondChangeAction((second) -> {
             if (restart) {
                 restart = false;
-                timer.setCancelled();
+                timer.cancel();
                 startCheck();
             }
-        }).addActionOnEnd(() -> LockLogin.plugin.getProxy().getServers().values().forEach(server -> server.ping((result, error) -> {
+        }).restartAction(() -> LockLogin.plugin.getProxy().getServers().values().forEach(server -> server.ping((result, error) -> {
             if (error != null) {
                 //If the server has players it means the plugin can't just ping it, but it's working
                 if (server.getPlayers().isEmpty()) {
                     if (fail_checks.getOrDefault(server.getName(), 0) >= 1) {
                         boolean changes = false;
 
-                        if (!ServerDataStorager.needsRegister(server.getName())) {
-                            ServerDataStorager.removeKeyRegistered(server.getName());
+                        if (!ServerDataStorage.needsRegister(server.getName())) {
+                            ServerDataStorage.removeKeyRegistered(server.getName());
                             changes = true;
                         }
-                        if (!ServerDataStorager.needsProxyKnowledge(server.getName())) {
-                            ServerDataStorager.removeProxyRegistered(server.getName());
+                        if (!ServerDataStorage.needsProxyKnowledge(server.getName())) {
+                            ServerDataStorage.removeProxyRegistered(server.getName());
                             changes = true;
                         }
 
@@ -59,7 +60,9 @@ public final class ServerLifeChecker {
             } else {
                 fail_checks.remove(server.getName());
             }
-        }))).start();
+        })));
+
+        timer.start();
     }
 
     public static void restart() {

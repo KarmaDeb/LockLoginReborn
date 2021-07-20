@@ -14,10 +14,10 @@ package eu.locklogin.api.common.session;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.time.Instant;
 

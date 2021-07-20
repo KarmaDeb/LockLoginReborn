@@ -12,33 +12,39 @@ import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.LoadRule;
-import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -115,13 +121,31 @@ public class MainBootstrap implements KarmaBootstrap {
                 if (client != null)
                     client.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
             };
-            Consumer<MessageSender> onKick = messageSender -> {
-                ModulePlayer modulePlayer = messageSender.getPlayer();
-                UUID id = modulePlayer.getUUID();
+            Consumer<ActionBarSender> onActionBar = messageSender -> {
+                ProxiedPlayer player = messageSender.getPlayer().getPlayer();
 
-                ProxiedPlayer client = loader.getProxy().getPlayer(id);
-                if (client != null)
-                    client.disconnect(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                if (player != null) {
+                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                }
+            };
+            Consumer<TitleSender> onTitle = messageSender -> {
+                ProxiedPlayer player = messageSender.getPlayer().getPlayer();
+
+                if (player != null) {
+                    TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
+                    title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
+                }
+            };
+            Consumer<MessageSender> onKick = messageSender -> {
+                SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, false).multiThreading(false);
+                scheduler.endAction(() -> scheduler.requestSync(() -> {
+                    ModulePlayer modulePlayer = messageSender.getPlayer();
+                    UUID id = modulePlayer.getUUID();
+
+                    ProxiedPlayer client = loader.getProxy().getPlayer(id);
+                    if (client != null)
+                        client.disconnect(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                })).start();
             };
             Consumer<ModulePlayer> onLogin = modulePlayer -> {
                 UUID id = modulePlayer.getUUID();
@@ -165,6 +189,8 @@ public class MainBootstrap implements KarmaBootstrap {
 
             try {
                 JarManager.changeField(ModulePlayer.class, "onChat", onMessage);
+                JarManager.changeField(ModulePlayer.class, "onBar", onActionBar);
+                JarManager.changeField(ModulePlayer.class, "onTitle", onTitle);
                 JarManager.changeField(ModulePlayer.class, "onKick", onKick);
                 JarManager.changeField(ModulePlayer.class, "onLogin", onLogin);
                 JarManager.changeField(ModulePlayer.class, "onClose", onClose);
@@ -176,18 +202,13 @@ public class MainBootstrap implements KarmaBootstrap {
             LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
             File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-            Set<PluginModule> wait = new HashSet<>();
             if (moduleFiles != null) {
-                for (File file : moduleFiles) {
-                    PluginModule module = ModuleLoader.getByName(file.getName().replace(".jar", ""));
-                    if (module != null) {
-                        if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
-                            module.load();
-                        } else {
-                            wait.add(module);
-                        }
-                    }
-                }
+                List<File> files = Arrays.asList(moduleFiles);
+                Iterator<File> iterator = files.iterator();
+                do {
+                    File file = iterator.next();
+                    LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+                } while (iterator.hasNext());
             }
 
             PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
@@ -195,7 +216,7 @@ public class MainBootstrap implements KarmaBootstrap {
 
             AllowedCommand.scan();
 
-            Manager.initialize(wait);
+            Manager.initialize();
         });
     }
 
@@ -206,9 +227,14 @@ public class MainBootstrap implements KarmaBootstrap {
 
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null) {
-            for (File module : moduleFiles) {
-                LockLogin.getLoader().unloadModule(module.getName());
-            }
+            List<File> files = Arrays.asList(moduleFiles);
+            Iterator<File> iterator = files.iterator();
+            do {
+                File file = iterator.next();
+                if (file.isFile()) {
+                    LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+                }
+            } while (iterator.hasNext());
         }
 
         Manager.terminate();

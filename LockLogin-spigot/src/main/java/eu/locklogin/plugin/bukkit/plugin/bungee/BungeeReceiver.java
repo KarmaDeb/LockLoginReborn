@@ -2,32 +2,34 @@ package eu.locklogin.plugin.bukkit.plugin.bungee;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
-import eu.locklogin.api.common.security.client.ClientData;
-import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
-import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
-import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.files.Config;
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
-import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.logger;
@@ -190,7 +192,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                             switch (sub) {
                                 case MESSAGES:
                                     String messageString = input.readUTF();
-                                    Message.manager.loadBungee(messageString);
+                                    CurrentPlatform.getMessages().loadString(messageString);
                                     break;
                                 case CONFIG:
                                     String configString = input.readUTF();
@@ -270,6 +272,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                     }
                 } else {
                     logger.scheduleLog(Level.GRAVE, "Someone tried to access the plugin message channel using {0}'s identification ( INVALID KEY )", id.toString());
+                    logger.scheduleLog(Level.INFO, "Message data: {0} -> {1} under {2} ({3})", channel, sub.name(), (player != null ? player.getUniqueId() : "invalid player uuid"), (player != null ? StringUtils.stripColor(player.getDisplayName()) : "invalid player name"));
                 }
             } else {
                 String proxyKey = input.readUTF();

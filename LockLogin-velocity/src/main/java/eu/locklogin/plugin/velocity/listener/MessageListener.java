@@ -20,23 +20,23 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.util.Optional;
@@ -50,7 +50,7 @@ public final class MessageListener {
     @Subscribe(order = PostOrder.FIRST)
     public final void onMessageReceive(PluginMessageEvent e) {
         if (e.getResult().isAllowed()) {
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
             ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
@@ -141,7 +141,7 @@ public final class MessageListener {
                             if (!id.equalsIgnoreCase("invalid")) {
                                 //As the key should be global, when a proxy registers a key, all the proxies should know that
                                 Console.send(source, "Registered proxy key into server {0}", Level.INFO, name);
-                                ServerDataStorager.setKeyRegistered(name);
+                                ServerDataStorage.setKeyRegistered(name);
                             } else {
                                 Console.send(source, "Failed to set proxy key in {0}", Level.GRAVE, name);
                                 e.setResult(PluginMessageEvent.ForwardResult.handled());
@@ -152,7 +152,7 @@ public final class MessageListener {
                                 //Only listen if the proxy id is this one
                                 if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
                                     Console.send(source, "Registered this proxy into server {0}", Level.INFO, name);
-                                    ServerDataStorager.setProxyRegistered(name);
+                                    ServerDataStorage.setProxyRegistered(name);
                                     DataSender.updateDataPool(name);
                                 } else {
                                     e.setResult(PluginMessageEvent.ForwardResult.handled());
@@ -167,9 +167,9 @@ public final class MessageListener {
                                 //Only listen if the proxy id is this one
                                 if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
                                     Console.send(source, "Removed ths proxy from server {0}", Level.INFO, name);
-                                    ServerDataStorager.removeProxyRegistered(name);
+                                    ServerDataStorage.removeProxyRegistered(name);
                                 } else {
-                                    ServerDataStorager.removeKeyRegistered(name);
+                                    ServerDataStorage.removeKeyRegistered(name);
                                     e.setResult(PluginMessageEvent.ForwardResult.handled());
                                 }
                             } else {

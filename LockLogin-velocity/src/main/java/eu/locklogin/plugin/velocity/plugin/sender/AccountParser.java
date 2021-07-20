@@ -11,8 +11,8 @@ package eu.locklogin.plugin.velocity.plugin.sender;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.util.Set;
 

@@ -14,32 +14,30 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.client.AccountData;
+import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
-import eu.locklogin.plugin.bukkit.util.player.SessionCheck;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.encryption.CryptoUtil;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.session.PersistentSessionData;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 @SystemCommand(command = "account")
 public class AccountCommand implements CommandExecutor {
@@ -69,7 +66,7 @@ public class AccountCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -150,24 +147,7 @@ public class AccountCommand implements CommandExecutor {
                                             LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, () -> player.sendMessage(""));
                                     }
 
-                                    String barMessage = messages.captcha(session.getCaptcha());
-                                    try {
-                                        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-                                            barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                                    } catch (Throwable ignored) {}
-
-                                    BarMessage bar = new BarMessage(player, barMessage);
-                                    if (!session.isCaptchaLogged())
-                                        bar.send(true);
-
-                                    SessionCheck check = new SessionCheck(player, target -> {
-                                        bar.setMessage("");
-                                        bar.stop();
-                                    }, target -> {
-                                        bar.setMessage("");
-                                        bar.stop();
-                                    });
-
+                                    SessionCheck<Player> check = user.getChecker();
                                     LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
 
                                     if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
@@ -194,7 +174,7 @@ public class AccountCommand implements CommandExecutor {
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
                                                 player.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
+                                                user.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
                                                 ModulePlugin.callEvent(issuer);
@@ -225,7 +205,10 @@ public class AccountCommand implements CommandExecutor {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.remove(manager.getName());
+                                            manager.setPassword("");
+                                            manager.setPin("");
+                                            manager.setGAuth("");
+                                            manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -262,7 +245,7 @@ public class AccountCommand implements CommandExecutor {
                                             session.invalidate();
                                             session.validate();
 
-                                            SessionCheck check = new SessionCheck(player, null, null);
+                                            SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                             LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
@@ -363,7 +346,7 @@ public class AccountCommand implements CommandExecutor {
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     tar_p.performCommand("account close");
-                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
+                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
                                     ModulePlugin.callEvent(issuer);
@@ -388,7 +371,10 @@ public class AccountCommand implements CommandExecutor {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.remove(config.serverName());
+                                manager.setPassword("");
+                                manager.setPin("");
+                                manager.setGAuth("");
+                                manager.set2FA(false);
 
                                 if (online != null) {
                                     User onlineUser = new User(online);

@@ -18,12 +18,12 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.plugin.velocity.LockLogin;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.file.ProxyConfiguration;
 
 import java.io.File;
 import java.util.*;

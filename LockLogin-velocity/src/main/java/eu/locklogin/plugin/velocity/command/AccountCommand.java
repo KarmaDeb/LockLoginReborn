@@ -16,32 +16,31 @@ package eu.locklogin.plugin.velocity.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
-import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
-import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
-import eu.locklogin.plugin.velocity.util.player.SessionCheck;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.encryption.CryptoUtil;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
+import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
+import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 
@@ -72,7 +71,7 @@ public class AccountCommand extends BungeeLikeCommand {
     @Override
     public void execute(CommandSource sender, String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -159,23 +158,8 @@ public class AccountCommand extends BungeeLikeCommand {
                                     if (!config.captchaOptions().isEnabled())
                                         session.setCaptchaLogged(true);
 
-                                    AdvancedSimpleTimer tmp_timer = null;
-                                    if (!session.isCaptchaLogged()) {
-                                        tmp_timer = new AdvancedSimpleTimer(main, 1, true);
-                                        tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
-                                    }
 
-                                    AdvancedSimpleTimer timer = tmp_timer;
-                                    SessionCheck check = new SessionCheck(player, target -> {
-                                        player.sendActionBar(Component.text().content("").build());
-                                        if (timer != null)
-                                            timer.setCancelled();
-                                    }, target -> {
-                                        player.sendActionBar(Component.text().content("").build());
-                                        if (timer != null)
-                                            timer.setCancelled();
-                                    });
-
+                                    SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                     server.getScheduler().buildTask(plugin, check);
 
                                     user.send(messages.prefix() + messages.closed());
@@ -195,7 +179,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
                                                 target.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
+                                                user.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p.get())));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
                                                 ModulePlugin.callEvent(issuer);
@@ -226,7 +210,10 @@ public class AccountCommand extends BungeeLikeCommand {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.remove(manager.getName());
+                                            manager.setPassword("");
+                                            manager.setPin("");
+                                            manager.setGAuth("");
+                                            manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
@@ -277,23 +264,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                             if (!config.captchaOptions().isEnabled())
                                                 session.setCaptchaLogged(true);
 
-                                            AdvancedSimpleTimer tmp_timer = null;
-                                            if (!session.isCaptchaLogged()) {
-                                                tmp_timer = new AdvancedSimpleTimer(main, 1, true);
-                                                tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
-                                            }
-
-                                            AdvancedSimpleTimer timer = tmp_timer;
-                                            SessionCheck check = new SessionCheck(player, target -> {
-                                                player.sendActionBar(Component.text().content("").build());
-                                                if (timer != null)
-                                                    timer.setCancelled();
-                                            }, target -> {
-                                                player.sendActionBar(Component.text().content("").build());
-                                                if (timer != null)
-                                                    timer.setCancelled();
-                                            });
-
+                                            SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                             server.getScheduler().buildTask(plugin, check);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
@@ -413,7 +384,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     target.performCommand("account close");
-                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p.get()));
+                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p.get())));
 
                                     AccountCloseEvent event = new AccountCloseEvent(fromPlayer(tar_p.get()), config.serverName(), null);
                                     ModulePlugin.callEvent(event);
@@ -438,7 +409,10 @@ public class AccountCommand extends BungeeLikeCommand {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.remove(config.serverName());
+                                manager.setPassword("");
+                                manager.setPin("");
+                                manager.setGAuth("");
+                                manager.set2FA(false);
 
                                 Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 

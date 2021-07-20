@@ -14,25 +14,25 @@ package eu.locklogin.plugin.bungee.command;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
-import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
-import eu.locklogin.plugin.bungee.util.files.Message;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
-import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
-import eu.locklogin.api.common.utils.plugin.Alias;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
+import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
+import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
+import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -66,7 +66,7 @@ public final class PlayerInfoCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;

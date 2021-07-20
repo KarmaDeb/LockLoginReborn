@@ -1,9 +1,9 @@
 package eu.locklogin.api.encryption.libraries.argon.algorithm;
 
-import eu.locklogin.api.encryption.libraries.argon.Constants;
-import eu.locklogin.api.encryption.libraries.argon.model.Instance;
 import eu.locklogin.api.encryption.libraries.argon.Argon2;
+import eu.locklogin.api.encryption.libraries.argon.Constants;
 import eu.locklogin.api.encryption.libraries.argon.Util;
+import eu.locklogin.api.encryption.libraries.argon.model.Instance;
 
 public class Initialize {
 

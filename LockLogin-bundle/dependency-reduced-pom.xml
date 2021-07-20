@@ -3,7 +3,7 @@
   <parent>
     <artifactId>LockLogin</artifactId>
     <groupId>eu.locklogin</groupId>
-    <version>1.12.25</version>
+    <version>1.12.31</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>LockLogin-Bundle</artifactId>
@@ -39,9 +39,4 @@
       </plugin>
     </plugins>
   </build>
-  <properties>
-    <maven.compiler.target>8</maven.compiler.target>
-    <maven.compiler.source>8</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 </project>

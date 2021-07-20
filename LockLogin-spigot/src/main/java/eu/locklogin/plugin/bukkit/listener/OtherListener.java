@@ -14,9 +14,10 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -29,6 +30,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 public final class OtherListener implements Listener {
 
@@ -64,7 +67,7 @@ public final class OtherListener implements Listener {
             Entity target = e.getEntity();
             Entity damager = e.getDamager();
 
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             if (target instanceof Player) {
                 Player victim = (Player) target;
@@ -78,7 +81,7 @@ public final class OtherListener implements Listener {
                                 Player attacker = (Player) damager;
                                 User at_user = new User(attacker);
 
-                                at_user.send(messages.prefix() + messages.notVerified(victim));
+                                at_user.send(messages.prefix() + messages.notVerified(fromPlayer(victim)));
                                 e.setCancelled(true);
                             } else {
                                 e.setCancelled(true);

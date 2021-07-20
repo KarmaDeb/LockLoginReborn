@@ -14,23 +14,23 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.GoogleAuthFactory;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
-import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.encryption.CryptoUtil;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.security.GoogleAuthFactory;
-import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -61,7 +61,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

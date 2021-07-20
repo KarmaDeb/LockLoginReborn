@@ -15,8 +15,8 @@ package eu.locklogin.api.encryption.argon;
  */
 
 import eu.locklogin.api.encryption.HashType;
-import eu.locklogin.api.encryption.libraries.argon.model.Argon2Type;
 import eu.locklogin.api.encryption.libraries.argon.Argon2;
+import eu.locklogin.api.encryption.libraries.argon.model.Argon2Type;
 
 import java.nio.charset.StandardCharsets;
 

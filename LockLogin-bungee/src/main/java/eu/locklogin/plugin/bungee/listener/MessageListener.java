@@ -16,24 +16,24 @@ package eu.locklogin.plugin.bungee.listener;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
-import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.Message;
-import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
-import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
+import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -52,7 +52,7 @@ public final class MessageListener implements Listener {
     public final void onMessageReceive(PluginMessageEvent e) {
         if (!e.isCancelled()) {
             try {
-                Message messages = new Message();
+                PluginMessages messages = CurrentPlatform.getMessages();
                 ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                 ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
@@ -140,9 +140,9 @@ public final class MessageListener implements Listener {
                                 if (!id.equalsIgnoreCase("invalid")) {
                                     //As the key should be global, when a proxy registers a key, all the proxies should know that
 
-                                    if (ServerDataStorager.needsRegister(name)) {
+                                    if (ServerDataStorage.needsRegister(name)) {
                                         Console.send(plugin, "Registered proxy key into server {0}", Level.INFO, name);
-                                        ServerDataStorager.setKeyRegistered(name);
+                                        ServerDataStorage.setKeyRegistered(name);
                                     }
                                 } else {
                                     Console.send(plugin, "Failed to set proxy key in {0}", Level.GRAVE, name);
@@ -153,9 +153,9 @@ public final class MessageListener implements Listener {
                                 if (!id.equalsIgnoreCase("invalid")) {
                                     //Only listen if the proxy id is this one
                                     if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
-                                        if (ServerDataStorager.needsProxyKnowledge(name)) {
+                                        if (ServerDataStorage.needsProxyKnowledge(name)) {
                                             Console.send(plugin, "Registered this proxy into server {0}", Level.INFO, name);
-                                            ServerDataStorager.setProxyRegistered(name);
+                                            ServerDataStorage.setProxyRegistered(name);
                                             DataSender.updateDataPool(name);
                                         }
                                     } else {
@@ -170,12 +170,12 @@ public final class MessageListener implements Listener {
                                 if (!id.equalsIgnoreCase("invalid")) {
                                     //Only listen if the proxy id is this one
                                     if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
-                                        if (!ServerDataStorager.needsProxyKnowledge(name)) {
+                                        if (!ServerDataStorage.needsProxyKnowledge(name)) {
                                             Console.send(plugin, "Removed ths proxy from server {0}", Level.INFO, name);
-                                            ServerDataStorager.removeProxyRegistered(name);
+                                            ServerDataStorage.removeProxyRegistered(name);
                                         }
                                     } else {
-                                        ServerDataStorager.removeKeyRegistered(name);
+                                        ServerDataStorage.removeKeyRegistered(name);
                                         e.setCancelled(true);
                                     }
                                 } else {

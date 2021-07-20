@@ -14,7 +14,6 @@ package eu.locklogin.plugin.bungee;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -66,6 +65,7 @@ public final class Main extends Plugin implements KarmaSource {
     @Override
     public void onDisable() {
         plugin.disable();
+        stopTasks();
     }
 
     @Override

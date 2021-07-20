@@ -12,24 +12,24 @@ package eu.locklogin.api.common.web;
  */
 
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.FixedLateScheduler;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.time.Instant;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 import static ml.karmaconfigs.api.common.version.VersionUpdater.VersionFetchResult;
-import static ml.karmaconfigs.api.common.version.VersionUpdater.VersionFetchResult.*;
+import static ml.karmaconfigs.api.common.version.VersionUpdater.VersionFetchResult.VersionType;
 
 /**
  * LockLogin version downloader
  */
 public final class VersionDownloader {
 
-    private static double percentage = 0D;
     private static boolean downloading = false;
 
     private final VersionFetchResult result;
@@ -41,15 +41,6 @@ public final class VersionDownloader {
      */
     public VersionDownloader(final VersionFetchResult res) {
         result = res;
-    }
-
-    /**
-     * Get the downloader download percentage
-     *
-     * @return the downloader download percentage
-     */
-    public static double getPercentage() {
-        return percentage;
     }
 
     /**
@@ -66,62 +57,51 @@ public final class VersionDownloader {
     /**
      * Download the latest version
      *
-     * @param onDownload when the downloader downloads
-     *                   the latest version
-     * @param onFail     when the downloader fails to download
+     * @return the download result
      */
-    public final void download(final Consumer<File> onDownload, final Consumer<Throwable> onFail) {
-        String time = Instant.now().toString().replace(":", ";");
-        File dest_file = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater", "LockLogin_" + result.resolve(VersionType.LATEST) + ".jar");
+    public final LateScheduler<File> download() {
+        LateScheduler<File> future = new FixedLateScheduler<>();
 
-        dest_file = FileUtilities.getFixedFile(dest_file);
-        downloading = true;
+        CompletableFuture.runAsync(() -> {
+            File dest_file = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater" + File.separator + result.resolve(VersionType.LATEST), "LockLogin.jar");
+            dest_file = FileUtilities.getFixedFile(dest_file);
 
-        try {
-            URL url = new URL(result.getUpdateURL());
-            URLConnection connection = url.openConnection();
+            downloading = true;
 
-            int size = connection.getContentLength();
-            connection.connect();
+            Throwable error = null;
+            try {
+                URL url = new URL(result.getUpdateURL());
+                URLConnection connection = url.openConnection();
+                connection.connect();
 
-            if (!dest_file.getParentFile().exists()) {
-                if (dest_file.getParentFile().mkdirs()) {
-                    Console.send("Created update folder for LockLogin new update", Level.INFO);
-                } else {
-                    Console.send("An unknown error occurred while creating update folder", Level.GRAVE);
+                if (!dest_file.getParentFile().exists()) {
+                    if (dest_file.getParentFile().mkdirs()) {
+                        Console.send("Created update folder for LockLogin new update", Level.INFO);
+                    } else {
+                        Console.send("An unknown error occurred while creating update folder", Level.GRAVE);
+                    }
                 }
+
+                InputStream input = new BufferedInputStream(url.openStream(), 1024);
+                OutputStream output = new FileOutputStream(dest_file);
+
+                byte[] dataBuffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = input.read(dataBuffer, 0, 1024)) != -1) output.write(dataBuffer, 0, bytesRead);
+
+                output.flush();
+
+                output.close();
+                input.close();
+            } catch (Throwable ex) {
+                error = ex;
+            } finally {
+                future.complete(dest_file, error);
+                downloading = false;
             }
+        });
 
-            InputStream input = new BufferedInputStream(url.openStream(), 1024);
-            OutputStream output = new FileOutputStream(dest_file);
-
-            byte[] dataBuffer = new byte[1024];
-            int bytesRead;
-            double sumCount = 0.0;
-            while ((bytesRead = input.read(dataBuffer, 0, 1024)) != -1) {
-                output.write(dataBuffer, 0, bytesRead);
-
-                sumCount += bytesRead;
-                percentage = (sumCount / size * 100.0);
-            }
-
-            output.flush();
-
-            output.close();
-            input.close();
-        } catch (Throwable ex) {
-            if (onFail != null) {
-                onFail.accept(ex);
-            } else {
-                ex.printStackTrace();
-            }
-        } finally {
-            if (onDownload != null) {
-                onDownload.accept(dest_file);
-            }
-
-            downloading = false;
-        }
+        return future;
     }
 
     /**

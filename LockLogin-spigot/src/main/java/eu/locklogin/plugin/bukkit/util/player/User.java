@@ -11,21 +11,25 @@ package eu.locklogin.plugin.bukkit.util.player;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import me.clip.placeholderapi.PlaceholderAPI;
-import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.GoogleAuthFactory;
+import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.api.common.security.GoogleAuthFactory;
+import me.clip.placeholderapi.PlaceholderAPI;
+import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
+import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
+import ml.karmaconfigs.api.common.boss.BossColor;
+import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
@@ -36,6 +40,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -44,13 +49,14 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
  */
 public final class User {
 
-    private final static Set<UUID> registered = new HashSet<>();
-    private final static Map<UUID, Collection<PotionEffect>> effects = new HashMap<>();
+    private final static Set<UUID> registered = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Map<UUID, Collection<PotionEffect>> effects = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
-    private static Map<UUID, ClientSession> sessions = new HashMap<>();
-    private final static Map<UUID, AccountManager> managers = new HashMap<>();
+    private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
+    private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
+    private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
-    private static Map<UUID, GameMode> temp_spectator = new HashMap<>();
+    private static Map<UUID, GameMode> temp_spectator = new ConcurrentHashMap<>();
     private final Player player;
 
     /**
@@ -263,7 +269,7 @@ public final class User {
     public final void send(final String message) {
         String[] parsed = parseMessage(message);
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (parsed.length > 1) {
             for (String str : parsed)
@@ -316,6 +322,22 @@ public final class User {
                 player.kickPlayer(StringUtils.toColor(parsed[0]));
             }
         });
+    }
+
+    /**
+     * Remove the user session check
+     */
+    public final void removeSessionCheck() {
+        sessionChecks.remove(player.getUniqueId());
+    }
+
+    /**
+     * Get the client session checker
+     *
+     * @return the client session checker
+     */
+    public final SessionCheck<Player> getChecker() {
+        return sessionChecks.computeIfAbsent(player.getUniqueId(), (session) -> new SessionCheck<>(plugin, fromPlayer(player), new BossMessage(plugin, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN)));
     }
 
     /**
@@ -404,8 +426,7 @@ public final class User {
 
                 ClientSession session = getSession();
                 if (session.isCaptchaLogged()) {
-                    message = message.replace("{captcha}", "")
-                            .replace("<captcha>", "");
+                    message = message.replace("{captcha}", "").replace("<captcha>", "");
                 } else {
                     message = message.replace("{captcha}", "<captcha>");
                 }

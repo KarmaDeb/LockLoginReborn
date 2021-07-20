@@ -17,26 +17,26 @@ package eu.locklogin.plugin.velocity.command;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
-import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
-import eu.locklogin.api.common.utils.plugin.Alias;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
+import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
+import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 
 import java.time.Instant;
@@ -65,7 +65,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

@@ -16,7 +16,6 @@ package eu.locklogin.module.manager.bungee.command;
 
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
-import eu.locklogin.module.manager.bungee.Main;
 import eu.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 

@@ -25,21 +25,23 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import eu.locklogin.api.common.security.client.ClientData;
-import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
-import eu.locklogin.plugin.velocity.util.files.Config;
-import eu.locklogin.plugin.velocity.util.files.Proxy;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.velocity.util.player.SessionCheck;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.client.AccountData;
+import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.common.security.client.Name;
+import eu.locklogin.api.common.security.client.ProxyCheck;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.UUIDGen;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
@@ -47,19 +49,18 @@ import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.Name;
-import eu.locklogin.api.common.security.client.ProxyCheck;
-import eu.locklogin.api.common.session.SessionKeeper;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.UUIDGen;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
+import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.plugin.velocity.util.files.Config;
+import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
+import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.kyori.adventure.text.Component;
 
@@ -94,7 +95,7 @@ public final class JoinListener {
     @SuppressWarnings("all")
     @Subscribe(order = PostOrder.FIRST)
     public final void onPreLogin(PreLoginEvent e) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
         InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
 
         String conn_name = e.getUsername();
@@ -167,17 +168,26 @@ public final class JoinListener {
                         return;
                     }
 
-                    Name name = new Name(conn_name);
-                    name.check();
+                    if (config.checkNames()) {
+                        Name name = new Name(conn_name);
+                        name.check();
 
-                    if (name.notValid()) {
-                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
-                        return;
+                        if (name.notValid()) {
+                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
+                            return;
+                        }
                     }
 
                     OfflineClient offline = new OfflineClient(conn_name);
                     AccountManager manager = offline.getAccount();
                     if (manager != null) {
+                        if (config.enforceNameCheck()) {
+                            if (!manager.getName().equals(conn_name)) {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.similarName(manager.getName()))).build()));
+                                return;
+                            }
+                        }
+
                         LockedAccount account = new LockedAccount(manager.getUUID());
                         LockedData data = account.getData();
 
@@ -240,23 +250,23 @@ public final class JoinListener {
                 RegisteredServer info = connection.getServer();
                 ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                if (ServerDataStorager.needsRegister(info.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName())) {
-                    if (ServerDataStorager.needsRegister(info.getServerInfo().getName()))
+                if (ServerDataStorage.needsRegister(info.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
+                    if (ServerDataStorage.needsRegister(info.getServerInfo().getName()))
                         DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
-                    if (ServerDataStorager.needsProxyKnowledge(info.getServerInfo().getName()))
+                    if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName()))
                         DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
                 }
             }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(CurrentPlatform.getMessages().toString()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
             CurrentPlatform.requestDataContainerUpdate();
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
             DataSender.send(player, validation);
 
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             ProxyCheck proxy = new ProxyCheck(ip);
             if (proxy.isProxy()) {
@@ -277,10 +287,10 @@ public final class JoinListener {
             if (!config.captchaOptions().isEnabled())
                 session.setCaptchaLogged(true);
 
-            AdvancedSimpleTimer tmp_timer = null;
+            SimpleScheduler tmp_timer = null;
             if (!session.isCaptchaLogged()) {
-                tmp_timer = new AdvancedSimpleTimer(main, 1, true);
-                tmp_timer.addAction(() -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
+                tmp_timer = new SourceSecondsTimer(main, 1, true);
+                tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
             }
 
             MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
@@ -290,17 +300,12 @@ public final class JoinListener {
                     .addBoolData(user.isRegistered()).build();
             DataSender.send(player, join);
 
-            AdvancedSimpleTimer timer = tmp_timer;
-            SessionCheck check = new SessionCheck(player, target -> {
+            SimpleScheduler timer = tmp_timer;
+            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                user.restorePotionEffects();
                 player.sendActionBar(Component.text().content("").build());
-                if (timer != null)
-                    timer.setCancelled();
-            }, target -> {
-                player.sendActionBar(Component.text().content("").build());
-                if (timer != null)
-                    timer.setCancelled();
+                timer.cancel();
             });
-
             server.getScheduler().buildTask(plugin, check).schedule();
             forceSessionLogin(player);
 
@@ -330,16 +335,16 @@ public final class JoinListener {
             RegisteredServer server = e.getServer();
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            if (ServerDataStorager.needsRegister(server.getServerInfo().getName()) || ServerDataStorager.needsProxyKnowledge(server.getServerInfo().getName())) {
-                if (ServerDataStorager.needsRegister(server.getServerInfo().getName()))
+            if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
                     DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
-                if (ServerDataStorager.needsProxyKnowledge(server.getServerInfo().getName()))
+                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName()))
                     DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).build());
             }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(CurrentPlatform.getMessages().toString()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
             CurrentPlatform.requestDataContainerUpdate();
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();

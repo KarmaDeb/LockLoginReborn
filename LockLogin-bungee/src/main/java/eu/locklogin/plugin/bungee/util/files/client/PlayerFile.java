@@ -1,21 +1,21 @@
 package eu.locklogin.plugin.bungee.util.files.client;
 
+import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.AzuriomId;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.encryption.CryptTarget;
+import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.AzuriomId;
-import eu.locklogin.api.encryption.CryptTarget;
-import eu.locklogin.api.encryption.CryptoUtil;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.io.File;

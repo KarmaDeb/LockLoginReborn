@@ -14,15 +14,15 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Config;
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.Console;
 import org.bukkit.entity.Player;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
@@ -38,7 +38,7 @@ public class FileReloader {
         PluginStatusChangeEvent reload_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_START, null);
         ModulePlugin.callEvent(reload_start);
 
-        Message message = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
         if (player != null) {
             User user = new User(player);
 
@@ -47,7 +47,7 @@ public class FileReloader {
                     if (Config.manager.reload()) {
                         Config.manager.checkValues();
 
-                        user.send(message.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                        user.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
 
                         PluginConfiguration config = CurrentPlatform.getConfiguration();
                         CurrentPlatform.setConfigManager(new Config());
@@ -55,34 +55,34 @@ public class FileReloader {
                     }
                 }
                 if (player.hasPermission(PluginPermission.reload_messages())) {
-                    if (Message.manager.reload()) {
-                        user.send(message.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+                    if (CurrentPlatform.getMessages().reload()) {
+                        user.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
                     }
                 }
 
                 if (player.hasPermission(PluginPermission.reload())) {
-                    user.send(message.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
+                    user.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
                     Manager.restartVersionChecker();
                     Manager.restartAlertSystem();
                 }
             } else {
-                user.send(message.prefix() + message.permissionError(PluginPermission.reload()));
+                user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
             }
         } else {
             if (Config.manager.reload()) {
                 Config.manager.checkValues();
 
-                Console.send(message.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                Console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
 
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
                 CurrentPlatform.setPrefix(config.getModulePrefix());
             }
-            if (Message.manager.reload()) {
-                Console.send(message.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+            if (CurrentPlatform.getMessages().reload()) {
+                Console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
             }
 
-            Console.send(message.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
+            Console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
             Manager.restartVersionChecker();
             Manager.restartAlertSystem();

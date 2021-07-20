@@ -14,50 +14,54 @@ package eu.locklogin.plugin.bungee.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.common.security.client.ProxyCheck;
+import eu.locklogin.api.common.session.Session;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
+import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
+import eu.locklogin.api.common.web.AlertSystem;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.common.web.VersionDownloader;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.api.module.LoadRule;
+import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.LockLogin;
 import eu.locklogin.plugin.bungee.Main;
+import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.listener.ChatListener;
+import eu.locklogin.plugin.bungee.listener.JoinListener;
+import eu.locklogin.plugin.bungee.listener.MessageListener;
+import eu.locklogin.plugin.bungee.listener.QuitListener;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
+import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.listener.JoinListener;
-import eu.locklogin.plugin.bungee.listener.MessageListener;
-import eu.locklogin.plugin.bungee.listener.QuitListener;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
-import eu.locklogin.plugin.bungee.util.player.SessionCheck;
-import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.security.client.ProxyCheck;
-import eu.locklogin.api.common.session.Session;
-import eu.locklogin.api.common.session.SessionDataContainer;
-import eu.locklogin.api.common.session.SessionKeeper;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
-import eu.locklogin.api.common.web.AlertSystem;
-import eu.locklogin.api.common.web.VersionDownloader;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.ChatMessageType;
@@ -76,12 +80,13 @@ import org.bstats.charts.SimplePie;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
+import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 public final class Manager {
 
@@ -89,7 +94,7 @@ public final class Manager {
     private static int updater_id = 0;
     private static int alert_id = 0;
 
-    public static void initialize(final Set<PluginModule> load) {
+    public static void initialize() {
         int size = 10;
         String character = "*";
         try {
@@ -185,8 +190,17 @@ public final class Manager {
         ServerLifeChecker checker = new ServerLifeChecker();
         checker.startCheck();
 
-        for (PluginModule module : load)
-            module.load();
+        File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
+        if (moduleFiles != null) {
+            List<File> files = Arrays.asList(moduleFiles);
+            Iterator<File> iterator = files.iterator();
+            do {
+                File file = iterator.next();
+                if (file.isFile()) {
+                    LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
+                }
+            } while (iterator.hasNext());
+        }
     }
 
     public static void terminate() {
@@ -335,7 +349,10 @@ public final class Manager {
             Console.send(plugin, properties.getProperty("file_register_problem", "Failed to setup/check file(s): {0}. The plugin will use defaults, you can try to create files later by running /locklogin reload"), Level.WARNING, setToString(failed));
         }
 
+        Message messages = new Message();
+
         Config.manager.checkValues();
+        CurrentPlatform.setPluginMessages(messages);
     }
 
     /**
@@ -395,7 +412,7 @@ public final class Manager {
                         for (String line : fetch.getChangelog())
                             Console.send(line);
 
-                        Message messages = new Message();
+                        PluginMessages messages = CurrentPlatform.getMessages();
                         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                             User user = new User(player);
                             if (user.hasPermission(PluginPermission.applyUpdates())) {
@@ -405,28 +422,29 @@ public final class Manager {
                         }
 
                         if (VersionDownloader.downloadUpdates()) {
-                            if (VersionDownloader.isDownloading()) {
-                                Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
-                            } else {
+                            if (!VersionDownloader.isDownloading()) {
                                 VersionDownloader downloader = new VersionDownloader(fetch);
-                                downloader.download(
-                                        file -> {
-                                            Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+                                downloader.download().whenComplete((file, error) -> {
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                        logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
+                                        Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
 
-                                            for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                                                User user = new User(player);
-                                                if (user.hasPermission(PluginPermission.applyUpdates())) {
-                                                    user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
-                                                }
+                                        try {
+                                            Files.deleteIfExists(file.toPath());
+                                        } catch (Throwable ignored) {
+                                        }
+                                    } else {
+                                        Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+
+                                        for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                                            User user = new User(player);
+                                            if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                                user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
                                             }
-                                        },
-                                        error -> {
-                                            if (error != null) {
-                                                logger.scheduleLog(Level.GRAVE, error);
-                                                logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                                Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
-                                            }
-                                        });
+                                        }
+                                    }
+                                });
                             }
                         } else {
                             Console.send(plugin, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
@@ -455,14 +473,14 @@ public final class Manager {
     protected static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, config.getUpdaterOptions().getInterval(), true).setAsync(true).addActionOnEnd(Manager::performVersionCheck);
+        SimpleScheduler timer = new SourceSecondsTimer(plugin, config.getUpdaterOptions().getInterval(), true).multiThreading(true).endAction(Manager::performVersionCheck);
         if (config.getUpdaterOptions().isEnabled()) {
             timer.start();
         } else {
             performVersionCheck();
         }
 
-        updater_id = timer.getTimerId();
+        updater_id = timer.getId();
 
     }
 
@@ -470,7 +488,7 @@ public final class Manager {
      * Schedule the alert system
      */
     protected static void scheduleAlertSystem() {
-        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 30, true).setAsync(true).addActionOnEnd(() -> {
+        SimpleScheduler timer = new SourceSecondsTimer(plugin, 30, true).multiThreading(true).endAction(() -> {
             AlertSystem system = new AlertSystem();
             system.checkAlerts();
 
@@ -479,7 +497,7 @@ public final class Manager {
         });
         timer.start();
 
-        alert_id = timer.getTimerId();
+        alert_id = timer.getId();
 
     }
 
@@ -492,7 +510,7 @@ public final class Manager {
     protected static void initPlayers() {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                 plugin.getProxy().getScheduler().schedule(plugin, () -> {
@@ -515,18 +533,18 @@ public final class Manager {
                         ServerInfo info = server.getInfo();
                         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                        if (ServerDataStorager.needsRegister(info.getName()) || ServerDataStorager.needsProxyKnowledge(info.getName())) {
-                            if (ServerDataStorager.needsRegister(info.getName()))
+                        if (ServerDataStorage.needsRegister(info.getName()) || ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                            if (ServerDataStorage.needsRegister(info.getName()))
                                 DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addBoolData(proxy.multiBungee()).build());
 
-                            if (ServerDataStorager.needsProxyKnowledge(info.getName())) {
+                            if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
                                 DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
                             }
                         }
                     }
 
-                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
-                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Message.manager.getMessages()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(CurrentPlatform.getMessages().toString()).build());
+                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
                     CurrentPlatform.requestDataContainerUpdate();
 
                     DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
@@ -551,10 +569,10 @@ public final class Manager {
                     if (!config.captchaOptions().isEnabled())
                         session.setCaptchaLogged(true);
 
-                    AdvancedSimpleTimer tmp_timer = null;
+                    SimpleScheduler tmp_timer = null;
                     if (!session.isCaptchaLogged()) {
-                        tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
-                        tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                        tmp_timer = new SourceSecondsTimer(plugin, 1, true);
+                        tmp_timer.secondChangeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                     }
 
                     MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
@@ -564,15 +582,13 @@ public final class Manager {
                             .addBoolData(user.isRegistered()).build();
                     DataSender.send(player, join);
 
-                    AdvancedSimpleTimer timer = tmp_timer;
-                    SessionCheck check = new SessionCheck(player, target -> {
+                    SimpleScheduler timer = tmp_timer;
+                    SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(() -> {
+                        user.restorePotionEffects();
                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+
                         if (timer != null)
-                            timer.setCancelled();
-                    }, target -> {
-                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-                        if (timer != null)
-                            timer.setCancelled();
+                            timer.cancel();
                     });
 
                     plugin.getProxy().getScheduler().runAsync(plugin, check);
@@ -623,12 +639,10 @@ public final class Manager {
      */
     public static void restartVersionChecker() {
         try {
-            AdvancedSimpleTimer timer = AdvancedSimpleTimer.getManager.getTimer(updater_id);
-            timer.setCancelled();
+            SimpleScheduler timer = new SourceSecondsTimer(plugin, updater_id);
+            timer.restart();
         } catch (Throwable ignored) {
         }
-
-        scheduleVersionCheck();
     }
 
     /**
@@ -636,12 +650,10 @@ public final class Manager {
      */
     public static void restartAlertSystem() {
         try {
-            AdvancedSimpleTimer timer = AdvancedSimpleTimer.getManager.getTimer(alert_id);
-            timer.setCancelled();
+            SimpleScheduler timer = new SourceSecondsTimer(plugin, alert_id);
+            timer.restart();
         } catch (Throwable ignored) {
         }
-
-        scheduleAlertSystem();
     }
 
     /**

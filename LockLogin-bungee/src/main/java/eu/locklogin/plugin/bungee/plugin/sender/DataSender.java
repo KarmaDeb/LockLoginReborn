@@ -14,19 +14,20 @@ package eu.locklogin.plugin.bungee.plugin.sender;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
+import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.logger;
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
@@ -55,7 +56,7 @@ public final class DataSender {
 
         try {
             ServerInfo server = player.getServer().getInfo();
-            if (ServerDataStorager.needsRegister(server.getName()) && ServerDataStorager.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+            if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 data_pool.add(new MessagePool(server, data));
             } else {
                 server.sendData(data.getChannel(), data.getData().toByteArray());
@@ -78,7 +79,7 @@ public final class DataSender {
         }
 
         try {
-            if (ServerDataStorager.needsRegister(server.getName()) && ServerDataStorager.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+            if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 data_pool.add(new MessagePool(server, data));
             } else {
                 server.sendData(data.getChannel(), data.getData().toByteArray());
@@ -113,7 +114,7 @@ public final class DataSender {
                     if (!server_sents.contains(info.getName().toLowerCase())) {
                         server_sents.add(info.getName().toLowerCase());
 
-                        if (!ServerDataStorager.needsRegister(info.getName()) && !ServerDataStorager.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
+                        if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 

@@ -19,11 +19,12 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.plugin.velocity.util.player.User;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.common.security.AllowedCommand;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.velocity.util.player.User;
 
 import static eu.locklogin.plugin.velocity.LockLogin.properties;
 
@@ -35,7 +36,7 @@ public final class ChatListener {
         User user = new User(player);
         ClientSession session = user.getSession();
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
             if (!session.isLogged() || !session.isTempLogged()) {
@@ -70,7 +71,7 @@ public final class ChatListener {
             User user = new User(player);
             ClientSession session = user.getSession();
 
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             if (session.isValid()) {
                 if (!session.isLogged()) {

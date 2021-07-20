@@ -14,14 +14,15 @@ package eu.locklogin.api.encryption;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.encryption.libraries.sha.LSSHA256;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.encryption.argon.Argon2Util;
 import eu.locklogin.api.encryption.libraries.bcrypt.BCryptLib;
+import eu.locklogin.api.encryption.libraries.sha.LSSHA256;
 import eu.locklogin.api.encryption.libraries.sha.SHA256;
 import eu.locklogin.api.encryption.libraries.sha.SHA512;
+import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
+import ml.karmaconfigs.api.common.Console;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -253,8 +254,10 @@ public final class CryptoUtil {
             key = new String(Base64.getDecoder().decode(key));
 
         SHA512 sha512 = new SHA512();
+        SHA512X sha512X = new SHA512X(password);
         Argon2Util argon2id = new Argon2Util(password);
 
+        SaltData data = new SaltData(key);
         switch (current_type) {
             case SHA512:
                 return sha512.auth(password, key);
@@ -272,7 +275,7 @@ public final class CryptoUtil {
             case ARGON2ID:
                 return argon2id.checkPassword(key, HashType.ARGON2ID);
             case UNKNOWN:
-                return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key);
+                return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
             case NONE:
             default:
                 Console.send("&cError while getting current token hash type: " + current_type.name());

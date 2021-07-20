@@ -11,10 +11,10 @@ package eu.locklogin.plugin.bungee.util.files.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.ArrayList;

@@ -14,17 +14,17 @@ package eu.locklogin.module.manager.bungee.manager;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.FileUtilities;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
-import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
-import eu.locklogin.api.common.utils.FileInfo;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -264,7 +264,7 @@ public class BungeeManager {
      */
     public static void update(final CommandSender issuer) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (update_issuer == null) {
             update_issuer = issuer;
@@ -321,7 +321,7 @@ public class BungeeManager {
      */
     private static void update(final File update_jar, final File current_jar) {
         CommandSender issuer = update_issuer;
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         RestartCache cache = new RestartCache();
         cache.storeUserData();

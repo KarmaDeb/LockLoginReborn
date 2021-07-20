@@ -14,19 +14,20 @@ package eu.locklogin.plugin.bungee.command;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
 import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
-import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.CommandSender;
@@ -36,7 +37,8 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.util.Set;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
+import static eu.locklogin.plugin.bungee.LockLogin.versionID;
 import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
@@ -59,7 +61,7 @@ public final class LockLoginCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof ProxiedPlayer) {
@@ -153,7 +155,7 @@ public final class LockLoginCommand extends Command {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {
@@ -259,7 +261,7 @@ public final class LockLoginCommand extends Command {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {

@@ -16,27 +16,27 @@ package eu.locklogin.plugin.velocity.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
-import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
-import eu.locklogin.plugin.velocity.util.player.SessionCheck;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
+import eu.locklogin.plugin.velocity.command.util.SystemCommand;
+import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.net.InetAddress;
@@ -65,7 +65,7 @@ public final class LoginCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -114,7 +114,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                         if (config.blockUnsafePasswords()) {
                                             manager.setPassword(null);
 
-                                            SessionCheck check = new SessionCheck(player, null, null);
+                                            SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                             server.getScheduler().buildTask(plugin, check).schedule();
                                             return;
                                         }

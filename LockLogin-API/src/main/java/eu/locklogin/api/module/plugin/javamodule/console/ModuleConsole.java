@@ -14,10 +14,10 @@ package eu.locklogin.api.module.plugin.javamodule.console;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.module.PluginModule;
 
 /**
  * LockLogin module console manager

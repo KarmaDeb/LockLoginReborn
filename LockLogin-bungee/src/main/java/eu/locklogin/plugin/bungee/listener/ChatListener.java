@@ -15,10 +15,11 @@ package eu.locklogin.plugin.bungee.listener;
  */
 
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.plugin.bungee.util.files.Message;
-import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -38,7 +39,7 @@ public final class ChatListener implements Listener {
             User user = new User(player);
             ClientSession session = user.getSession();
 
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             if (session.isValid()) {
                 if (!session.isLogged() || !session.isTempLogged()) {
@@ -76,7 +77,7 @@ public final class ChatListener implements Listener {
         User user = new User(player);
         ClientSession session = user.getSession();
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
             if (!session.isLogged()) {

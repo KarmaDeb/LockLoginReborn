@@ -14,10 +14,10 @@ package eu.locklogin.module.manager.bukkit.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.module.manager.bukkit.BukkitManager;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
+import eu.locklogin.module.manager.bukkit.BukkitManager;
 import org.bukkit.command.CommandSender;
 
 public class UpdateRequestListener implements EventListener {

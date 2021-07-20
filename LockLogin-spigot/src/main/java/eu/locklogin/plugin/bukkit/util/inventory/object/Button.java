@@ -1,6 +1,7 @@
 package eu.locklogin.plugin.bukkit.util.inventory.object;
 
-import eu.locklogin.plugin.bukkit.util.files.Message;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -288,7 +289,7 @@ public class Button {
         ItemMeta meta = next.getItemMeta();
         assert meta != null;
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         meta.setDisplayName(StringUtils.toColor(messages.nextButton()));
         next.setItemMeta(meta);
@@ -311,7 +312,7 @@ public class Button {
         ItemMeta meta = back.getItemMeta();
         assert meta != null;
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         meta.setDisplayName(StringUtils.toColor(messages.backButton()));
         back.setItemMeta(meta);

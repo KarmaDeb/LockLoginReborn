@@ -11,9 +11,9 @@ package eu.locklogin.plugin.bukkit.util.files.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import eu.locklogin.api.account.AccountID;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
-import eu.locklogin.api.account.AccountID;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;

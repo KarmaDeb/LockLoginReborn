@@ -24,16 +24,9 @@ import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-
 public final class Main extends JavaPlugin implements KarmaSource {
 
     private final KarmaBootstrap plugin;
-
-    private final static File lockloginFile = new File(Main.class.getProtectionDomain()
-            .getCodeSource()
-            .getLocation()
-            .getPath().replaceAll("%20", " "));
 
     public Main() throws Throwable {
         CurrentPlatform.setMain(Main.class);
@@ -64,6 +57,7 @@ public final class Main extends JavaPlugin implements KarmaSource {
     @Override
     public void onDisable() {
         plugin.disable();
+        stopTasks();
     }
 
     @Override

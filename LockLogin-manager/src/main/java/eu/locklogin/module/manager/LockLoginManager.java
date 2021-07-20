@@ -5,5 +5,5 @@ import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 
 public interface LockLoginManager {
 
-    PluginModule module = ModuleLoader.getByName("LockLoginManager");
+    PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile("LockLoginManager"));
 }

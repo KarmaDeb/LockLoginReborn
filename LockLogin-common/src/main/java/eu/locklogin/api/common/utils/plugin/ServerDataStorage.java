@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * LockLogin registered servers data storager
  */
-public final class ServerDataStorager {
+public final class ServerDataStorage {
 
     private static final Set<String> key_registered = new LinkedHashSet<>();
     private static final Set<String> proxy_registered = new LinkedHashSet<>();

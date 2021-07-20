@@ -14,16 +14,16 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.common.session.SessionKeeper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -69,6 +69,7 @@ public final class QuitListener implements Listener {
             user.removeLockLoginUser();
         }
 
+        user.removeSessionCheck();
         user.setTempSpectator(false);
 
         ClientVisor visor = new ClientVisor(player);
@@ -113,6 +114,7 @@ public final class QuitListener implements Listener {
             user.removeLockLoginUser();
         }
 
+        user.removeSessionCheck();
         user.setTempSpectator(false);
 
         ClientVisor visor = new ClientVisor(player);

@@ -185,6 +185,12 @@ IllegalName:
   - ""
   - "&cYour name can't contain:"
   - "{chars}"
+SimilarName:
+  - "{ServerName}"
+  - ""
+  - "&cYour name is similar to an"
+  - "&calready registered one"
+  - "&7{player}"
 UUIDFetchError:
   - "{ServerName}"
   - ""

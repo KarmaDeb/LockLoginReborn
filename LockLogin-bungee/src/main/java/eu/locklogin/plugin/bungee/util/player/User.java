@@ -11,25 +11,29 @@ package eu.locklogin.plugin.bungee.util.player;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.Message;
-import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.GoogleAuthFactory;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.Permission;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
-import eu.locklogin.api.common.security.GoogleAuthFactory;
-import eu.locklogin.api.common.utils.DataType;
+import ml.karmaconfigs.api.bungee.makeiteasy.BossMessage;
+import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
+import ml.karmaconfigs.api.common.boss.BossColor;
+import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ServerConnectRequest;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -37,7 +41,11 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
@@ -48,8 +56,9 @@ import static eu.locklogin.plugin.bungee.LockLogin.*;
 public final class User {
 
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
-    private static Map<UUID, ClientSession> sessions = new HashMap<>();
-    private final static Map<UUID, AccountManager> managers = new HashMap<>();
+    private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
+    private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
+    private final static Map<UUID, SessionCheck<ProxiedPlayer>> sessionChecks = new ConcurrentHashMap<>();
 
     private final AccountManager manager;
     private final ProxiedPlayer player;
@@ -147,7 +156,7 @@ public final class User {
     public final void send(final String message) {
         String[] parsed = parseMessage(message);
 
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (parsed.length > 1) {
             for (String str : parsed)
@@ -289,6 +298,22 @@ public final class User {
         DataSender.MessageData data = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player)
                 .addBoolData(false).build();
         DataSender.send(player, data);
+    }
+
+    /**
+     * Remove the user session check
+     */
+    public final void removeSessionCheck() {
+        sessionChecks.remove(player.getUniqueId());
+    }
+
+    /**
+     * Get the client session checker
+     *
+     * @return the client session checker
+     */
+    public final SessionCheck<ProxiedPlayer> getChecker() {
+        return sessionChecks.computeIfAbsent(player.getUniqueId(), (session) -> new SessionCheck<>(plugin, fromPlayer(player), new BossMessage(plugin, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN)));
     }
 
     /**

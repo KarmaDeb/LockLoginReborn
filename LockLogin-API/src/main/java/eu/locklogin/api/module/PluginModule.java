@@ -14,16 +14,16 @@ package eu.locklogin.api.module;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.javamodule.console.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
+import eu.locklogin.api.module.plugin.javamodule.console.ModuleConsole;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
@@ -32,17 +32,19 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
 /**
  * LockLogin plugin module
  */
+@SuppressWarnings("unused")
 public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
 
-    private static boolean timerAutoStart = true;
-    private static JarAppender appender;
+    private JarAppender appender;
 
     /**
      * Initialize the plugin module
@@ -51,14 +53,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * is already initialized
      */
     public PluginModule() throws IllegalAccessError {
-        if (ModuleLoader.isLoaded(name())) {
-            throw new IllegalAccessError("Tried to initialize module " + name() + " but it's already initialized!");
-        }
-    }
-
-    @SafeVarargs
-    public <T> PluginModule(final T... constructorParams) {
-        if (ModuleLoader.isLoaded(name())) {
+        if (ModuleLoader.isLoaded(this)) {
             throw new IllegalAccessError("Tried to initialize module " + name() + " but it's already initialized!");
         }
     }
@@ -102,24 +97,6 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
     }
 
     /**
-     * Set if the timers start automatically
-     *
-     * @param auto timer auto start
-     */
-    public final void setTimerAutoStart(final boolean auto) {
-        timerAutoStart = auto;
-    }
-
-    /**
-     * Get if the timer starts automatically
-     *
-     * @return if the timer starts automatically
-     */
-    public final boolean isTimerAutoStart() {
-        return timerAutoStart;
-    }
-
-    /**
      * Reload the module
      */
     public final void reload() {
@@ -152,14 +129,12 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     public final boolean unload() {
         try {
-            File modulesFolder = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin", "modules");
+            ModuleLoader loader = new ModuleLoader();
 
-            ModuleLoader loader = new ModuleLoader(modulesFolder);
-
-            PluginModule module = ModuleLoader.getByName(name());
+            PluginModule module = ModuleLoader.getByFile(getModule());
             if (module != null) {
-                if (ModuleLoader.isLoaded(module.name())) {
-                    loader.unloadModule(module.name());
+                if (ModuleLoader.isLoaded(module)) {
+                    loader.unloadModule(getModule());
                     return true;
                 }
             }
@@ -175,17 +150,13 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     public final boolean load() {
         try {
-            File modulesFolder = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin", "modules");
+            ModuleLoader loader = new ModuleLoader();
 
-            ModuleLoader loader = new ModuleLoader(modulesFolder);
+            PluginModule module = ModuleLoader.getByFile(getModule());
+            if (!ModuleLoader.isLoaded(module)) {
+                loader.loadModule(getModule(), loadRule());
 
-            PluginModule module = ModuleLoader.getByName(name());
-            if (module != null) {
-                if (!ModuleLoader.isLoaded(module.name())) {
-                    loader.loadModule(module.name());
-
-                    return true;
-                }
+                return true;
             }
         } catch (Throwable ignored) {}
 
@@ -495,6 +466,25 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
     }
 
     /**
+     * Get an internal resource from the module
+     *
+     * @param name the resource name
+     * @param dirs the resource location
+     * @return the resource stream
+     */
+    public final InputStream getResource(final String name, final String... dirs) {
+        if (dirs.length > 0) {
+            StringBuilder dirBuilder = new StringBuilder();
+            for (String str : dirs)
+                dirBuilder.append(str).append("/");
+
+            return getClass().getResourceAsStream(dirBuilder + name);
+        } else {
+            return getClass().getResourceAsStream("/" + name);
+        }
+    }
+
+    /**
      * Get the module data folder
      *
      * @return the module data folder
@@ -511,14 +501,6 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
     @Override
     public final Path getDataPath() {
         return getDataFolder().toPath();
-    }
-
-    /**
-     * Stop the running tasks
-     */
-    @Override
-    public final void stopTasks() {
-        KarmaSource.super.stopTasks();
     }
 
     /**
@@ -582,7 +564,27 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * @return the module scheduler
      */
     public final ModuleScheduler getScheduler() {
-        return new ModuleScheduler(this);
+        return new ModuleScheduler(this, 1, false);
+    }
+
+    /**
+     * Get the module scheduler
+     *
+     * @param time the scheduler time before ending
+     * @return the module scheduler
+     */
+    public final ModuleScheduler getScheduler(final Number time) {
+        return new ModuleScheduler(this, time, false);
+    }
+
+    /**
+     * Get the module scheduler
+     *
+     * @param time the scheduler time before restarting
+     * @return the module scheduler
+     */
+    public final ModuleScheduler getRepeatingScheduler(final Number time) {
+        return new ModuleScheduler(this, time, true);
     }
 
     /**

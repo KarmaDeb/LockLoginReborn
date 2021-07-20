@@ -7,14 +7,8 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.25</version>
+        <version>1.12.31</version>
     </parent>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <artifactId>LockLogin-common</artifactId>
     <packaging>jar</packaging>
@@ -40,13 +34,6 @@
             </resource>
         </resources>
     </build>
-
-    <repositories>
-        <repository>
-            <id>KarmaAPI-Repo</id>
-            <url>https://github.com/KarmaConfigs/Repos/raw/KarmaAPI/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>

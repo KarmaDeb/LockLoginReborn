@@ -17,17 +17,17 @@ package eu.locklogin.plugin.velocity;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.version.VersionID;
+import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.common.utils.FileInfo;
-import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
-import eu.locklogin.api.common.utils.plugin.Messages;
-import eu.locklogin.api.common.utils.version.VersionID;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
@@ -54,7 +54,7 @@ public interface LockLogin {
 
     Logger logger = new Logger(source);
 
-    Messages properties = new Messages();
+    PluginProperties properties = new PluginProperties();
 
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
@@ -67,7 +67,7 @@ public interface LockLogin {
             } catch (Throwable ignored) {
             }
 
-        return new ModuleLoader(modulesFolder);
+        return new ModuleLoader();
     }
 
     static ModulePlayer fromPlayer(final Player player) {

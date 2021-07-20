@@ -1,22 +1,21 @@
 package eu.locklogin.plugin.bukkit.util.inventory;
 
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
-import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
-import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -58,7 +57,7 @@ public final class PinInventory implements InventoryHolder {
         if (!inventories.containsKey(_player.getUniqueId())) {
             player = _player;
 
-            Message messages = new Message();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             String title = StringUtils.toColor(messages.pinTitle());
             if (title.length() > 32)
@@ -111,14 +110,11 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Open the inventory to the player
      */
-    public final void open() {
-        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 1, false).setAsync(false);
-        timer.addActionOnEnd(() -> {
-            timer.requestSync(() -> {
-                makeInventory();
-                player.openInventory(inventory);
-            });
-        }).start();
+    public final synchronized void open() {
+        trySync(() -> {
+            makeInventory();
+            player.openInventory(inventory);
+        });
     }
 
     /**
@@ -142,7 +138,7 @@ public final class PinInventory implements InventoryHolder {
         AccountManager manager = user.getManager();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
             if (!input.getOrDefault(player, "/-/-/-/").contains("/")) {

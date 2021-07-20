@@ -191,6 +191,16 @@ public abstract class PluginConfiguration {
     public abstract boolean checkNames();
 
     /**
+     * Get if the plugin should check if player
+     * names are similar, to avoid similar names
+     * in the server
+     *
+     * @return if the plugin should check also
+     * for similar player names
+     */
+    public abstract boolean enforceNameCheck();
+
+    /**
      * Get the current plugin language
      *
      * @return the plugin language

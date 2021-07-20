@@ -14,11 +14,12 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
+import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Console;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -46,7 +47,7 @@ public final class SetSpawnCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

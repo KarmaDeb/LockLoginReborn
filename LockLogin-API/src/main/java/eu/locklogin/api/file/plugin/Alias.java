@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.utils.plugin;
+package eu.locklogin.api.file.plugin;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -14,10 +14,10 @@ package eu.locklogin.api.common.utils.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountID;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.account.AccountID;
 
 import java.io.File;
 import java.nio.file.Files;

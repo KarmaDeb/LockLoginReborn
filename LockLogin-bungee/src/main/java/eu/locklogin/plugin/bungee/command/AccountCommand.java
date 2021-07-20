@@ -14,32 +14,31 @@ package eu.locklogin.plugin.bungee.command;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
-import eu.locklogin.plugin.bungee.util.files.Message;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.client.AccountData;
+import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
+import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
-import eu.locklogin.plugin.bungee.util.player.SessionCheck;
 import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.session.PersistentSessionData;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -72,7 +71,7 @@ public class AccountCommand extends Command {
     @Override
     public void execute(CommandSender sender, String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;
@@ -140,6 +139,7 @@ public class AccountCommand extends Command {
                         case "close":
                             switch (args.length) {
                                 case 1:
+                                    user.removeSessionCheck();
                                     session = user.getSession();
                                     session.setLogged(false);
                                     session.setPinLogged(false);
@@ -154,25 +154,7 @@ public class AccountCommand extends Command {
                                             plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
                                     }
 
-                                    AdvancedSimpleTimer tmp_timer = null;
-                                    if (!session.isCaptchaLogged()) {
-                                        tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
-                                        tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(messages.captcha(session.getCaptcha())))).start();
-                                    }
-
-                                    AdvancedSimpleTimer timer = tmp_timer;
-                                    SessionCheck check = new SessionCheck(player, target -> {
-                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-
-                                        if (timer != null)
-                                            timer.setCancelled();
-                                    }, target -> {
-                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-
-                                        if (timer != null)
-                                            timer.setCancelled();
-                                    });
-
+                                    SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                     plugin.getProxy().getScheduler().runAsync(plugin, check);
 
                                     user.send(messages.prefix() + messages.closed());
@@ -186,12 +168,13 @@ public class AccountCommand extends Command {
 
                                         if (tar_p != null && tar_p.isConnected()) {
                                             User target = new User(tar_p);
+                                            target.removeSessionCheck();
                                             session = target.getSession();
 
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
                                                 target.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
+                                                user.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
                                                 ModulePlugin.callEvent(issuer);
@@ -210,6 +193,7 @@ public class AccountCommand extends Command {
                                     break;
                             }
                             break;
+                        case "delete":
                         case "remove":
                             switch (args.length) {
                                 case 2:
@@ -221,13 +205,17 @@ public class AccountCommand extends Command {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.remove(manager.getName());
+                                            manager.setPassword("");
+                                            manager.setPin("");
+                                            manager.setGAuth("");
+                                            manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
                                             if (online != null) {
                                                 DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
                                                 User onlineUser = new User(online);
+                                                onlineUser.removeSessionCheck();
 
                                                 onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
                                             }
@@ -241,6 +229,7 @@ public class AccountCommand extends Command {
                                     }
                                     break;
                                 case 3:
+                                    user.removeSessionCheck();
                                     AccountManager manager = user.getManager();
                                     session = user.getSession();
 
@@ -269,25 +258,7 @@ public class AccountCommand extends Command {
                                                     plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
                                             }
 
-                                            AdvancedSimpleTimer tmp_timer = null;
-                                            if (!session.isCaptchaLogged()) {
-                                                tmp_timer = new AdvancedSimpleTimer(plugin, 1, true);
-                                                tmp_timer.addAction(() -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
-                                            }
-
-                                            AdvancedSimpleTimer timer = tmp_timer;
-                                            SessionCheck check = new SessionCheck(player, target -> {
-                                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-
-                                                if (timer != null)
-                                                    timer.setCancelled();
-                                            }, target -> {
-                                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-
-                                                if (timer != null)
-                                                    timer.setCancelled();
-                                            });
-
+                                            SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                             plugin.getProxy().getScheduler().runAsync(plugin, check);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
@@ -407,12 +378,13 @@ public class AccountCommand extends Command {
 
                             if (tar_p != null && tar_p.isConnected()) {
                                 User target = new User(tar_p);
+                                target.removeSessionCheck();
                                 ClientSession session = target.getSession();
 
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     target.performCommand("account close");
-                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(tar_p));
+                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
                                     ModulePlugin.callEvent(issuer);
@@ -443,6 +415,7 @@ public class AccountCommand extends Command {
                                 if (online != null) {
                                     DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
                                     User onlineUser = new User(online);
+                                    onlineUser.removeSessionCheck();
 
                                     onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
                                 }

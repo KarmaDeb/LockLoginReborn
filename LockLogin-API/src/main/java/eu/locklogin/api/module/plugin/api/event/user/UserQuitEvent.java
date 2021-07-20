@@ -14,8 +14,8 @@ package eu.locklogin.api.module.plugin.api.event.user;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.ModulePlayer;
 
 /**
  * This event is fired when a user quits

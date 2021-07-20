@@ -16,18 +16,19 @@ package eu.locklogin.plugin.velocity.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
-import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.utils.plugin.Alias;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
+import eu.locklogin.plugin.velocity.command.util.SystemCommand;
+import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.util.*;
 
@@ -53,7 +54,7 @@ public final class AliasCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

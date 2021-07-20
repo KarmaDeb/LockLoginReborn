@@ -1,10 +1,10 @@
 package eu.locklogin.api.encryption.libraries.argon;
 
+import eu.locklogin.api.encryption.libraries.argon.algorithm.FillMemory;
+import eu.locklogin.api.encryption.libraries.argon.algorithm.Finalize;
 import eu.locklogin.api.encryption.libraries.argon.algorithm.Initialize;
 import eu.locklogin.api.encryption.libraries.argon.model.Argon2Type;
 import eu.locklogin.api.encryption.libraries.argon.model.Instance;
-import eu.locklogin.api.encryption.libraries.argon.algorithm.FillMemory;
-import eu.locklogin.api.encryption.libraries.argon.algorithm.Finalize;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

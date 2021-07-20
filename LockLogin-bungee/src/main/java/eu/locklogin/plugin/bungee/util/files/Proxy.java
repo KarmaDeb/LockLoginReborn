@@ -14,11 +14,11 @@ package eu.locklogin.plugin.bungee.util.files;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.ProxyConfiguration;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.file.ProxyConfiguration;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 

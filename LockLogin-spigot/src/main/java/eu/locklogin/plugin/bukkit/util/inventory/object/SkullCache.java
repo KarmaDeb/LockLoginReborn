@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE

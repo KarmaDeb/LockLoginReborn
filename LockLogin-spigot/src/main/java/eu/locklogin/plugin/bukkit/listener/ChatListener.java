@@ -14,13 +14,13 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -40,7 +40,7 @@ public final class ChatListener implements Listener {
         ClientSession session = user.getSession();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
             if (!session.isLogged() || !session.isTempLogged()) {
@@ -76,7 +76,7 @@ public final class ChatListener implements Listener {
         ClientSession session = user.getSession();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
             if (!session.isLogged()) {

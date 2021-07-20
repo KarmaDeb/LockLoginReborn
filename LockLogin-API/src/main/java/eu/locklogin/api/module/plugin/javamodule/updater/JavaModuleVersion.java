@@ -160,11 +160,11 @@ public final class JavaModuleVersion {
                 }
             }, 0, 1000);
 
-            return result;
         } else {
             result.complete(updater_enabled);
-            return result;
         }
+
+        return result;
     }
 }
 

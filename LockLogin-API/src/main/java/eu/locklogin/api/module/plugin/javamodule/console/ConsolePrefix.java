@@ -14,8 +14,8 @@ package eu.locklogin.api.module.plugin.javamodule.console;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.module.PluginModule;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;

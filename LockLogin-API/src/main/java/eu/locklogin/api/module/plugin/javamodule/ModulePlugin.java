@@ -17,12 +17,12 @@ package eu.locklogin.api.module.plugin.javamodule;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.command.Command;
+import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
 import eu.locklogin.api.module.plugin.javamodule.console.ModuleConsole;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
-import eu.locklogin.api.module.plugin.api.command.CommandData;
-import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 
 import java.lang.reflect.Method;
@@ -116,7 +116,7 @@ public final class ModulePlugin {
                                             continue;
 
                                         if (!passed.contains(module)) {
-                                            PluginModule afterModule = ModuleLoader.getByName(methodHandler.after());
+                                            PluginModule afterModule = ModuleLoader.getByFile(ModuleLoader.getModuleFile(methodHandler.after()));
                                             if (afterModule != null) {
                                                 after.put(afterModule, method);
                                                 afterOwner.put(afterModule, module);

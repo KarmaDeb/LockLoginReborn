@@ -14,14 +14,14 @@ package eu.locklogin.plugin.velocity.util.files;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.encryption.HashType;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.*;
+import eu.locklogin.api.util.enums.Lang;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.encryption.HashType;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.util.enums.Lang;
 
 import java.io.File;
 
@@ -275,6 +275,19 @@ public final class Config extends PluginConfiguration {
     @Override
     public final boolean checkNames() {
         return cfg.getBoolean("CheckNames", true);
+    }
+
+    /**
+     * Get if the plugin should check if player
+     * names are similar, to avoid similar names
+     * in the server
+     *
+     * @return if the plugin should check also
+     * for similar player names
+     */
+    @Override
+    public boolean enforceNameCheck() {
+        return cfg.getBoolean("EnforceNameCheck", false);
     }
 
     @Override

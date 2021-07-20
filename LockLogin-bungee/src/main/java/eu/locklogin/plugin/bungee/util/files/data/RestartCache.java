@@ -11,15 +11,15 @@ package eu.locklogin.plugin.bungee.util.files.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
-import eu.locklogin.api.common.JarManager;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.lang.reflect.Field;

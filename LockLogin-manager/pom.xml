@@ -5,16 +5,11 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.25</version>
+        <version>1.12.31</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>LockLogin-manager</artifactId>
-
-    <properties>
-        <maven.compiler.source>15</maven.compiler.source>
-        <maven.compiler.target>15</maven.compiler.target>
-    </properties>
 
     <build>
         <finalName>LockLoginManager</finalName>

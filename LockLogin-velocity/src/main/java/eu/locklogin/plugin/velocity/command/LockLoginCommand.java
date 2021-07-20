@@ -16,18 +16,19 @@ package eu.locklogin.plugin.velocity.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.FileReloader;
-import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
-import ml.karmaconfigs.api.common.Console;
-import eu.locklogin.api.module.PluginModule;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.plugin.velocity.util.ServerLifeChecker;
-import eu.locklogin.plugin.velocity.util.files.Message;
+import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
@@ -38,7 +39,8 @@ import net.kyori.adventure.text.event.HoverEvent;
 
 import java.util.Set;
 
-import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.versionID;
 
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand extends BungeeLikeCommand {
@@ -60,7 +62,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         VersionUpdater updater = VersionUpdater.createNewBuilder(source).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
         if (sender instanceof Player) {
@@ -144,7 +146,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {
@@ -241,7 +243,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                 case 3:
                     if (args[0].equalsIgnoreCase("modules")) {
                         String moduleName = args[2];
-                        PluginModule module = ModuleLoader.getByName(moduleName);
+                        PluginModule module = ModuleLoader.getByFile(ModuleLoader.getModuleFile(moduleName));
 
                         if (module != null) {
                             switch (args[1].toLowerCase()) {

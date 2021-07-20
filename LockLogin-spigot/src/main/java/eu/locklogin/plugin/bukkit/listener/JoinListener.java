@@ -14,36 +14,40 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.security.client.*;
-import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
-import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
-import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
-import eu.locklogin.plugin.bukkit.util.player.SessionCheck;
-import eu.locklogin.plugin.bukkit.util.player.User;
-import me.clip.placeholderapi.PlaceholderAPI;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.client.AccountData;
+import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.common.security.client.Name;
+import eu.locklogin.api.common.security.client.ProxyCheck;
+import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.session.SessionKeeper;
-import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.UUIDGen;
+import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
+import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
+import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
+import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import me.clip.placeholderapi.PlaceholderAPI;
+import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -68,7 +72,7 @@ import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altInfo;
 public final class JoinListener implements Listener {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
-    private final static Message messages = new Message();
+    private final static PluginMessages messages = CurrentPlatform.getMessages();
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -156,12 +160,14 @@ public final class JoinListener implements Listener {
                             return;
                         }
 
-                        Name name = new Name(e.getName());
-                        name.check();
+                        if (config.checkNames()) {
+                            Name name = new Name(e.getName());
+                            name.check();
 
-                        if (name.notValid()) {
-                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
-                            return;
+                            if (name.notValid()) {
+                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
+                                return;
+                            }
                         }
 
                         Player player = plugin.getServer().getPlayer(tar_uuid);
@@ -180,6 +186,13 @@ public final class JoinListener implements Listener {
                         OfflineClient offline = new OfflineClient(e.getName());
                         AccountManager manager = offline.getAccount();
                         if (manager != null) {
+                            if (config.enforceNameCheck()) {
+                                if (!manager.getName().equals(e.getName())) {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.similarName(manager.getName())));
+                                    return;
+                                }
+                            }
+
                             LockedAccount account = new LockedAccount(manager.getUUID());
                             LockedData data = account.getData();
 
@@ -198,8 +211,8 @@ public final class JoinListener implements Listener {
                         //Allow the player at the eyes of the plugin
                         e.allow();
                     } else {
-                        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(plugin, 5, false);
-                        timer.addActionOnEnd(() -> {
+                        SimpleScheduler timer = new SourceSecondsTimer(plugin, 5, false);
+                        timer.endAction(() -> {
                             Player online = plugin.getServer().getPlayer(e.getUniqueId());
                             if (online != null && online.isOnline()) {
                                 User user = new User(online);
@@ -280,9 +293,6 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onPostLogin(PlayerJoinEvent e) {
-        String join_message = e.getJoinMessage();
-        e.setJoinMessage("");
-
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
@@ -313,18 +323,12 @@ public final class JoinListener implements Listener {
             if (!session.isCaptchaLogged())
                 bar.send(true);
 
-            SessionCheck check = new SessionCheck(player, target -> {
-                bar.setMessage("");
-                bar.stop();
-            }, target -> {
+            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                user.restorePotionEffects();
                 bar.setMessage("");
                 bar.stop();
             });
-
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-
-            if (join_message != null)
-                plugin.getServer().getOnlinePlayers().forEach(target -> target.sendMessage(StringUtils.toColor(join_message)));
         }
 
         if (player.getLocation().getBlock().getType().name().contains("PORTAL"))

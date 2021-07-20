@@ -186,6 +186,12 @@ IllegalName:
   - ""
   - "&cTu nombre no puede contener:"
   - "{chars}"
+SimilarName:
+  - "{ServerName}"
+  - ""
+  - "&cTu nombre es similar a"
+  - "&cuno ya registrado"
+  - "&7{player}"
 UUIDFetchError:
   - "{ServerName}"
   - ""

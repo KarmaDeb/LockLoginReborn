@@ -1,38 +1,42 @@
 package eu.locklogin.plugin.bukkit;
 
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.injector.dependencies.DependencyManager;
+import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.common.utils.dependencies.Dependency;
+import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.LoadRule;
-import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
+import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
+import eu.locklogin.api.module.plugin.client.ActionBarSender;
+import eu.locklogin.api.module.plugin.client.MessageSender;
+import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.client.TitleSender;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
+import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
+import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.StringUtils;
-import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
-import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
-import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
-import eu.locklogin.api.common.utils.dependencies.PluginDependency;
-import eu.locklogin.api.common.utils.dependencies.Dependency;
-import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
-import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.AllowedCommand;
-import eu.locklogin.api.common.utils.FileInfo;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -81,64 +85,70 @@ public class MainBootstrap implements KarmaBootstrap {
         STFetcher fetcher = new STFetcher();
         fetcher.check();
 
-        loader.getServer().getScheduler().runTaskAsynchronously(loader, () -> {
-            PrefixConsoleData prefixData = new PrefixConsoleData(loader);
-            prefixData.setOkPrefix("&aOk &e>> &7");
-            prefixData.setInfoPrefix("&7Info &e>> &7");
-            prefixData.setWarnPrefix("&6Warning &e>> &7");
-            prefixData.setGravPrefix("&4Grave &e>> &7");
+        PrefixConsoleData prefixData = new PrefixConsoleData(loader);
+        prefixData.setOkPrefix("&aOk &e>> &7");
+        prefixData.setInfoPrefix("&7Info &e>> &7");
+        prefixData.setWarnPrefix("&6Warning &e>> &7");
+        prefixData.setGravPrefix("&4Grave &e>> &7");
 
-            Consumer<MessageSender> onMessage = messageSender -> {
-                ModulePlayer modulePlayer = messageSender.getPlayer();
-                UUID id = modulePlayer.getUUID();
+        Consumer<MessageSender> onMessage = messageSender -> {
+            Player player = messageSender.getPlayer().getPlayer();
 
-                Player client = loader.getServer().getPlayer(id);
-                if (client != null)
-                    client.sendMessage(StringUtils.toColor(messageSender.getMessage()));
-            };
-            Consumer<MessageSender> onKick = messageSender -> {
-                ModulePlayer modulePlayer = messageSender.getPlayer();
-                UUID id = modulePlayer.getUUID();
+            if (player != null)
+                player.sendMessage(StringUtils.toColor(messageSender.getMessage()));
+        };
+        Consumer<ActionBarSender> onActionBar = messageSender -> {
+            Player player = messageSender.getPlayer().getPlayer();
 
-                Player client = loader.getServer().getPlayer(id);
-                if (client != null)
-                    client.kickPlayer(StringUtils.toColor(messageSender.getMessage()));
-            };
-            BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule;
-
-            try {
-                JarManager.changeField(ModulePlayer.class, "onChat", onMessage);
-                JarManager.changeField(ModulePlayer.class, "onKick", onKick);
-                JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
-            } catch (Throwable ignored) {
+            if (player != null) {
+                BarMessage bar = new BarMessage(player, messageSender.getMessage());
+                bar.send(false);
             }
+        };
+        Consumer<TitleSender> onTitle = messageSender -> {
+            Player player = messageSender.getPlayer().getPlayer();
 
-            prepareManager();
-
-            LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
-
-            File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-            Set<PluginModule> wait = new HashSet<>();
-            if (moduleFiles != null) {
-                for (File file : moduleFiles) {
-                    PluginModule module = ModuleLoader.getByName(file.getName().replace(".jar", ""));
-                    if (module != null) {
-                        if (module.loadRule().equals(LoadRule.PREPLUGIN)) {
-                            module.load();
-                        } else {
-                            wait.add(module);
-                        }
-                    }
-                }
+            if (player != null) {
+                TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
+                title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
             }
+        };
+        Consumer<MessageSender> onKick = messageSender -> {
+            Player player = messageSender.getPlayer().getPlayer();
+            User user = new User(player);
+            user.kick(messageSender.getMessage());
+        };
+        BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule;
 
-            PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
-            ModulePlugin.callEvent(event);
+        try {
+            JarManager.changeField(ModulePlayer.class, "onChat", onMessage);
+            JarManager.changeField(ModulePlayer.class, "onBar", onActionBar);
+            JarManager.changeField(ModulePlayer.class, "onTitle", onTitle);
+            JarManager.changeField(ModulePlayer.class, "onKick", onKick);
+            JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
+        } catch (Throwable ignored) {
+        }
 
-            AllowedCommand.scan();
+        prepareManager();
 
-            Manager.initialize(wait);
-        });
+        LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
+
+        File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
+        if (moduleFiles != null) {
+            List<File> files = Arrays.asList(moduleFiles);
+            Iterator<File> iterator = files.iterator();
+            do {
+                File file = iterator.next();
+                LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+            } while (iterator.hasNext());
+        }
+
+        PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
+        ModulePlugin.callEvent(event);
+
+        AllowedCommand.scan();
+
+        Manager.initialize();
     }
 
     @Override
@@ -148,9 +158,14 @@ public class MainBootstrap implements KarmaBootstrap {
 
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null) {
-            for (File module : moduleFiles) {
-                LockLogin.getLoader().unloadModule(module.getName());
-            }
+            List<File> files = Arrays.asList(moduleFiles);
+            Iterator<File> iterator = files.iterator();
+            do {
+                File file = iterator.next();
+                if (file.isFile()) {
+                    LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+                }
+            } while (iterator.hasNext());
         }
 
         Manager.terminate();

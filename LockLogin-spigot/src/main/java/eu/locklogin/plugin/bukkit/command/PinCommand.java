@@ -14,17 +14,17 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
-import eu.locklogin.plugin.bukkit.LockLogin;
-import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
-import eu.locklogin.plugin.bukkit.util.files.Message;
-import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
-import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.encryption.CryptoUtil;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.LockLogin;
+import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
+import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
+import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.Console;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,7 +49,7 @@ public class PinCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Message messages = new Message();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
         if (sender instanceof Player) {
             Player player = (Player) sender;

@@ -232,6 +232,14 @@ AccountsPerIp: 2
 #4 chars min, 16 max, only "_" allowed
 CheckNames: true
 
+#Toggle LockLogin similar name checker.
+#While this option is true, if a player
+#called someone joins the server, another
+#player won't be able to join as SomeOne,
+#soMeoNe and so on until the original
+#someone removes his account completely.
+EnforceNameCheck: false
+
 #Plugin language
 #For more info please visit:
 # https://rb.gy/jlmjah

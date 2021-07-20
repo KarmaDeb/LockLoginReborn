@@ -15,14 +15,14 @@ package eu.locklogin.api.util.platform;
  */
 
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.ProxyConfiguration;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
-import java.util.function.Consumer;
 
 /**
  * Current platform utilities
@@ -42,7 +42,9 @@ public final class CurrentPlatform {
 
     private static PluginConfiguration current_config;
     private static ProxyConfiguration current_proxy;
+    private static PluginMessages current_messages;
 
+    @SuppressWarnings("all")
     private static JarAppender current_appender;
 
     private static Runnable onDataContainerUpdate;
@@ -87,6 +89,15 @@ public final class CurrentPlatform {
     }
 
     /**
+     * Set the current plugin messages
+     *
+     * @param messages the current plugin messages
+     */
+    public static void setPluginMessages(final PluginMessages messages) {
+        current_messages = messages;
+    }
+
+    /**
      * Set the current KarmaAPI version
      *
      * @param version the current KarmaAPI version
@@ -117,15 +128,6 @@ public final class CurrentPlatform {
     }
 
     /**
-     * Get the current platform
-     *
-     * @return the current platform
-     */
-    public static Platform getPlatform() {
-        return platform;
-    }
-
-    /**
      * Set the current platform
      *
      * @param platform the platform
@@ -135,21 +137,48 @@ public final class CurrentPlatform {
     }
 
     /**
-     * Get the current main class
-     *
-     * @return the current main class
-     */
-    public static Class<?> getMain() {
-        return main;
-    }
-
-    /**
      * Set the current main class
      *
      * @param main the current main class
      */
     public static void setMain(final Class<?> main) {
         CurrentPlatform.main = main;
+    }
+
+    /**
+     * Set the current server online mode
+     *
+     * @param onlineMode the online mode
+     */
+    public static void setOnline(final boolean onlineMode) {
+        online = onlineMode;
+    }
+
+    /**
+     * Set the current module commands prefix
+     *
+     * @param modulePrefix the module commands prefix
+     */
+    public static void setPrefix(final String modulePrefix) {
+        prefix = modulePrefix;
+    }
+
+    /**
+     * Get the current platform
+     *
+     * @return the current platform
+     */
+    public static Platform getPlatform() {
+        return platform;
+    }
+
+    /**
+     * Get the current main class
+     *
+     * @return the current main class
+     */
+    public static Class<?> getMain() {
+        return main;
     }
 
     /**
@@ -264,6 +293,15 @@ public final class CurrentPlatform {
     }
 
     /**
+     * Get the current plugin messages
+     *
+     * @return the current plugin messages
+     */
+    public static PluginMessages getMessages() {
+        return current_messages;
+    }
+
+    /**
      * Check if the current server is online
      * mode
      *
@@ -271,15 +309,6 @@ public final class CurrentPlatform {
      */
     public static boolean isOnline() {
         return online;
-    }
-
-    /**
-     * Set the current server online mode
-     *
-     * @param onlineMode the online mode
-     */
-    public static void setOnline(final boolean onlineMode) {
-        online = onlineMode;
     }
 
     /**
@@ -307,14 +336,5 @@ public final class CurrentPlatform {
      */
     public static JarAppender getPluginAppender() {
         return current_appender;
-    }
-
-    /**
-     * Set the current module commands prefix
-     *
-     * @param modulePrefix the module commands prefix
-     */
-    public static void setPrefix(final String modulePrefix) {
-        prefix = modulePrefix;
     }
 }

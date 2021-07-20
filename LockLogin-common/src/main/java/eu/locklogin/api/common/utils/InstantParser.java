@@ -11,7 +11,7 @@ package eu.locklogin.api.common.utils;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.common.utils.plugin.Messages;
+import eu.locklogin.api.file.plugin.PluginProperties;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -129,7 +129,7 @@ public final class InstantParser {
      * @return the time ago
      */
     public final String getDifference(final Instant instance) {
-        Messages properties = new Messages();
+        PluginProperties properties = new PluginProperties();
 
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);

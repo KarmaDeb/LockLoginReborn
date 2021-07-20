@@ -1,18 +1,20 @@
 package eu.locklogin.plugin.velocity.util;
 
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.LockLogin;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorager;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.timer.AdvancedSimpleTimer;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.LockLogin.main;
+import static eu.locklogin.plugin.velocity.LockLogin.source;
 
 public final class ServerLifeChecker {
 
@@ -26,14 +28,14 @@ public final class ServerLifeChecker {
      * Start checking for the servers
      */
     public final void startCheck() {
-        AdvancedSimpleTimer timer = new AdvancedSimpleTimer(main, proxy.proxyLifeCheck(), true).setAsync(true);
-        timer.addAction(() -> {
+        SimpleScheduler timer = new SourceSecondsTimer(main, proxy.proxyLifeCheck(), true).multiThreading(true);
+        timer.secondChangeAction((second) -> {
             if (restart) {
                 restart = false;
-                timer.setCancelled();
+                timer.cancel();
                 startCheck();
             }
-        }).addActionOnEnd(() -> LockLogin.server.getAllServers().forEach(server -> {
+        }).restartAction(() -> LockLogin.server.getAllServers().forEach(server -> {
             ServerInfo info = server.getServerInfo();
             server.ping().whenComplete((result, error) -> {
                 if (error != null) {
@@ -42,12 +44,12 @@ public final class ServerLifeChecker {
                         if (fail_checks.getOrDefault(info.getName(), 0) >= 1) {
                             boolean changes = false;
 
-                            if (!ServerDataStorager.needsRegister(info.getName())) {
-                                ServerDataStorager.removeKeyRegistered(info.getName());
+                            if (!ServerDataStorage.needsRegister(info.getName())) {
+                                ServerDataStorage.removeKeyRegistered(info.getName());
                                 changes = true;
                             }
-                            if (!ServerDataStorager.needsProxyKnowledge(info.getName())) {
-                                ServerDataStorager.removeProxyRegistered(info.getName());
+                            if (!ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                                ServerDataStorage.removeProxyRegistered(info.getName());
                                 changes = true;
                             }
 

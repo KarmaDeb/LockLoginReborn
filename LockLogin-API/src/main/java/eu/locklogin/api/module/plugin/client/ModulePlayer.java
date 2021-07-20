@@ -40,6 +40,10 @@ public final class ModulePlayer implements Serializable {
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<MessageSender> onChat = null;
     @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<ActionBarSender> onBar = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<TitleSender> onTitle = null;
+    @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<MessageSender> onKick = null;
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<ModulePlayer> onLogin = null;
@@ -116,30 +120,25 @@ public final class ModulePlayer implements Serializable {
      */
     public final <T> T getPlayer() {
         try {
-            Class<?> lockLoginClass;
+            Class<?> serverClass;
             Field utilField;
-            Object plugin;
             Object server;
             Method getPlayer;
 
             switch (CurrentPlatform.getPlatform()) {
                 case BUKKIT:
-                    lockLoginClass = Class.forName("eu.locklogin.plugin.bukkit.LockLogin");
-                    utilField = lockLoginClass.getField("plugin");
-                    plugin = utilField.get(null);
-                    server = plugin.getClass().getMethod("getServer").invoke(plugin);
+                    serverClass = Class.forName("org.bukkit.Bukkit");
+                    server = serverClass.getMethod("getServer").invoke(serverClass);
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
                     return (T) getPlayer.invoke(server, uniqueId);
                 case BUNGEE:
-                    lockLoginClass = Class.forName("eu.locklogin.plugin.bungee.LockLogin");
-                    utilField = lockLoginClass.getField("plugin");
-                    plugin = utilField.get(null);
-                    server = plugin.getClass().getMethod("getProxy").invoke(plugin);
+                    serverClass = Class.forName("net.md_5.bungee.api.ProxyServer");
+                    server = serverClass.getMethod("getInstance").invoke(serverClass);
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
                     return (T) getPlayer.invoke(server, uniqueId);
                 case VELOCITY:
-                    lockLoginClass = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
-                    utilField = lockLoginClass.getField("server");
+                    serverClass = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
+                    utilField = serverClass.getField("server");
                     server = utilField.get(null);
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
                     Optional<T> player = (Optional<T>) getPlayer.invoke(server, uniqueId);
@@ -161,6 +160,44 @@ public final class ModulePlayer implements Serializable {
     public final void sendMessage(final String message) {
         if (onChat != null) {
             onChat.accept(new MessageSender(this, message));
+        }
+    }
+
+    /**
+     * Send an action bar to the player
+     *
+     * @param message the message to send
+     */
+    public final void sendActionBar(final String message) {
+        if (onBar != null) {
+            onBar.accept(new ActionBarSender(this, message));
+        }
+    }
+
+    /**
+     * Send a title to the player
+     *
+     * @param title the title
+     * @param subtitle the subtitle
+     */
+    public final void sendTitle(final String title, final String subtitle) {
+        if (onTitle != null) {
+            onTitle.accept(new TitleSender(this, title, subtitle, 2, 5, 2));
+        }
+    }
+
+    /**
+     * Send a title to the player
+     *
+     * @param title the title
+     * @param subtitle the subtitle
+     * @param fadeOut the time before showing the title
+     * @param keepIn the time to show the title
+     * @param hideIn the time that will take to hide the title
+     */
+    public final void sendTitle(final String title, final String subtitle, final int fadeOut, final int keepIn, final int hideIn) {
+        if (onTitle != null) {
+            onTitle.accept(new TitleSender(this, title, subtitle, fadeOut, keepIn, fadeOut));
         }
     }
 

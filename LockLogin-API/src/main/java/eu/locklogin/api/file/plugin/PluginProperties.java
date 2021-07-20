@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.utils.plugin;
+package eu.locklogin.api.file.plugin;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -28,7 +28,7 @@ import java.util.Properties;
 /**
  * LockLogin plugin messages
  */
-public final class Messages {
+public final class PluginProperties {
 
     /**
      * Get a plugin message property

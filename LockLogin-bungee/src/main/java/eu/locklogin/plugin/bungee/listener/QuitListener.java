@@ -14,14 +14,14 @@ package eu.locklogin.plugin.bungee.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.security.client.ClientData;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
-import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.plugin.bungee.util.player.User;
+import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.ServerKickEvent;
@@ -62,6 +62,8 @@ public final class QuitListener implements Listener {
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
+
+            user.removeSessionCheck();
         }
     }
 
@@ -91,6 +93,8 @@ public final class QuitListener implements Listener {
 
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
+
+            user.removeSessionCheck();
         }
     }
 }

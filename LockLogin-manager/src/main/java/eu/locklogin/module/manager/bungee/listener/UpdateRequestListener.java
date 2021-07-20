@@ -14,10 +14,10 @@ package eu.locklogin.module.manager.bungee.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.module.manager.bungee.manager.BungeeManager;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
+import eu.locklogin.module.manager.bungee.manager.BungeeManager;
 import net.md_5.bungee.api.CommandSender;
 
 public class UpdateRequestListener implements EventListener {
