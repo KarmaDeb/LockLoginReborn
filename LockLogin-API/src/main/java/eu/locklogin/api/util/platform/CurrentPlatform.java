@@ -23,6 +23,10 @@ import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Current platform utilities
@@ -50,6 +54,8 @@ public final class CurrentPlatform {
     private static Runnable onDataContainerUpdate;
 
     private static boolean online;
+
+    private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
 
     /**
      * Set the current account manager
@@ -161,6 +167,25 @@ public final class CurrentPlatform {
      */
     public static void setPrefix(final String modulePrefix) {
         prefix = modulePrefix;
+    }
+
+    /**
+     * Connect a new player to the plugin
+     *
+     * @param id the player uuid
+     * @param player the player
+     */
+    public static void connectPlayer(final UUID id, final Object player) {
+        players.put(id, player);
+    }
+
+    /**
+     * Disconnect a player from the plugin
+     *
+     * @param id the player uuid
+     */
+    public static void disconnectPlayer(final UUID id) {
+        players.remove(id);
     }
 
     /**
@@ -336,5 +361,14 @@ public final class CurrentPlatform {
      */
     public static JarAppender getPluginAppender() {
         return current_appender;
+    }
+
+    /**
+     * Get the connected players
+     *
+     * @return the connected players
+     */
+    public static Map<UUID, Object> getConnectedPlayers() {
+        return new HashMap<>(players);
     }
 }

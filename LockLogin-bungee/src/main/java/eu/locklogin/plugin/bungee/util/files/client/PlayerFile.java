@@ -382,14 +382,23 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final void setPassword(final String newPassword) {
-        if (newPassword != null) {
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).build();
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).build();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-            manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
-        } else {
-            manager.set("PASSWORD", "");
-        }
+        manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
+    }
+
+    /**
+     * Save the account password unsafely
+     *
+     * @param newPassword the account password
+     */
+    @Override
+    public void setUnsafePassword(final String newPassword) {
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).unsafe();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
     }
 
     /**
@@ -409,13 +418,19 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final void setGAuth(final String token) {
-        if (token != null) {
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).build();
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).build();
+        manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
+    }
 
-            manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
-        } else {
-            manager.set("TOKEN", "");
-        }
+    /**
+     * Save the account unsafe google auth token
+     *
+     * @param token the account google auth token
+     */
+    @Override
+    public void setUnsafeGAuth(final String token) {
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).unsafe();
+        manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
     }
 
     /**
@@ -450,14 +465,23 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final void setPin(final String pin) {
-        if (pin != null) {
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).build();
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).build();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-            manager.set("PIN", util.hash(config.pinEncryption(), true));
-        } else {
-            manager.set("PIN", "");
-        }
+        manager.set("PIN", util.hash(config.pinEncryption(), true));
+    }
+
+    /**
+     * Save the account unsafe pin
+     *
+     * @param pin the account pin
+     */
+    @Override
+    public void setUnsafePin(String pin) {
+        CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).unsafe();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        manager.set("PIN", util.hash(config.pinEncryption(), true));
     }
 
     /**

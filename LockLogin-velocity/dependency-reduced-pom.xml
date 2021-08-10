@@ -3,7 +3,7 @@
   <parent>
     <artifactId>LockLogin</artifactId>
     <groupId>eu.locklogin</groupId>
-    <version>1.12.31</version>
+    <version>1.12.32</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>LockLogin-velocity</artifactId>

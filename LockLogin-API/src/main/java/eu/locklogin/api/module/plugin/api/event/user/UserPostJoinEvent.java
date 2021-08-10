@@ -14,14 +14,13 @@ package eu.locklogin.api.module.plugin.api.event.user;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 
 /**
  * This event is fired when a player joins
  * the server at the eyes of the plugin.
  */
-public final class UserPostJoinEvent extends Event {
+public final class UserPostJoinEvent extends GenericJoinEvent {
 
     private final ModulePlayer modulePlayer;
     private final Object eventObj;
@@ -47,48 +46,6 @@ public final class UserPostJoinEvent extends Event {
      */
     public final ModulePlayer getPlayer() {
         return modulePlayer;
-    }
-
-    /**
-     * Get if the event is handleable or not
-     *
-     * @return if the event is handleable
-     */
-    @Override
-    public boolean isHandleable() {
-        return true;
-    }
-
-    /**
-     * Check if the event has been handled
-     *
-     * @return if the event has been handled
-     */
-    @Override
-    public final boolean isHandled() {
-        return handled;
-    }
-
-    /**
-     * Get the reason of why the event has been
-     * marked as handled
-     *
-     * @return the event handle reason
-     */
-    @Override
-    public String getHandleReason() {
-        return handleReason;
-    }
-
-    /**
-     * Set the event handle status
-     *
-     * @param status the handle status
-     * @param reason the handle reason
-     */
-    public final void setHandled(final boolean status, final String reason) {
-        handled = status;
-        handleReason = reason;
     }
 
     /**

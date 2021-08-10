@@ -88,10 +88,10 @@ public enum Dependency {
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.7/gson-2.8.7.jar", false);
             case MANAGER:
             default:
-                String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
+                String version = FileInfo.getManagerVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 return PluginDependency.of(prettyName(),
-                        "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar",
+                        "https://locklogin.eu/modules/manager/" + version + "/LockLoginManager.jar",
                         true,
                         true);
         }

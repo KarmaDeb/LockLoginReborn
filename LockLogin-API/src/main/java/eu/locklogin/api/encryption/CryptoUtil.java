@@ -23,6 +23,7 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -66,9 +67,17 @@ public final class CryptoUtil {
         if (!isBase64(target)) {
             switch (target) {
                 case PASSWORD:
-                    return Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
+                    if (!StringUtils.isNullOrEmpty(password)) {
+                        return Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
+                    }
+
+                    return "";
                 case TOKEN:
-                    return Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
+                    if (!StringUtils.isNullOrEmpty(token)) {
+                        return Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
+                    }
+
+                    return "";
                 default:
                     return "";
             }
@@ -87,9 +96,17 @@ public final class CryptoUtil {
         if (isBase64(target)) {
             switch (target) {
                 case PASSWORD:
-                    return new String(Base64.getDecoder().decode(password.getBytes(StandardCharsets.UTF_8)));
+                    if (!StringUtils.isNullOrEmpty(password)) {
+                        return new String(Base64.getDecoder().decode(password.getBytes(StandardCharsets.UTF_8)));
+                    }
+
+                    return "";
                 case TOKEN:
-                    return new String(Base64.getDecoder().decode(token.getBytes(StandardCharsets.UTF_8)));
+                    if (!StringUtils.isNullOrEmpty(token)) {
+                        return new String(Base64.getDecoder().decode(token.getBytes(StandardCharsets.UTF_8)));
+                    }
+
+                    return "";
                 default:
                     return "";
             }
@@ -106,7 +123,7 @@ public final class CryptoUtil {
      * @return the hashed password
      */
     public final String hash(final HashType type, final boolean encrypt) throws IllegalArgumentException {
-        if (!password.isEmpty()) {
+        if (!StringUtils.isNullOrEmpty(password)) {
             switch (type) {
                 case SHA512:
                     SHA512 sha512 = new SHA512();
@@ -151,7 +168,7 @@ public final class CryptoUtil {
             }
         }
 
-        return token;
+        return (!StringUtils.isNullOrEmpty(token) ? token : "");
     }
 
     /**
@@ -160,7 +177,7 @@ public final class CryptoUtil {
      * @return the token hash type
      */
     public final HashType getTokenHash() {
-        if (!token.replaceAll("\\s", "").isEmpty()) {
+        if (!StringUtils.isNullOrEmpty(token)) {
             String clean = fromBase64(CryptTarget.TOKEN);
 
             try {
@@ -247,40 +264,44 @@ public final class CryptoUtil {
      * @return if the password is correct
      */
     public final boolean validate() {
-        HashType current_type = getTokenHash();
+        if (!StringUtils.isNullOrEmpty(token) && !StringUtils.isNullOrEmpty(password)) {
+            HashType current_type = getTokenHash();
 
-        String key = token;
-        if (isBase64(key))
-            key = new String(Base64.getDecoder().decode(key));
+            String key = token;
+            if (isBase64(key))
+                key = new String(Base64.getDecoder().decode(key));
 
-        SHA512 sha512 = new SHA512();
-        SHA512X sha512X = new SHA512X(password);
-        Argon2Util argon2id = new Argon2Util(password);
+            SHA512 sha512 = new SHA512();
+            SHA512X sha512X = new SHA512X(password);
+            Argon2Util argon2id = new Argon2Util(password);
 
-        SaltData data = new SaltData(key);
-        switch (current_type) {
-            case SHA512:
-                return sha512.auth(password, key);
-            case SHA256:
-                SHA256 sha256 = new SHA256(password);
-                return sha256.check(key);
-            case LS_SHA256:
-                LSSHA256 lssha256 = new LSSHA256(password);
-                return lssha256.check(key);
-            case BCrypt:
-            case BCryptPHP:
-                return BCryptLib.checkpw(password, key.replaceFirst("2y", "2a"));
-            case ARGON2I:
-                return argon2id.checkPassword(key, HashType.ARGON2I);
-            case ARGON2ID:
-                return argon2id.checkPassword(key, HashType.ARGON2ID);
-            case UNKNOWN:
-                return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
-            case NONE:
-            default:
-                Console.send("&cError while getting current token hash type: " + current_type.name());
-                return false;
+            SaltData data = new SaltData(key);
+            switch (current_type) {
+                case SHA512:
+                    return sha512.auth(password, key);
+                case SHA256:
+                    SHA256 sha256 = new SHA256(password);
+                    return sha256.check(key);
+                case LS_SHA256:
+                    LSSHA256 lssha256 = new LSSHA256(password);
+                    return lssha256.check(key);
+                case BCrypt:
+                case BCryptPHP:
+                    return BCryptLib.checkpw(password, key.replaceFirst("2y", "2a"));
+                case ARGON2I:
+                    return argon2id.checkPassword(key, HashType.ARGON2I);
+                case ARGON2ID:
+                    return argon2id.checkPassword(key, HashType.ARGON2ID);
+                case UNKNOWN:
+                    return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
+                case NONE:
+                default:
+                    Console.send("&cError while getting current token hash type: " + current_type.name());
+                    return false;
+            }
         }
+
+        return false;
     }
 
     /**
@@ -292,9 +313,17 @@ public final class CryptoUtil {
     public final boolean isBase64(final CryptTarget target) {
         switch (target) {
             case PASSWORD:
-                return isBase64(password);
+                if (!StringUtils.isNullOrEmpty(password)) {
+                    return isBase64(password);
+                }
+
+                return false;
             case TOKEN:
-                return isBase64(token);
+                if (!StringUtils.isNullOrEmpty(token)) {
+                    return isBase64(token);
+                }
+
+                return false;
             default:
                 //As we always return "" for default value, true is
                 //our fail-true state
@@ -347,6 +376,15 @@ public final class CryptoUtil {
             } else {
                 return new CryptoUtil(password, token);
             }
+        }
+
+        /**
+         * Build the builder unsafely
+         *
+         * @return the crypto util instance
+         */
+        public CryptoUtil unsafe() {
+            return new CryptoUtil(password, token);
         }
     }
 

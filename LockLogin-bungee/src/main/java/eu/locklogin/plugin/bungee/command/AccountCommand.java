@@ -205,9 +205,9 @@ public class AccountCommand extends Command {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.setPassword("");
-                                            manager.setPin("");
-                                            manager.setGAuth("");
+                                            manager.setUnsafePassword("");
+                                            manager.setUnsafePin("");
+                                            manager.setUnsafeGAuth("");
                                             manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
@@ -400,6 +400,7 @@ public class AccountCommand extends Command {
                         }
                         break;
                     case "remove":
+                    case "delete":
                         if (args.length == 2) {
                             String target = args[1];
                             ProxiedPlayer online = plugin.getProxy().getPlayer(target);
@@ -408,19 +409,18 @@ public class AccountCommand extends Command {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.remove(config.serverName());
-
-                                Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                manager.setUnsafePassword("");
+                                manager.setUnsafePin("");
+                                manager.setUnsafeGAuth("");
+                                manager.set2FA(false);
 
                                 if (online != null) {
-                                    DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
                                     User onlineUser = new User(online);
-                                    onlineUser.removeSessionCheck();
-
                                     onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
                                 }
 
                                 account.lock(StringUtils.stripColor("{ServerName}"));
+                                Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
                             } else {
                                 Console.send(messages.prefix() + messages.neverPlayer(target));
                             }

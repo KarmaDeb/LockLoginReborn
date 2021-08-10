@@ -146,6 +146,16 @@ public class GlobalAccount extends AccountManager {
     }
 
     /**
+     * Save the account password unsafely
+     *
+     * @param password the account password
+     */
+    @Override
+    public void setUnsafePassword(String password) {
+        this.password = password;
+    }
+
+    /**
      * Get the account google auth token
      *
      * @return the account google auth
@@ -164,6 +174,16 @@ public class GlobalAccount extends AccountManager {
      */
     @Override
     public void setGAuth(String token) {
+        gauth = token;
+    }
+
+    /**
+     * Save the account unsafe google auth token
+     *
+     * @param token the account google auth token
+     */
+    @Override
+    public void setUnsafeGAuth(String token) {
         gauth = token;
     }
 
@@ -194,6 +214,16 @@ public class GlobalAccount extends AccountManager {
      */
     @Override
     public void setPin(String pin) {
+        this.pin = pin;
+    }
+
+    /**
+     * Save the account unsafe pin
+     *
+     * @param pin the account pin
+     */
+    @Override
+    public void setUnsafePin(String pin) {
         this.pin = pin;
     }
 

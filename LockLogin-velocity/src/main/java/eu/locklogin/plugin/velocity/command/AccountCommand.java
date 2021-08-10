@@ -210,9 +210,9 @@ public class AccountCommand extends BungeeLikeCommand {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.setPassword("");
-                                            manager.setPin("");
-                                            manager.setGAuth("");
+                                            manager.setUnsafePassword("");
+                                            manager.setUnsafePin("");
+                                            manager.setUnsafeGAuth("");
                                             manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
@@ -409,9 +409,9 @@ public class AccountCommand extends BungeeLikeCommand {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.setPassword("");
-                                manager.setPin("");
-                                manager.setGAuth("");
+                                manager.setUnsafePassword("");
+                                manager.setUnsafePin("");
+                                manager.setUnsafeGAuth("");
                                 manager.set2FA(false);
 
                                 Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));

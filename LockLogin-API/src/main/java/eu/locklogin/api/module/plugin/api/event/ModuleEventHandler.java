@@ -24,8 +24,8 @@ import java.lang.annotation.Target;
  * method to make the plugin know it's a event
  * handler method
  */
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ModuleEventHandler {
 
     Priority priority() default Priority.NORMAL;

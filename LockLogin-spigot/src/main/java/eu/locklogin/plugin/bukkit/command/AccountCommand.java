@@ -205,9 +205,9 @@ public class AccountCommand implements CommandExecutor {
                                         AccountManager manager = offline.getAccount();
                                         if (manager != null) {
                                             LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.setPassword("");
-                                            manager.setPin("");
-                                            manager.setGAuth("");
+                                            manager.setUnsafePassword("");
+                                            manager.setUnsafePin("");
+                                            manager.setUnsafeGAuth("");
                                             manager.set2FA(false);
 
                                             user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
@@ -371,9 +371,9 @@ public class AccountCommand implements CommandExecutor {
                             manager = offline.getAccount();
                             if (manager != null) {
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.setPassword("");
-                                manager.setPin("");
-                                manager.setGAuth("");
+                                manager.setUnsafePassword("");
+                                manager.setUnsafePin("");
+                                manager.setUnsafeGAuth("");
                                 manager.set2FA(false);
 
                                 if (online != null) {

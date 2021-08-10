@@ -15,7 +15,6 @@ package eu.locklogin.api.module.plugin.api.event.user;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.module.plugin.api.event.util.Event;
 
 import java.net.InetAddress;
 import java.util.UUID;
@@ -24,15 +23,12 @@ import java.util.UUID;
  * This event is fired when a player joins
  * the server at the eyes of the plugin.
  */
-public final class UserPreJoinEvent extends Event {
+public final class UserPreJoinEvent extends GenericJoinEvent {
 
     private final InetAddress address;
     private final UUID id;
     private final String player;
     private final Object eventObject;
-
-    private boolean handled = false;
-    private String handleReason = "";
 
     /**
      * Initialize event
@@ -84,48 +80,6 @@ public final class UserPreJoinEvent extends Event {
     @Override
     public final Object getEvent() {
         return eventObject;
-    }
-
-    /**
-     * Get if the event is handleable or not
-     *
-     * @return if the event is handleable
-     */
-    @Override
-    public boolean isHandleable() {
-        return true;
-    }
-
-    /**
-     * Check if the event has been handled
-     *
-     * @return if the event has been handled
-     */
-    @Override
-    public final boolean isHandled() {
-        return handled;
-    }
-
-    /**
-     * Get the reason of why the event has been
-     * marked as handled
-     *
-     * @return the event handle reason
-     */
-    @Override
-    public String getHandleReason() {
-        return handleReason;
-    }
-
-    /**
-     * Set the event handle status
-     *
-     * @param status the handle status
-     * @param reason the handle reason
-     */
-    public final void setHandled(final boolean status, final String reason) {
-        handled = status;
-        handleReason = reason;
     }
 }
 

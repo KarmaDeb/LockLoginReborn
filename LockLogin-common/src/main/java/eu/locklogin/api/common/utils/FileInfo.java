@@ -79,6 +79,33 @@ public interface FileInfo {
     }
 
     /**
+     * Get the specified manager module file version
+     *
+     * @param file the jar file
+     * @return the jar file LockLoginManager version
+     */
+    static String getManagerVersion(final File file) {
+        try {
+            JarFile jar = new JarFile(file);
+            JarEntry jar_info = jar.getJarEntry("global.yml");
+
+            if (jar_info != null) {
+                InputStream yml = jar.getInputStream(jar_info);
+
+                Yaml yaml = new Yaml();
+                Map<String, Object> values = yaml.load(yml);
+                yml.close();
+                return values.getOrDefault("project_manager", "v1").toString();
+            }
+            jar.close();
+
+            return "-1";
+        } catch (Throwable ex) {
+            return "-1";
+        }
+    }
+
+    /**
      * Get the specified jar file authors
      *
      * @param file the jar file
@@ -149,13 +176,13 @@ public interface FileInfo {
                 Yaml yaml = new Yaml();
                 Map<String, Object> values = yaml.load(yml);
                 yml.close();
-                return values.getOrDefault("project_karmaapi", "1.1.4").toString();
+                return values.getOrDefault("project_karmaapi", "1.3.1-SNAPSHOT").toString();
             }
             jar.close();
 
-            return "1.1.4";
+            return "1.3.1-SNAPSHOT";
         } catch (Throwable ex) {
-            return "1.1.4";
+            return "1.3.1-SNAPSHOT";
         }
     }
 

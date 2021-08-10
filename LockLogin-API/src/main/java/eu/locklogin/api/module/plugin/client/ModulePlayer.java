@@ -17,11 +17,13 @@ package eu.locklogin.api.module.plugin.client;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.Console;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -118,32 +120,66 @@ public final class ModulePlayer implements Serializable {
      * @param <T> the player type
      * @return the player object
      */
+    @SuppressWarnings("unchecked")
     public final <T> T getPlayer() {
+        Map<UUID, Object> connected = CurrentPlatform.getConnectedPlayers();
+        for (UUID uuid : connected.keySet()) {
+            if (uuid.equals(uniqueId)) {
+                Object player = connected.getOrDefault(uuid, null);
+                return (T) player;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the player object
+     *
+     * @return the player object
+     */
+    public final Object getPlayerObject() {
         try {
-            Class<?> serverClass;
-            Field utilField;
+            Class<?> locklogin;
+            Field pluginField;
             Object server;
             Method getPlayer;
 
             switch (CurrentPlatform.getPlatform()) {
                 case BUKKIT:
-                    serverClass = Class.forName("org.bukkit.Bukkit");
-                    server = serverClass.getMethod("getServer").invoke(serverClass);
+                    locklogin = Class.forName("eu.locklogin.plugin.bukkit.LockLogin");
+                    pluginField  = locklogin.getField("plugin");
+                    Object bukkitPlugin = pluginField.get(null);
+
+                    server = bukkitPlugin.getClass().getMethod("getServer").invoke(bukkitPlugin);
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
-                    return (T) getPlayer.invoke(server, uniqueId);
+
+                    return getPlayer.invoke(server, uniqueId);
                 case BUNGEE:
-                    serverClass = Class.forName("net.md_5.bungee.api.ProxyServer");
-                    server = serverClass.getMethod("getInstance").invoke(serverClass);
+                    locklogin = Class.forName("eu.locklogin.plugin.bungee.LockLogin");
+                    pluginField  = locklogin.getField("plugin");
+                    Object proxyPlugin = pluginField.get(null);
+
+                    server = proxyPlugin.getClass().getMethod("getProxy").invoke(proxyPlugin);
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
-                    return (T) getPlayer.invoke(server, uniqueId);
+
+                    return getPlayer.invoke(server, uniqueId);
                 case VELOCITY:
-                    serverClass = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
-                    utilField = serverClass.getField("server");
-                    server = utilField.get(null);
+                    locklogin = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
+                    server = locklogin.getField("server");
+
                     getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
-                    Optional<T> player = (Optional<T>) getPlayer.invoke(server, uniqueId);
-                    return player.get();
+                    Object result = getPlayer.invoke(server, uniqueId);
+
+                    if (result instanceof Optional) {
+                        Optional<?> optional = (Optional<?>) result;
+                        return optional.orElse(null);
+                    } else {
+                        Console.send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
+                        return null;
+                    }
                 default:
+                    Console.send("&cTried to get player object from LockLoginAPI with an unknown server platform");
                     return null;
             }
         } catch (Throwable ex) {
