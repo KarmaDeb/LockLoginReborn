@@ -1,8 +1,9 @@
 package eu.locklogin.api.common.web;
 
 import com.google.gson.*;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -43,9 +44,9 @@ public final class STFetcher {
                     }
                 }, wait);
 
-                String check_url = "https://locklogin.eu/stf/";
-                URL url = new URL(check_url);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                URL check_url = URLUtils.getOrBackup("https://locklogin.eu/stf/",
+                        "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json");
+                HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
                 connection.setRequestMethod("GET");
 
                 int response = connection.getResponseCode();
@@ -59,7 +60,7 @@ public final class STFetcher {
                     for (JsonElement element : array) special_thanks.add(element.getAsString());
                 } else {
                     can_check = true;
-                    Console.send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
+                    APISource.getConsole().send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
                 }
             } catch (Throwable ex) {
                 can_check = true;

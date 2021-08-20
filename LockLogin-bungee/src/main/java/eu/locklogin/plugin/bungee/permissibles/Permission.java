@@ -20,8 +20,7 @@ import java.util.Map;
 public final class Permission {
 
     private final Map<String, Boolean> nodes_child = new HashMap<>();
-    private final Map<String, Boolean> nodes_parent = new HashMap<>();
-    private String node;
+    private final String node;
 
     /**
      * Initialize the plugin permission
@@ -42,8 +41,6 @@ public final class Permission {
     public final void addNode(final @NotNull String subNode, final boolean inheritance, final boolean child) {
         if (child) {
             nodes_child.put(subNode, inheritance);
-        } else {
-            nodes_parent.put(subNode, inheritance);
         }
     }
 

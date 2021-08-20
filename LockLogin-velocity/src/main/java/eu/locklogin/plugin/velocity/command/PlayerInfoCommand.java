@@ -35,15 +35,13 @@ import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 
 import java.time.Instant;
 import java.util.*;
 
-import static eu.locklogin.plugin.velocity.LockLogin.properties;
-import static eu.locklogin.plugin.velocity.LockLogin.server;
+import static eu.locklogin.plugin.velocity.LockLogin.*;
 
 @SystemCommand(command = "playerinfo")
 public final class PlayerInfoCommand extends BungeeLikeCommand {
@@ -271,7 +269,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 

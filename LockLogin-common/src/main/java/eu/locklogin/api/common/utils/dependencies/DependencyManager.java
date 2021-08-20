@@ -23,7 +23,7 @@
  *  SOFTWARE.
  */
 
-package eu.locklogin.api.common.injector.dependencies;
+package eu.locklogin.api.common.utils.dependencies;
 
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
@@ -70,7 +70,12 @@ public class DependencyManager {
         }
     }
 
-    private void loadDependency(Dependency dependency) throws Exception {
+    /**
+     * Load the dependency
+     *
+     * @param dependency the dependency
+     */
+    private void loadDependency(Dependency dependency) {
         if (loaded.containsKey(dependency)) {
             return;
         }

@@ -17,10 +17,9 @@ package eu.locklogin.api.module.plugin.client;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.Map;
@@ -140,46 +139,37 @@ public final class ModulePlayer implements Serializable {
      */
     public final Object getPlayerObject() {
         try {
-            Class<?> locklogin;
-            Field pluginField;
-            Object server;
-            Method getPlayer;
-
             switch (CurrentPlatform.getPlatform()) {
                 case BUKKIT:
-                    locklogin = Class.forName("eu.locklogin.plugin.bukkit.LockLogin");
-                    pluginField  = locklogin.getField("plugin");
-                    Object bukkitPlugin = pluginField.get(null);
+                    Class<?> bukkit = Class.forName("org.bukkit.Bukkit");
 
-                    server = bukkitPlugin.getClass().getMethod("getServer").invoke(bukkitPlugin);
-                    getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
+                    Object bukkitServer = bukkit.getMethod("getServer").invoke(bukkit);
+                    Method getPlayer = bukkitServer.getClass().getMethod("getPlayer", UUID.class);
 
-                    return getPlayer.invoke(server, uniqueId);
+                    return getPlayer.invoke(bukkitServer, uniqueId);
                 case BUNGEE:
-                    locklogin = Class.forName("eu.locklogin.plugin.bungee.LockLogin");
-                    pluginField  = locklogin.getField("plugin");
-                    Object proxyPlugin = pluginField.get(null);
+                    Class<?> proxy = Class.forName("net.md_5.bungee.api.ProxyServer");
 
-                    server = proxyPlugin.getClass().getMethod("getProxy").invoke(proxyPlugin);
-                    getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
+                    Object bungeeServer = proxy.getMethod("getInstance").invoke(proxy);
+                    getPlayer = bungeeServer.getClass().getMethod("getPlayer", UUID.class);
 
-                    return getPlayer.invoke(server, uniqueId);
+                    return getPlayer.invoke(bungeeServer, uniqueId);
                 case VELOCITY:
-                    locklogin = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
-                    server = locklogin.getField("server");
+                    Class<?> locklogin = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
+                    Object velocityServer = locklogin.getField("server").get(null);
 
-                    getPlayer = server.getClass().getMethod("getPlayer", UUID.class);
-                    Object result = getPlayer.invoke(server, uniqueId);
+                    getPlayer = velocityServer.getClass().getMethod("getPlayer", UUID.class);
+                    Object result = getPlayer.invoke(velocityServer, uniqueId);
 
                     if (result instanceof Optional) {
                         Optional<?> optional = (Optional<?>) result;
                         return optional.orElse(null);
                     } else {
-                        Console.send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
+                        APISource.getConsole().send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
                         return null;
                     }
                 default:
-                    Console.send("&cTried to get player object from LockLoginAPI with an unknown server platform");
+                    APISource.getConsole().send("&cTried to get player object from LockLoginAPI with an unknown server platform");
                     return null;
             }
         } catch (Throwable ex) {

@@ -1,9 +1,8 @@
 package eu.locklogin.plugin.bukkit.util.inventory.object;
 
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 
 /**
  * Private GSA code
@@ -37,7 +36,7 @@ public final class PropertyManager {
                         try {
                             property = Class.forName("com.velocitypowered.api.util.GameProfile$Property");
                         } catch (Exception exce) {
-                            Console.send(plugin, "Could not find any skin provider", Level.INFO);
+                            console.send("Could not find any skin provider", Level.INFO);
                         }
                     }
                 }

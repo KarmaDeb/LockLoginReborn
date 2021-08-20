@@ -22,7 +22,6 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -30,6 +29,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.account;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.locations;
@@ -142,14 +142,14 @@ public final class LastLocationCommand implements CommandExecutor {
                     switch (action.toLowerCase()) {
                         case "remove":
                             LastLocation.removeAll();
-                            Console.send(messages.prefix() + messages.locationsReset());
+                            console.send(messages.prefix() + messages.locationsReset());
                             break;
                         case "fix":
                             LastLocation.fixAll();
-                            Console.send(messages.prefix() + messages.locationsFixed());
+                            console.send(messages.prefix() + messages.locationsFixed());
                             break;
                         default:
-                            Console.send(messages.prefix() + messages.resetLocUsage());
+                            console.send(messages.prefix() + messages.resetLocUsage());
                             break;
                     }
                 } else {
@@ -162,22 +162,22 @@ public final class LastLocationCommand implements CommandExecutor {
                         switch (action.toLowerCase()) {
                             case "remove":
                                 location.remove();
-                                Console.send(messages.prefix() + messages.locationReset(target));
+                                console.send(messages.prefix() + messages.locationReset(target));
                                 break;
                             case "fix":
                                 location.fix();
-                                Console.send(messages.prefix() + messages.locationFixed(target));
+                                console.send(messages.prefix() + messages.locationFixed(target));
                                 break;
                             default:
-                                Console.send(messages.prefix() + messages.resetLocUsage());
+                                console.send(messages.prefix() + messages.resetLocUsage());
                                 break;
                         }
                     } else {
-                        Console.send(messages.prefix() + messages.neverPlayer(target));
+                        console.send(messages.prefix() + messages.neverPlayer(target));
                     }
                 }
             } else {
-                Console.send(messages.prefix() + messages.resetLocUsage());
+                console.send(messages.prefix() + messages.resetLocUsage());
             }
         }
 

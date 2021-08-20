@@ -43,7 +43,7 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.timer.AsyncScheduler;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -67,7 +67,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altInfo;
+import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altAlert;
 
 public final class JoinListener implements Listener {
 
@@ -115,14 +115,14 @@ public final class JoinListener implements Listener {
                                 int amount = data.getAlts().size();
                                 if (amount > 2) {
                                     for (Player online : plugin.getServer().getOnlinePlayers()) {
-                                        if (online.hasPermission(altInfo())) {
+                                        if (online.hasPermission(altAlert())) {
                                             User user = new User(online);
                                             user.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
                                         }
                                     }
 
                                     if (!messages.altFound(e.getName(), amount).replaceAll("\\s", "").isEmpty())
-                                        Console.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
+                                        console.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
                                 }
                             } else {
                                 e.disallow(PlayerPreLoginEvent.Result.KICK_FULL, StringUtils.toColor(messages.maxRegisters()));
@@ -263,13 +263,6 @@ public final class JoinListener implements Listener {
                 if (!config.captchaOptions().isEnabled())
                     session.setCaptchaLogged(true);
 
-                if (config.enableSpawn()) {
-                    Spawn spawn = new Spawn(player.getWorld());
-                    spawn.load();
-
-                    spawn.teleport(player);
-                }
-
                 //Allow the player at the eyes of the plugin
                 e.allow();
 
@@ -308,10 +301,12 @@ public final class JoinListener implements Listener {
             user.savePotionEffects();
             user.applySessionEffects();
 
-            if (config.clearChat()) {
-                for (int i = 0; i < 150; i++)
-                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> player.sendMessage(""));
-            }
+            new AsyncScheduler().addTask(() -> {
+                if (config.clearChat()) {
+                    for (int i = 0; i < 150; i++)
+                        player.sendMessage("");
+                }
+            });
 
             String barMessage = messages.captcha(session.getCaptcha());
             try {
@@ -325,6 +320,7 @@ public final class JoinListener implements Listener {
 
             SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
                 user.restorePotionEffects();
+
                 bar.setMessage("");
                 bar.stop();
             });
@@ -340,6 +336,13 @@ public final class JoinListener implements Listener {
                 visor.vanish();
             }
             visor.checkVanish();
+        }
+
+        if (config.enableSpawn()) {
+            Spawn spawn = new Spawn(player.getWorld());
+            spawn.load();
+
+            spawn.teleport(player);
         }
 
         if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {

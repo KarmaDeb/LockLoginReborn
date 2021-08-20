@@ -22,9 +22,10 @@ import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
@@ -35,10 +36,11 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,135 +52,153 @@ public final class MessageListener {
     @Subscribe(order = PostOrder.FIRST)
     public final void onMessageReceive(PluginMessageEvent e) {
         if (e.getResult().isAllowed()) {
-            PluginMessages messages = CurrentPlatform.getMessages();
-            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+            try {
+                String identifier = e.getIdentifier().getId();
+                if (identifier.equalsIgnoreCase("ll:access") || identifier.equalsIgnoreCase("ll:plugin") || identifier.equalsIgnoreCase("ll:account")) {
 
-            ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
+                    PluginMessages messages = CurrentPlatform.getMessages();
+                    ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
-            String id = input.readUTF();
+                    ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
 
-            switch (e.getIdentifier().getId().toLowerCase()) {
-                case "ll:account":
-                    if (sub == DataType.PIN) {
-
-                        UUID uuid = UUID.fromString(id);
-                        String pin = input.readUTF();
-
-                        Optional<Player> tmp_player = server.getPlayer(uuid);
-                        if (tmp_player.isPresent() && tmp_player.get().isActive()) {
-                            Player player = tmp_player.get();
-                            User user = new User(player);
-                            ClientSession session = user.getSession();
-                            AccountManager manager = user.getManager();
-
-                            if (session.isValid()) {
-                                if (!manager.hasPin() || CryptoUtil.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
-                                    DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
-
-                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                            (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
-                                            (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                    ModulePlugin.callEvent(event);
-
-                                    user.send(messages.prefix() + event.getAuthMessage());
-                                    session.setPinLogged(true);
-
-                                    user.checkServer(0);
-                                } else {
-                                    DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
-
-                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
-                                    ModulePlugin.callEvent(event);
-
-                                    user.send(messages.prefix() + event.getAuthMessage());
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case "ll:plugin":
-                    switch (sub) {
-                        case PLAYER:
-                            if (!id.equalsIgnoreCase(proxy.getProxyID().toString())) {
-                                ModulePlayer modulePlayer = StringUtils.loadUnsafe(input.readUTF());
-                                if (modulePlayer != null) {
-                                    AccountManager manager = modulePlayer.getAccount();
-
-                                    if (manager != null) {
-                                        AccountManager newManager = new PlayerFile(manager.getUUID());
-
-                                        if (!newManager.exists())
-                                            newManager.create();
-
-                                        newManager.setName(manager.getName());
-                                        newManager.setPassword(manager.getPassword());
-                                        newManager.setPin(manager.getPin());
-                                        newManager.set2FA(manager.has2FA());
-                                        newManager.setGAuth(manager.getGAuth());
-                                    }
-                                }
-                            }
-                            break;
-                        case MODULE:
-                            int byteLength = input.readInt();
-                            byte[] bytes = new byte[byteLength];
-
-                            int i = 0;
-                            while (i < byteLength) {
-                                bytes[i] = input.readByte();
-                                i++;
-                            }
-
-                            ModuleMessageService.listenMessage(id, bytes);
-                            break;
-                    }
-                case "ll:access":
+                    String token = input.readUTF();
                     String name = input.readUTF();
 
-                    switch (sub) {
-                        case KEY:
-                            if (!id.equalsIgnoreCase("invalid")) {
-                                //As the key should be global, when a proxy registers a key, all the proxies should know that
-                                Console.send(source, "Registered proxy key into server {0}", Level.INFO, name);
-                                ServerDataStorage.setKeyRegistered(name);
-                            } else {
-                                Console.send(source, "Failed to set proxy key in {0}", Level.GRAVE, name);
-                                e.setResult(PluginMessageEvent.ForwardResult.handled());
-                            }
-                            break;
-                        case REGISTER:
-                            if (!id.equalsIgnoreCase("invalid")) {
-                                //Only listen if the proxy id is this one
-                                if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
-                                    Console.send(source, "Registered this proxy into server {0}", Level.INFO, name);
-                                    ServerDataStorage.setProxyRegistered(name);
-                                    DataSender.updateDataPool(name);
-                                } else {
-                                    e.setResult(PluginMessageEvent.ForwardResult.handled());
-                                }
-                            } else {
-                                Console.send(source, "Failed to register this proxy in {0}", Level.GRAVE, name);
-                                e.setResult(PluginMessageEvent.ForwardResult.handled());
-                            }
-                            break;
-                        case REMOVE:
-                            if (!id.equalsIgnoreCase("invalid")) {
-                                //Only listen if the proxy id is this one
-                                if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
-                                    Console.send(source, "Removed ths proxy from server {0}", Level.INFO, name);
-                                    ServerDataStorage.removeProxyRegistered(name);
-                                } else {
-                                    ServerDataStorage.removeKeyRegistered(name);
-                                    e.setResult(PluginMessageEvent.ForwardResult.handled());
-                                }
-                            } else {
-                                Console.send(source, "Failed to remove this proxy from server {0}", Level.GRAVE, name);
-                                e.setResult(PluginMessageEvent.ForwardResult.handled());
-                            }
-                            break;
+                    boolean canRead = true;
+                    if (!identifier.equalsIgnoreCase("ll:access")) {
+                        canRead = TokenGen.matches(token, name, proxy.proxyKey());
                     }
-                    break;
+
+                    if (canRead) {
+                        DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
+                        String id = input.readUTF();
+                        switch (e.getIdentifier().getId().toLowerCase()) {
+                            case "ll:account":
+                                if (sub == DataType.PIN) {
+
+                                    UUID uuid = UUID.fromString(id);
+                                    String pin = input.readUTF();
+
+                                    Optional<Player> tmp_player = server.getPlayer(uuid);
+                                    if (tmp_player.isPresent() && tmp_player.get().isActive()) {
+                                        Player player = tmp_player.get();
+                                        User user = new User(player);
+                                        ClientSession session = user.getSession();
+                                        AccountManager manager = user.getManager();
+
+                                        if (session.isValid()) {
+                                            if (!manager.hasPin() || CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
+
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
+                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
+                                                ModulePlugin.callEvent(event);
+
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                session.setPinLogged(true);
+
+                                                user.checkServer(0);
+                                            } else {
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
+
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
+                                                ModulePlugin.callEvent(event);
+
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case "ll:plugin":
+                                switch (sub) {
+                                    case PLAYER:
+                                        if (!id.equalsIgnoreCase(proxy.getProxyID().toString())) {
+                                            ModulePlayer modulePlayer = StringUtils.loadUnsafe(input.readUTF());
+                                            if (modulePlayer != null) {
+                                                AccountManager manager = modulePlayer.getAccount();
+
+                                                if (manager != null) {
+                                                    AccountManager newManager = new PlayerFile(manager.getUUID());
+
+                                                    if (!newManager.exists())
+                                                        newManager.create();
+
+                                                    newManager.setName(manager.getName());
+                                                    newManager.setPassword(manager.getPassword());
+                                                    newManager.setPin(manager.getPin());
+                                                    newManager.set2FA(manager.has2FA());
+                                                    newManager.setGAuth(manager.getGAuth());
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    case MODULE:
+                                        int byteLength = input.readInt();
+                                        byte[] bytes = new byte[byteLength];
+
+                                        int i = 0;
+                                        while (i < byteLength) {
+                                            bytes[i] = input.readByte();
+                                            i++;
+                                        }
+
+                                        ModuleMessageService.listenMessage(id, bytes);
+                                        break;
+                                }
+                            case "ll:access":
+                                switch (sub) {
+                                    case KEY:
+                                        if (!id.equalsIgnoreCase("invalid")) {
+                                            //As the key should be global, when a proxy registers a key, all the proxies should know that
+                                            console.send("Registered proxy key into server {0}", Level.INFO, name);
+                                            ServerDataStorage.setKeyRegistered(name);
+                                        } else {
+                                            console.send("Failed to set proxy key in {0}", Level.GRAVE, name);
+                                            e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                        }
+                                        break;
+                                    case REGISTER:
+                                        if (!id.equalsIgnoreCase("invalid")) {
+                                            //Only listen if the proxy id is this one
+                                            if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
+                                                console.send("Registered this proxy into server {0}", Level.INFO, name);
+                                                ServerDataStorage.setProxyRegistered(name);
+                                                DataSender.updateDataPool(name);
+
+                                                TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
+                                            } else {
+                                                e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                            }
+                                        } else {
+                                            console.send("Failed to register this proxy in {0}", Level.GRAVE, name);
+                                            e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                        }
+                                        break;
+                                    case REMOVE:
+                                        if (!id.equalsIgnoreCase("invalid")) {
+                                            //Only listen if the proxy id is this one
+                                            if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
+                                                console.send("Removed ths proxy from server {0}", Level.INFO, name);
+                                                ServerDataStorage.removeProxyRegistered(name);
+                                            } else {
+                                                ServerDataStorage.removeKeyRegistered(name);
+                                                e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                            }
+                                        } else {
+                                            console.send("Failed to remove this proxy from server {0}", Level.GRAVE, name);
+                                            e.setResult(PluginMessageEvent.ForwardResult.handled());
+                                        }
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                logger.scheduleLog(Level.GRAVE, ex);
+                logger.scheduleLog(Level.INFO, "Failed to read message from server");
             }
         }
     }

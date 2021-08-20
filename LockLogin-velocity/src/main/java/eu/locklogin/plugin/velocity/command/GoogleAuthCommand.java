@@ -20,7 +20,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.GoogleAuthFactory;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -32,7 +32,6 @@ import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -41,8 +40,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 
 import java.util.List;
 
-import static eu.locklogin.plugin.velocity.LockLogin.fromPlayer;
-import static eu.locklogin.plugin.velocity.LockLogin.properties;
+import static eu.locklogin.plugin.velocity.LockLogin.*;
 
 @SystemCommand(command = "2fa")
 public final class GoogleAuthCommand extends BungeeLikeCommand {
@@ -87,7 +85,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                         } else {
                                             String password = args[1];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                             if (util.validate()) {
                                                 String token = manager.getGAuth();
 
@@ -147,7 +145,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                                 try {
                                                     int code = Integer.parseInt(codeBuilder.toString());
 
-                                                    CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                                    CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                                     GoogleAuthFactory factory = user.getTokenFactory();
 
                                                     if (util.validate() && factory.validate(manager.getGAuth(), code)) {
@@ -229,7 +227,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 }

@@ -4,12 +4,15 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.JarManager;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -18,7 +21,6 @@ import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
@@ -26,14 +28,11 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.logger;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeReceiver implements PluginMessageListener {
@@ -41,31 +40,28 @@ public final class BungeeReceiver implements PluginMessageListener {
     private static final Map<String, AccountManager> accounts = new ConcurrentHashMap<>();
 
     /**
-     * Listens for incoming plugin messages
-     *
-     * @param channel the channel
-     * @param player  the player used to send the message
-     * @param bytes   the message bytes
+     * Initialize the bungee receiver
      */
-    @Override
-    public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte[] bytes) {
-        ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
-        try {
-            DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
-            UUID id = UUID.fromString(input.readUTF());
-            String key = input.readUTF();
-            String clientUUID = input.readUTF();
+    public BungeeReceiver() {
+        MessagePool.whenValid((channel, player, input) -> {
+            BungeeDataStorager storager = new BungeeDataStorager();
+
             try {
-                player = plugin.getServer().getPlayer(UUID.fromString(clientUUID));
-            } catch (Throwable ignored) {}
+                String token = input.readUTF();
+                UUID id = UUID.fromString(input.readUTF());
 
-            BungeeDataStorager storager = new BungeeDataStorager(key);
+                boolean canRead = true;
+                if (!channel.equalsIgnoreCase("ll:access")) {
+                    canRead = TokenGen.matches(token, id.toString(), storager.getServerName());
+                }
 
-            if (!channel.equalsIgnoreCase("ll:access")) {
-                if (storager.validate(id)) {
+                if (canRead) {
+                    DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
+
                     User user = new User(player);
                     ClientSession session = user.getSession();
                     PluginConfiguration config = CurrentPlatform.getConfiguration();
+
 
                     switch (channel.toLowerCase()) {
                         case "ll:account":
@@ -190,14 +186,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                             break;
                         case "ll:plugin":
                             switch (sub) {
-                                case MESSAGES:
-                                    String messageString = input.readUTF();
-                                    CurrentPlatform.getMessages().loadString(messageString);
-                                    break;
-                                case CONFIG:
-                                    String configString = input.readUTF();
-                                    Config.manager.loadBungee(configString);
-                                    break;
                                 case LOGGED:
                                     storager.setLoggedAccounts(input.readInt());
                                     break;
@@ -240,16 +228,24 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     AccountManager manager = StringUtils.loadUnsafe(serialized);
                                     if (manager != null) {
                                         if (!accounts.containsKey(manager.getUUID().getId().replace("-", "").toLowerCase())) {
-                                            Console.send(plugin, "Stored temp account of client {0}", Level.INFO, manager.getName());
+                                            console.send("Stored temp account of client {0}", Level.INFO, manager.getName());
                                         } else {
-                                            Console.send(plugin, "Updated temp account of client {0}", Level.INFO, manager.getName());
+                                            console.send("Updated temp account of client {0}", Level.INFO, manager.getName());
                                         }
 
                                         accounts.put(manager.getUUID().getId().replace("-", "").toLowerCase(), manager);
-                                        BungeeSender.sendPlayerInstance(clientUUID, serialized, id.toString());
+                                        BungeeSender.sendPlayerInstance(player, serialized, id.toString());
                                     } else {
-                                        Console.send(plugin, "Received null serialized player account from proxy with id {0}", Level.INFO, id);
+                                        console.send("Received null serialized player account from proxy with id {0}", Level.INFO, id);
                                     }
+                                    break;
+                                case MESSAGES:
+                                    String messageString = input.readUTF();
+                                    CurrentPlatform.getMessages().loadString(messageString);
+                                    break;
+                                case CONFIG:
+                                    String configString = input.readUTF();
+                                    Config.manager.loadBungee(configString);
                                     break;
                                 case MODULE:
                                     String name = input.readUTF();
@@ -269,58 +265,68 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     break;
                             }
                             break;
+                        case "ll:access":
+                            String proxyKey = input.readUTF();
+                            String serverName = input.readUTF();
+
+                            switch (sub) {
+                                case KEY:
+                                    //This also checks if the proxy key is empty, retuning true if it is
+                                    //so we will just use it as a "emptyProxyOwner" check
+                                    if (storager.isProxyKey(proxyKey)) {
+                                        storager.setServerName(serverName);
+                                        storager.setProxyKey(proxyKey);
+                                        BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());
+                                    } else {
+                                        BungeeSender.sendProxyStatus(player, "invalid", sub.name().toLowerCase());
+                                        logger.scheduleLog(Level.GRAVE, "Proxy with id {0} tried to register a key but the key is already registered and the specified one is incorrect", id.toString());
+                                    }
+                                    break;
+                                case REGISTER:
+                                    if (storager.isProxyKey(proxyKey)) {
+                                        TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), id.toString(), serverName, Instant.parse(input.readUTF()));
+                                        TokenGen.assignDefaultNodeName(serverName);
+
+                                        BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());
+                                    } else {
+                                        BungeeSender.sendProxyStatus(player, "invalid", sub.name().toLowerCase());
+                                        logger.scheduleLog(Level.GRAVE, "Proxy with id {0} to register itself with an invalid access key", id.toString());
+                                    }
+                                    break;
+                                case REMOVE:
+                                    //Yes, when a bungeecord proxy goes down
+                                    //he must send this message, otherwise, when
+                                    //the proxy starts again, it will have another
+                                    //access key and won't be able to access anymore
+                                    if (storager.isProxyKey(proxyKey)) {
+                                        JarManager.changeField(BungeeDataStorager.class, "proxyKey", "");
+                                        BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());
+                                    } else {
+                                        BungeeSender.sendProxyStatus(player, "invalid", sub.name().toLowerCase());
+                                        logger.scheduleLog(Level.GRAVE, "Tried to remove proxy with id {0} using an invalid key", id.toString());
+                                    }
+                            }
                     }
-                } else {
-                    logger.scheduleLog(Level.GRAVE, "Someone tried to access the plugin message channel using {0}'s identification ( INVALID KEY )", id.toString());
-                    logger.scheduleLog(Level.INFO, "Message data: {0} -> {1} under {2} ({3})", channel, sub.name(), (player != null ? player.getUniqueId() : "invalid player uuid"), (player != null ? StringUtils.stripColor(player.getDisplayName()) : "invalid player name"));
                 }
-            } else {
-                String proxyKey = input.readUTF();
-                String serverName = input.readUTF();
-
-                logger.scheduleLog(Level.INFO, "Received server access plugin message from a proxy with id {0} in where this server is known as {1}", id.toString(), serverName);
-
-                switch (sub) {
-                    case KEY:
-                        //This also checks if the proxy key is empty, retuning true if it is
-                        //so we will just use it as a "emptyProxyOwner" check
-                        if (storager.isProxyKey(proxyKey)) {
-                            storager.setProxyKey(proxyKey);
-                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
-
-                            storager.setMultiBungee(input.readBoolean());
-                        } else {
-                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
-                            logger.scheduleLog(Level.GRAVE, "Proxy with id {0} tried to register a key but the key is already registered and the specified one is incorrect", id.toString());
-                        }
-                        break;
-                    case REGISTER:
-                        if (storager.isProxyKey(proxyKey) && storager.canRegister()) {
-                            storager.addProxy(id);
-                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
-                        } else {
-                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
-                            logger.scheduleLog(Level.GRAVE, "Proxy with id {0} to register itself with an invalid access key", id.toString());
-                        }
-                        break;
-                    case REMOVE:
-                        //Yes, when a bungeecord proxy goes down
-                        //he must send this message, otherwise, when
-                        //the proxy starts again, it will have another
-                        //access key and won't be able to access anymore
-                        if (storager.isProxyKey(proxyKey) && storager.validate(id)) {
-                            storager.delProxy(id);
-                            BungeeSender.sendProxyStatus(clientUUID, id.toString(), serverName, sub.name().toLowerCase());
-                        } else {
-                            BungeeSender.sendProxyStatus(clientUUID, "invalid", serverName, sub.name().toLowerCase());
-                            logger.scheduleLog(Level.GRAVE, "Tried to remove proxy with id {0} using an invalid key", id.toString());
-                        }
-                        break;
-                }
+            } catch (Throwable ex) {
+                logger.scheduleLog(Level.GRAVE, ex);
+                logger.scheduleLog(Level.INFO, "Failed to read bungeecord message");
             }
-        } catch (Throwable ex) {
-            logger.scheduleLog(Level.GRAVE, ex);
-            logger.scheduleLog(Level.INFO, "Failed to read bungeecord message");
-        }
+        });
+    }
+
+    /**
+     * Listens for incoming plugin messages
+     *
+     * @param channel the channel
+     * @param player  the player used to send the message
+     * @param bytes   the message bytes
+     */
+    @Override
+    public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte[] bytes) {
+        ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
+
+        String clientUUID = input.readUTF();
+        MessagePool.addPlayer(channel, UUID.fromString(clientUUID), input);
     }
 }

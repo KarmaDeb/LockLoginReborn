@@ -16,7 +16,7 @@ package eu.locklogin.api.module.plugin.javamodule.console;
 
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 
 /**
@@ -43,7 +43,7 @@ public final class ModuleConsole {
      */
     public final void sendMessage(final String message, final Object... replaces) {
         if (ModuleLoader.isLoaded(module)) {
-            Console.send(getPrefixManager().getPrefix() +  message, replaces);
+            APISource.getConsole().send(getPrefixManager().getPrefix() +  message, replaces);
         }
     }
 
@@ -62,7 +62,7 @@ public final class ModuleConsole {
             if (!prefix.endsWith(" "))
                 prefix = prefix + " ";
 
-            Console.send("{0}{1}", prefix, final_message);
+            APISource.getConsole().send("{0}{1}", prefix, final_message);
         }
     }
 

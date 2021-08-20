@@ -16,18 +16,52 @@ package eu.locklogin.plugin.bukkit.plugin.bungee;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.plugin.bukkit.LockLogin;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeSender {
 
-    private static int proxy_tries = 0;
-    private static int inst_tries = 0;
+    /**
+     * Send to the proxy the feedback
+     * of access channel
+     *
+     * @param recipient the recipient used to receive and send message
+     * @param id the proxy id
+     * @param sub the proxy sub channel
+     */
+    public static void sendProxyStatus(final Player recipient, final String id, final String sub) {
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        try {
+            BungeeDataStorager storager = new BungeeDataStorager();
+
+            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            if (token == null) {
+                TokenGen.generate(plugin.getServer().getName());
+                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                assert token != null;
+            }
+
+            output.writeUTF(token);
+            output.writeUTF(storager.getServerName());
+            output.writeUTF(sub);
+            output.writeUTF(id);
+            if (sub.equalsIgnoreCase("register")) {
+                output.writeUTF(TokenGen.expiration("LOCAL_TOKEN").toString());
+            }
+
+            recipient.sendPluginMessage(LockLogin.plugin, "ll:access", output.toByteArray());
+        } catch (Throwable ex) {
+            LockLogin.logger.scheduleLog(Level.GRAVE, ex);
+            LockLogin.logger.scheduleLog(Level.INFO, "Error while sending proxy status to bungee");
+        }
+    }
 
     /**
      * Send the player pin input to BungeeCord
@@ -38,6 +72,17 @@ public final class BungeeSender {
     public static void sendPinInput(final Player player, final String pin) {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
         try {
+            BungeeDataStorager storager = new BungeeDataStorager();
+
+            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            if (token == null) {
+                TokenGen.generate(plugin.getServer().getName());
+                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                assert token != null;
+            }
+
+            output.writeUTF(token);
+            output.writeUTF(storager.getServerName());
             output.writeUTF("pin");
             output.writeUTF(player.getUniqueId().toString());
             output.writeUTF(pin);
@@ -50,71 +95,34 @@ public final class BungeeSender {
     }
 
     /**
-     * Send to the proxy the feedback
-     * of access channel
-     *
-     * @param uuid the player id used to send the message
-     * @param name this server name
-     * @param id the proxy id
-     * @param sub the proxy sub channel
-     */
-    public static void sendProxyStatus(final String uuid, final String id, final String name, final String sub) {
-        if (uuid != null) {
-            Player recipient = LockLogin.plugin.getServer().getPlayer(UUID.fromString(uuid));
-
-            if (recipient != null) {
-                proxy_tries = 0;
-                ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                try {
-                    output.writeUTF(sub);
-                    output.writeUTF(id);
-                    output.writeUTF(name);
-
-                    recipient.sendPluginMessage(LockLogin.plugin, "ll:access", output.toByteArray());
-                } catch (Throwable ex) {
-                    LockLogin.logger.scheduleLog(Level.GRAVE, ex);
-                    LockLogin.logger.scheduleLog(Level.INFO, "Error while sending proxy status to bungee");
-                }
-            } else {
-                if (proxy_tries != 3) {
-                    LockLogin.plugin.getServer().getScheduler().runTaskLater(LockLogin.plugin, () -> sendProxyStatus(uuid, id, name, sub), 20 * 3);
-                    proxy_tries++;
-                }
-            }
-        }
-    }
-
-    /**
      * Send a module player object to all bungeecord instance
      *
-     * @param uuid the player uuid used to send the message
+     * @param recipient the recipient used to receive and send messages
      * @param player the module player serialized string
      * @param id the server id who originally sent the module player object
      */
-    public static void sendPlayerInstance(final String uuid, final String player, final String id) {
-        if (uuid != null) {
-            Player recipient = LockLogin.plugin.getServer().getPlayer(UUID.fromString(uuid));
+    public static void sendPlayerInstance(final Player recipient, final String player, final String id) {
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        try {
+            BungeeDataStorager storager = new BungeeDataStorager();
 
-            if (recipient != null) {
-                inst_tries = 0;
-
-                ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                try {
-                    output.writeUTF(DataType.PLAYER.name().toLowerCase());
-                    output.writeUTF(id);
-                    output.writeUTF(player);
-
-                    recipient.sendPluginMessage(LockLogin.plugin, "ll:plugin", output.toByteArray());
-                } catch (Throwable ex) {
-                    LockLogin.logger.scheduleLog(Level.GRAVE, ex);
-                    LockLogin.logger.scheduleLog(Level.INFO, "Error while sending player instance to bungee");
-                }
-            } else {
-                if (inst_tries != 3) {
-                    LockLogin.plugin.getServer().getScheduler().runTaskLater(LockLogin.plugin, () -> sendPlayerInstance(uuid, id, LockLogin.name), 20 * 3);
-                    inst_tries++;
-                }
+            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            if (token == null) {
+                TokenGen.generate(plugin.getServer().getName());
+                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                assert token != null;
             }
+
+            output.writeUTF(token);
+            output.writeUTF(storager.getServerName());
+            output.writeUTF(DataType.PLAYER.name().toLowerCase());
+            output.writeUTF(id);
+            output.writeUTF(player);
+
+            recipient.sendPluginMessage(LockLogin.plugin, "ll:plugin", output.toByteArray());
+        } catch (Throwable ex) {
+            LockLogin.logger.scheduleLog(Level.GRAVE, ex);
+            LockLogin.logger.scheduleLog(Level.INFO, "Error while sending player instance to bungee");
         }
     }
 
@@ -128,6 +136,17 @@ public final class BungeeSender {
     public static void sendModule(final String channel, final byte[] data) {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
         try {
+            BungeeDataStorager storager = new BungeeDataStorager();
+
+            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            if (token == null) {
+                TokenGen.generate(plugin.getServer().getName());
+                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                assert token != null;
+            }
+
+            output.writeUTF(token);
+            output.writeUTF(storager.getServerName());
             output.writeUTF(DataType.MODULE.name().toLowerCase());
             output.writeUTF(channel);
             output.writeInt(data.length);

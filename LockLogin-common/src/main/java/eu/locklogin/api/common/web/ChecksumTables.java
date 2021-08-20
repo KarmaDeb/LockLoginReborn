@@ -4,9 +4,10 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -51,49 +52,52 @@ public final class ChecksumTables {
 
                 String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
-                String check_url = "https://locklogin.eu/checksum/" + version + "/checksum.lldb";
-                URL url = new URL(check_url);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
+                URL check_url = URLUtils.getOrBackup(
+                        "https://locklogin.eu/checksum/" + version + "/checksum.lldb",
+                        "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb");
+                if (check_url != null) {
+                    HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
+                    connection.setRequestMethod("GET");
 
-                int response = connection.getResponseCode();
-                if (response == HttpURLConnection.HTTP_OK) {
-                    Console.send("&aFetching checksum results to keep dependencies safe ( {0} )", check_url);
+                    int response = connection.getResponseCode();
+                    if (response == HttpURLConnection.HTTP_OK) {
+                        APISource.getConsole().send("&aFetching checksum results to keep dependencies safe ( {0} )", check_url);
 
-                    InputStream inputStream = connection.getInputStream();
-                    InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-                    BufferedReader bf = new BufferedReader(reader);
+                        InputStream inputStream = connection.getInputStream();
+                        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+                        BufferedReader bf = new BufferedReader(reader);
 
-                    File dataFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "tables.lldb");
-                    KarmaFile checksum = new KarmaFile(dataFile);
-                    checksum.create();
+                        File dataFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "tables.lldb");
+                        KarmaFile checksum = new KarmaFile(dataFile);
+                        checksum.create();
 
-                    BufferedWriter writer = Files.newBufferedWriter(dataFile.toPath(), StandardCharsets.UTF_8);
-                    String line;
-                    while ((line = bf.readLine()) != null) {
-                        writer.write(line + "\n");
+                        BufferedWriter writer = Files.newBufferedWriter(dataFile.toPath(), StandardCharsets.UTF_8);
+                        String line;
+                        while ((line = bf.readLine()) != null) {
+                            writer.write(line + "\n");
+                        }
+
+                        writer.flush();
+                        writer.close();
+
+                        bf.close();
+                        reader.close();
+                        bf.close();
+
+                        for (Dependency dependency : Dependency.values()) {
+                            String name = dependency.getAsDependency().getName();
+                            long adler = checksum.getLong(name + "_adler", 0L);
+                            long crc = checksum.getLong(name + "_crc", 0L);
+
+                            adler_tables.put(name, adler);
+                            crc_tables.put(name, crc);
+                        }
+
+                        checksum.delete();
+                    } else {
+                        can_check = true;
+                        APISource.getConsole().send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
                     }
-
-                    writer.flush();
-                    writer.close();
-
-                    bf.close();
-                    reader.close();
-                    bf.close();
-
-                    for (Dependency dependency : Dependency.values()) {
-                        String name = dependency.getAsDependency().getName();
-                        long adler = checksum.getLong(name + "_adler", 0L);
-                        long crc = checksum.getLong(name + "_crc", 0L);
-
-                        adler_tables.put(name, adler);
-                        crc_tables.put(name, crc);
-                    }
-
-                    checksum.delete();
-                } else {
-                    can_check = true;
-                    Console.send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
                 }
             } catch (Throwable ex) {
                 ex.printStackTrace();

@@ -22,9 +22,9 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import org.bukkit.entity.Player;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 public class FileReloader {
@@ -73,16 +73,16 @@ public class FileReloader {
             if (Config.manager.reload()) {
                 Config.manager.checkValues();
 
-                Console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
 
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
                 CurrentPlatform.setPrefix(config.getModulePrefix());
             }
             if (CurrentPlatform.getMessages().reload()) {
-                Console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+                console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
             }
 
-            Console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
+            console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
             Manager.restartVersionChecker();
             Manager.restartAlertSystem();

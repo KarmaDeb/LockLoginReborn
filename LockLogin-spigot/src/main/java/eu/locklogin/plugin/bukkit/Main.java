@@ -19,9 +19,11 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.ResourceDownloader;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin implements KarmaSource {
@@ -29,6 +31,7 @@ public final class Main extends JavaPlugin implements KarmaSource {
     private final KarmaBootstrap plugin;
 
     public Main() throws Throwable {
+        APISource.setSourceProvider(this);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setPlatform(Platform.BUKKIT);
         CurrentPlatform.setOnline(getServer().getOnlineMode());
@@ -36,7 +39,9 @@ public final class Main extends JavaPlugin implements KarmaSource {
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
-        String downloadURL = "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar";
+        String downloadURL = URLUtils.getOrBackup(
+                "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar",
+                "https://karmaconfigs.github.io/updates/LockLogin/assets/" + getDescription().getVersion() + "/LockLoginC.jar").toString();
         ResourceDownloader downloader = ResourceDownloader.toCache(
                 this,
                 "locklogin.injar",
@@ -82,15 +87,20 @@ public final class Main extends JavaPlugin implements KarmaSource {
 
     @Override
     public String updateURL() {
+        String host = "https://locklogin.eu/version/";
+        if (!URLUtils.exists(host)) {
+            host = "https://karmaconfigs.github.io/updates/LockLogin/";
+        }
+
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         switch (config.getUpdaterOptions().getChannel()) {
             case SNAPSHOT:
-                return "https://locklogin.eu/version/snapshot.kupdter";
+                return host + "snapshot.kupdter";
             case RC:
-                return "https://locklogin.eu/version/candidate.kupdter";
+                return host + "candidate.kupdter";
             case RELEASE:
             default:
-                return "https://locklogin.eu/version/release.kupdter";
+                return host + "release.kupdter";
         }
     }
 }

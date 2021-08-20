@@ -4,7 +4,7 @@ project_manager: ${project.manager}
 project_developers: ${project.author}
 project_description: ${project.description}
 project_build: ${project.buildType}
-project_debug: ${project.debug}
 project_karmaapi: ${project.karmaapi}
 project_update: ${project.update}
+project_keylength: ${project.key.length}
 project_checksums: ${project.showchecksums}

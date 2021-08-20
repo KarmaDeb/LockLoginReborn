@@ -5,13 +5,12 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.AzuriomId;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.encryption.CryptTarget;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -27,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 /**
@@ -79,11 +79,11 @@ public final class PlayerFile extends AccountManager {
         File[] files = v1DataFolder.listFiles();
 
         if (files != null) {
-            Console.send(plugin, "Initializing LockLogin v1 player database migration", Level.INFO);
+            console.send("Initializing LockLogin v1 player database migration", Level.INFO);
 
             for (File file : files) {
                 if (file.getName().endsWith(".yml")) {
-                    Console.send(plugin, "Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
+                    console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
                     KarmaYamlManager oldManager = new KarmaYamlManager(plugin, file.getName(), "Users");
 
                     File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
@@ -162,11 +162,11 @@ public final class PlayerFile extends AccountManager {
         File[] files = v1DataFolder.listFiles();
 
         if (files != null) {
-            Console.send(plugin, "Initializing LockLogin v2 player database migration", Level.INFO);
+            console.send("Initializing LockLogin v2 player database migration", Level.INFO);
 
             for (File file : files) {
                 if (file.getName().endsWith(".yml")) {
-                    Console.send(plugin, "Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
+                    console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
                     KarmaYamlManager oldManager = new KarmaYamlManager(plugin, file.getName(), "playerdata");
 
                     File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
@@ -247,11 +247,11 @@ public final class PlayerFile extends AccountManager {
         File[] files = v2DataFolder.listFiles();
 
         if (files != null) {
-            Console.send(plugin, "Initializing LockLogin v3 player database migration", Level.INFO);
+            console.send("Initializing LockLogin v3 player database migration", Level.INFO);
 
             for (File file : files) {
                 if (file.getName().endsWith(".lldb")) {
-                    Console.send(plugin, "Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
+                    console.send("Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
                     KarmaYamlManager oldManager = new KarmaYamlManager(plugin, file.getName(), "playerdata");
 
                     File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName());
@@ -376,7 +376,7 @@ public final class PlayerFile extends AccountManager {
     @Override
     public final void setPassword(final String newPassword) {
         if (!StringUtils.isNullOrEmpty(newPassword)) {
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).build();
+            CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
             PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
@@ -392,7 +392,7 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public void setUnsafePassword(final String newPassword) {
-        CryptoUtil util = CryptoUtil.getBuilder().withPassword(newPassword).unsafe();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
@@ -415,7 +415,7 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final void setGAuth(final String token) {
-        CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
         manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
     }
 
@@ -426,7 +426,7 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public void setUnsafeGAuth(final String token) {
-        CryptoUtil util = CryptoUtil.getBuilder().withPassword(token).unsafe();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
     }
 
@@ -462,7 +462,7 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public final void setPin(final String pin) {
-        CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("PIN", util.hash(config.pinEncryption(), true));
@@ -475,7 +475,7 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public void setUnsafePin(final String pin) {
-        CryptoUtil util = CryptoUtil.getBuilder().withPassword(pin).unsafe();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("PIN", util.hash(config.pinEncryption(), true));

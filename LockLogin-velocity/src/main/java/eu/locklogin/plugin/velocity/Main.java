@@ -36,13 +36,14 @@ import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
-import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import net.kyori.adventure.text.Component;
@@ -56,7 +57,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.32", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.37", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -74,6 +75,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
+        APISource.setSourceProvider(this);
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
@@ -101,7 +103,9 @@ public class Main implements KarmaBootstrap, KarmaSource {
     public void enable() {
         new SourceSecondsTimer(this, 1, false).multiThreading(true).endAction(() -> {
             Main.instance = Main.this;
-            Console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+            Console console = new Console(source);
+
+            console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
             Optional<PluginContainer> container = Main.server.getPluginManager().getPlugin("locklogin");
 
             if (container.isPresent()) {
@@ -109,12 +113,14 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     PluginDependency dependency = pluginDependency.getAsDependency();
 
                     if (FileInfo.showChecksums(Main.lockloginFile)) {
-                        System.out.println("Current checksum for " + dependency.getName());
-                        System.out.println("Adler32: " + dependency.getAdlerCheck());
-                        System.out.println("CRC32: " + dependency.getCRCCheck());
-                        System.out.println("Fetched checksum for " + dependency.getName());
-                        System.out.println("Adler32: " + ChecksumTables.getAdler(dependency));
-                        System.out.println("CRC32: " + ChecksumTables.getCRC(dependency));
+                        console.send("&7----------------------");
+                        console.send("");
+                        console.send("&bDependency: &3{0}", dependency.getName());
+                        console.send("&bType&8/&eCurrent&8/&aFetched");
+                        console.send("&bAdler32 &8- {0} &8- &a{1}", dependency.getAdlerCheck(), ChecksumTables.getAdler(dependency));
+                        console.send("&bCRC32 &8- {0} &8- &a{1}", dependency.getCRCCheck(), ChecksumTables.getCRC(dependency));
+                        console.send("");
+                        console.send("&7----------------------");
                     }
 
                     JarManager manager = new JarManager(dependency);
@@ -134,11 +140,10 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     }
                 });
 
-                PrefixConsoleData prefixData = new PrefixConsoleData(Main.source);
-                prefixData.setOkPrefix("&aOk &e>> &7");
-                prefixData.setInfoPrefix("&7Info &e>> &7");
-                prefixData.setWarnPrefix("&6Warning &e>> &7");
-                prefixData.setGravPrefix("&4Grave &e>> &7");
+                console.getData().setOkPrefix("&aOk &e>> &7");
+                console.getData().setInfoPrefix("&7Info &e>> &7");
+                console.getData().setWarnPrefix("&6Warning &e>> &7");
+                console.getData().setGravPrefix("&4Grave &e>> &7");
 
                 Consumer<MessageSender> onMessage = messageSender -> {
                     Player player = messageSender.getPlayer().getPlayer();
@@ -319,15 +324,20 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Override
     public String updateURL() {
+        String host = "https://locklogin.eu/version/";
+        if (!URLUtils.exists(host)) {
+            host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
+        }
+
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         switch (config.getUpdaterOptions().getChannel()) {
             case SNAPSHOT:
-                return "https://locklogin.eu/version/snapshot.kupdter";
+                return host + "snapshot.kupdter";
             case RC:
-                return "https://locklogin.eu/version/candidate.kupdter";
+                return host + "candidate.kupdter";
             case RELEASE:
             default:
-                return "https://locklogin.eu/version/release.kupdter";
+                return host + "release.kupdter";
         }
     }
 }

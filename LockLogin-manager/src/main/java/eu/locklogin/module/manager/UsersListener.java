@@ -39,19 +39,10 @@ public class UsersListener implements EventListener {
     }
 
     @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)
-    public final void onJoin(UserPostJoinEvent e) {
-        CurrentPlatform.connectPlayer(e.getPlayer().getUUID(), e.getPlayer().getPlayerObject());
-    }
-
-    @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)
     public final void onHook(UserHookEvent e) {
         ModulePlayer player = e.getPlayer();
         if (player.getSession().isLogged()) {
             SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
         }
-
-        CurrentPlatform.connectPlayer(e.getPlayer().getUUID(), e.getPlayer().getPlayerObject());
     }
-
-
 }

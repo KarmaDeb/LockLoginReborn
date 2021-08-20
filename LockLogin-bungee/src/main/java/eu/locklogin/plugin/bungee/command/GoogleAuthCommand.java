@@ -19,7 +19,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.GoogleAuthFactory;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -30,7 +30,6 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -39,8 +38,7 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.util.List;
 
-import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
-import static eu.locklogin.plugin.bungee.LockLogin.properties;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "2fa")
 public final class GoogleAuthCommand extends Command {
@@ -85,7 +83,7 @@ public final class GoogleAuthCommand extends Command {
                                         } else {
                                             String password = args[1];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                             if (util.validate()) {
                                                 String token = manager.getGAuth();
 
@@ -142,7 +140,7 @@ public final class GoogleAuthCommand extends Command {
                                                 try {
                                                     int code = Integer.parseInt(codeBuilder.toString());
 
-                                                    CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                                    CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                                     GoogleAuthFactory factory = user.getTokenFactory();
 
                                                     if (util.validate() && factory.validate(manager.getGAuth(), code)) {
@@ -224,7 +222,7 @@ public final class GoogleAuthCommand extends Command {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("only_console_google", "&5&oThe console can't have 2FA enabled!"));
+            console.send(messages.prefix() + properties.getProperty("only_console_google", "&5&oThe console can't have 2FA enabled!"));
         }
     }
 }

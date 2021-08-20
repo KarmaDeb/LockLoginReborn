@@ -2,7 +2,7 @@ package eu.locklogin.plugin.bungee;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.injector.dependencies.DependencyManager;
+import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
@@ -25,14 +25,11 @@ import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
-import ml.karmaconfigs.api.common.utils.PrefixConsoleData;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ChatMessageType;
@@ -49,8 +46,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.PLUGIN_CHANNEL;
 
@@ -80,12 +76,14 @@ public class MainBootstrap implements KarmaBootstrap {
             PluginDependency dependency = pluginDependency.getAsDependency();
 
             if (FileInfo.showChecksums(lockloginFile)) {
-                System.out.println("Current checksum for " + dependency.getName());
-                System.out.println("Adler32: " + dependency.getAdlerCheck());
-                System.out.println("CRC32: " + dependency.getCRCCheck());
-                System.out.println("Fetched checksum for " + dependency.getName());
-                System.out.println("Adler32: " + ChecksumTables.getAdler(dependency));
-                System.out.println("CRC32: " + ChecksumTables.getCRC(dependency));
+                console.send("&7----------------------");
+                console.send("");
+                console.send("&bDependency: &3{0}", dependency.getName());
+                console.send("&bType&8/&eCurrent&8/&aFetched");
+                console.send("&bAdler32 &8- {0} &8- &a{1}", dependency.getAdlerCheck(), ChecksumTables.getAdler(dependency));
+                console.send("&bCRC32 &8- {0} &8- &a{1}", dependency.getCRCCheck(), ChecksumTables.getCRC(dependency));
+                console.send("");
+                console.send("&7----------------------");
             }
 
             JarManager manager = new JarManager(dependency);
@@ -94,7 +92,7 @@ public class MainBootstrap implements KarmaBootstrap {
         JarManager.downloadAll();
         manager.loadDependencies();
 
-        Console.send("&aUsing KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+        console.send("&aUsing KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
 
         STFetcher fetcher = new STFetcher();
         fetcher.check();
@@ -107,11 +105,10 @@ public class MainBootstrap implements KarmaBootstrap {
                 }
             });
 
-            PrefixConsoleData prefixData = new PrefixConsoleData(loader);
-            prefixData.setOkPrefix("&aOk &e>> &7");
-            prefixData.setInfoPrefix("&7Info &e>> &7");
-            prefixData.setWarnPrefix("&6Warning &e>> &7");
-            prefixData.setGravPrefix("&4Grave &e>> &7");
+            console.getData().setOkPrefix("&aOk &e>> &7");
+            console.getData().setInfoPrefix("&7Info &e>> &7");
+            console.getData().setWarnPrefix("&6Warning &e>> &7");
+            console.getData().setGravPrefix("&4Grave &e>> &7");
 
             Consumer<MessageSender> onMessage = messageSender -> {
                 ModulePlayer modulePlayer = messageSender.getPlayer();

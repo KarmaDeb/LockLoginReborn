@@ -160,33 +160,6 @@ public interface FileInfo {
     }
 
     /**
-     * Get the specified jar api version
-     *
-     * @param file the jar file
-     * @return the jar file KarmaAPI version
-     */
-    static String getKarmaVersion(final File file) {
-        try {
-            JarFile jar = new JarFile(file);
-            JarEntry jar_info = jar.getJarEntry("global.yml");
-
-            if (jar_info != null) {
-                InputStream yml = jar.getInputStream(jar_info);
-
-                Yaml yaml = new Yaml();
-                Map<String, Object> values = yaml.load(yml);
-                yml.close();
-                return values.getOrDefault("project_karmaapi", "1.3.1-SNAPSHOT").toString();
-            }
-            jar.close();
-
-            return "1.3.1-SNAPSHOT";
-        } catch (Throwable ex) {
-            return "1.3.1-SNAPSHOT";
-        }
-    }
-
-    /**
      * Get the specified jar update name
      *
      * @param file the jar file
@@ -212,6 +185,33 @@ public interface FileInfo {
             return def;
         } catch (Throwable ex) {
             return def;
+        }
+    }
+
+    /**
+     * Get the specified jar keys length
+     *
+     * @param file the jar file
+     * @return the jar file keys length
+     */
+    static int getKeysLength(final File file) {
+        try {
+            JarFile jar = new JarFile(file);
+            JarEntry jar_info = jar.getJarEntry("global.yml");
+
+            if (jar_info != null) {
+                InputStream yml = jar.getInputStream(jar_info);
+
+                Yaml yaml = new Yaml();
+                Map<String, Object> values = yaml.load(yml);
+                yml.close();
+                return Integer.parseInt(values.getOrDefault("project_keylength", 1024).toString());
+            }
+            jar.close();
+
+            return 1024;
+        } catch (Throwable ex) {
+            return 1024;
         }
     }
 

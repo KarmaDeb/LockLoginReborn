@@ -24,9 +24,9 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import static eu.locklogin.plugin.bungee.LockLogin.console;
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
 public class FileReloader {
@@ -77,19 +77,19 @@ public class FileReloader {
             if (Config.manager.reload()) {
                 Config.manager.checkValues();
 
-                Console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
 
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
                 CurrentPlatform.setPrefix(config.getModulePrefix());
             }
             if (Proxy.manager.reload()) {
-                Console.send(messages.prefix() + properties.getProperty("reload_proxy", "&aReloaded proxy configuration"));
+                console.send(messages.prefix() + properties.getProperty("reload_proxy", "&aReloaded proxy configuration"));
             }
             if (CurrentPlatform.getMessages().reload()) {
-                Console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+                console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
             }
 
-            Console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
+            console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
             Manager.restartVersionChecker();
             Manager.restartAlertSystem();

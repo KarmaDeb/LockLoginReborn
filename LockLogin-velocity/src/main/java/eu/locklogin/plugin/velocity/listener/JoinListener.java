@@ -18,8 +18,8 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
-import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
+import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.Player;
@@ -29,6 +29,7 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
@@ -42,10 +43,7 @@ import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.*;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -56,8 +54,8 @@ import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -85,6 +83,105 @@ public final class JoinListener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
+    /**
+     * Initialize the join listener
+     */
+    public JoinListener() {
+        PlayerPool.whenValid((player) -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+            InetSocketAddress ip = player.getRemoteAddress();
+            User user = new User(player);
+
+            Optional<ServerConnection> tmp_server = player.getCurrentServer();
+            if (tmp_server.isPresent()) {
+                ServerConnection connection = tmp_server.get();
+
+                RegisteredServer server = connection.getServer();
+                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+
+                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                    if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
+                        DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+
+                    if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
+                                .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
+                                .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                .build());
+                    }
+                }
+                DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
+                DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());
+            }
+
+            CurrentPlatform.requestDataContainerUpdate();
+
+            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
+            DataSender.send(player, validation);
+
+            PluginMessages messages = CurrentPlatform.getMessages();
+
+            ProxyCheck proxy = new ProxyCheck(ip);
+            if (proxy.isProxy()) {
+                user.kick(messages.ipProxyError());
+                return;
+            }
+
+            user.applySessionEffects();
+
+            if (config.clearChat()) {
+                for (int i = 0; i < 150; i++)
+                    server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+            }
+
+            ClientSession session = user.getSession();
+            session.validate();
+
+            if (!config.captchaOptions().isEnabled())
+                session.setCaptchaLogged(true);
+
+            SimpleScheduler tmp_timer = null;
+            if (!session.isCaptchaLogged()) {
+                tmp_timer = new SourceSecondsTimer(main, 1, true);
+                tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
+            }
+
+            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
+                    .addBoolData(session.isLogged())
+                    .addBoolData(session.is2FALogged())
+                    .addBoolData(session.isPinLogged())
+                    .addBoolData(user.isRegistered()).build();
+            DataSender.send(player, join);
+
+            SimpleScheduler timer = tmp_timer;
+            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                user.restorePotionEffects();
+                player.sendActionBar(Component.text().content("").build());
+
+                if (timer != null)
+                    timer.cancel();
+            });
+            server.getScheduler().buildTask(plugin, check).schedule();
+            forceSessionLogin(player);
+
+            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
+
+            player.getCurrentServer().ifPresent(server -> {
+                if (Proxy.isAuth(server.getServerInfo())) {
+                    user.checkServer(0);
+                }
+            });
+
+            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(player), null);
+            ModulePlugin.callEvent(event);
+
+            if (event.isHandleable()) {
+                user.kick(event.getHandleReason());
+            }
+        });
+    }
+
     @Subscribe(order = PostOrder.FIRST)
     public final void onServerPing(ProxyPingEvent e) {
         ClientData client = new ClientData(e.getConnection().getRemoteAddress().getAddress());
@@ -92,7 +189,12 @@ public final class JoinListener {
             client.setVerified(true);
     }
 
-    @SuppressWarnings("all")
+    @Subscribe(order = PostOrder.LAST)
+    public final void onGameProfileRequest(GameProfileRequestEvent e) {
+        VelocityGameProfileEvent event = new VelocityGameProfileEvent(e);
+        ModulePlugin.callEvent(event);
+    }
+
     @Subscribe(order = PostOrder.FIRST)
     public final void onPreLogin(PreLoginEvent e) {
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -104,9 +206,8 @@ public final class JoinListener {
         String address = "null";
         try {
             address = ip.getHostAddress();
-        } catch (Throwable ignored) {
-        }
-        if (!e.getResult().isAllowed()) {
+        } catch (Throwable ignored) {}
+        if (e.getResult().isAllowed()) {
             try {
                 if (validateIP(ip)) {
                     PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -130,7 +231,7 @@ public final class JoinListener {
                                 }
 
                                 if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
-                                    Console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                    console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                             }
                         } else {
                             e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxRegisters())).build()));
@@ -210,6 +311,8 @@ public final class JoinListener {
                         e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
                         return;
                     }
+
+                    PlayerPool.addPlayer(tar_uuid);
                 } else {
                     e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipProxyError())).build()));
                     logger.scheduleLog(Level.GRAVE, "Player {0}[{2}] tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", conn_name, address, tar_uuid);
@@ -230,100 +333,10 @@ public final class JoinListener {
 
             if (event.isHandled()) {
                 e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
+                PlayerPool.delPlayer(e.getPlayer().getUniqueId());
+                System.out.println("Removed player with id: " + e.getPlayer().getUniqueId().toString());
             }
         }
-    }
-
-    @Subscribe(order = PostOrder.FIRST)
-    public final void onPostLogin(PostLoginEvent e) {
-        server.getScheduler().buildTask(plugin, () -> {
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-            Player player = e.getPlayer();
-            InetSocketAddress ip = player.getRemoteAddress();
-            User user = new User(player);
-
-            Optional<ServerConnection> tmp_server = player.getCurrentServer();
-            if (tmp_server.isPresent()) {
-                ServerConnection connection = tmp_server.get();
-
-                RegisteredServer info = connection.getServer();
-                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
-
-                if (ServerDataStorage.needsRegister(info.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
-                    if (ServerDataStorage.needsRegister(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
-
-                    if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName()))
-                        DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
-                }
-            }
-
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(CurrentPlatform.getMessages().toString()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
-            CurrentPlatform.requestDataContainerUpdate();
-
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-            DataSender.send(player, validation);
-
-            PluginMessages messages = CurrentPlatform.getMessages();
-
-            ProxyCheck proxy = new ProxyCheck(ip);
-            if (proxy.isProxy()) {
-                user.kick(messages.ipProxyError());
-                return;
-            }
-
-            user.applySessionEffects();
-
-            if (config.clearChat()) {
-                for (int i = 0; i < 150; i++)
-                    server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
-            }
-
-            ClientSession session = user.getSession();
-            session.validate();
-
-            if (!config.captchaOptions().isEnabled())
-                session.setCaptchaLogged(true);
-
-            SimpleScheduler tmp_timer = null;
-            if (!session.isCaptchaLogged()) {
-                tmp_timer = new SourceSecondsTimer(main, 1, true);
-                tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
-            }
-
-            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                    .addBoolData(session.isLogged())
-                    .addBoolData(session.is2FALogged())
-                    .addBoolData(session.isPinLogged())
-                    .addBoolData(user.isRegistered()).build();
-            DataSender.send(player, join);
-
-            SimpleScheduler timer = tmp_timer;
-            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
-                user.restorePotionEffects();
-                player.sendActionBar(Component.text().content("").build());
-                timer.cancel();
-            });
-            server.getScheduler().buildTask(plugin, check).schedule();
-            forceSessionLogin(player);
-
-            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
-
-            e.getPlayer().getCurrentServer().ifPresent(server -> {
-                if (Proxy.isAuth(server.getServerInfo())) {
-                    user.checkServer(0);
-                }
-            });
-
-            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            ModulePlugin.callEvent(event);
-
-            if (event.isHandleable()) {
-                user.kick(event.getHandleReason());
-            }
-        }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }
 
     @Subscribe(order = PostOrder.FIRST)
@@ -339,12 +352,16 @@ public final class JoinListener {
                 if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
                     DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
-                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName()))
-                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).build());
+                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
+                            .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
+                            .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                            .build());
+                }
             }
+            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
+            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(CurrentPlatform.getMessages().toString()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(Config.manager.getConfiguration()).build());
             CurrentPlatform.requestDataContainerUpdate();
 
             MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();

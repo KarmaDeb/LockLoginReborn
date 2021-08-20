@@ -20,7 +20,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
@@ -35,7 +35,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.command.Command;
@@ -46,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 @SystemCommand(command = "account")
@@ -85,7 +85,7 @@ public class AccountCommand implements CommandExecutor {
 
                                 AccountManager manager = user.getManager();
 
-                                CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (util.validate()) {
                                     if (!password.equals(new_pass)) {
                                         manager.setPassword(new_pass);
@@ -233,7 +233,7 @@ public class AccountCommand implements CommandExecutor {
                                     String confirmation = args[2];
 
                                     if (password.equals(confirmation)) {
-                                        CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                        CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate()) {
                                             user.send(messages.prefix() + messages.accountRemoved());
                                             manager.remove(player.getName());
@@ -304,7 +304,7 @@ public class AccountCommand implements CommandExecutor {
             }
         } else {
             if (args.length == 0) {
-                Console.send(messages.prefix() + messages.accountArguments());
+                console.send(messages.prefix() + messages.accountArguments());
             } else {
                 String tar_name;
                 OfflineClient offline;
@@ -322,16 +322,16 @@ public class AccountCommand implements CommandExecutor {
 
                             if (data.isLocked()) {
                                 if (account.unlock()) {
-                                    Console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                    console.send(messages.prefix() + messages.accountUnLocked(tar_name));
                                 } else {
-                                    Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                    console.send(messages.prefix() + messages.accountNotLocked(tar_name));
                                     LockLogin.logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
                                 }
                             } else {
-                                Console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                console.send(messages.prefix() + messages.accountNotLocked(tar_name));
                             }
                         } else {
-                            Console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                            console.send(messages.prefix() + messages.neverPlayer(tar_name));
                         }
                         break;
                     case "close":
@@ -346,19 +346,19 @@ public class AccountCommand implements CommandExecutor {
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     tar_p.performCommand("account close");
-                                    Console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
+                                    console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
                                     ModulePlugin.callEvent(issuer);
                                 } else {
-                                    Console.send(messages.prefix() + messages.targetAccessError(tar_name));
+                                    console.send(messages.prefix() + messages.targetAccessError(tar_name));
                                 }
                             } else {
-                                Console.send(messages.prefix() + messages.connectionError(tar_name));
+                                console.send(messages.prefix() + messages.connectionError(tar_name));
                             }
                             break;
                         } else {
-                            Console.send(messages.prefix() + messages.close());
+                            console.send(messages.prefix() + messages.close());
                         }
                         break;
                     case "remove":
@@ -382,16 +382,16 @@ public class AccountCommand implements CommandExecutor {
                                 }
 
                                 account.lock(StringUtils.stripColor("{ServerName}"));
-                                Console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
                             } else {
-                                Console.send(messages.prefix() + messages.neverPlayer(target));
+                                console.send(messages.prefix() + messages.neverPlayer(target));
                             }
                         } else {
-                            Console.send(messages.prefix() + messages.remove());
+                            console.send(messages.prefix() + messages.remove());
                         }
                         break;
                     default:
-                        Console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                        console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
                 }
             }
         }

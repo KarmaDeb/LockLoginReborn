@@ -15,6 +15,7 @@ package eu.locklogin.api.common.utils.other;
  */
 
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -62,10 +63,10 @@ public class ASCIIArtGenerator {
                 if (sb.toString().trim().isEmpty())
                     continue;
 
-                Console.send(color + sb);
+                APISource.getConsole().send(color + sb);
             }
         } catch (Throwable ex) {
-            Console.send(color + artText);
+            APISource.getConsole().send(color + artText);
         }
     }
 

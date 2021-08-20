@@ -15,7 +15,7 @@ package eu.locklogin.api.common.security.client;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
@@ -53,7 +53,7 @@ public final class AccountData {
             for (byte bytes : libraryName.getAddress())
                 addressBuilder.append(bytes);
 
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(addressBuilder.toString()).build();
+            CryptoFactory util = CryptoFactory.getBuilder().withPassword(addressBuilder.toString()).build();
             ip = util.hash(HashType.LS_SHA256, true);
         } else {
             ip = "none";

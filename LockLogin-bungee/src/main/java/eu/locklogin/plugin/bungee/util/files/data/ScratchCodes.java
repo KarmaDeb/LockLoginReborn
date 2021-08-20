@@ -11,7 +11,7 @@ package eu.locklogin.plugin.bungee.util.files.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
@@ -47,7 +47,7 @@ public class ScratchCodes {
         List<String> codes = new ArrayList<>();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         for (int code : scratch_codes) {
-            CryptoUtil util = CryptoUtil.getBuilder().withPassword(code).build();
+            CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).build();
             codes.add(util.hash(config.pinEncryption(), false));
         }
 
@@ -66,7 +66,7 @@ public class ScratchCodes {
         String remove = "";
         if (!codes.isEmpty()) {
             for (String token : codes) {
-                CryptoUtil util = CryptoUtil.getBuilder().withPassword(code).withToken(token).build();
+                CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token).build();
                 if (util.validate()) {
                     remove = token;
                     status = true;

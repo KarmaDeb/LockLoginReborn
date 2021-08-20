@@ -15,7 +15,9 @@ package eu.locklogin.api.common.utils.dependencies;
  */
 
 import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -91,7 +93,9 @@ public enum Dependency {
                 String version = FileInfo.getManagerVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 return PluginDependency.of(prettyName(),
-                        "https://locklogin.eu/modules/manager/" + version + "/LockLoginManager.jar",
+                        URLUtils.getOrBackup(
+                                "https://locklogin.eu/modules/manager/" + version + "/LockLoginManager.jar",
+                                "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar").toString(),
                         true,
                         true);
         }

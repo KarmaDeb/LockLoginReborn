@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
@@ -53,19 +54,17 @@ import eu.locklogin.plugin.velocity.listener.MessageListener;
 import eu.locklogin.plugin.velocity.listener.QuitListener;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
-import eu.locklogin.plugin.velocity.util.ServerLifeChecker;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import eu.locklogin.plugin.velocity.util.files.data.RestartCache;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
+import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
@@ -104,33 +103,35 @@ public final class Manager {
 
         System.out.println();
         artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID.getVersionID());
-        Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
+        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
         ProxyCheck.scan();
 
         PlayerFile.migrateV1();
         PlayerFile.migrateV2();
         PlayerFile.migrateV3();
+        PlayerPool.startCheckTask();
 
         setupFiles();
+        TokenGen.generate(CurrentPlatform.getProxyConfiguration().proxyKey());
         registerCommands();
         registerListeners();
 
-        Console.send(" ");
-        Console.send("&e-----------------------");
+        console.send(" ");
+        console.send("&e-----------------------");
 
         if (!CurrentPlatform.isValidAccountManager()) {
             CurrentPlatform.setAccountsManager(PlayerFile.class);
-            Console.send(source, "Loaded native player account manager", Level.INFO);
+            console.send("Loaded native player account manager", Level.INFO);
         } else {
-            Console.send(source, "Loaded custom player account manager", Level.INFO);
+            console.send("Loaded custom player account manager", Level.INFO);
         }
         if (!CurrentPlatform.isValidSessionManager()) {
             CurrentPlatform.setSessionManager(Session.class);
-            Console.send(source, "Loaded native player session manager", Level.INFO);
+            console.send("Loaded native player session manager", Level.INFO);
         } else {
-            Console.send(source, "Loaded custom player session manager", Level.INFO);
+            console.send("Loaded custom player session manager", Level.INFO);
         }
 
         loadCache();
@@ -186,9 +187,6 @@ public final class Manager {
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
 
-        ServerLifeChecker checker = new ServerLifeChecker();
-        checker.startCheck();
-
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null) {
             List<File> files = Arrays.asList(moduleFiles);
@@ -204,7 +202,7 @@ public final class Manager {
 
     public static void terminate() {
         try {
-            Console.send(source, "Finalizing console filter, please wait", Level.INFO);
+            console.send("Finalizing console filter, please wait", Level.INFO);
             Logger coreLogger = (Logger) LogManager.getRootLogger();
 
             Iterator<Filter> filters = coreLogger.getFilters();
@@ -228,9 +226,9 @@ public final class Manager {
 
         System.out.println();
         artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID.getVersionID());
-        Console.send(" ");
-        Console.send("&e-----------------------");
+        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send(" ");
+        console.send("&e-----------------------");
 
         endPlayers();
     }
@@ -265,10 +263,10 @@ public final class Manager {
         }
 
         if (!unregistered.isEmpty()) {
-            Console.send(source, properties.getProperty("command_register_problem", "Failed to register command(s): {0}"), Level.GRAVE, setToString(unregistered));
-            Console.send(source, properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
+            console.send(properties.getProperty("command_register_problem", "Failed to register command(s): {0}"), Level.GRAVE, setToString(unregistered));
+            console.send(properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
         } else {
-            Console.send(source, properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
+            console.send(properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
 
             try {
                 ConsoleFilter filter = new ConsoleFilter(registered);
@@ -279,8 +277,8 @@ public final class Manager {
                 logger.scheduleLog(Level.GRAVE, ex);
                 logger.scheduleLog(Level.INFO, "Failed to register console filter");
 
-                Console.send(source, properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
-                Console.send(source, properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
+                console.send(properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
+                console.send(properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
             }
         }
     }
@@ -330,7 +328,7 @@ public final class Manager {
         } else {
             if (!msg_file.exists()) {
                 failed.add(msg_file.getName());
-                Console.send(source, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
+                console.send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
 
                 msg_file = new File(source.getDataPath().toFile() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
@@ -344,12 +342,12 @@ public final class Manager {
                     }
                 }
             } else {
-                Console.send(source, "Detected community language pack, please make sure this pack is updated to avoid translation errors", Level.WARNING);
+                console.send("Detected community language pack, please make sure this pack is updated to avoid translation errors", Level.WARNING);
             }
         }
 
         if (!failed.isEmpty()) {
-            Console.send(source, properties.getProperty("file_register_problem", "Failed to setup/check file(s): {0}. The plugin will use defaults, you can try to create files later by running /locklogin reload"), Level.WARNING, setToString(failed));
+            console.send(properties.getProperty("file_register_problem", "Failed to setup/check file(s): {0}. The plugin will use defaults, you can try to create files later by running /locklogin reload"), Level.WARNING, setToString(failed));
         }
 
         Message messages = new Message();
@@ -394,7 +392,6 @@ public final class Manager {
      */
     protected static void loadCache() {
         RestartCache cache = new RestartCache();
-        cache.loadBungeeKey();
         cache.loadUserData();
 
         cache.remove();
@@ -411,9 +408,9 @@ public final class Manager {
                     if (changelog_requests <= 0) {
                         changelog_requests = 3;
 
-                        Console.send(source, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
+                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
                         for (String line : fetch.getChangelog())
-                            Console.send(line);
+                            console.send(line);
 
                         PluginMessages messages = CurrentPlatform.getMessages();
                         for (Player player : server.getAllPlayers()) {
@@ -431,13 +428,13 @@ public final class Manager {
                                     if (error != null) {
                                         logger.scheduleLog(Level.GRAVE, error);
                                         logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                        Console.send(source, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
+                                        console.send(properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
 
                                         try {
                                             Files.deleteIfExists(file.toPath());
                                         } catch (Throwable ignored) {}
                                     } else {
-                                        Console.send(source, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+                                        console.send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
 
                                         for (Player player : server.getAllPlayers()) {
                                             User user = new User(player);
@@ -449,7 +446,7 @@ public final class Manager {
                                 });
                             }
                         } else {
-                            Console.send(source, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
+                            console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
 
                             for (Player player : server.getAllPlayers()) {
                                 User user = new User(player);
@@ -492,7 +489,7 @@ public final class Manager {
             system.checkAlerts();
 
             if (system.available())
-                Console.send(system.getMessage());
+                console.send(system.getMessage());
         });
         timer.start();
 
@@ -536,8 +533,12 @@ public final class Manager {
                             if (ServerDataStorage.needsRegister(info.getServerInfo().getName()))
                                 DataSender.send(info, DataSender.getBuilder(DataType.KEY, DataSender.ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
 
-                            if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName()))
-                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).build());
+                            if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
+                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player)
+                                        .addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName())
+                                        .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                        .build());
+                            }
                         }
                     }
 

@@ -22,7 +22,7 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512;
 import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 /**
  * LockLogin crypto util
  */
-public final class CryptoUtil {
+public final class CryptoFactory {
 
     private final String password;
     private final String token;
@@ -43,7 +43,7 @@ public final class CryptoUtil {
      * @param pwd the password
      * @param tkn the token
      */
-    CryptoUtil(final String pwd, final String tkn) {
+    CryptoFactory(final String pwd, final String tkn) {
         password = pwd;
         token = tkn;
     }
@@ -184,7 +184,6 @@ public final class CryptoUtil {
                 String[] data = clean.split("\\$");
 
                 String type = data[1];
-
                 switch (type.toLowerCase()) {
                     case "sha512":
                     case "512":
@@ -200,9 +199,11 @@ public final class CryptoUtil {
                         return HashType.ARGON2I;
                     case "argon2id":
                         return HashType.ARGON2ID;
+                    case "sha":
+                        return HashType.AUTHME_SHA;
                     default:
                         type = data[2];
-                        switch (type) {
+                        switch (type.toLowerCase()) {
                             case "sha512":
                             case "512":
                                 return HashType.SHA512;
@@ -217,6 +218,8 @@ public final class CryptoUtil {
                                 return HashType.ARGON2I;
                             case "argon2id":
                                 return HashType.ARGON2ID;
+                            case "sha":
+                                return HashType.AUTHME_SHA;
                             default:
                                 return HashType.UNKNOWN;
                         }
@@ -292,11 +295,13 @@ public final class CryptoUtil {
                     return argon2id.checkPassword(key, HashType.ARGON2I);
                 case ARGON2ID:
                     return argon2id.checkPassword(key, HashType.ARGON2ID);
+                case AUTHME_SHA:
+                    return AuthMeAuth.check(password, key);
                 case UNKNOWN:
                     return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
                 case NONE:
                 default:
-                    Console.send("&cError while getting current token hash type: " + current_type.name());
+                    APISource.getConsole().send("&cError while getting current token hash type: " + current_type.name());
                     return false;
             }
         }
@@ -370,11 +375,11 @@ public final class CryptoUtil {
          *
          * @return the crypto util instance
          */
-        public CryptoUtil build() throws IllegalArgumentException {
+        public CryptoFactory build() throws IllegalArgumentException {
             if (password.replaceAll("\\s", "").isEmpty() && token.replaceAll("\\s", "").isEmpty()) {
                 throw new IllegalArgumentException("Tried to build a crypto util instance with empty/null password and token");
             } else {
-                return new CryptoUtil(password, token);
+                return new CryptoFactory(password, token);
             }
         }
 
@@ -383,8 +388,8 @@ public final class CryptoUtil {
          *
          * @return the crypto util instance
          */
-        public CryptoUtil unsafe() {
-            return new CryptoUtil(password, token);
+        public CryptoFactory unsafe() {
+            return new CryptoFactory(password, token);
         }
     }
 

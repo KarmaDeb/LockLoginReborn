@@ -18,10 +18,8 @@ import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.ModuleStatusChangeEvent;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
-import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -160,7 +158,7 @@ public final class ModuleLoader {
 
                             loadedModule = module_class.getDeclaredConstructor().newInstance();
                         } else {
-                            Console.send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
+                            APISource.getConsole().send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
                         }
 
                         module_yml.close();
@@ -168,7 +166,7 @@ public final class ModuleLoader {
 
                     jar.close();
                 } else {
-                    Console.send("&cModule {0} failed to load ( invalid or null module.yml )", name);
+                    APISource.getConsole().send("&cModule {0} failed to load ( invalid or null module.yml )", name);
                 }
             } catch (Throwable ex) {
                 ex.printStackTrace();
@@ -223,7 +221,7 @@ public final class ModuleLoader {
 
                 if (loadedModule != null) {
                     if (loadedModule.loadRule().equals(rule)) {
-                        Console.send("&cModule {0} failed to load ( already loaded )", name);
+                        APISource.getConsole().send("&cModule {0} failed to load ( already loaded )", name);
                     }
                 } else {
                     try {
@@ -274,7 +272,7 @@ public final class ModuleLoader {
                                         CurrentPlatform.getPluginAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
                                     }
                                 } else {
-                                    Console.send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
+                                    APISource.getConsole().send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
                                 }
 
                                 module_yml.close();
@@ -282,7 +280,7 @@ public final class ModuleLoader {
 
                             jar.close();
                         } else {
-                            Console.send("&cModule {0} failed to load ( invalid or null module.yml )", name);
+                            APISource.getConsole().send("&cModule {0} failed to load ( invalid or null module.yml )", name);
                         }
                     } catch (Throwable ex) {
                         ex.printStackTrace();

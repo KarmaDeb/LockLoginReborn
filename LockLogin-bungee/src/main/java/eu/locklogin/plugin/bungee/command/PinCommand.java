@@ -17,18 +17,18 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
+import static eu.locklogin.plugin.bungee.LockLogin.console;
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
 @SystemCommand(command = "pin")
@@ -93,7 +93,7 @@ public class PinCommand extends Command {
                                         } else {
                                             String current = args[1];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
                                             if (util.validate()) {
                                                 manager.setPin(null);
                                                 user.send(messages.prefix() + messages.pinReseted());
@@ -113,7 +113,7 @@ public class PinCommand extends Command {
                                             String current = args[1];
                                             String newPin = args[2];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
                                             if (util.validate()) {
                                                 manager.setPin(newPin);
                                                 user.send(messages.prefix() + messages.pinChanged());
@@ -138,7 +138,7 @@ public class PinCommand extends Command {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 }

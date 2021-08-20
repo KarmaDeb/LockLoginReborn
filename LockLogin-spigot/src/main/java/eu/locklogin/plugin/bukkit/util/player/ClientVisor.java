@@ -20,8 +20,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
-
 @SuppressWarnings("deprecation")
 public final class ClientVisor {
 
@@ -42,12 +40,13 @@ public final class ClientVisor {
      * Vanish the specified player
      */
     public final void vanish() {
+        /*
         vanished.add(player.getUniqueId());
 
         for (Player online : plugin.getServer().getOnlinePlayers()) {
             player.hidePlayer(online);
             online.hidePlayer(player);
-        }
+        }*/
     }
 
     /**
@@ -55,18 +54,20 @@ public final class ClientVisor {
      * to other players
      */
     public final void unVanish() {
+        /*
         vanished.remove(player.getUniqueId());
 
         for (Player online : plugin.getServer().getOnlinePlayers()) {
             player.showPlayer(online);
             online.showPlayer(player);
-        }
+        }*/
     }
 
     /**
      * Check for all vanished players
      */
     public final void checkVanish() {
+        /*
         Player last = null;
 
         for (Player online : plugin.getServer().getOnlinePlayers()) {
@@ -92,6 +93,6 @@ public final class ClientVisor {
             }
 
             last = online;
-        }
+        }*/
     }
 }

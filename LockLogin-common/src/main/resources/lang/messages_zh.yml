@@ -1,0 +1,200 @@
+#LockLogin message file
+#----------------------------------
+#Translation: Chinese (Official - Community based)
+#Editor: MAX_XiaoKui, KarmaDev
+#Last edited: 13 - August - 2021 02:13
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates（this means
+#   this language will be translated by the author when a new
+#   message is added）
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update（this
+#   means the author of the language pack must update the
+#   language with the new messages，LockLogin developer won't do it）
+
+#Plugin prefix
+Prefix: "&eLockLogin &7>> "
+
+#Permission error message
+PermissionError: "&5&o你没有{permission}权限"
+
+#BungeeCord proxy message
+BungeeProxy: "&5&o请使用BungeeCord代理地址连接！"
+
+#Inventories messages
+PinTitle: "&8&lLockLogin pinner"
+AltTitle: "&8&lAlt账户查找"
+InfoTitle: "&8&l捆绑的玩家数据"
+Next: "&e下一个"
+Back: "&e上一个"
+
+#Session messages - Manager
+PlayerNotVerified: "&5&o你不能与{player}战斗，因为他/她还没有注册/登录"
+AlreadyPlaying: "&5&o那个玩家已经在游戏中了"
+MaxIp: "&5&o服务器已达到每IP账户数量上线"
+ConnectionError: "&5&o玩家{player}不在线"
+PlayerInfoUsage: "&5&o有效的playerinfo子参数：&e<玩家>&7，&e<@[别名]>"
+LookUpUsage: "&5&o请使用/account alts <玩家>"
+AltFound: "&5&o{player}没有{alts} alt账户，输入/account alts {player}获取更多信息"
+NeverPlayed: "&5&o玩家{player}从来没有进入过这个服务器"
+TargetAccessError: "&5&o玩家{player}还没有注册/登录"
+IncorrectPassword: "&5&o密码错误！"
+Captcha: "&7你的验证码是：&e{captcha}"
+InvalidCaptcha: "&5&o指定的验证码无效或不正确"
+SessionServerDisabled: "&5&o此服务器中禁用了持久会话"
+SessionEnabled: "&d为您的账户启用了持久会话"
+SessionDisabled: "&5&o为您的账户禁用了持久会话"
+
+#Session messages - Register
+Register: "&5&o请使用/register <密码> <密码> <验证码>"
+RegisterBar: "{color}你还有&7{time}{color}来注册"
+Registered: "&d已注册，欢迎"
+AlreadyRegistered: "&5&o你已经注册过了！"
+RegisterError: "&5&o提供的两次密码不相同！"
+PasswordInsecure: "&5&o密码不安全！"
+RegisterOut: "&5&o你花了太长时间注册！"
+RegisterTitle: "&7你还有"
+RegisterSubtitle: "&b{time} &7来注册"
+MaxRegisters:
+  - "{ServerName}"
+  - ""
+  - "&c您已达到服务器中最大账户注册数！"
+  - ""
+  - "&c如果你认为这是一个错误，你可以在以下平台报告："
+  - "&7QQ群（群号（未设置））"
+
+#Session messages - Login
+Login: "&5&o请使用/login <密码> <验证码>"
+LoginBar: "{color}你还有&7{time}{color}来登录"
+Logged: "&d登录成功，欢迎&7{player}"
+AlreadyLogged: "&5&o你已经登录了！"
+LoginInsecure: "&5&o你的密码被识别为不安全，你必须更改密码"
+LoginOut: "&5&o你花了太长时间来登录"
+LoginTitle: "&7你还有"
+LoginSubtitle: "&b{time} &7来登录"
+
+#Session messages - Pin
+PinUsages: "&5&o有效的pin子参数：&e<setup>&7，&e<remove>&7，&e<change>"
+PinSet: "&d成功设置你的pin"
+PinResetted: "&5&oPin已移除，你的账户现在变得不那么安全了"
+PinChanged: "&d成功更换了你的pin"
+AlreadyPin: "&5&o你已经设置了你的pin！"
+NoPin: "&5&o你没有pin！"
+SetPin: "&5&o请使用/pin setup <pin>"
+ResetPin: "&5&o请使用/pin remove <pin>"
+ChangePin: "&5&o请使用/pin change <pin> <新pin>"
+PinDisabled: "&5&oPin已禁用"
+PinLength: "&5&oPin必须有4位数字"
+IncorrectPin: "&5&oPin错误！"
+
+#Session messages - 2FA
+2FaUsages: "&5&o有效的2FA子参数：&e<setup>&7，&e<remove>&7，&e<2fa code>"
+2FaSetupUsage: "&5&o请使用/2fa setup <密码>"
+2FaRemoveUsage: "&5&o请使用/2fa remove <密码> <2fa code>"
+2FaAuthenticate: "&5&o请使用/2fa来继续游戏"
+2FaLogged: "&d2FA码已验证"
+2FaAlreadyLogged: "&5&o你已经通过2FA验证了！"
+2FaIncorrect: "&5&o2FA码错误"
+2FaAlready: "&5&o你已经设置了你的2FA！"
+2FaToggleError: "&5&o开关2FA发生错误（错误的密码/2FA码）"
+Disabled2FA: "&5&o2FA已关闭，你的账户现在变得不那么安全了"
+Enabled2FA: "&d2FA已开启，你的账户现在又变得安全了"
+2FaAccountDisabled: "&5&o2FA已在你的账户中禁用"
+2FAServerDisabled: "&5&o2FA已被服务器禁用"
+2FaLocked: "&5&o此服务器希望您启用2FA"
+2FAScratchCodes:
+  - "&7嘿！&b{player}&7，这些是你的恢复码，"
+  - "&7千万别弄丢了，因为这是你最后一次"
+  - "&7看见它们："
+2FaInstructions:
+  - "&f如何使用谷歌验证器进行验证？"
+  - "&71 - 点击'{message}'"
+  - "&72 - 下载	Google 身份验证器 app"
+  - "&73 - 在app中点击'+'"
+  - "&74 - 点击'Scan a QR code'"
+  - "&75 - 扫描屏幕上的二维码（step #1）"
+  - "&77 - 在 Google 身份验证器 app中找到{account}"
+  - "&78 - 输入/2fa <app中显示的验证码>"
+2FaLink: "&b点击这里来获取2FA二维码"
+
+#Session messages - Account management
+AccountArguments: "&5&o有效的account子参数：&e<change>&7，&e<unlock>&7，&e<close>&7，&e<remove>&7，&e<alts>"
+Change: "&5&o请使用/account change <密码> <新密码>"
+ChangeSame: "&5&o你的新密码不能与旧密码相同！"
+ChangeDone: "&d你的密码已更改！"
+AccountUnlock: "&5&o请使用/account unlock <玩家>"
+AccountUnlocked: "&d{player}的账户已解锁"
+AccountNotLocked: "&5&o{player}的账户没有锁定！"
+Close: "&5&o请使用/account close [玩家]"
+Closed: "&5&o会话关闭，请重新登录！"
+ForceClose: "&5&o你的会话被管理员关闭，请重新登录"
+ForceCloseAdmin: "&d{player}的会话已关闭"
+Remove: "&5&o请使用/account remove <password|player> [密码]来注销账户"
+RemoveAccountMatch: "&5&o密码错误"
+AccountRemoved: "&5&o你的账户已删除"
+ForcedAccountRemoval:
+  - "{ServerName}"
+  - ""
+  - "&c你的账户已被管理员（&7{player}&c）删除"
+  - "&c并且暂时封禁来避免数据丢失，"
+  - "&c直到有工作人员打开它"
+  - ""
+  - "&c如果你认为不合理，请在以下平台报告："
+  - "&7QQ群（群号（未设置））"
+ForcedAccountRemovalAdmin: "&d{player}的账户已删除，不要忘记运行/account unlock {player}！"
+
+#Spawn utilities（includes take back）
+SpawnSet: "&d登录出生点已设置"
+LocationsReset: "&d所有的最后登录位置已重置"
+LocationReset: "&d{player}的最后登录位置已重置"
+LocationsFixed: "&d所有的最后登录位置已固定"
+LocationFixed: "&d{player}的位置已固定"
+ResetLastLocUsage: "&5&o请使用/locations [玩家|@all|@me] <remove|fix>"
+
+#Alias messages
+AliasArguments: "&5&o有效的alias子参数：&e<create>&7，&e<destroy>&7，&e<add>&7，&e<remove> [别名] [玩家]"
+AliasCreated: "&d别名{alias}创建成功"
+AliasDestroyed: "&5&o别名{alias}已被破坏"
+AliasExists: "&5&o别名{alias}已被使用！"
+AliasNotFound: "&5&o找不到称作的{alias}别名"
+AddedPlayer: "&d已将{player}加入{alias}"
+RemovedPlayer: "&d已将{player}移出{alias}"
+PlayerNotIn: "&5&o{player}不在{alias}中！"
+PlayerAlreadyIn: "&5&o{player}已在{alias}中！"
+
+#Security messages
+IpBlocked:
+  - "{ServerName}"
+  - ""
+  - "&cLockLogin系统在你的IP上检测到一个异常的通信并已经禁止"
+  - "&f{time} {time_format}"
+AntiBot:
+  - "&f{ServerName}"
+  - ""
+  - "&c将此服务器添加到服务器列表"
+  - "&c如果你已经添加，重载服务器列表"
+IllegalName:
+  - "{ServerName}"
+  - ""
+  - "&c您的ID不能包含："
+  - "{chars}"
+SimilarName:
+  - "{ServerName}"
+  - ""
+  - "&c你的名字看起来像一个"
+  - "&c已经注册了"
+  - "&7{player}"
+UUIDFetchError:
+  - "{ServerName}"
+  - ""
+  - "&c使用客户端名称获取您的UUID时出现问题……"
+IpProxyError:
+  - "{ServerName}"
+  - ""
+  - "&c你的IP地址似乎有一点可疑"
+  - "&c如果你认为这是一个错误，你可以在以下平台报告："
+  - "&7QQ群（群号（未设置））"

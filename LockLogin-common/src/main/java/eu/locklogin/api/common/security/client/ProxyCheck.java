@@ -16,7 +16,7 @@ package eu.locklogin.api.common.security.client;
 
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -106,7 +106,7 @@ public final class ProxyCheck {
                 return false;
             }
 
-            Console.send("Couldn't process null ip proxy check at {0}", Instant.now().toString());
+            APISource.getConsole().send("Couldn't process null ip proxy check at {0}", Instant.now().toString());
             return false;
         }
 

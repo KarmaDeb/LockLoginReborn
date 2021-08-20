@@ -27,7 +27,6 @@ import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.util.*;
@@ -186,17 +185,17 @@ public final class AliasCommand extends BungeeLikeCommand {
                     case "create":
                         if (!alias.exists()) {
                             alias.create();
-                            Console.send(messages.prefix() + messages.aliasCreated(alias));
+                            console.send(messages.prefix() + messages.aliasCreated(alias));
                         } else {
-                            Console.send(messages.prefix() + messages.aliasExists(alias));
+                            console.send(messages.prefix() + messages.aliasExists(alias));
                         }
                         break;
                     case "destroy":
                         if (alias.exists()) {
                             alias.destroy();
-                            Console.send(messages.prefix() + messages.aliasDestroyed(alias));
+                            console.send(messages.prefix() + messages.aliasDestroyed(alias));
                         } else {
-                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                            console.send(messages.prefix() + messages.aliasNotFound(name));
                         }
                         break;
                     case "add":
@@ -213,7 +212,7 @@ public final class AliasCommand extends BungeeLikeCommand {
 
                                     String invalid = extract(names);
                                     if (!invalid.replaceAll("\\s", "").isEmpty())
-                                        Console.send(messages.prefix() + messages.neverPlayer(invalid));
+                                        console.send(messages.prefix() + messages.neverPlayer(invalid));
 
                                     Map<AccountID, String> accounts = parse(names);
 
@@ -222,20 +221,20 @@ public final class AliasCommand extends BungeeLikeCommand {
 
                                     if (!not_added.isEmpty()) {
                                         added.removeAll(not_added);
-                                        Console.send(messages.prefix() + messages.playerAlreadyIn(alias, not_added.toArray(new String[]{})));
+                                        console.send(messages.prefix() + messages.playerAlreadyIn(alias, not_added.toArray(new String[]{})));
                                     }
                                     if (!added.isEmpty()) {
-                                        Console.send(messages.prefix() + messages.addedPlayer(alias, added.toArray(new String[]{})));
+                                        console.send(messages.prefix() + messages.addedPlayer(alias, added.toArray(new String[]{})));
                                     } else {
                                         if (not_added.isEmpty())
-                                            Console.send(messages.prefix() + messages.addedPlayer(alias, "@nobody"));
+                                            console.send(messages.prefix() + messages.addedPlayer(alias, "@nobody"));
                                     }
                                 }).schedule();
                             } else {
-                                Console.send(messages.prefix() + messages.alias());
+                                console.send(messages.prefix() + messages.alias());
                             }
                         } else {
-                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                            console.send(messages.prefix() + messages.aliasNotFound(name));
                         }
                         break;
                     case "remove":
@@ -252,7 +251,7 @@ public final class AliasCommand extends BungeeLikeCommand {
 
                                     String invalid = extract(names);
                                     if (!invalid.replaceAll("\\s", "").isEmpty())
-                                        Console.send(messages.prefix() + messages.neverPlayer(invalid));
+                                        console.send(messages.prefix() + messages.neverPlayer(invalid));
 
                                     Map<AccountID, String> accounts = parse(names);
 
@@ -261,28 +260,28 @@ public final class AliasCommand extends BungeeLikeCommand {
 
                                     if (!not_removed.isEmpty()) {
                                         removed.removeAll(not_removed);
-                                        Console.send(messages.prefix() + messages.playerNotIn(alias, not_removed.toArray(new String[]{})));
+                                        console.send(messages.prefix() + messages.playerNotIn(alias, not_removed.toArray(new String[]{})));
                                     }
                                     if (!removed.isEmpty()) {
-                                        Console.send(messages.prefix() + messages.removedPlayer(alias, removed.toArray(new String[]{})));
+                                        console.send(messages.prefix() + messages.removedPlayer(alias, removed.toArray(new String[]{})));
                                     } else {
                                         if (not_removed.isEmpty())
-                                            Console.send(messages.prefix() + messages.removedPlayer(alias, "@nobody"));
+                                            console.send(messages.prefix() + messages.removedPlayer(alias, "@nobody"));
                                     }
                                 }).schedule();
                             } else {
-                                Console.send(messages.prefix() + messages.alias());
+                                console.send(messages.prefix() + messages.alias());
                             }
                         } else {
-                            Console.send(messages.prefix() + messages.aliasNotFound(name));
+                            console.send(messages.prefix() + messages.aliasNotFound(name));
                         }
                         break;
                     default:
-                        Console.send(messages.prefix() + messages.alias());
+                        console.send(messages.prefix() + messages.alias());
                         break;
                 }
             } else {
-                Console.send(messages.prefix() + messages.alias());
+                console.send(messages.prefix() + messages.alias());
             }
         }
     }

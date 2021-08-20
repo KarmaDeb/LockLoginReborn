@@ -22,7 +22,7 @@ import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.Password;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
@@ -35,7 +35,6 @@ import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
@@ -106,7 +105,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                 if (ip != null)
                                     protection = new BruteForce(ip);
 
-                                CryptoUtil utils = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (utils.validate()) {
                                     if (!checker.isSecure()) {
                                         user.send(messages.prefix() + messages.loginInsecure());
@@ -242,7 +241,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
     }
 }

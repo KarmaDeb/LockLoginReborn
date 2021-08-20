@@ -26,12 +26,14 @@ import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.plugin.velocity.util.player.User;
+import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.UUID;
 
@@ -42,6 +44,8 @@ public interface LockLogin {
     Metrics.Factory factory = Main.factory;
     KarmaSource source = Main.source;
     Main main = Main.get();
+
+    Console console = new Console(source);
 
     String name = main.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
@@ -57,6 +61,13 @@ public interface LockLogin {
     PluginProperties properties = new PluginProperties();
 
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
+
+    UUID rsa_id = UUID.nameUUIDFromBytes(("locklogin_rsa_local").getBytes(StandardCharsets.UTF_8));
+    UUID aes_id = UUID.nameUUIDFromBytes(("locklogin_aes_local").getBytes(StandardCharsets.UTF_8));
+
+    static UUID generateForServer(final String proxy) {
+        return UUID.nameUUIDFromBytes(("KeyFor:" + proxy).getBytes(StandardCharsets.UTF_8));
+    }
 
     static ModuleLoader getLoader() {
         File modulesFolder = new File(source.getDataPath().toFile() + File.separator + "plugin", "modules");

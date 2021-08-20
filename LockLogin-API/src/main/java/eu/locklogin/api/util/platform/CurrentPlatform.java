@@ -259,19 +259,23 @@ public final class CurrentPlatform {
      */
     @Nullable
     public static AccountManager getLastAccountManager(final Class<?>[] constructorParams, final Object... parameters) {
-        try {
-            Constructor<? extends AccountManager> constructor = last_manager.getDeclaredConstructor(constructorParams);
-            constructor.setAccessible(true);
-            return constructor.newInstance(parameters);
-        } catch (Throwable ex) {
+        if (last_manager != null) {
             try {
-                Constructor<? extends AccountManager> constructor = last_manager.getConstructor(constructorParams);
+                Constructor<? extends AccountManager> constructor = last_manager.getDeclaredConstructor(constructorParams);
                 constructor.setAccessible(true);
                 return constructor.newInstance(parameters);
-            } catch (Throwable exc) {
-                return null;
+            } catch (Throwable ex) {
+                try {
+                    Constructor<? extends AccountManager> constructor = last_manager.getConstructor(constructorParams);
+                    constructor.setAccessible(true);
+                    return constructor.newInstance(parameters);
+                } catch (Throwable exc) {
+                    return null;
+                }
             }
         }
+
+        return getAccountManager(constructorParams, parameters);
     }
 
     /**

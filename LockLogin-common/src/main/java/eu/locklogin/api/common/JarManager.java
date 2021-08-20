@@ -12,7 +12,7 @@ package eu.locklogin.api.common;
  */
 
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -74,7 +74,7 @@ public final class JarManager {
         if (pluginDependency.isValid()) {
             downloadTable.remove(pluginDependency);
         } else {
-            Console.send("&cDependency " + pluginDependency.getName() + " is invalid or is not downloaded and will be downloaded");
+            APISource.getConsole().send("&cDependency " + pluginDependency.getName() + " is invalid or is not downloaded and will be downloaded");
             downloadTable.add(pluginDependency);
         }
     }
@@ -86,7 +86,7 @@ public final class JarManager {
         Set<PluginDependency> success = new HashSet<>();
         Set<PluginDependency> error = new HashSet<>();
         for (PluginDependency download : downloadTable) {
-            Console.send("&aTrying to download dependency " + download.getName());
+            APISource.getConsole().send("&aTrying to download dependency " + download.getName());
 
             String url = download.getDownloadURL();
             File jarFile = download.getLocation();
@@ -138,10 +138,10 @@ public final class JarManager {
         }
 
         for (PluginDependency valid : success)
-            Console.send("&aDownloaded plugin dependency " + valid.getName());
+            APISource.getConsole().send("&aDownloaded plugin dependency " + valid.getName());
 
         for (PluginDependency failed : error)
-            Console.send("&cFailed to download plugin dependency " + failed.getName());
+            APISource.getConsole().send("&cFailed to download plugin dependency " + failed.getName());
     }
 
     /**

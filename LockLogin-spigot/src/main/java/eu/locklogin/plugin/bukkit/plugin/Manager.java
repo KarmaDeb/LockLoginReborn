@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bukkit.plugin;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
@@ -40,6 +41,7 @@ import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.*;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
 import eu.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.Message;
@@ -52,11 +54,9 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
@@ -100,33 +100,35 @@ public final class Manager {
 
         System.out.println();
         artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID.getVersionID());
-        Console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
+        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
         ProxyCheck.scan();
 
         PlayerFile.migrateV1();
         PlayerFile.migrateV2();
         PlayerFile.migrateV3();
+        MessagePool.startCheckTask();
 
         setupFiles();
+        TokenGen.generate(plugin.getServer().getName());
         registerCommands();
         registerListeners();
 
-        Console.send(" ");
-        Console.send("&e-----------------------");
+        console.send(" ");
+        console.send("&e-----------------------");
 
         if (!CurrentPlatform.isValidAccountManager()) {
             CurrentPlatform.setAccountsManager(PlayerFile.class);
-            Console.send(plugin, "Loaded native player account manager", Level.INFO);
+            console.send("Loaded native player account manager", Level.INFO);
         } else {
-            Console.send(plugin, "Loaded custom player account manager", Level.INFO);
+            console.send("Loaded custom player account manager", Level.INFO);
         }
         if (!CurrentPlatform.isValidSessionManager()) {
             CurrentPlatform.setSessionManager(Session.class);
-            Console.send(plugin, "Loaded native player session manager", Level.INFO);
+            console.send("Loaded native player session manager", Level.INFO);
         } else {
-            Console.send(plugin, "Loaded custom player session manager", Level.INFO);
+            console.send("Loaded custom player session manager", Level.INFO);
         }
 
         loadCache();
@@ -143,9 +145,9 @@ public final class Manager {
             messenger.registerOutgoingPluginChannel(plugin, "ll:access");
 
             if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
-                Console.send(plugin, "Registered plugin message listeners", Level.OK);
+                console.send("Registered plugin message listeners", Level.OK);
             } else {
-                Console.send(plugin, "Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
+                console.send("Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
             }
         }
 
@@ -166,9 +168,9 @@ public final class Manager {
             if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
                 LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
                 if (placeholder.register()) {
-                    Console.send(plugin, "Hooked and loaded placeholder expansion", Level.OK);
+                    console.send("Hooked and loaded placeholder expansion", Level.OK);
                 } else {
-                    Console.send(plugin, "Couldn't hook placeholder expansion", Level.GRAVE);
+                    console.send("Couldn't hook placeholder expansion", Level.GRAVE);
                 }
             }
         });
@@ -201,7 +203,7 @@ public final class Manager {
 
     public static void terminate() {
         try {
-            Console.send(plugin, "Finalizing console filter, please wait", Level.INFO);
+            console.send("Finalizing console filter, please wait", Level.INFO);
             Logger coreLogger = (Logger) LogManager.getRootLogger();
 
             Iterator<Filter> filters = coreLogger.getFilters();
@@ -227,18 +229,18 @@ public final class Manager {
             LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
             if (placeholder.isRegistered()) {
                 if (placeholder.unregister()) {
-                    Console.send(plugin, "Unhooked placeholder expansion", Level.OK);
+                    console.send("Unhooked placeholder expansion", Level.OK);
                 } else {
-                    Console.send(plugin, "Couldn't un-hook placeholder expansion", Level.GRAVE);
+                    console.send("Couldn't un-hook placeholder expansion", Level.GRAVE);
                 }
             }
         }
 
         System.out.println();
         artGen.print(RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        Console.send("&eversion:&6 {0}", versionID.getVersionID());
-        Console.send(" ");
-        Console.send("&e-----------------------");
+        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send(" ");
+        console.send("&e-----------------------");
 
         endPlayers();
     }
@@ -293,11 +295,11 @@ public final class Manager {
         }
 
         if (!unregistered.isEmpty()) {
-            Console.send(plugin, properties.getProperty("command_register_problem", "Failed to register command(s): {0}"), Level.GRAVE, setToString(unregistered));
-            Console.send(plugin, properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
+            console.send(properties.getProperty("command_register_problem", "Failed to register command(s): {0}"), Level.GRAVE, setToString(unregistered));
+            console.send(properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
             plugin.getServer().getPluginManager().disablePlugin(plugin);
         } else {
-            Console.send(plugin, properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
+            console.send(properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
 
             try {
                 ConsoleFilter filter = new ConsoleFilter(registered);
@@ -308,8 +310,8 @@ public final class Manager {
                 logger.scheduleLog(Level.GRAVE, ex);
                 logger.scheduleLog(Level.INFO, "Failed to register console filter");
 
-                Console.send(plugin, properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
-                Console.send(plugin, properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
+                console.send(properties.getProperty("plugin_filter_error", "An error occurred while initializing console filter, check logs for more info"), Level.GRAVE);
+                console.send(properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
                 plugin.getServer().getPluginManager().disablePlugin(plugin);
             }
         }
@@ -351,7 +353,7 @@ public final class Manager {
         } else {
             if (!msg_file.exists()) {
                 failed.add(msg_file.getName());
-                Console.send(plugin, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
+                console.send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
 
                 msg_file = new File(plugin.getDataFolder() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
@@ -365,12 +367,12 @@ public final class Manager {
                     }
                 }
             } else {
-                Console.send(plugin, "Detected community language pack, please make sure this pack is updated to avoid translation errors", Level.WARNING);
+                console.send("Detected community language pack, please make sure this pack is updated to avoid translation errors", Level.WARNING);
             }
         }
 
         if (!failed.isEmpty()) {
-            Console.send(plugin, properties.getProperty("file_register_problem", "Failed to setup/check file(s): {0}. The plugin will use defaults, you can try to create files later by running /locklogin reload"), Level.WARNING, setToString(failed));
+            console.send(properties.getProperty("file_register_problem", "Failed to setup/check file(s): {0}. The plugin will use defaults, you can try to create files later by running /locklogin reload"), Level.WARNING, setToString(failed));
         }
 
         Message messages = new Message();
@@ -436,9 +438,9 @@ public final class Manager {
                     if (changelog_requests <= 0) {
                         changelog_requests = 3;
 
-                        Console.send(plugin, "LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
+                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
                         for (String line : fetch.getChangelog())
-                            Console.send(line);
+                            console.send(line);
 
                         PluginMessages messages = CurrentPlatform.getMessages();
                         for (Player player : plugin.getServer().getOnlinePlayers()) {
@@ -456,14 +458,14 @@ public final class Manager {
                                     if (error != null) {
                                         logger.scheduleLog(Level.GRAVE, error);
                                         logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                        Console.send(plugin, properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
+                                        console.send(properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
 
                                         try {
                                             Files.deleteIfExists(file.toPath());
                                         } catch (Throwable ignored) {
                                         }
                                     } else {
-                                        Console.send(plugin, properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
+                                        console.send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
 
                                         for (Player player : plugin.getServer().getOnlinePlayers()) {
                                             User user = new User(player);
@@ -475,7 +477,7 @@ public final class Manager {
                                 });
                             }
                         } else {
-                            Console.send(plugin, "LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
+                            console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
 
                             for (Player player : plugin.getServer().getOnlinePlayers()) {
                                 User user = new User(player);
@@ -518,7 +520,7 @@ public final class Manager {
             system.checkAlerts();
 
             if (system.available())
-                Console.send(system.getMessage());
+                console.send(system.getMessage());
         });
         timer.start();
 

@@ -326,6 +326,10 @@ public final class Config extends PluginConfiguration {
             case "de_de":
             case "german":
                 return Lang.GERMAN;
+            case "zh_cn":
+            case "chinese simplified":
+            case "simplified chinese":
+                return Lang.CHINESE_SIMPLIFIED;
             default:
                 return Lang.COMMUNITY;
         }

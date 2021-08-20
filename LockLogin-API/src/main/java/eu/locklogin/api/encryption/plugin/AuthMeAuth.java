@@ -34,6 +34,7 @@ public class AuthMeAuth {
             final String[] components = token.split("\\$");
             final String salt = components[2];
             final String compareHash = "$SHA$" + salt + "$" + hashSha256(hashSha256(password) + salt);
+
             return token.equals(compareHash);
         } catch (Throwable e) {
             return false;

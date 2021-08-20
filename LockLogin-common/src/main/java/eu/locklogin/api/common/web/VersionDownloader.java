@@ -11,7 +11,7 @@ package eu.locklogin.api.common.web;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.FixedLateScheduler;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
@@ -76,9 +76,9 @@ public final class VersionDownloader {
 
                 if (!dest_file.getParentFile().exists()) {
                     if (dest_file.getParentFile().mkdirs()) {
-                        Console.send("Created update folder for LockLogin new update", Level.INFO);
+                        APISource.getConsole().send("Created update folder for LockLogin new update", Level.INFO);
                     } else {
-                        Console.send("An unknown error occurred while creating update folder", Level.GRAVE);
+                        APISource.getConsole().send("An unknown error occurred while creating update folder", Level.GRAVE);
                     }
                 }
 

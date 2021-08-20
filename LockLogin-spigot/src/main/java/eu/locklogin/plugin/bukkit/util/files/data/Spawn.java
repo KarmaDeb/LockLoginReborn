@@ -11,7 +11,6 @@ package eu.locklogin.plugin.bukkit.util.files.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.Location;
@@ -104,10 +103,10 @@ public final class Spawn {
 
             if (world == null) {
                 try {
-                    Console.send(plugin, "Creating world {0} because is set as spawn location", Level.INFO, world_string);
+                    console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
                     world = plugin.getServer().createWorld(WorldCreator.name(world_string));
                 } catch (Throwable ex) {
-                    Console.send(plugin, "Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
+                    console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
                     return;
                 }
             }

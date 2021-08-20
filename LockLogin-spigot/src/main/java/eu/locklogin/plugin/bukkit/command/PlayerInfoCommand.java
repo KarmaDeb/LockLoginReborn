@@ -27,7 +27,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -38,8 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.*;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
-import static eu.locklogin.plugin.bukkit.LockLogin.properties;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.playerInfo;
 
 @SystemCommand(command = "playerinfo")
@@ -191,7 +189,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
 
         return false;

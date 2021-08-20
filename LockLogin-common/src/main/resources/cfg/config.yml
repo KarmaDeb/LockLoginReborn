@@ -1,11 +1,11 @@
 ###########################################################
 #                                                         #
 #   LockLogin source is a plugin under GSA GPL license    #
-#           https://karmaconfigs.ml/license               #
+#             https://locklogin.eu/license                #
 #                                                         #
 #                                                         #
 #                   For more help                         #
-#             go to: https://rb.gy/jlmjah                 #
+#             go to: https://rb.gy/simfd2                 #
 #                                                         #
 ###########################################################
 
@@ -177,13 +177,9 @@ Pin: true
 #players account, but since due Spigot API is
 #bypasseable, you should enable PIN feature
 #For help while using/scanning 2FA QR codes
-#check these link:
+#check these video
 #
-# https://rb.gy/clq5ou
-# https://rb.gy/ugciij
-# This tutorial is on an iPhone
-# but the process is the same
-# on Android
+#https://www.youtube.com/watch?v=zcLxFQgCrnU
 2FA: true
 
 #Updater options
@@ -241,8 +237,14 @@ CheckNames: true
 EnforceNameCheck: false
 
 #Plugin language
-#For more info please visit:
-# https://rb.gy/jlmjah
+#
+# Available languages are:
+# English ( en_EN | English )
+# Spanish ( es_ES | Spanish )
+# French ( fr_FR | French )
+# German ( de_DE | German )
+# Simplified Chinese ( zh_CN | Chinese simplified | Simplified chinese )
+# being english by default
 Lang: en_EN
 
 #Module commands prefix

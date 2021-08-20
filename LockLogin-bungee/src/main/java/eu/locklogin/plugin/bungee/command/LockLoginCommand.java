@@ -24,9 +24,7 @@ import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
-import eu.locklogin.plugin.bungee.util.ServerLifeChecker;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionCheckType;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
@@ -37,8 +35,8 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.util.Set;
 
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
-import static eu.locklogin.plugin.bungee.LockLogin.versionID;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.version;
 import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
@@ -207,13 +205,12 @@ public final class LockLoginCommand extends Command {
         } else {
             switch (args.length) {
                 case 0:
-                    Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>");
+                    console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>");
                     break;
                 case 1:
                     switch (args[0].toLowerCase()) {
                         case "reload":
                             FileReloader.reload(null);
-                            ServerLifeChecker.restart();
                             break;
                         case "applyupdates":
                             UpdateRequestEvent event = new UpdateRequestEvent(sender, true, null);
@@ -238,23 +235,23 @@ public final class LockLoginCommand extends Command {
                                 id++;
                             }
 
-                            Console.send(builder.toString());
+                            console.send(builder.toString());
                             break;
                         case "version":
-                            Console.send("&7Current version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                            Console.send("&7Latest version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                            console.send("&7Current version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
+                            console.send("&7Latest version:&e {0}", updater.get().resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
                             break;
                         case "changelog":
                             for (String str : updater.get().getChangelog()) {
-                                Console.send(str);
+                                console.send(str);
                             }
                             break;
                         case "check":
                             updater.fetch(true);
-                            Console.send("Checked for updates successfully");
+                            console.send("Checked for updates successfully");
                             break;
                         default:
-                            Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                            console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                             break;
                     }
                     break;
@@ -267,34 +264,34 @@ public final class LockLoginCommand extends Command {
                             switch (args[1].toLowerCase()) {
                                 case "load":
                                     if (module.load()) {
-                                        Console.send("&aModule " + moduleName + " has been loaded successfully");
+                                        console.send("&aModule " + moduleName + " has been loaded successfully");
                                     } else {
-                                        Console.send("&cModule " + moduleName + " failed to load, maybe is already loaded?");
+                                        console.send("&cModule " + moduleName + " failed to load, maybe is already loaded?");
                                     }
                                     break;
                                 case "unload":
                                     if (module.unload()) {
-                                        Console.send("&aModule " + moduleName + " has been unloaded successfully");
+                                        console.send("&aModule " + moduleName + " has been unloaded successfully");
                                     } else {
-                                        Console.send("&cModule " + moduleName + " failed to unload, maybe is not loaded?");
+                                        console.send("&cModule " + moduleName + " failed to unload, maybe is not loaded?");
                                     }
                                     break;
                                 case "reload":
                                     module.reload();
                                     break;
                                 default:
-                                    Console.send("&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
+                                    console.send("&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
                                     break;
                             }
                         } else {
-                            Console.send("&cModule " + moduleName + " is not loaded or does not exist!");
+                            console.send("&cModule " + moduleName + " is not loaded or does not exist!");
                         }
                     } else {
-                        Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                        console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                     }
                     break;
                 default:
-                    Console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                    console.send("&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
                     break;
             }
         }

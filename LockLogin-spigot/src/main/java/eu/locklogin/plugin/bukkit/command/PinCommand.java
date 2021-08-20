@@ -16,7 +16,7 @@ package eu.locklogin.plugin.bukkit.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -24,12 +24,13 @@ import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 
 @SystemCommand(command = "pin")
 public class PinCommand implements CommandExecutor {
@@ -90,7 +91,7 @@ public class PinCommand implements CommandExecutor {
                                         } else {
                                             String current = args[1];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
                                             if (util.validate()) {
                                                 manager.setPin(null);
                                                 user.send(messages.prefix() + messages.pinReseted());
@@ -110,7 +111,7 @@ public class PinCommand implements CommandExecutor {
                                             String current = args[1];
                                             String newPin = args[2];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(current).withToken(manager.getPin()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
                                             if (util.validate()) {
                                                 manager.setPin(newPin);
                                                 user.send(messages.prefix() + messages.pinChanged());
@@ -135,7 +136,7 @@ public class PinCommand implements CommandExecutor {
                 user.send(messages.prefix() + LockLogin.properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
 
         return false;

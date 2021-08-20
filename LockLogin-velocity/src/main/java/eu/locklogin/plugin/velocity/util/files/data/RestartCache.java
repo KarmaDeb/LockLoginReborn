@@ -18,6 +18,7 @@ import eu.locklogin.plugin.velocity.listener.MessageListener;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -48,14 +49,18 @@ public final class RestartCache {
         if (sessions_serialized != null) {
             cache.set("SESSIONS", sessions_serialized);
         } else {
-            Console.send(source, properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
+            console.send(properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
         }
     }
 
     /**
      * Store bungeecord key so a fake bungeecord server
      * won't be able to send a fake key
+     *
+     * @deprecated LockLogin now uses a long-term token
+     * communication
      */
+    @Deprecated
     public final void storeBungeeKey() {
         if (!cache.exists())
             cache.create();
@@ -95,10 +100,10 @@ public final class RestartCache {
                     try {
                         JarManager.changeField(User.class, "sessions", fixedSessions);
                     } catch (Throwable ex) {
-                        Console.send(source, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
+                        console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
                     }
                 } else {
-                    Console.send(source, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
+                    console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                 }
             }
         }
@@ -106,7 +111,11 @@ public final class RestartCache {
 
     /**
      * Load the stored bungeecord key
+     *
+     * @deprecated LockLogin now uses a long-term token
+     * communication
      */
+    @Deprecated
     public final void loadBungeeKey() {
         if (cache.exists()) {
             try {

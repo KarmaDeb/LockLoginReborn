@@ -13,23 +13,18 @@ package eu.locklogin.plugin.bungee.util.files.data;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.plugin.bungee.listener.MessageListener;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
-import static eu.locklogin.plugin.bungee.LockLogin.properties;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 public final class RestartCache {
 
@@ -48,26 +43,19 @@ public final class RestartCache {
         if (sessions_serialized != null) {
             cache.set("SESSIONS", sessions_serialized);
         } else {
-            Console.send(plugin, properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
+            console.send(properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
         }
     }
 
     /**
      * Store bungeecord key so a fake bungeecord server
      * won't be able to send a fake key
+     *
+     * @deprecated LockLogin now uses a long-term token
+     * communication
      */
+    @Deprecated
     public final void storeBungeeKey() {
-        if (!cache.exists())
-            cache.create();
-
-        try {
-            Class<?> storagerClass = DataSender.class;
-            Field keyField = storagerClass.getDeclaredField("key");
-
-            String key = (String) keyField.get(null);
-            cache.set("KEY", key);
-        } catch (Throwable ignored) {
-        }
     }
 
     /**
@@ -96,10 +84,10 @@ public final class RestartCache {
                     try {
                         JarManager.changeField(User.class, "sessions", fixedSessions);
                     } catch (Throwable ex) {
-                        Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
+                        console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
                     }
                 } else {
-                    Console.send(plugin, properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
+                    console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                 }
             }
         }
@@ -107,27 +95,12 @@ public final class RestartCache {
 
     /**
      * Load the stored bungeecord key
+     *
+     * @deprecated LockLogin now uses a long-term token
+     * communication
      */
+    @Deprecated
     public final void loadBungeeKey() {
-        if (cache.exists()) {
-            try {
-                String key = cache.getString("KEY", "");
-
-                if (!key.replaceAll("\\s", "").isEmpty()) {
-                    JarManager.changeField(DataSender.class, "key", key);
-                }
-            } catch (Throwable ignored) {
-            }
-
-            try {
-                String token = cache.getString("TOKEN", "");
-
-                if (!token.replaceAll("\\s", "").isEmpty()) {
-                    JarManager.changeField(MessageListener.class, "token", token);
-                }
-            } catch (Throwable ignored) {
-            }
-        }
     }
 
     /**

@@ -31,5 +31,23 @@ public enum UpdateChannel {
      * LockLogin snapshots, release candidates
      * and releases
      */
-    SNAPSHOT
+    SNAPSHOT;
+
+    /**
+     * Get the web name the channel has
+     *
+     * @return the channel web name
+     */
+    public final String webName() {
+        switch (this) {
+            case RELEASE:
+                return "release";
+            case RC:
+                return "candidate";
+            case SNAPSHOT:
+                return "snapshot";
+        }
+
+        return "release";
+    }
 }

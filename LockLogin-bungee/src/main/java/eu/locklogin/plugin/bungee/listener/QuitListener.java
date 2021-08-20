@@ -43,6 +43,9 @@ public final class QuitListener implements Listener {
         if (!player.isConnected()) {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
+            if (user.getChecker().isUnderCheck()) {
+                user.getChecker().cancelCheck();
+            }
 
             SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
             keeper.store();
@@ -74,6 +77,9 @@ public final class QuitListener implements Listener {
         if (!player.isConnected()) {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
+            if (user.getChecker().isUnderCheck()) {
+                user.getChecker().cancelCheck();
+            }
 
             SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
             keeper.store();

@@ -16,7 +16,6 @@ import eu.locklogin.api.common.JarManager;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -28,6 +27,9 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
+import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class RestartCache {
 
@@ -48,13 +50,13 @@ public final class RestartCache {
         if (sessions_serialized != null) {
             cache.set("SESSIONS", sessions_serialized);
         } else {
-            Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
+            console.send(properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
         }
 
         if (spectators_serialized != null) {
             cache.set("SPECTATORS", spectators_serialized);
         } else {
-            Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "spectators are null");
+            console.send(properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "spectators are null");
         }
     }
 
@@ -72,28 +74,6 @@ public final class RestartCache {
 
             String owner = (String) ownerField.get(null);
             cache.set("KEY", owner);
-        } catch (Throwable ignored) {
-        }
-
-        try {
-            Class<?> storagerClass = BungeeDataStorager.class;
-            Field proxyField = storagerClass.getDeclaredField("proxies");
-
-            Object proxies = proxyField.get(null);
-            String serialized = StringUtils.serialize(proxies);
-
-            if (serialized != null)
-                cache.set("PROXIES", serialized);
-        } catch (Throwable ignored) {
-        }
-
-        try {
-            Class<?> storagerClass = BungeeDataStorager.class;
-            Field bungeeField = storagerClass.getDeclaredField("multiBungee");
-
-            boolean multiple = (boolean) bungeeField.get(null);
-
-            cache.set("MULTIBUNGEE", multiple);
         } catch (Throwable ignored) {
         }
     }
@@ -124,10 +104,10 @@ public final class RestartCache {
                     try {
                         JarManager.changeField(User.class, "sessions", fixedSessions);
                     } catch (Throwable ex) {
-                        Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
+                        console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
                     }
                 } else {
-                    Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
+                    console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                 }
             }
 
@@ -147,10 +127,10 @@ public final class RestartCache {
                     try {
                         JarManager.changeField(User.class, "temp_spectator", fixedSpectators);
                     } catch (Throwable ex) {
-                        Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", ex.fillInStackTrace());
+                        console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", ex.fillInStackTrace());
                     }
                 } else {
-                    Console.send(LockLogin.plugin, LockLogin.properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "temp spectators map is null");
+                    console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "temp spectators", "temp spectators map is null");
                 }
             }
         }
@@ -169,23 +149,6 @@ public final class RestartCache {
                 }
             } catch (Throwable ignored) {
             }
-
-            try {
-                String proxies = cache.getString("PROXIES", "");
-
-                if (!proxies.replaceAll("\\s", "").isEmpty()) {
-                    Map<String, String> map = StringUtils.loadUnsafe(proxies);
-
-                    if (map != null)
-                        JarManager.changeField(BungeeDataStorager.class, "proxies", map);
-                }
-            } catch (Throwable ignored) {}
-
-            try {
-                boolean multiple = cache.getBoolean("MULTIBUNGEE", false);
-
-                JarManager.changeField(BungeeDataStorager.class, "multiBungee", multiple);
-            } catch (Throwable ignored) {}
         }
     }
 

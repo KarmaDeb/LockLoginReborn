@@ -43,6 +43,10 @@ public enum HashType {
      */
     ARGON2ID,
     /**
+     * LockLogin compatible hash type
+     */
+    AUTHME_SHA,
+    /**
      * LockLogin unknown hash type
      */
     UNKNOWN,

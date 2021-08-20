@@ -19,20 +19,17 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import static eu.locklogin.plugin.velocity.LockLogin.logger;
+import static eu.locklogin.plugin.velocity.LockLogin.*;
 import static eu.locklogin.plugin.velocity.LockLogin.server;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -41,8 +38,6 @@ public final class DataSender {
     public final static String CHANNEL_PLAYER = "ll:account";
     public final static String PLUGIN_CHANNEL = "ll:plugin";
     public final static String ACCESS_CHANNEL = "ll:access";
-    @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
-    private static String key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
 
     private static final ConcurrentHashMultiset<MessagePool> data_pool = ConcurrentHashMultiset.create();
 
@@ -52,9 +47,8 @@ public final class DataSender {
      * @param player the player
      */
     public static void send(final Player player, final MessageData data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
+        player.getCurrentServer().ifPresent(server -> {
             try {
-                ServerConnection server = player.getCurrentServer().get();
                 ServerInfo info = server.getServerInfo();
 
                 if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
@@ -62,13 +56,12 @@ public final class DataSender {
                 } else {
                     server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
                 }
+
             } catch (Throwable e) {
                 logger.scheduleLog(Level.GRAVE, e);
                 logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
             }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
-        }
+        });
     }
 
     /**
@@ -77,21 +70,17 @@ public final class DataSender {
      * @param server the server
      */
     public static void send(final RegisteredServer server, final MessageData data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
-            try {
-                ServerInfo info = server.getServerInfo();
+        try {
+            ServerInfo info = server.getServerInfo();
 
-                if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
-                    data_pool.add(new MessagePool(server, data));
-                } else {
-                    server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
-                }
-            } catch (Throwable e) {
-                logger.scheduleLog(Level.GRAVE, e);
-                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
+            if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                data_pool.add(new MessagePool(server, data));
+            } else {
+                server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
             }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        } catch (Throwable e) {
+            logger.scheduleLog(Level.GRAVE, e);
+            logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
         }
     }
 
@@ -102,42 +91,45 @@ public final class DataSender {
      * @param data    the data to send
      */
     public static void sendModule(final String channel, final byte[] data) {
-        if (!key.replaceAll("\\s", "").isEmpty()) {
-            try {
-                Set<String> server_sents = new HashSet<>();
+        try {
+            Set<String> server_sents = new HashSet<>();
 
-                for (Player player : server.getAllPlayers()) {
-                    Optional<ServerConnection> tmp_server = player.getCurrentServer();
-                    if (tmp_server.isPresent()) {
-                        ServerConnection server = tmp_server.get();
+            for (Player player : server.getAllPlayers()) {
+                Optional<ServerConnection> tmp_server = player.getCurrentServer();
+                if (tmp_server.isPresent()) {
+                    ServerConnection server = tmp_server.get();
 
-                        ServerInfo info = server.getServerInfo();
+                    ServerInfo info = server.getServerInfo();
 
-                        if (!server_sents.contains(info.getName().toLowerCase())) {
-                            server_sents.add(info.getName().toLowerCase());
+                    if (!server_sents.contains(info.getName().toLowerCase())) {
+                        server_sents.add(info.getName().toLowerCase());
 
-                            if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+                        if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                            ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                                output.writeUTF(DataType.MODULE.name().toLowerCase());
-                                output.writeUTF(proxy.getProxyID().toString());
-                                output.writeUTF(key);
-                                output.writeUTF(channel);
-                                output.writeInt(data.length);
-                                output.write(data);
-
-                                server.sendPluginMessage(new LegacyChannelIdentifier(PLUGIN_CHANNEL), output.toByteArray());
+                            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                            if (token == null) {
+                                TokenGen.generate(proxy.proxyKey());
+                                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                                assert token != null;
                             }
+
+                            output.writeUTF(token);
+                            output.writeUTF(proxy.getProxyID().toString());
+                            output.writeUTF(DataType.MODULE.name().toLowerCase());
+                            output.writeUTF(channel);
+                            output.writeInt(data.length);
+                            output.write(data);
+
+                            server.sendPluginMessage(new LegacyChannelIdentifier(PLUGIN_CHANNEL), output.toByteArray());
                         }
                     }
                 }
-            } catch (Throwable e) {
-                logger.scheduleLog(Level.GRAVE, e);
-                logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
             }
-        } else {
-            logger.scheduleLog(Level.GRAVE, "Tried to send plugin message with empty access key");
+        } catch (Throwable e) {
+            logger.scheduleLog(Level.GRAVE, e);
+            logger.scheduleLog(Level.INFO, "Error while sending a plugin message from Velocity");
         }
     }
 
@@ -184,14 +176,21 @@ public final class DataSender {
         MessageDataBuilder(final DataType data, final Player owner) throws IllegalArgumentException {
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            output.writeUTF(data.name().toLowerCase());
-            output.writeUTF(proxy.getProxyID().toString());
-            output.writeUTF(key);
+            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+            if (token == null) {
+                TokenGen.generate(proxy.proxyKey());
+                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                assert token != null;
+            }
+
             if (owner != null) {
                 output.writeUTF(owner.getGameProfile().getId().toString());
             } else {
                 output.writeUTF(UUID.randomUUID().toString());
             }
+            output.writeUTF(token);
+            output.writeUTF(proxy.getProxyID().toString());
+            output.writeUTF(data.name().toLowerCase());
         }
 
         /**

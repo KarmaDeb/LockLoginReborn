@@ -4,7 +4,7 @@ import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
@@ -47,7 +47,7 @@ public abstract class PluginMessages {
 
             if (!msg_file.exists()) {
                 if (!alerted) {
-                    Console.send(source, "Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
+                    APISource.getConsole().send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
                     alerted = true;
                 }
 

@@ -14,12 +14,12 @@ package eu.locklogin.plugin.bungee.plugin.sender;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -29,8 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static eu.locklogin.plugin.bungee.LockLogin.logger;
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class DataSender {
@@ -38,8 +37,6 @@ public final class DataSender {
     public final static String CHANNEL_PLAYER = "ll:account";
     public final static String PLUGIN_CHANNEL = "ll:plugin";
     public final static String ACCESS_CHANNEL = "ll:access";
-    @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
-    private static String key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
 
     private static final ConcurrentHashMultiset<MessagePool> data_pool = ConcurrentHashMultiset.create();
 
@@ -49,11 +46,6 @@ public final class DataSender {
      * @param player the player
      */
     public static void send(final ProxiedPlayer player, final MessageData data) {
-        if (key.replaceAll("\\s", "").isEmpty()) {
-            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
-            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
-        }
-
         try {
             ServerInfo server = player.getServer().getInfo();
             if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
@@ -73,11 +65,6 @@ public final class DataSender {
      * @param server the server
      */
     public static void send(final ServerInfo server, final MessageData data) {
-        if (key.replaceAll("\\s", "").isEmpty()) {
-            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
-            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
-        }
-
         try {
             if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 data_pool.add(new MessagePool(server, data));
@@ -97,11 +84,6 @@ public final class DataSender {
      * @param data    the data to send
      */
     public static void sendModule(final String channel, final byte[] data) {
-        if (key.replaceAll("\\s", "").isEmpty()) {
-            key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
-            logger.scheduleLog(Level.INFO, "Generated proxy communication key");
-        }
-
         try {
             Set<String> server_sents = new HashSet<>();
 
@@ -118,9 +100,16 @@ public final class DataSender {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                            output.writeUTF(DataType.MODULE.name().toLowerCase());
+                            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                            if (token == null) {
+                                TokenGen.generate(proxy.proxyKey());
+                                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                                assert token != null;
+                            }
+
+                            output.writeUTF(token);
                             output.writeUTF(proxy.getProxyID().toString());
-                            output.writeUTF(key);
+                            output.writeUTF(DataType.MODULE.name().toLowerCase());
                             output.writeUTF(channel);
                             output.writeInt(data.length);
                             output.write(data);
@@ -177,21 +166,22 @@ public final class DataSender {
          * @param data the data type to send
          */
         MessageDataBuilder(final DataType data, final ProxiedPlayer owner) {
-            if (key.replaceAll("\\s", "").isEmpty()) {
-                key = StringUtils.randomString(18, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
-                logger.scheduleLog(Level.INFO, "Generated proxy communication key");
+            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+            if (token == null) {
+                TokenGen.generate(proxy.proxyKey());
+                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                assert token != null;
             }
 
-            ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
-
-            output.writeUTF(data.name().toLowerCase());
-            output.writeUTF(proxy.getProxyID().toString());
-            output.writeUTF(key);
             if (owner != null) {
                 output.writeUTF(owner.getUniqueId().toString());
             } else {
                 output.writeUTF(UUID.randomUUID().toString());
             }
+            output.writeUTF(token);
+            output.writeUTF(proxy.getProxyID().toString());
+            output.writeUTF(data.name().toLowerCase());
         }
 
         /**

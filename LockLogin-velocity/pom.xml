@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.32</version>
+        <version>1.12.37</version>
     </parent>
 
     <artifactId>LockLogin-velocity</artifactId>
@@ -87,12 +87,16 @@
                 <configuration>
                     <relocations>
                         <relocation>
+                            <pattern>eu.locklogin.api.common.security.TokenGen</pattern>
+                            <shadedPattern>eu.locklogin.plugin.velocity.util.security.TokenGen</shadedPattern>
+                        </relocation>
+                        <relocation>
                             <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
                             <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>eu.locklogin.api.common.utils.filter.ConsoleFilter</pattern>
-                            <shadedPattern>eu.locklogin.plugin.velocity.util.filter.ConsoleFilter</shadedPattern>
+                            <pattern>eu.locklogin.api.common.utils.filter</pattern>
+                            <shadedPattern>eu.locklogin.plugin.velocity.util.filter</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>eu.locklogin.api.common.web.STFetcher</pattern>

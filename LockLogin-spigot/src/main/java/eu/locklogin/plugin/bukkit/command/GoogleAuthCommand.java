@@ -18,7 +18,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.GoogleAuthFactory;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.encryption.CryptoUtil;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -29,7 +29,6 @@ import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
@@ -40,8 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
-import static eu.locklogin.plugin.bukkit.LockLogin.properties;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "2fa")
 public final class GoogleAuthCommand implements CommandExecutor {
@@ -83,7 +81,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                         } else {
                                             String password = args[1];
 
-                                            CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                             if (util.validate()) {
                                                 String token = manager.getGAuth();
 
@@ -140,7 +138,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                                 try {
                                                     int code = Integer.parseInt(codeBuilder.toString());
 
-                                                    CryptoUtil util = CryptoUtil.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                                    CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                                     GoogleAuthFactory factory = user.getTokenFactory();
 
                                                     if (util.validate() && factory.validate(manager.getGAuth(), code)) {
@@ -225,7 +223,7 @@ public final class GoogleAuthCommand implements CommandExecutor {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            Console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
         }
         return false;
     }

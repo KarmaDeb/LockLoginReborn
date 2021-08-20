@@ -40,6 +40,9 @@ public final class QuitListener implements Listener {
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
+        if (user.getChecker().isUnderCheck()) {
+            user.getChecker().cancelCheck();
+        }
 
         if (user.isLockLoginUser()) {
             if (ip != null) {
@@ -85,6 +88,9 @@ public final class QuitListener implements Listener {
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
+        if (user.getChecker().isUnderCheck()) {
+            user.getChecker().cancelCheck();
+        }
 
         if (user.isLockLoginUser()) {
             if (ip != null) {

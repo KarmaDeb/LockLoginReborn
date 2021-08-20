@@ -28,6 +28,7 @@ public final class SessionCheck<T> implements Runnable {
     private Runnable onEnd;
 
     private final static Set<UUID> under_check = new HashSet<>();
+    private final static Set<UUID> cancel_queue = new HashSet<>();
 
     public SessionCheck(final KarmaSource owner, final ModulePlayer client, final BossProvider<T> provider) {
         player = client;
@@ -82,35 +83,40 @@ public final class SessionCheck<T> implements Runnable {
             AccountManager manager = player.getAccount();
             SimpleScheduler timer = new SourceSecondsTimer(source, time, false).multiThreading(false);
             timer.secondChangeAction((timer_time) -> {
-                ClientSession session = player.getSession();
-                if (!session.isLogged()) {
-                    if (boss != null) {
-                        if (timer_time == ((int) Math.round(((double) time / 2)))) {
-                            boss.color(BossColor.YELLOW);
-                            BAR_COLOR = "&e";
-                        }
+                if (!cancel_queue.contains(player.getUUID())) {
+                    ClientSession session = player.getSession();
+                    if (!session.isLogged()) {
+                        if (boss != null) {
+                            if (timer_time == ((int) Math.round(((double) time / 2)))) {
+                                boss.color(BossColor.YELLOW);
+                                BAR_COLOR = "&e";
+                            }
 
-                        if (timer_time == ((int) Math.round(((double) time / 3)))) {
-                            boss.color(BossColor.RED);
-                            BAR_COLOR = "&c";
+                            if (timer_time == ((int) Math.round(((double) time / 3)))) {
+                                boss.color(BossColor.RED);
+                                BAR_COLOR = "&c";
+                            }
+
+                            if (manager.isRegistered()) {
+                                boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                            } else {
+                                boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                            }
                         }
 
                         if (manager.isRegistered()) {
-                            boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                            if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
+                                player.sendTitle(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time), 0, 5, 0);
                         } else {
-                            boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                            if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
+                                player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                         }
-                    }
-
-                    if (manager.isRegistered()) {
-                        if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
-                            player.sendTitle(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time), 0, 5, 0);
                     } else {
-                        if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
-                            player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
+                        timer.cancel();
                     }
                 } else {
                     timer.cancel();
+                    cancel_queue.remove(player.getUUID());
                 }
             }).endAction(() -> {
                 if (onEnd != null)
@@ -166,5 +172,21 @@ public final class SessionCheck<T> implements Runnable {
             }
         });
         timer.start();
+    }
+
+    /**
+     * Cancel the player session check
+     */
+    public final void cancelCheck() {
+        cancel_queue.add(player.getUUID());
+    }
+
+    /**
+     * Get if the player is under a check
+     *
+     * @return if the player is under session check
+     */
+    public final boolean isUnderCheck() {
+        return under_check.contains(player.getUUID());
     }
 }
