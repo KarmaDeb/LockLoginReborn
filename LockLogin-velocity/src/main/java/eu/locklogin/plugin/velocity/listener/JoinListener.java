@@ -176,7 +176,7 @@ public final class JoinListener {
             UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(player), null);
             ModulePlugin.callEvent(event);
 
-            if (event.isHandleable()) {
+            if (event.isHandled()) {
                 user.kick(event.getHandleReason());
             }
         });

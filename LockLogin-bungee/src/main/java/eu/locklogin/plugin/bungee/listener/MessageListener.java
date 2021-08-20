@@ -148,8 +148,6 @@ public final class MessageListener implements Listener {
                                 switch (sub) {
                                     case KEY:
                                         if (!id.equalsIgnoreCase("invalid")) {
-                                            //As the key should be global, when a proxy registers a key, all the proxies should know that
-
                                             if (ServerDataStorage.needsRegister(name)) {
                                                 console.send("Registered proxy key into server {0}", Level.INFO, name);
                                                 ServerDataStorage.setKeyRegistered(name);
@@ -164,7 +162,6 @@ public final class MessageListener implements Listener {
                                             //Only listen if the proxy id is this one
                                             if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
                                                 if (ServerDataStorage.needsProxyKnowledge(name)) {
-                                                    console.send("Registered this proxy into server {0}", Level.INFO, name);
                                                     ServerDataStorage.setProxyRegistered(name);
                                                     DataSender.updateDataPool(name);
 

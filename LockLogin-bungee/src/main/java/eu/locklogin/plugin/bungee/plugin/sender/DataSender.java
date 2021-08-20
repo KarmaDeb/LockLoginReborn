@@ -11,7 +11,6 @@ package eu.locklogin.plugin.bungee.plugin.sender;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import eu.locklogin.api.common.security.TokenGen;
@@ -20,14 +19,15 @@ import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -38,7 +38,31 @@ public final class DataSender {
     public final static String PLUGIN_CHANNEL = "ll:plugin";
     public final static String ACCESS_CHANNEL = "ll:access";
 
-    private static final ConcurrentHashMultiset<MessagePool> data_pool = ConcurrentHashMultiset.create();
+    private final static Map<String, Set<MessagePool>> data_pool = new ConcurrentHashMap<>();
+
+    private final static Set<MessagePool> auto_data_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    private final static SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+
+    /**
+     * Initialize the data sender
+     */
+    public DataSender() {
+        if (!scheduler.isRunning()) {
+            scheduler.restartAction(() -> {
+                for (MessagePool message : auto_data_pool) {
+                    ServerInfo server = (ServerInfo) message.getServer();
+                    MessageData data = (MessageData) message.getMessage();
+
+                    try {
+                        server.sendData(data.getChannel(), data.getData().toByteArray());
+                        auto_data_pool.remove(message);
+                    } catch (IllegalStateException ignored) {}
+                }
+            });
+            scheduler.start();
+        }
+    }
 
     /**
      * Send a plugin message on the player server
@@ -49,9 +73,16 @@ public final class DataSender {
         try {
             ServerInfo server = player.getServer().getInfo();
             if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
-                data_pool.add(new MessagePool(server, data));
+                Set<MessagePool> pool = data_pool.getOrDefault(server.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
+                pool.add(new MessagePool(server, data));
+
+                data_pool.put(server.getName(), pool);
             } else {
-                server.sendData(data.getChannel(), data.getData().toByteArray());
+                try {
+                    server.sendData(data.getChannel(), data.getData().toByteArray());
+                } catch (IllegalStateException ex) {
+                    auto_data_pool.add(new MessagePool(server, data));
+                }
             }
         } catch (Throwable e) {
             logger.scheduleLog(Level.GRAVE, e);
@@ -67,9 +98,16 @@ public final class DataSender {
     public static void send(final ServerInfo server, final MessageData data) {
         try {
             if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
-                data_pool.add(new MessagePool(server, data));
+                Set<MessagePool> pool = data_pool.getOrDefault(server.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
+                pool.add(new MessagePool(server, data));
+
+                data_pool.put(server.getName(), pool);
             } else {
-                server.sendData(data.getChannel(), data.getData().toByteArray());
+                try {
+                    server.sendData(data.getChannel(), data.getData().toByteArray());
+                } catch (IllegalStateException ex) {
+                    auto_data_pool.add(new MessagePool(server, data));
+                }
             }
         } catch (Throwable e) {
             logger.scheduleLog(Level.GRAVE, e);
@@ -131,14 +169,11 @@ public final class DataSender {
      * @param name the server name that just registered
      */
     public static void updateDataPool(final String name) {
-        for (MessagePool message : data_pool) {
+        for (MessagePool message : data_pool.getOrDefault(name, Collections.newSetFromMap(new ConcurrentHashMap<>()))) {
             ServerInfo server = (ServerInfo) message.getServer();
             MessageData data = (MessageData) message.getMessage();
 
-            if (server.getName().equals(name)) {
-                data_pool.remove(message);
-                send(server, data);
-            }
+            send(server, data);
         }
     }
 

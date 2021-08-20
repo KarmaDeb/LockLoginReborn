@@ -151,9 +151,10 @@ public final class MessageListener {
                                 switch (sub) {
                                     case KEY:
                                         if (!id.equalsIgnoreCase("invalid")) {
-                                            //As the key should be global, when a proxy registers a key, all the proxies should know that
-                                            console.send("Registered proxy key into server {0}", Level.INFO, name);
-                                            ServerDataStorage.setKeyRegistered(name);
+                                            if (ServerDataStorage.needsRegister(name)) {
+                                                console.send("Registered proxy key into server {0}", Level.INFO, name);
+                                                ServerDataStorage.setKeyRegistered(name);
+                                            }
                                         } else {
                                             console.send("Failed to set proxy key in {0}", Level.GRAVE, name);
                                             e.setResult(PluginMessageEvent.ForwardResult.handled());
@@ -163,11 +164,12 @@ public final class MessageListener {
                                         if (!id.equalsIgnoreCase("invalid")) {
                                             //Only listen if the proxy id is this one
                                             if (proxy.getProxyID().toString().equalsIgnoreCase(id)) {
-                                                console.send("Registered this proxy into server {0}", Level.INFO, name);
-                                                ServerDataStorage.setProxyRegistered(name);
-                                                DataSender.updateDataPool(name);
+                                                if (ServerDataStorage.needsProxyKnowledge(name)) {
+                                                    ServerDataStorage.setProxyRegistered(name);
+                                                    DataSender.updateDataPool(name);
 
-                                                TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
+                                                    TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
+                                                }
                                             } else {
                                                 e.setResult(PluginMessageEvent.ForwardResult.handled());
                                             }
