@@ -9,8 +9,8 @@ currently supported
 
 |     Version     |         Supported        |
 | ----------------|--------------------------|
-|     Legacy      | :x:                      |
-|     1.12.X      | ✅:                      |
+|     Legacy      | ❌                       |
+|     1.12.X      | ✅                         |
 
 ## Reporting a Vulnerability
 
