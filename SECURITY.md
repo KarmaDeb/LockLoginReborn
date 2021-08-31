@@ -1,4 +1,4 @@
-# Security Policy
+# [Security Policy](https://locklogin.eu/license)
 
 ## Supported Versions
 
