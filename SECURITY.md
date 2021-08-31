@@ -5,16 +5,12 @@
 The following version of LockLogin are
 currently supported
 
-### NS = Non release ( Snapshot - Release Candidate )
-### SB - Support build
+### Legacy = < 1.1.0.9
 
 |     Version     |         Supported        |
 | ----------------|--------------------------|
-|     1.1.0.9     | :white_check_mark:       |
-|     1.12.1      | :white_check_mark:       |
-|     NS 1.12.1   | :white_check_mark:       |
-|     < 1.1.0.8   | :x:                      |
-|     SB X.X.X    | :x:                      |
+|     Legacy      | :x:                      |
+|     1.12.X      | ✅:                      |
 
 ## Reporting a Vulnerability
 
