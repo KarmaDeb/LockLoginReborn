@@ -86,6 +86,23 @@ public class GlobalAccount extends AccountManager {
     }
 
     /**
+     * Import the values from the specified account manager
+     *
+     * @param account the account
+     */
+    @Override
+    protected void importFrom(final AccountManager account) {
+        if (exists()) {
+            name = account.getName();
+            uuid = account.getUUID();
+            password = account.getPassword();
+            gauth = account.getGAuth();
+            pin = account.getPin();
+            enableFA = account.has2FA();
+        }
+    }
+
+    /**
      * Get the account id
      *
      * @return the account id

@@ -19,9 +19,12 @@ import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
+import eu.locklogin.api.module.plugin.api.event.plugin.PluginProcessCommandEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
-import eu.locklogin.api.module.plugin.javamodule.console.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 
@@ -192,8 +195,9 @@ public final class ModulePlugin {
      *
      * @param sender the command sender
      * @param cmd    the command
+     * @param parentEvent the parent event
      */
-    public static void fireCommand(final Object sender, final String cmd) {
+    public static void fireCommand(final ModuleSender sender, final String cmd, final Object parentEvent) {
         String argument = cmd.substring(1);
 
         if (argument.contains(" "))
@@ -223,10 +227,26 @@ public final class ModulePlugin {
                         List<String> valid_args = Arrays.asList(handler.validAliases());
                         if (valid_args.stream().anyMatch(argument::equalsIgnoreCase)) {
                             try {
-                                Method processCommandMethod = handler.getClass().getMethod("processCommand", String.class, Object.class, String[].class);
-                                processCommandMethod.invoke(handler, argument, sender, arguments);
+                                PluginProcessCommandEvent event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
+                                ModulePlugin.callEvent(event);
+
+                                if (!event.isHandled()) {
+                                    Method processCommandMethod = handler.getClass().getMethod("processCommand", String.class, ModuleSender.class, String[].class);
+                                    processCommandMethod.invoke(handler, argument, sender, arguments);
+                                }
                             } catch (Throwable ex) {
-                                ex.printStackTrace();
+                                try {
+                                    //Legacy API support
+                                    PluginProcessCommandEvent event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
+                                    ModulePlugin.callEvent(event);
+
+                                    if (!event.isHandled()) {
+                                        Method processCommandMethod = handler.getClass().getMethod("processCommand", String.class, Object.class, String[].class);
+                                        processCommandMethod.invoke(handler, argument, (sender instanceof ModulePlayer ? ((ModulePlayer) sender).getPlayer() : sender), arguments);
+                                    }
+                                } catch (Throwable exc) {
+                                    exc.printStackTrace();
+                                }
                             }
                         }
                     }
@@ -251,6 +271,28 @@ public final class ModulePlugin {
         }
 
         return cmds;
+    }
+
+    /**
+     * Get the module that owns the specified command
+     *
+     * @param command the command
+     * @return the module owning the specified command
+     */
+    public static PluginModule getCommandOwner(String command) {
+        if (command.startsWith(CurrentPlatform.getPrefix()))
+            command = command.substring(1);
+
+        for (PluginModule module : module_commands.keySet()) {
+            Set<Command> handlers = module_commands.getOrDefault(module, new LinkedHashSet<>());
+
+            for (Command handler : handlers) {
+                if (Arrays.stream(handler.validAliases()).anyMatch(command::equalsIgnoreCase))
+                    return module;
+            }
+        }
+
+        return null;
     }
 
     /**

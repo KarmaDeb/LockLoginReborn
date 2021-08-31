@@ -1,4 +1,4 @@
-package eu.locklogin.api.module.plugin.client;
+package eu.locklogin.api.module.plugin.javamodule.sender;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -16,8 +16,12 @@ package eu.locklogin.api.module.plugin.client;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.module.plugin.client.ActionBarSender;
+import eu.locklogin.api.module.plugin.client.MessageSender;
+import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -30,7 +34,7 @@ import java.util.function.Consumer;
 /**
  * ModulePlayer class
  */
-public final class ModulePlayer implements Serializable {
+public final class ModulePlayer extends ModuleSender implements Serializable {
 
     private final String name;
     private final UUID uniqueId;
@@ -61,6 +65,7 @@ public final class ModulePlayer implements Serializable {
      * @param ip the player ip address
      */
     public ModulePlayer(final String client, final UUID id, final ClientSession ses, final AccountManager acc, final InetAddress ip) {
+        super();
         name = client;
         uniqueId = id;
         session = ses;
@@ -69,11 +74,12 @@ public final class ModulePlayer implements Serializable {
     }
 
     /**
-     * Get the player name
+     * Get the sender name
      *
-     * @return the player name
+     * @return the sender name
      */
-    public final String getName() {
+    @Override
+    public String getName() {
         return name;
     }
 
@@ -82,7 +88,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @return the player unique id
      */
-    public final UUID getUUID() {
+    public UUID getUUID() {
         return uniqueId;
     }
 
@@ -91,7 +97,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @return the player session
      */
-    public final ClientSession getSession() {
+    public ClientSession getSession() {
         return session;
     }
 
@@ -100,7 +106,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @return the player account manager
      */
-    public final AccountManager getAccount() {
+    public AccountManager getAccount() {
         return manager;
     }
 
@@ -109,7 +115,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @return the player address
      */
-    public final InetAddress getAddress() {
+    public InetAddress getAddress() {
         return address;
     }
 
@@ -120,7 +126,7 @@ public final class ModulePlayer implements Serializable {
      * @return the player object
      */
     @SuppressWarnings("unchecked")
-    public final <T> T getPlayer() {
+    public <T> T getPlayer() {
         Map<UUID, Object> connected = CurrentPlatform.getConnectedPlayers();
         for (UUID uuid : connected.keySet()) {
             if (uuid.equals(uniqueId)) {
@@ -137,7 +143,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @return the player object
      */
-    public final Object getPlayerObject() {
+    public Object getPlayerObject() {
         try {
             switch (CurrentPlatform.getPlatform()) {
                 case BUKKIT:
@@ -182,10 +188,12 @@ public final class ModulePlayer implements Serializable {
      * Send a message to the player
      *
      * @param message the message to send
+     * @param replaces the message replaces
      */
-    public final void sendMessage(final String message) {
+    @Override
+    public void sendMessage(final String message, final Object... replaces) {
         if (onChat != null) {
-            onChat.accept(new MessageSender(this, message));
+            onChat.accept(new MessageSender(this, StringUtils.formatString(message, replaces)));
         }
     }
 
@@ -194,7 +202,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @param message the message to send
      */
-    public final void sendActionBar(final String message) {
+    public void sendActionBar(final String message) {
         if (onBar != null) {
             onBar.accept(new ActionBarSender(this, message));
         }
@@ -206,7 +214,7 @@ public final class ModulePlayer implements Serializable {
      * @param title the title
      * @param subtitle the subtitle
      */
-    public final void sendTitle(final String title, final String subtitle) {
+    public void sendTitle(final String title, final String subtitle) {
         if (onTitle != null) {
             onTitle.accept(new TitleSender(this, title, subtitle, 2, 5, 2));
         }
@@ -221,7 +229,7 @@ public final class ModulePlayer implements Serializable {
      * @param keepIn the time to show the title
      * @param hideIn the time that will take to hide the title
      */
-    public final void sendTitle(final String title, final String subtitle, final int fadeOut, final int keepIn, final int hideIn) {
+    public void sendTitle(final String title, final String subtitle, final int fadeOut, final int keepIn, final int hideIn) {
         if (onTitle != null) {
             onTitle.accept(new TitleSender(this, title, subtitle, fadeOut, keepIn, fadeOut));
         }
@@ -232,7 +240,7 @@ public final class ModulePlayer implements Serializable {
      *
      * @param reason the kick reason
      */
-    public final void requestKick(final String reason) {
+    public void requestKick(final String reason) {
         if (onKick != null) {
             onKick.accept(new MessageSender(this, reason));
         }
@@ -241,7 +249,7 @@ public final class ModulePlayer implements Serializable {
     /**
      * Request client force-login
      */
-    public final void requestLogin() {
+    public void requestLogin() {
         if (onLogin != null) {
             onLogin.accept(this);
         }
@@ -250,7 +258,7 @@ public final class ModulePlayer implements Serializable {
     /**
      * Request client close session
      */
-    public final void requestUnlogin() {
+    public void requestUnlogin() {
         if (onClose != null) {
             onClose.accept(this);
         }

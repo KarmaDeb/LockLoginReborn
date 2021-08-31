@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class MessagePool {
 

@@ -1,24 +1,28 @@
 package eu.locklogin.plugin.bukkit;
 
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
+import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
 import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
@@ -34,10 +38,12 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
+import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 public class MainBootstrap implements KarmaBootstrap {
 
@@ -92,31 +98,81 @@ public class MainBootstrap implements KarmaBootstrap {
         console.getData().setGravPrefix("&4Grave &e>> &7");
 
         Consumer<MessageSender> onMessage = messageSender -> {
-            Player player = messageSender.getPlayer().getPlayer();
+            if (messageSender.getSender() instanceof ModulePlayer) {
+                ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                Player player = mp.getPlayer();
 
-            if (player != null)
-                player.sendMessage(StringUtils.toColor(messageSender.getMessage()));
+                if (player != null) {
+                    User user = new User(player);
+                    user.send(messageSender.getMessage());
+                }
+            }
         };
         Consumer<ActionBarSender> onActionBar = messageSender -> {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
-                BarMessage bar = new BarMessage(player, messageSender.getMessage());
-                bar.send(false);
+                if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
+                    BarMessage bar = new BarMessage(player, messageSender.getMessage());
+                    bar.send(false);
+                }
             }
         };
         Consumer<TitleSender> onTitle = messageSender -> {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
+                if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                    return;
+
                 TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
                 title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
             }
         };
         Consumer<MessageSender> onKick = messageSender -> {
-            Player player = messageSender.getPlayer().getPlayer();
-            User user = new User(player);
-            user.kick(messageSender.getMessage());
+            if (messageSender.getSender() instanceof ModulePlayer) {
+                ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                Player player = mp.getPlayer();
+
+                User user = new User(player);
+                user.kick(messageSender.getMessage());
+            }
+        };
+        Consumer<ModulePlayer> onLogin = modulePlayer -> {
+            UUID id = modulePlayer.getUUID();
+
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            Player player = loader.getServer().getPlayer(id);
+            if (player != null) {
+                User user = new User(player);
+                ClientSession session = user.getSession();
+
+                if (!session.isLogged() || !session.isTempLogged()) {
+                    session.setCaptchaLogged(true);
+                    session.setLogged(true);
+                    session.setPinLogged(true);
+                    session.set2FALogged(true);
+
+                    if (config.hideNonLogged()) {
+                        ClientVisor visor = new ClientVisor(player);
+                        visor.unVanish();
+                        visor.checkVanish();
+                    }
+
+                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                    ModulePlugin.callEvent(event);
+
+                    user.send(event.getAuthMessage());
+                }
+            }
+        };
+        Consumer<ModulePlayer> onClose = modulePlayer -> {
+            UUID id = modulePlayer.getUUID();
+
+            Player player = loader.getServer().getPlayer(id);
+            if (player != null) {
+                player.performCommand("account close");
+            }
         };
         BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule;
 
@@ -125,6 +181,8 @@ public class MainBootstrap implements KarmaBootstrap {
             JarManager.changeField(ModulePlayer.class, "onBar", onActionBar);
             JarManager.changeField(ModulePlayer.class, "onTitle", onTitle);
             JarManager.changeField(ModulePlayer.class, "onKick", onKick);
+            JarManager.changeField(ModulePlayer.class, "onLogin", onLogin);
+            JarManager.changeField(ModulePlayer.class, "onClose", onClose);
             JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
         } catch (Throwable ignored) {
         }
@@ -149,6 +207,15 @@ public class MainBootstrap implements KarmaBootstrap {
         AllowedCommand.scan();
 
         Manager.initialize();
+
+        if (moduleFiles != null) {
+            List<File> files = Arrays.asList(moduleFiles);
+            Iterator<File> iterator = files.iterator();
+            do {
+                File file = iterator.next();
+                LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
+            } while (iterator.hasNext());
+        }
     }
 
     @Override
@@ -163,7 +230,7 @@ public class MainBootstrap implements KarmaBootstrap {
             do {
                 File file = iterator.next();
                 if (file.isFile()) {
-                    LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+                    LockLogin.getLoader().unloadModule(file);
                 }
             } while (iterator.hasNext());
         }

@@ -2,12 +2,12 @@ package eu.locklogin.plugin.bungee;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
+import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
@@ -17,7 +17,7 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -111,24 +111,32 @@ public class MainBootstrap implements KarmaBootstrap {
             console.getData().setGravPrefix("&4Grave &e>> &7");
 
             Consumer<MessageSender> onMessage = messageSender -> {
-                ModulePlayer modulePlayer = messageSender.getPlayer();
-                UUID id = modulePlayer.getUUID();
+                if (messageSender.getSender() instanceof ModulePlayer) {
+                    ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                    ProxiedPlayer player = mp.getPlayer();
 
-                ProxiedPlayer client = loader.getProxy().getPlayer(id);
-                if (client != null)
-                    client.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                    if (player != null) {
+                        User user = new User(player);
+                        user.send(messageSender.getMessage());
+                    }
+                }
             };
             Consumer<ActionBarSender> onActionBar = messageSender -> {
                 ProxiedPlayer player = messageSender.getPlayer().getPlayer();
 
                 if (player != null) {
-                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                    if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
+                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                    }
                 }
             };
             Consumer<TitleSender> onTitle = messageSender -> {
                 ProxiedPlayer player = messageSender.getPlayer().getPlayer();
 
                 if (player != null) {
+                    if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                        return;
+
                     TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
                     title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
                 }
@@ -136,12 +144,13 @@ public class MainBootstrap implements KarmaBootstrap {
             Consumer<MessageSender> onKick = messageSender -> {
                 SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, false).multiThreading(false);
                 scheduler.endAction(() -> scheduler.requestSync(() -> {
-                    ModulePlayer modulePlayer = messageSender.getPlayer();
-                    UUID id = modulePlayer.getUUID();
+                    if (messageSender.getSender() instanceof ModulePlayer) {
+                        ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                        ProxiedPlayer player = mp.getPlayer();
 
-                    ProxiedPlayer client = loader.getProxy().getPlayer(id);
-                    if (client != null)
-                        client.disconnect(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                        if (player != null)
+                            player.disconnect(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                    }
                 })).start();
             };
             Consumer<ModulePlayer> onLogin = modulePlayer -> {
@@ -170,6 +179,7 @@ public class MainBootstrap implements KarmaBootstrap {
                         ModulePlugin.callEvent(event);
 
                         user.checkServer(0);
+                        user.send(event.getAuthMessage());
                     }
                 }
             };
@@ -214,6 +224,15 @@ public class MainBootstrap implements KarmaBootstrap {
             AllowedCommand.scan();
 
             Manager.initialize();
+
+            if (moduleFiles != null) {
+                List<File> files = Arrays.asList(moduleFiles);
+                Iterator<File> iterator = files.iterator();
+                do {
+                    File file = iterator.next();
+                    LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
+                } while (iterator.hasNext());
+            }
         });
     }
 
@@ -229,7 +248,7 @@ public class MainBootstrap implements KarmaBootstrap {
             do {
                 File file = iterator.next();
                 if (file.isFile()) {
-                    LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
+                    LockLogin.getLoader().unloadModule(file);
                 }
             } while (iterator.hasNext());
         }

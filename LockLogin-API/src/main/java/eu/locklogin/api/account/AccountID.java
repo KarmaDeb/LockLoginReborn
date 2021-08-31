@@ -29,7 +29,7 @@ public final class AccountID implements Serializable {
      *
      * @param uniqueId the account uuid
      */
-    protected AccountID(final UUID uniqueId) {
+    private AccountID(final UUID uniqueId) {
         id = uniqueId.toString();
     }
 
@@ -38,7 +38,7 @@ public final class AccountID implements Serializable {
      *
      * @param trimmedUUID the account trimmed uuid
      */
-    protected AccountID(final String trimmedUUID) {
+    private AccountID(final String trimmedUUID) {
         id = trimmedUUID;
     }
 
@@ -67,7 +67,7 @@ public final class AccountID implements Serializable {
      *
      * @return the account id
      */
-    public final String getId() {
+    public String getId() {
         return id;
     }
 }

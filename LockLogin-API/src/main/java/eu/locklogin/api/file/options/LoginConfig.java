@@ -50,7 +50,7 @@ public final class LoginConfig {
      *
      * @return if the player should see a boss bar
      */
-    public final boolean hasBossBar() {
+    public boolean hasBossBar() {
         return boss;
     }
 
@@ -60,7 +60,7 @@ public final class LoginConfig {
      *
      * @return if the player should receive blind effect
      */
-    public final boolean blindEffect() {
+    public boolean blindEffect() {
         return blind;
     }
 
@@ -71,7 +71,7 @@ public final class LoginConfig {
      * @return if the player should receive
      * nausea effect
      */
-    public final boolean nauseaEffect() {
+    public boolean nauseaEffect() {
         return nausea;
     }
 
@@ -80,7 +80,7 @@ public final class LoginConfig {
      *
      * @return the register time out
      */
-    public final int timeOut() {
+    public int timeOut() {
         return timeout;
     }
 
@@ -91,7 +91,7 @@ public final class LoginConfig {
      * @return the maximum amount of login tries
      * before getting kicked
      */
-    public final int maxTries() {
+    public int maxTries() {
         return max;
     }
 
@@ -100,7 +100,7 @@ public final class LoginConfig {
      *
      * @return the login message interval
      */
-    public final int getMessageInterval() {
+    public int getMessageInterval() {
         return interval;
     }
 }

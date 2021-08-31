@@ -27,6 +27,7 @@ import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
+import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
 
 public final class ChatListener implements Listener {
 
@@ -62,7 +63,7 @@ public final class ChatListener implements Listener {
 
             if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                ModulePlugin.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
             }
         }
     }
@@ -104,7 +105,7 @@ public final class ChatListener implements Listener {
 
         if (ModulePlugin.parseCommand(e.getMessage())) {
             e.setCancelled(true);
-            ModulePlugin.fireCommand(player, e.getMessage());
+            ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
         }
     }
 

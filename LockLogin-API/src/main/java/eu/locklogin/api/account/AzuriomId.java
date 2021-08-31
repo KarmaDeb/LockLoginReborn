@@ -48,7 +48,7 @@ public final class AzuriomId {
      *
      * @param name the account name
      */
-    public final void assignTo(final String name) {
+    public void assignTo(final String name) {
         idData.set(name, uuid);
     }
 
@@ -57,7 +57,7 @@ public final class AzuriomId {
      *
      * @return the azuriom id account file
      */
-    public final File getAccountFile() {
+    public File getAccountFile() {
         return new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator + "accounts", uuid + ".lldb");
     }
 }

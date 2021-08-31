@@ -20,7 +20,7 @@ import java.security.MessageDigest;
 /**
  * AuthMe default authentication
  */
-public class AuthMeAuth {
+public final class AuthMeAuth {
 
     /**
      * Check the password with the specified token
@@ -47,7 +47,7 @@ public class AuthMeAuth {
      * @param password the password
      * @return a encrypted password
      */
-    private static String hashSha256(String password) {
+    public static String hashSha256(String password) {
         try {
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.reset();

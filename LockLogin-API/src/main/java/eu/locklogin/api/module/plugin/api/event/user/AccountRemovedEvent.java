@@ -49,7 +49,7 @@ public final class AccountRemovedEvent extends Event {
      * @return the player who created
      * the account
      */
-    public final AccountManager getRemovedAccount() {
+    public AccountManager getRemovedAccount() {
         return removedAccount;
     }
 
@@ -58,7 +58,7 @@ public final class AccountRemovedEvent extends Event {
      *
      * @return the account remove issuer
      */
-    public final String getIssuer() {
+    public String getIssuer() {
         return issuer;
     }
 
@@ -78,7 +78,7 @@ public final class AccountRemovedEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
+    public boolean isHandled() {
         return handled;
     }
 
@@ -99,7 +99,7 @@ public final class AccountRemovedEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }

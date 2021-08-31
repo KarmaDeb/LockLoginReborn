@@ -2,7 +2,7 @@ package eu.locklogin.api.file;
 
 import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.file.plugin.PluginProperties;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
@@ -190,7 +190,7 @@ public abstract class PluginMessages {
      *
      * @return plugin message
      */
-    public final String notVerified(final ModulePlayer target) {
+    public final String notVerified(final ModuleSender target) {
         String str = msg.getString("PlayerNotVerified", "&5&oYou can't fight against {player} while he's not logged/registered");
 
         return parse(str.replace("{player}", StringUtils.stripColor(target.getName())));
@@ -1125,7 +1125,7 @@ public abstract class PluginMessages {
      * @param target message replace
      * @return plugin message
      */
-    public String forcedCloseAdmin(final ModulePlayer target) {
+    public String forcedCloseAdmin(final ModuleSender target) {
         String str = msg.getString("ForcedCloseAdmin", "&dSession of {player} closed");
 
         return parse(str.replace("{player}", StringUtils.stripColor(target.getName())));
@@ -1477,6 +1477,29 @@ public abstract class PluginMessages {
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str.replace("{player}", name)).append("\n");
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param name messages replace
+     * @param knownNames message replace
+     * @return plugin message
+     */
+    public String multipleNames(final String name, final String... knownNames) {
+        List<String> messages = msg.getStringList("MultipleNames");
+        StringBuilder nameBuilder = new StringBuilder();
+
+        for (String known : knownNames)
+            nameBuilder.append("&d").append(known).append("&5, ");
+
+        String names = StringUtils.replaceLast(nameBuilder.toString(), "&5, ", "");
+
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages) builder.append(str.replace("{player}", name).replace("{players}", names)).append("\n");
 
         return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
     }

@@ -39,12 +39,10 @@ import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.velocity.LockLogin;
 import eu.locklogin.plugin.velocity.Main;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
@@ -186,18 +184,6 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
-
-        File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
-        if (moduleFiles != null) {
-            List<File> files = Arrays.asList(moduleFiles);
-            Iterator<File> iterator = files.iterator();
-            do {
-                File file = iterator.next();
-                if (file.isFile()) {
-                    LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
-                }
-            } while (iterator.hasNext());
-        }
     }
 
     public static void terminate() {
@@ -316,14 +302,12 @@ public final class Manager {
         InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
         //Check if the file exists inside the plugin as an official language
         if (internal != null) {
-            if (!msg_file.exists()) {
-                FileCopy copy = new FileCopy(source, "lang/messages_" + country + ".yml");
+            FileCopy copy = new FileCopy(source, "lang/messages_" + country + ".yml");
 
-                try {
-                    copy.copy(msg_file);
-                } catch (Throwable ex) {
-                    failed.add(msg_file.getName());
-                }
+            try {
+                copy.copy(msg_file);
+            } catch (Throwable ex) {
+                failed.add(msg_file.getName());
             }
         } else {
             if (!msg_file.exists()) {

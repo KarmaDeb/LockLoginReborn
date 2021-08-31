@@ -51,7 +51,7 @@ public final class Alias {
     /**
      * Create the specified alias
      */
-    public final void create() {
+    public void create() {
         if (!file.exists())
             file.create();
     }
@@ -59,7 +59,7 @@ public final class Alias {
     /**
      * Destroy the specified alias
      */
-    public final void destroy() {
+    public void destroy() {
         try {
             if (file.exists())
                 Files.delete(file.getFile().toPath());
@@ -72,7 +72,7 @@ public final class Alias {
      *
      * @return if the alias exists
      */
-    public final boolean exists() {
+    public boolean exists() {
         return file.exists();
     }
 
@@ -82,7 +82,7 @@ public final class Alias {
      * @param accounts the accounts to add
      * @return the already added user ids
      */
-    public final Set<String> addUsers(final Map<AccountID, String> accounts) {
+    public Set<String> addUsers(final Map<AccountID, String> accounts) {
         List<String> set = file.getStringList("USERS");
         Set<String> already = new LinkedHashSet<>();
         for (AccountID id : accounts.keySet()) {
@@ -102,7 +102,7 @@ public final class Alias {
      * @param accounts the accounts to remove
      * @return the non-removed ids
      */
-    public final Set<String> delUsers(final Map<AccountID, String> accounts) {
+    public Set<String> delUsers(final Map<AccountID, String> accounts) {
         List<String> set = file.getStringList("USERS");
         Set<String> not_in = new LinkedHashSet<>();
         for (AccountID id : accounts.keySet()) {
@@ -121,7 +121,7 @@ public final class Alias {
      *
      * @return the alias user ids
      */
-    public final Set<AccountID> getUsers() {
+    public Set<AccountID> getUsers() {
         List<String> set = file.getStringList("USERS");
         Set<AccountID> ids = new LinkedHashSet<>();
 
@@ -136,7 +136,7 @@ public final class Alias {
      *
      * @return the alias name
      */
-    public final String getName() {
+    public String getName() {
         return name;
     }
 }

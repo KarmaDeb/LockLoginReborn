@@ -48,7 +48,7 @@ public class ScratchCodes {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         for (int code : scratch_codes) {
             CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).build();
-            codes.add(util.hash(config.pinEncryption(), false));
+            codes.add(util.hash(config.pinEncryption(), config.encryptBase64()));
         }
 
         codesFile.set("CODES", codes);

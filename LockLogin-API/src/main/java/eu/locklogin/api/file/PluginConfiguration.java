@@ -53,6 +53,14 @@ public abstract class PluginConfiguration {
     public abstract boolean ipHealthCheck();
 
     /**
+     * Get if the plugin should validate UUIDs
+     *
+     * @return if the plugin should validate
+     * UUIDs
+     */
+    public abstract boolean uuidValidator();
+
+    /**
      * Get the session life time
      *
      * @return the session life time
@@ -89,6 +97,14 @@ public abstract class PluginConfiguration {
      * @return the pin encryption type
      */
     public abstract HashType pinEncryption();
+
+    /**
+     * Get if the plugin should encrypt the passwords
+     * in Base64
+     *
+     * @return if the plugin should encrypt in Base64
+     */
+    public abstract boolean encryptBase64();
 
     /**
      * Get if the plugin should block the player
@@ -199,6 +215,13 @@ public abstract class PluginConfiguration {
      * for similar player names
      */
     public abstract boolean enforceNameCheck();
+
+    /**
+     * Get the name check protocol
+     *
+     * @return the name check protocol
+     */
+    public abstract int nameCheckProtocol();
 
     /**
      * Get the current plugin language

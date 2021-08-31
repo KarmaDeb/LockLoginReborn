@@ -62,6 +62,13 @@ public abstract class AccountManager implements Serializable {
     public abstract void set2FA(final boolean status);
 
     /**
+     * Import the values from the specified account manager
+     *
+     * @param account the account
+     */
+    protected abstract void importFrom(final AccountManager account);
+
+    /**
      * Get the account id
      *
      * @return the account id

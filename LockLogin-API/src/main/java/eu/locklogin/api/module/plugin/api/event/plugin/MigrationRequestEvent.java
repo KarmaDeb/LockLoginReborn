@@ -52,7 +52,7 @@ public final class MigrationRequestEvent extends Event {
      *
      * @return the source account
      */
-    public final AccountManager getSource() {
+    public AccountManager getSource() {
         return source;
     }
 
@@ -61,7 +61,7 @@ public final class MigrationRequestEvent extends Event {
      *
      * @return the target account
      */
-    public final AccountManager getTarget() {
+    public AccountManager getTarget() {
         return target;
     }
 
@@ -81,8 +81,8 @@ public final class MigrationRequestEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -102,7 +102,7 @@ public final class MigrationRequestEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }
@@ -113,7 +113,7 @@ public final class MigrationRequestEvent extends Event {
      * @return the event instance
      */
     @Override
-    public final @Nullable Object getEvent() {
+    public @Nullable Object getEvent() {
         return eventObj;
     }
 }

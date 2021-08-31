@@ -46,7 +46,7 @@ public final class ConsolePrefix {
      * @throws IllegalArgumentException if the module tries
      * to modify the default prefix or the prefix length is over 16 or is empty
      */
-    public final void setPrefix(final MessageLevel level, final String prefix) throws IllegalArgumentException {
+    public void setPrefix(final MessageLevel level, final String prefix) throws IllegalArgumentException {
         if (StringUtils.isNullOrEmpty(StringUtils.stripColor(prefix)) || StringUtils.stripColor(prefix).length() > 16) {
             throw new IllegalArgumentException("Module " + module.name() + " tried to register an empty prefix or longer than 16 characters");
         }
@@ -71,7 +71,7 @@ public final class ConsolePrefix {
      *
      * @return the module prefix
      */
-    public final String getPrefix() {
+    public String getPrefix() {
         return "&7[ &e" + module.name() + "&7 ]&r ";
     }
 
@@ -81,7 +81,7 @@ public final class ConsolePrefix {
      * @param level the message level
      * @return the message for the specified message level
      */
-    public final String forLevel(final MessageLevel level) {
+    public String forLevel(final MessageLevel level) {
         if (level.equals(MessageLevel.NONE))
             return getPrefix();
 

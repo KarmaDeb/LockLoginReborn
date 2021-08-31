@@ -24,19 +24,17 @@ import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
+import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
@@ -57,7 +55,10 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
-import net.md_5.bungee.api.event.*;
+import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PreLoginEvent;
+import net.md_5.bungee.api.event.ProxyPingEvent;
+import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
@@ -162,8 +163,6 @@ public final class JoinListener implements Listener {
 
             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-            forceSessionLogin(player);
-
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
             if (!Proxy.isAuth(player.getServer().getInfo())) {
@@ -204,8 +203,6 @@ public final class JoinListener implements Listener {
             try {
                 if (validateIP(ip)) {
                     PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-                    UUID gen_uuid = UUIDGen.getUUID(conn_name);
 
                     if (config.registerOptions().maxAccounts() > 0) {
                         AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
@@ -259,12 +256,6 @@ public final class JoinListener implements Listener {
                             e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.antiBot())));
                             return;
                         }
-                    }
-
-                    if (!gen_uuid.equals(tar_uuid)) {
-                        e.setCancelled(true);
-                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.uuidFetchError())));
-                        return;
                     }
 
                     if (config.checkNames()) {
@@ -333,6 +324,23 @@ public final class JoinListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public final void onLogin(LoginEvent e) {
         if (!e.isCancelled()) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            PluginMessages messages = CurrentPlatform.getMessages();
+
+            if (config.uuidValidator()) {
+                UUID tar_uuid = e.getConnection().getUniqueId();
+                UUID gen_uuid = UUIDGen.getUUID(e.getConnection().getName());
+
+                if (!gen_uuid.equals(tar_uuid)) {
+                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                    if (!util.isFloodClient()) {
+                        e.setCancelled(true);
+                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.uuidFetchError())));
+                        return;
+                    }
+                }
+            }
+
             UserJoinEvent event = new UserJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
             ModulePlugin.callEvent(event);
 
@@ -412,43 +420,5 @@ public final class JoinListener implements Listener {
         }
 
         return true;
-    }
-
-    /**
-     * Get if the player has a session and
-     * validate it
-     *
-     * @param player the player
-     */
-    protected void forceSessionLogin(final ProxiedPlayer player) {
-        ModulePlayer modulePlayer = fromPlayer(player);
-
-        SessionKeeper keeper = new SessionKeeper(modulePlayer);
-        if (keeper.hasSession()) {
-            User user = new User(player);
-            ClientSession session = user.getSession();
-
-            if (!session.isLogged() || !session.isTempLogged()) {
-                session.setCaptchaLogged(true);
-                session.setLogged(true);
-                session.setPinLogged(true);
-                session.set2FALogged(true);
-
-                MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
-                MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-
-                DataSender.send(player, login);
-                DataSender.send(player, pin);
-                DataSender.send(player, gauth);
-
-                keeper.destroy();
-
-                user.checkServer(0);
-
-                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-                ModulePlugin.callEvent(event);
-            }
-        }
     }
 }

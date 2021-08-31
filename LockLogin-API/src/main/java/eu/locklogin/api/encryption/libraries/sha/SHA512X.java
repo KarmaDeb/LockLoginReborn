@@ -27,7 +27,7 @@ import java.security.NoSuchAlgorithmException;
  * This is used specially to add DynamicBungeeAuth compatibility
  */
 @SuppressWarnings("UnstableApiUsage")
-public class SHA512X {
+public final class SHA512X {
 
     private final String pwd;
 
@@ -47,7 +47,7 @@ public class SHA512X {
      * @param salt the salt to use
      * @return if the password matches the token
      */
-    public final boolean validate(final String token, final String salt) {
+    public boolean validate(final String token, final String salt) {
         if (validateC(token, salt)) {
             return true;
         } else {

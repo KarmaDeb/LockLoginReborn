@@ -46,7 +46,7 @@ public final class ModuleMessageService {
      * @param name the channel name
      * @param channel the channel instance
      */
-    public final void registerService(String name, final ModuleMessagingChannel channel) {
+    public void registerService(String name, final ModuleMessagingChannel channel) {
         name = name.toLowerCase();
 
         Map<String, ModuleMessagingChannel> registered = channels.getOrDefault(module, new HashMap<>());
@@ -61,7 +61,7 @@ public final class ModuleMessageService {
      *
      * @param name the channel name
      */
-    public final void unregisterService(String name) {
+    public void unregisterService(String name) {
         name = name.toLowerCase();
 
         Map<String, ModuleMessagingChannel> registered = channels.getOrDefault(module, new HashMap<>());

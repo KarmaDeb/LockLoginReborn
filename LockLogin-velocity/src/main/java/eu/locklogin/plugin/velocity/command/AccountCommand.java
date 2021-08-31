@@ -24,6 +24,8 @@ import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
+import eu.locklogin.api.common.utils.other.name.NameSearchResult;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -108,25 +110,31 @@ public class AccountCommand extends BungeeLikeCommand {
                             if (user.hasPermission(PluginPermission.account())) {
                                 if (args.length == 2) {
                                     String target = args[1];
-                                    OfflineClient offline = new OfflineClient(target);
+                                    NameSearchResult nsr = AccountNameDatabase.find(target);
 
-                                    AccountManager manager = offline.getAccount();
-                                    if (manager != null) {
-                                        LockedAccount account = new LockedAccount(manager.getUUID());
-                                        LockedData data = account.getData();
+                                    if (nsr.singleResult()) {
+                                        OfflineClient offline = new OfflineClient(target);
 
-                                        if (data.isLocked()) {
-                                            if (account.unlock()) {
-                                                user.send(messages.prefix() + messages.accountUnLocked(target));
+                                        AccountManager manager = offline.getAccount();
+                                        if (manager != null) {
+                                            LockedAccount account = new LockedAccount(manager.getUUID());
+                                            LockedData data = account.getData();
+
+                                            if (data.isLocked()) {
+                                                if (account.unlock()) {
+                                                    user.send(messages.prefix() + messages.accountUnLocked(target));
+                                                } else {
+                                                    user.send(messages.prefix() + messages.accountNotLocked(target));
+                                                    logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
+                                                }
                                             } else {
                                                 user.send(messages.prefix() + messages.accountNotLocked(target));
-                                                logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
                                             }
                                         } else {
-                                            user.send(messages.prefix() + messages.accountNotLocked(target));
+                                            user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.neverPlayer(target));
+                                        user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                     }
                                 } else {
                                     user.send(messages.prefix() + messages.accountUnLock());
@@ -203,29 +211,35 @@ public class AccountCommand extends BungeeLikeCommand {
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
                                         String target = args[1];
-                                        Optional<Player> online = server.getPlayer(target);
-                                        OfflineClient offline = new OfflineClient(target);
+                                        NameSearchResult nsr = AccountNameDatabase.find(target);
 
-                                        AccountManager manager = offline.getAccount();
-                                        if (manager != null) {
-                                            LockedAccount account = new LockedAccount(manager.getUUID());
-                                            manager.setUnsafePassword("");
-                                            manager.setUnsafePin("");
-                                            manager.setUnsafeGAuth("");
-                                            manager.set2FA(false);
+                                        if (nsr.singleResult()) {
+                                            Optional<Player> online = server.getPlayer(target);
+                                            OfflineClient offline = new OfflineClient(target);
 
-                                            user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                            AccountManager manager = offline.getAccount();
+                                            if (manager != null) {
+                                                LockedAccount account = new LockedAccount(manager.getUUID());
+                                                manager.setUnsafePassword("");
+                                                manager.setUnsafePin("");
+                                                manager.setUnsafeGAuth("");
+                                                manager.set2FA(false);
 
-                                            if (online.isPresent()) {
-                                                DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
-                                                User onlineUser = new User(online.get());
+                                                user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
 
-                                                onlineUser.kick(messages.forcedAccountRemoval(player.getUsername()));
+                                                if (online.isPresent()) {
+                                                    DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
+                                                    User onlineUser = new User(online.get());
+
+                                                    onlineUser.kick(messages.forcedAccountRemoval(player.getUsername()));
+                                                }
+
+                                                account.lock(StringUtils.stripColor(player.getUsername()));
+                                            } else {
+                                                user.send(messages.prefix() + messages.neverPlayer(target));
                                             }
-
-                                            account.lock(StringUtils.stripColor(player.getUsername()));
                                         } else {
-                                            user.send(messages.prefix() + messages.neverPlayer(target));
+                                            user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                         }
                                     } else {
                                         user.send(messages.prefix() + messages.permissionError(PluginPermission.delAccount()));
@@ -281,35 +295,41 @@ public class AccountCommand extends BungeeLikeCommand {
                             if (user.hasPermission(PluginPermission.altInfo())) {
                                 if (args.length == 2) {
                                     String target = args[1];
-                                    OfflineClient offline = new OfflineClient(target);
-                                    AccountManager manager = offline.getAccount();
+                                    NameSearchResult nsr = AccountNameDatabase.find(target);
 
-                                    if (manager != null) {
-                                        AccountData data = new AccountData(null, manager.getUUID());
-                                        Set<AccountID> ids = data.getReverseAlts();
-                                        Set<AccountManager> accounts = new HashSet<>();
+                                    if (nsr.singleResult()) {
+                                        OfflineClient offline = new OfflineClient(target);
+                                        AccountManager manager = offline.getAccount();
 
-                                        for (AccountID id : ids) {
-                                            offline = new OfflineClient(id);
-                                            manager = offline.getAccount();
+                                        if (manager != null) {
+                                            AccountData data = new AccountData(null, manager.getUUID());
+                                            Set<AccountID> ids = data.getReverseAlts();
+                                            Set<AccountManager> accounts = new HashSet<>();
 
-                                            if (manager != null)
-                                                accounts.add(new GlobalAccount(manager));
+                                            for (AccountID id : ids) {
+                                                offline = new OfflineClient(id);
+                                                manager = offline.getAccount();
+
+                                                if (manager != null)
+                                                    accounts.add(new GlobalAccount(manager));
+                                            }
+
+                                            int sent = 0;
+                                            int max = accounts.size();
+                                            for (AccountManager account : accounts) {
+                                                player.sendActionBar(Component.text().content(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")).build());
+
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                sent++;
+                                            }
+
+                                            AccountParser parser = new AccountParser(accounts);
+                                            DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                        } else {
+                                            user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
-
-                                        int sent = 0;
-                                        int max = accounts.size();
-                                        for (AccountManager account : accounts) {
-                                            player.sendActionBar(Component.text().content(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")).build());
-
-                                            DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
-                                            sent++;
-                                        }
-
-                                        AccountParser parser = new AccountParser(accounts);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                     } else {
-                                        user.send(messages.prefix() + messages.neverPlayer(target));
+                                        user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                     }
                                 } else {
                                     user.send(messages.prefix() + messages.lookupUsage());
@@ -346,29 +366,36 @@ public class AccountCommand extends BungeeLikeCommand {
                 String tar_name;
                 OfflineClient offline;
                 AccountManager manager;
+                NameSearchResult nsr;
 
                 switch (args[0].toLowerCase()) {
                     case "unlock":
                         tar_name = args[1];
-                        offline = new OfflineClient(tar_name);
+                        nsr = AccountNameDatabase.find(tar_name);
 
-                        manager = offline.getAccount();
-                        if (manager != null) {
-                            LockedAccount account = new LockedAccount(manager.getUUID());
-                            LockedData data = account.getData();
+                        if (nsr.singleResult()) {
+                            offline = new OfflineClient(tar_name);
 
-                            if (data.isLocked()) {
-                                if (account.unlock()) {
-                                    console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                            manager = offline.getAccount();
+                            if (manager != null) {
+                                LockedAccount account = new LockedAccount(manager.getUUID());
+                                LockedData data = account.getData();
+
+                                if (data.isLocked()) {
+                                    if (account.unlock()) {
+                                        console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                    } else {
+                                        console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                        logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                    }
                                 } else {
                                     console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                    logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
                                 }
                             } else {
-                                console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                console.send(messages.prefix() + messages.neverPlayer(tar_name));
                             }
                         } else {
-                            console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                            console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
                         }
                         break;
                     case "close":
@@ -401,30 +428,36 @@ public class AccountCommand extends BungeeLikeCommand {
                     case "remove":
                     case "delete":
                         if (args.length == 2) {
-                            String target = args[1];
-                            Optional<Player> online = server.getPlayer(target);
-                            offline = new OfflineClient(target);
+                            tar_name = args[1];
+                            nsr = AccountNameDatabase.find(tar_name);
 
-                            manager = offline.getAccount();
-                            if (manager != null) {
-                                LockedAccount account = new LockedAccount(manager.getUUID());
-                                manager.setUnsafePassword("");
-                                manager.setUnsafePin("");
-                                manager.setUnsafeGAuth("");
-                                manager.set2FA(false);
+                            if (nsr.singleResult()) {
+                                Optional<Player> online = server.getPlayer(tar_name);
+                                offline = new OfflineClient(tar_name);
 
-                                console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                manager = offline.getAccount();
+                                if (manager != null) {
+                                    LockedAccount account = new LockedAccount(manager.getUUID());
+                                    manager.setUnsafePassword("");
+                                    manager.setUnsafePin("");
+                                    manager.setUnsafeGAuth("");
+                                    manager.set2FA(false);
 
-                                if (online.isPresent()) {
-                                    DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
-                                    User onlineUser = new User(online.get());
+                                    console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(tar_name));
 
-                                    onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
+                                    if (online.isPresent()) {
+                                        DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
+                                        User onlineUser = new User(online.get());
+
+                                        onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
+                                    }
+
+                                    account.lock(StringUtils.stripColor("{ServerName}"));
+                                } else {
+                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
                                 }
-
-                                account.lock(StringUtils.stripColor("{ServerName}"));
                             } else {
-                                console.send(messages.prefix() + messages.neverPlayer(target));
+                                console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
                             }
                         } else {
                             console.send(messages.prefix() + messages.remove());

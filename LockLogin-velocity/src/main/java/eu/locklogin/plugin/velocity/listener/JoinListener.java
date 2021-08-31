@@ -35,16 +35,18 @@ import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
+import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.*;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.VelocityGameProfileEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
@@ -65,8 +67,10 @@ import net.kyori.adventure.text.Component;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,6 +86,8 @@ public final class JoinListener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
+
+    private final static Map<String, UUID> ids = new ConcurrentHashMap<>();
 
     /**
      * Initialize the join listener
@@ -163,7 +169,6 @@ public final class JoinListener {
                     timer.cancel();
             });
             server.getScheduler().buildTask(plugin, check).schedule();
-            forceSessionLogin(player);
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
 
@@ -193,6 +198,9 @@ public final class JoinListener {
     public final void onGameProfileRequest(GameProfileRequestEvent e) {
         VelocityGameProfileEvent event = new VelocityGameProfileEvent(e);
         ModulePlugin.callEvent(event);
+
+        ids.put(e.getGameProfile().getName(), e.getGameProfile().getId());
+        ids.put(e.getOriginalProfile().getName(), e.getGameProfile().getId());
     }
 
     @Subscribe(order = PostOrder.FIRST)
@@ -201,7 +209,9 @@ public final class JoinListener {
         InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
 
         String conn_name = e.getUsername();
-        UUID tar_uuid = UUIDGen.getUUID(conn_name);
+        UUID tar_uuid = ids.getOrDefault(conn_name, UUIDGen.getUUID(conn_name));
+
+        ids.remove(conn_name);
 
         String address = "null";
         try {
@@ -211,8 +221,6 @@ public final class JoinListener {
             try {
                 if (validateIP(ip)) {
                     PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-                    UUID gen_uuid = UUIDGen.getUUID(conn_name);
 
                     if (config.registerOptions().maxAccounts() > 0) {
                         AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
@@ -264,11 +272,6 @@ public final class JoinListener {
                         }
                     }
 
-                    if (!gen_uuid.equals(tar_uuid)) {
-                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
-                        return;
-                    }
-
                     if (config.checkNames()) {
                         Name name = new Name(conn_name);
                         name.check();
@@ -304,7 +307,7 @@ public final class JoinListener {
                         }
                     }
 
-                    UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), null, e.getUsername(), e);
+                    UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, e.getUsername(), e);
                     ModulePlugin.callEvent(event);
 
                     if (event.isHandled()) {
@@ -328,13 +331,28 @@ public final class JoinListener {
     @Subscribe(order = PostOrder.FIRST)
     public final void onLogin(LoginEvent e) {
         if (e.getResult().isAllowed()) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            PluginMessages messages = CurrentPlatform.getMessages();
+
+            if (config.uuidValidator()) {
+                UUID tar_uuid = e.getPlayer().getGameProfile().getId();
+                UUID gen_uuid = UUIDGen.getUUID(e.getPlayer().getGameProfile().getName());
+
+                if (!gen_uuid.equals(tar_uuid)) {
+                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                    if (!util.isFloodClient()) {
+                        e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
+                        return;
+                    }
+                }
+            }
+
             UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
             ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {
                 e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
                 PlayerPool.delPlayer(e.getPlayer().getUniqueId());
-                System.out.println("Removed player with id: " + e.getPlayer().getUniqueId().toString());
             }
         }
     }
@@ -403,41 +421,5 @@ public final class JoinListener {
         }
 
         return true;
-    }
-
-    /**
-     * Get if the player has a session and
-     * validate it
-     *
-     * @param player the player
-     */
-    protected void forceSessionLogin(final Player player) {
-        ModulePlayer modulePlayer = fromPlayer(player);
-
-        SessionKeeper keeper = new SessionKeeper(modulePlayer);
-        if (keeper.hasSession()) {
-            User user = new User(player);
-            ClientSession session = user.getSession();
-
-            session.setCaptchaLogged(true);
-            session.setLogged(true);
-            session.setPinLogged(true);
-            session.set2FALogged(true);
-
-            MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
-            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-
-            DataSender.send(player, login);
-            DataSender.send(player, pin);
-            DataSender.send(player, gauth);
-
-            keeper.destroy();
-
-            user.checkServer(0);
-
-            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
-            ModulePlugin.callEvent(event);
-        }
     }
 }

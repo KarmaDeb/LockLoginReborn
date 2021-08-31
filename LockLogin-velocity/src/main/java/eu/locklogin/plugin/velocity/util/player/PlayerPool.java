@@ -11,7 +11,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.LockLogin.server;
+import static eu.locklogin.plugin.velocity.LockLogin.source;
 
 public class PlayerPool {
 

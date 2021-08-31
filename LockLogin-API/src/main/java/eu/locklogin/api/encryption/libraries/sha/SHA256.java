@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * SHA256 utilities
  */
-public class SHA256 {
+public final class SHA256 {
 
     private final Object password;
 
@@ -42,7 +42,7 @@ public class SHA256 {
      * @param token the provided token password
      * @return a boolean
      */
-    public final boolean check(final String token) {
+    public boolean check(final String token) {
         try {
             String[] data = token.split("\\$");
             String salt = data[2];
@@ -84,7 +84,7 @@ public class SHA256 {
      * @return a hashed value
      */
     @SuppressWarnings("all")
-    public final String hash() {
+    public String hash() {
         String random_salt = StringUtils.randomString(64, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER);
 
         return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password.toString(), StandardCharsets.UTF_8).toString();

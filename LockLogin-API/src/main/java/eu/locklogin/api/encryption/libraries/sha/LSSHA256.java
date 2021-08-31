@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * SHA256 utilities
  */
-public class LSSHA256 {
+public final class LSSHA256 {
 
     private final Object password;
 
@@ -41,7 +41,7 @@ public class LSSHA256 {
      * @param token the provided token password
      * @return a boolean
      */
-    public final boolean check(final String token) {
+    public boolean check(final String token) {
         return token.equals(hash());
     }
 
@@ -51,7 +51,7 @@ public class LSSHA256 {
      * @return a hashed value
      */
     @SuppressWarnings("all")
-    public final String hash() {
+    public String hash() {
         return "$SHA256$" + Hashing.sha256().hashString(password.toString(), StandardCharsets.UTF_8).toString();
     }
 }

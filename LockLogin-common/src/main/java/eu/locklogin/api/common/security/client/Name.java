@@ -14,6 +14,8 @@ package eu.locklogin.api.common.security.client;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.util.LinkedHashSet;
@@ -41,12 +43,21 @@ public final class Name {
     /**
      * Check the client name
      */
-    public final void check() {
+    public void check() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
         for (int i = 0; i < name.length(); i++) {
             char character = name.charAt(i);
 
-            if (!Character.isLetterOrDigit(character) && character != '_')
-                invalid_chars.add(character);
+            if (config.nameCheckProtocol() == 2) {
+                if (notAscii(character)) {
+                    invalid_chars.add(character);
+                }
+            } else {
+                if (!Character.isLetterOrDigit(character) && character != '_') {
+                    invalid_chars.add(character);
+                }
+            }
         }
 
         checked = true;
@@ -57,7 +68,7 @@ public final class Name {
      *
      * @return if the name is valid
      */
-    public final boolean notValid() {
+    public boolean notValid() {
         if (!checked)
             check();
 
@@ -69,7 +80,7 @@ public final class Name {
      *
      * @return the name invalid characters
      */
-    public final String getInvalidChars() {
+    public String getInvalidChars() {
         StringBuilder builder = new StringBuilder();
         for (Character character : invalid_chars) {
             String value = String.valueOf(character);
@@ -85,5 +96,45 @@ public final class Name {
         }
 
         return StringUtils.replaceLast(builder.toString(), "&7, ", "");
+    }
+
+    /**
+     * Get if the character is ascii character
+     *
+     * @param c the character
+     * @return if the character is ascii
+     */
+    public static boolean notAscii(final Character c) {
+        int charId = (int) c;
+
+        if (charId > 127) {
+            return true;
+        } else {
+            if (charId <= 47) {
+                return true;
+            }
+            switch (charId) {
+                case 58:
+                case 59:
+                case 60:
+                case 61:
+                case 62:
+                case 63:
+                case 64:
+                case 91:
+                case 92:
+                case 93:
+                case 94:
+                case 96:
+                case 123:
+                case 124:
+                case 125:
+                case 126:
+                case 127:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * BruteForce configuration
  */
-public class BruteForceConfig {
+public final class BruteForceConfig {
 
     private final int tries;
     private final int time;
@@ -43,7 +43,7 @@ public class BruteForceConfig {
      * @return the maximum tries a player has
      * to login incorrectly after being blocked
      */
-    public final int getMaxTries() {
+    public int getMaxTries() {
         return tries;
     }
 
@@ -54,7 +54,7 @@ public class BruteForceConfig {
      * @return the amount of time the player will
      * be blocked ( in seconds )
      */
-    public final int getBlockTime() {
+    public int getBlockTime() {
         return (int) TimeUnit.MINUTES.toSeconds(time);
     }
 }

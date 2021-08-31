@@ -49,7 +49,7 @@ public final class UpdateRequestEvent extends Event {
      *
      * @return the update request issuer
      */
-    public final Object getSender() {
+    public Object getSender() {
         return commandSender;
     }
 
@@ -63,7 +63,7 @@ public final class UpdateRequestEvent extends Event {
      * an option
      */
     @Deprecated
-    public final boolean canPerformUnsafeUpdate() {
+    public boolean canPerformUnsafeUpdate() {
         return isUnsafe;
     }
 
@@ -83,8 +83,8 @@ public final class UpdateRequestEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -104,7 +104,7 @@ public final class UpdateRequestEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }

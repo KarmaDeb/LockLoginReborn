@@ -25,11 +25,6 @@ Options:
 #AS YOUR OTHER PROXY.YML CONFIGURATION FILES
 ProxyKey: ""
 
-#This is the time the plugin will check
-#for the server if is alive, this is useful
-#to invalidate temporal keys and avoid ghost servers
-ServerLifeCheck: 10
-
 #PLEASE DO NOT MODIFY THIS, THIS IS
 #YOUR UNIQUE BUNGEECORD PROXY ID
 #AND THIS WILL BE USED FOR MULTI-BUNGEE

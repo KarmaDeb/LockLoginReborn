@@ -64,8 +64,8 @@ public final class ModuleStatusChangeEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -85,7 +85,7 @@ public final class ModuleStatusChangeEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }
@@ -95,7 +95,7 @@ public final class ModuleStatusChangeEvent extends Event {
      *
      * @return the plugin status
      */
-    public final Status getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -104,7 +104,7 @@ public final class ModuleStatusChangeEvent extends Event {
      *
      * @return the module that changed
      */
-    public final PluginModule getModule() {
+    public PluginModule getModule() {
         return target;
     }
 
@@ -113,7 +113,7 @@ public final class ModuleStatusChangeEvent extends Event {
      *
      * @return the loader that performed this action
      */
-    public final ModuleLoader getLoader() {
+    public ModuleLoader getLoader() {
         return loader;
     }
 
@@ -123,7 +123,7 @@ public final class ModuleStatusChangeEvent extends Event {
      * @return the event instance
      */
     @Override
-    public final @Nullable Object getEvent() {
+    public @Nullable Object getEvent() {
         return eventObj;
     }
 

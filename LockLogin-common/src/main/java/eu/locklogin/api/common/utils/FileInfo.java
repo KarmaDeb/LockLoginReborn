@@ -189,33 +189,6 @@ public interface FileInfo {
     }
 
     /**
-     * Get the specified jar keys length
-     *
-     * @param file the jar file
-     * @return the jar file keys length
-     */
-    static int getKeysLength(final File file) {
-        try {
-            JarFile jar = new JarFile(file);
-            JarEntry jar_info = jar.getJarEntry("global.yml");
-
-            if (jar_info != null) {
-                InputStream yml = jar.getInputStream(jar_info);
-
-                Yaml yaml = new Yaml();
-                Map<String, Object> values = yaml.load(yml);
-                yml.close();
-                return Integer.parseInt(values.getOrDefault("project_keylength", 1024).toString());
-            }
-            jar.close();
-
-            return 1024;
-        } catch (Throwable ex) {
-            return 1024;
-        }
-    }
-
-    /**
      * Get if the jar file should show dependencies
      * checksums
      *

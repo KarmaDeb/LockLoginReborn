@@ -63,7 +63,7 @@ public final class CryptoFactory {
      * @param target the crypt target
      * @return the encrypted target
      */
-    public final String toBase64(final CryptTarget target) {
+    public String toBase64(final CryptTarget target) {
         if (!isBase64(target)) {
             switch (target) {
                 case PASSWORD:
@@ -92,7 +92,7 @@ public final class CryptoFactory {
      * @param target the crypt target
      * @return the un-encrypted target
      */
-    public final String fromBase64(final CryptTarget target) {
+    public String fromBase64(final CryptTarget target) {
         if (isBase64(target)) {
             switch (target) {
                 case PASSWORD:
@@ -122,7 +122,7 @@ public final class CryptoFactory {
      * @param encrypt encrypt the hash result to base 64
      * @return the hashed password
      */
-    public final String hash(final HashType type, final boolean encrypt) throws IllegalArgumentException {
+    public String hash(final HashType type, final boolean encrypt) throws IllegalArgumentException {
         if (!StringUtils.isNullOrEmpty(password)) {
             switch (type) {
                 case SHA512:
@@ -161,6 +161,12 @@ public final class CryptoFactory {
                     } else {
                         return argon2.hashPassword(type);
                     }
+                case AUTHME_SHA:
+                    if (encrypt) {
+                        return Base64.getEncoder().encodeToString(AuthMeAuth.hashSha256(password).getBytes(StandardCharsets.UTF_8));
+                    } else {
+                        return AuthMeAuth.hashSha256(password);
+                    }
                 case NONE:
                 case UNKNOWN:
                 default:
@@ -176,7 +182,7 @@ public final class CryptoFactory {
      *
      * @return the token hash type
      */
-    public final HashType getTokenHash() {
+    public HashType getTokenHash() {
         if (!StringUtils.isNullOrEmpty(token)) {
             String clean = fromBase64(CryptTarget.TOKEN);
 
@@ -242,16 +248,7 @@ public final class CryptoFactory {
      * @param current_crypto the current crypt type
      * @return if the token needs a re-hash
      */
-    public final boolean needsRehash(final HashType current_crypto) {
-        try {
-            String clean = fromBase64(CryptTarget.TOKEN);
-            String token_salt = clean.split("\\$")[1];
-            if (token_salt.length() <= 1)
-                return true;
-        } catch (Throwable ex) {
-            return true;
-        }
-
+    public boolean needsRehash(final HashType current_crypto) {
         HashType token_crypto = getTokenHash();
 
         if (!token_crypto.equals(HashType.NONE) && !token_crypto.equals(HashType.UNKNOWN))
@@ -266,7 +263,7 @@ public final class CryptoFactory {
      *
      * @return if the password is correct
      */
-    public final boolean validate() {
+    public boolean validate() {
         if (!StringUtils.isNullOrEmpty(token) && !StringUtils.isNullOrEmpty(password)) {
             HashType current_type = getTokenHash();
 
@@ -315,7 +312,7 @@ public final class CryptoFactory {
      * @param target the check target
      * @return if the target is base 64
      */
-    public final boolean isBase64(final CryptTarget target) {
+    public boolean isBase64(final CryptTarget target) {
         switch (target) {
             case PASSWORD:
                 if (!StringUtils.isNullOrEmpty(password)) {
@@ -339,7 +336,7 @@ public final class CryptoFactory {
     /**
      * Get the crypto util builder
      */
-    public static class Builder {
+    public final static class Builder {
 
         private String password = "";
         private String token = "";

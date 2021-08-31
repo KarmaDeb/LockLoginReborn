@@ -15,6 +15,7 @@ package eu.locklogin.api.module.plugin.api.event.plugin;
  */
 
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public final class PluginProcessCommandEvent extends Event {
 
     private final String arg;
-    private final Object sender;
+    private final ModuleSender sender;
     private final String[] parameters;
     private final Object eventObj;
 
@@ -39,7 +40,7 @@ public final class PluginProcessCommandEvent extends Event {
      * @param arguments the command arguments
      * @param event     the event in where this event is fired
      */
-    public PluginProcessCommandEvent(final String argument, final Object sender, final Object event, final String... arguments) {
+    public PluginProcessCommandEvent(final String argument, final ModuleSender sender, final Object event, final String... arguments) {
         arg = argument;
         this.sender = sender;
         parameters = arguments;
@@ -51,7 +52,7 @@ public final class PluginProcessCommandEvent extends Event {
      *
      * @return the command argument
      */
-    public final String getArgument() {
+    public String getArgument() {
         return arg;
     }
 
@@ -60,7 +61,7 @@ public final class PluginProcessCommandEvent extends Event {
      *
      * @return the command parameters
      */
-    public final String[] getParameters() {
+    public String[] getParameters() {
         return parameters;
     }
 
@@ -69,7 +70,7 @@ public final class PluginProcessCommandEvent extends Event {
      *
      * @return the command sender
      */
-    public final Object getSender() {
+    public ModuleSender getSender() {
         return sender;
     }
 
@@ -89,8 +90,8 @@ public final class PluginProcessCommandEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -110,7 +111,7 @@ public final class PluginProcessCommandEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }

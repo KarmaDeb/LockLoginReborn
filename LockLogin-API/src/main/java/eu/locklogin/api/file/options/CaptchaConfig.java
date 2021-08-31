@@ -47,7 +47,7 @@ public final class CaptchaConfig {
      *
      * @return the captcha mode
      */
-    public final boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
@@ -56,7 +56,7 @@ public final class CaptchaConfig {
      *
      * @return the captcha code length
      */
-    public final int getLength() {
+    public int getLength() {
         return length;
     }
 
@@ -65,7 +65,7 @@ public final class CaptchaConfig {
      *
      * @return if the captcha has letters
      */
-    public final boolean hasLetters() {
+    public boolean hasLetters() {
         return letters;
     }
 
@@ -75,7 +75,7 @@ public final class CaptchaConfig {
      *
      * @return if the captcha has strike
      */
-    public final boolean enableStrike() {
+    public boolean enableStrike() {
         return strikethrough;
     }
 
@@ -86,7 +86,7 @@ public final class CaptchaConfig {
      *
      * @return if the strike effect is random
      */
-    public final boolean randomStrike() {
+    public boolean randomStrike() {
         return randomStrikethrough;
     }
 }

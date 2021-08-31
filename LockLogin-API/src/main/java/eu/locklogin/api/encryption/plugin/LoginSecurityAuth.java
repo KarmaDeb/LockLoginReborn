@@ -19,7 +19,7 @@ import eu.locklogin.api.encryption.libraries.bcrypt.BCryptLib;
 /**
  * LoginSecurity default authentication
  */
-public class LoginSecurityAuth {
+public final class LoginSecurityAuth {
 
     /**
      * Check the password with the specified token

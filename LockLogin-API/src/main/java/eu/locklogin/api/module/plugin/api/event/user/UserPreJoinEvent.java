@@ -50,7 +50,7 @@ public final class UserPreJoinEvent extends GenericJoinEvent {
      *
      * @return the player ip
      */
-    public final InetAddress getIp() {
+    public InetAddress getIp() {
         return address;
     }
 
@@ -59,7 +59,7 @@ public final class UserPreJoinEvent extends GenericJoinEvent {
      *
      * @return the player account id
      */
-    public final AccountID getAccountId() {
+    public AccountID getAccountId() {
         return AccountID.fromUUID(id);
     }
 
@@ -68,7 +68,7 @@ public final class UserPreJoinEvent extends GenericJoinEvent {
      *
      * @return the event player
      */
-    public final String getName() {
+    public String getName() {
         return player;
     }
 
@@ -78,7 +78,7 @@ public final class UserPreJoinEvent extends GenericJoinEvent {
      * @return the event instance
      */
     @Override
-    public final Object getEvent() {
+    public Object getEvent() {
         return eventObject;
     }
 }

@@ -39,7 +39,7 @@ public final class CommandData {
      *
      * @return the command that owns this data
      */
-    public final Command getOwner() {
+    public Command getOwner() {
         return command;
     }
 

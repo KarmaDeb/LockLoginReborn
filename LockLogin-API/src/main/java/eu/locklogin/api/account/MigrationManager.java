@@ -40,25 +40,13 @@ public final class MigrationManager {
     /**
      * Initialize the migration
      */
-    public final void startMigration() {
+    public void startMigration() {
         MigrationRequestEvent event = new MigrationRequestEvent(current, target, null);
         ModulePlugin.callEvent(event);
-
-        AccountID uuid = current.getUUID();
-        String name = current.getName();
-        String password = current.getPassword();
-        String token = current.getGAuth();
-        String pin = current.getPin();
-        boolean fa = current.has2FA();
 
         if (!target.exists())
             target.create();
 
-        target.saveUUID(uuid);
-        target.setName(name);
-        target.setPassword(password);
-        target.setGAuth(token);
-        target.setPin(pin);
-        target.set2FA(fa);
+        target.importFrom(current);
     }
 }

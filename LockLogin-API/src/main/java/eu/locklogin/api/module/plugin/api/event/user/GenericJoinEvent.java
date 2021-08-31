@@ -24,7 +24,7 @@ public abstract class GenericJoinEvent extends Event {
      */
     @Override
     public final boolean isHandled() {
-        return handled;
+        return isHandleable() && handled;
     }
 
     /**

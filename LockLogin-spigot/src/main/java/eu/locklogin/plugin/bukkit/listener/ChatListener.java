@@ -18,6 +18,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -30,6 +31,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
+import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 public final class ChatListener implements Listener {
 
@@ -64,7 +66,7 @@ public final class ChatListener implements Listener {
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                ModulePlugin.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
             }
         }
     }
@@ -104,7 +106,7 @@ public final class ChatListener implements Listener {
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                ModulePlugin.fireCommand(player, e.getMessage());
+                ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
             }
         }
     }
@@ -114,8 +116,12 @@ public final class ChatListener implements Listener {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getCommand())) {
-                e.setCancelled(true);
-                ModulePlugin.fireCommand(e.getSender(), e.getCommand());
+                PluginModule module = ModulePlugin.getCommandOwner(e.getCommand());
+
+                if (module != null) {
+                    e.setCancelled(true);
+                    ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
+                }
             }
         }
     }

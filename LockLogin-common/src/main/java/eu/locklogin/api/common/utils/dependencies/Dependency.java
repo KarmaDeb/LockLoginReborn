@@ -15,7 +15,6 @@ package eu.locklogin.api.common.utils.dependencies;
  */
 
 import eu.locklogin.api.common.utils.FileInfo;
-import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import org.jetbrains.annotations.NotNull;

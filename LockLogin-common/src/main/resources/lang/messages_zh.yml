@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Chinese (Official - Community based)
 #Editor: MAX_XiaoKui, KarmaDev
-#Last edited: 13 - August - 2021 02:13
+#Last edited: 29 - August - 2021 00:40
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -188,6 +188,11 @@ SimilarName:
   - "&c你的名字看起来像一个"
   - "&c已经注册了"
   - "&7{player}"
+MultipleNames:
+  - "&5我们发现分配给多个 UUID"
+  - "&d{player}&5, 所以你不能用它来获取数据."
+  - ""
+  - "&5但你可以试试他的其他名字:&d {players}"
 UUIDFetchError:
   - "{ServerName}"
   - ""

@@ -1,4 +1,4 @@
-package eu.locklogin.api.module.plugin.javamodule.console;
+package eu.locklogin.api.module.plugin.javamodule.sender;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -15,14 +15,17 @@ package eu.locklogin.api.module.plugin.javamodule.console;
  */
 
 import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.api.module.plugin.api.event.server.ModuleServerMessageEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.console.ConsolePrefix;
+import eu.locklogin.api.module.plugin.javamodule.console.MessageLevel;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 
 /**
  * LockLogin module console manager
  */
-public final class ModuleConsole {
+public final class ModuleConsole extends ModuleSender {
 
     private final PluginModule module;
 
@@ -32,6 +35,7 @@ public final class ModuleConsole {
      * @param owner the owner module
      */
     public ModuleConsole(final PluginModule owner) {
+        super();
         module = owner;
     }
 
@@ -41,9 +45,14 @@ public final class ModuleConsole {
      * @param message the message
      * @param replaces the message replaces
      */
-    public final void sendMessage(final String message, final Object... replaces) {
+    public void sendMessage(final String message, final Object... replaces) {
         if (ModuleLoader.isLoaded(module)) {
-            APISource.getConsole().send(getPrefixManager().getPrefix() +  message, replaces);
+            ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
+            ModulePlugin.callEvent(event);
+
+            if (!event.isHandled()) {
+                APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+            }
         }
     }
 
@@ -54,15 +63,14 @@ public final class ModuleConsole {
      * @param message the message
      * @param replaces the message replaces
      */
-    public final void sendMessage(final MessageLevel level, final String message, final Object... replaces) {
+    public void sendMessage(final MessageLevel level, final String message, final Object... replaces) {
         if (ModuleLoader.isLoaded(module)) {
             String prefix = getPrefixManager().forLevel(level);
 
-            String final_message = StringUtils.formatString(message, replaces);
-            if (!prefix.endsWith(" "))
-                prefix = prefix + " ";
+            ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
+            ModulePlugin.callEvent(event);
 
-            APISource.getConsole().send("{0}{1}", prefix, final_message);
+            APISource.getConsole().send("{0}{1}", prefix, event.getMessage(), event.getReplaces());
         }
     }
 
@@ -71,7 +79,7 @@ public final class ModuleConsole {
      *
      * @return the module console prefix manager
      */
-    public final ConsolePrefix getPrefixManager() {
+    public ConsolePrefix getPrefixManager() {
         return new ConsolePrefix(module);
     }
 }

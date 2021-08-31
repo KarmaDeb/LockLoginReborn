@@ -26,12 +26,13 @@ import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
+import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -156,8 +157,11 @@ public final class JoinListener implements Listener {
                         }
 
                         if (!gen_uuid.equals(tar_uuid)) {
-                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
-                            return;
+                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                            if (!util.isFloodClient()) {
+                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
+                                return;
+                            }
                         }
 
                         if (config.checkNames()) {

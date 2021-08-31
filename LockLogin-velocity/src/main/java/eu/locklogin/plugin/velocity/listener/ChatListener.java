@@ -27,6 +27,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.util.player.User;
 
 import static eu.locklogin.plugin.velocity.LockLogin.properties;
+import static eu.locklogin.plugin.velocity.LockLogin.fromPlayer;
 
 public final class ChatListener {
 
@@ -59,7 +60,7 @@ public final class ChatListener {
 
         if (ModulePlugin.parseCommand(e.getMessage())) {
             e.setResult(PlayerChatEvent.ChatResult.denied());
-            ModulePlugin.fireCommand(player, e.getMessage());
+            ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
         }
     }
 
@@ -100,7 +101,7 @@ public final class ChatListener {
 
             if (ModulePlugin.parseCommand(e.getCommand())) {
                 e.setResult(CommandExecuteEvent.CommandResult.denied());
-                ModulePlugin.fireCommand(player, e.getCommand());
+                ModulePlugin.fireCommand(fromPlayer(player), e.getCommand(), e);
             }
         }
     }

@@ -17,11 +17,14 @@ package eu.locklogin.api.module;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
-import eu.locklogin.api.module.plugin.javamodule.console.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
+import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +35,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -161,6 +165,40 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
         } catch (Throwable ignored) {}
 
         return false;
+    }
+
+    /**
+     * Export the resource
+     *
+     * @param resource the resource to export
+     * @return if the resource could be exported
+     */
+    public final boolean export(final String resource, final Path destination) {
+        try {
+            FileCopy copy = new FileCopy(this, resource);
+            copy.copy(FileUtilities.getFixedFile(destination.toFile()));
+
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
+    }
+
+    /**
+     * Export the resource
+     *
+     * @param resource the resource to export
+     * @return if the resource could be exported
+     */
+    public final boolean export(final String resource, final File destination) {
+        try {
+            FileCopy copy = new FileCopy(this, resource);
+            copy.copy(FileUtilities.getFixedFile(destination));
+
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
     }
 
     /**
@@ -538,6 +576,39 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
         } else {
             return new File(getDataFolder(), name);
         }
+    }
+
+    /**
+     * Load a yaml file
+     *
+     * @param name the yaml file name
+     * @param path the yaml file path
+     * @return the yaml file manager
+     */
+    public final KarmaYamlManager loadYaml(final String name, final String... path) {
+        File file = getFile(name, path);
+        HashMap<Object, String> defaults = new HashMap<>();
+
+        if (file.exists()) {
+            try {
+                return new KarmaYamlManager(file);
+            } catch (Throwable ex) {
+                return new KarmaYamlManager(defaults);
+            }
+        } else {
+            return new KarmaYamlManager(defaults);
+        }
+    }
+
+    /**
+     * Load a karma file
+     *
+     * @param name the karma file name
+     * @param path the karma file path
+     * @return the karma file
+     */
+    public final KarmaFile loadFile(final String name, final String... path) {
+        return new KarmaFile(this, name, path);
     }
 
     /**

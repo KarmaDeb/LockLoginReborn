@@ -14,14 +14,16 @@ package eu.locklogin.api.module.plugin.client;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
+
 /**
  * ModulePlayer message sender, this
  * contains the module player who should see
  * the message, and the message
  */
-public class MessageSender {
+public final class MessageSender {
 
-    private final ModulePlayer target;
+    private final ModuleSender target;
     private final String message;
 
     /**
@@ -30,7 +32,7 @@ public class MessageSender {
      * @param tar the target
      * @param msg the message
      */
-    public MessageSender(final ModulePlayer tar, final String msg) {
+    public MessageSender(final ModuleSender tar, final String msg) {
         target = tar;
         message = msg;
     }
@@ -40,7 +42,7 @@ public class MessageSender {
      *
      * @return the message player
      */
-    public final ModulePlayer getPlayer() {
+    public ModuleSender getSender() {
         return target;
     }
 
@@ -49,7 +51,7 @@ public class MessageSender {
      *
      * @return the message
      */
-    public final String getMessage() {
+    public String getMessage() {
         return message;
     }
 }

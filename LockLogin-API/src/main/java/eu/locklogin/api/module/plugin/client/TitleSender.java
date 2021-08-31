@@ -14,12 +14,14 @@ package eu.locklogin.api.module.plugin.client;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+
 /**
  * ModulePlayer title sender, this
  * contains the module player who should see
  * the message, and the title
  */
-public class TitleSender {
+public final class TitleSender {
 
     private final ModulePlayer target;
     private final String title;
@@ -52,7 +54,7 @@ public class TitleSender {
      *
      * @return the message player
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return target;
     }
 
@@ -61,7 +63,7 @@ public class TitleSender {
      *
      * @return the title
      */
-    public final String getTitle() {
+    public String getTitle() {
         return title;
     }
 
@@ -70,7 +72,7 @@ public class TitleSender {
      *
      * @return the subtitle
      */
-    public final String getSubtitle() {
+    public String getSubtitle() {
         return subtitle;
     }
 
@@ -79,7 +81,7 @@ public class TitleSender {
      *
      * @return the time before showing the title
      */
-    public final int getFadeOut() {
+    public int getFadeOut() {
         return fadeOut;
     }
 
@@ -88,7 +90,7 @@ public class TitleSender {
      *
      * @return the time to show the title
      */
-    public final int getKeepIn() {
+    public int getKeepIn() {
         return keepIn;
     }
 
@@ -97,7 +99,7 @@ public class TitleSender {
      *
      * @return the time that will take to hide the title
      */
-    public final int getHideIn() {
+    public int getHideIn() {
         return hideIn;
     }
 }

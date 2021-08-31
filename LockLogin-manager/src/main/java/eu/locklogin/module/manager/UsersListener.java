@@ -4,7 +4,7 @@ import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.user.*;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 
 public class UsersListener implements EventListener {

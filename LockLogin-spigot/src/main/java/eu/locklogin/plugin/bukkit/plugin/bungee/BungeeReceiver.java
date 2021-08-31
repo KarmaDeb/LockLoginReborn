@@ -32,7 +32,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
+import static eu.locklogin.plugin.bukkit.LockLogin.logger;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeReceiver implements PluginMessageListener {

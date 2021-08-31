@@ -96,16 +96,6 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
-     * Get the servers check interval
-     *
-     * @return the servers check interval time
-     */
-    @Override
-    public int proxyLifeCheck() {
-        return cfg.getInt("ServerLifeCheck", 5);
-    }
-
-    /**
      * Get the proxy ID
      *
      * @return the proxy server ID

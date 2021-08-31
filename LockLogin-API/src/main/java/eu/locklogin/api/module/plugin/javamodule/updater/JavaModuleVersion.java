@@ -52,7 +52,7 @@ public final class JavaModuleVersion {
      *
      * @return the current module version
      */
-    public final String getVersion() {
+    public String getVersion() {
         return module.version();
     }
 
@@ -61,7 +61,7 @@ public final class JavaModuleVersion {
      *
      * @return the latest module version
      */
-    public final String getLatest() {
+    public String getLatest() {
         try {
             if (updaterEnabled().get()) {
                 String update_url = module.updateURL().replaceAll("\\s", "") + "latest.txt";
@@ -86,7 +86,7 @@ public final class JavaModuleVersion {
      *
      * @return the latest module version
      */
-    public final String getDownloadURL() {
+    public String getDownloadURL() {
         try {
             if (updaterEnabled().get()) {
                 String update_url = module.updateURL().replaceAll("\\s", "") + "latest.txt";
@@ -113,7 +113,7 @@ public final class JavaModuleVersion {
      * @return if the module has the updater
      * enabled
      */
-    public final Future<Boolean> updaterEnabled() {
+    public Future<Boolean> updaterEnabled() {
         CompletableFuture<Boolean> result = new CompletableFuture<>();
 
         if (last_try <= 0) {

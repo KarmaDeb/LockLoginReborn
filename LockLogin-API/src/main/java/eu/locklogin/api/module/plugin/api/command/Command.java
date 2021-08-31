@@ -14,6 +14,8 @@ package eu.locklogin.api.module.plugin.api.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
+
 /**
  * LockLogin command initializer
  */
@@ -55,7 +57,21 @@ public abstract class Command {
      * @param sender     the command sender
      * @param parameters the command parameters
      */
-    public abstract void processCommand(final String arg, final Object sender, final String... parameters);
+    public abstract void processCommand(final String arg, final ModuleSender sender, final String... parameters);
+
+    /**
+     * Process the command when
+     * its fired
+     *
+     * @param arg        the used argument
+     * @param sender     the command sender
+     * @param parameters the command parameters
+     *
+     * @deprecated It's better to use {@link Command#processCommand(String, ModuleSender, String...)}
+     * instead as this contains directly the command issuers
+     */
+    @Deprecated
+    public void processCommand(final String arg, final Object sender, final String... parameters) {}
 
     /**
      * Get the valid command arguments

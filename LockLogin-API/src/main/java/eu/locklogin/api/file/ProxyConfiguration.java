@@ -33,13 +33,6 @@ public abstract class ProxyConfiguration {
     public abstract String proxyKey();
 
     /**
-     * Get the servers check interval
-     *
-     * @return the servers check interval time
-     */
-    public abstract int proxyLifeCheck();
-
-    /**
      * Get the proxy ID
      *
      * @return the proxy server ID

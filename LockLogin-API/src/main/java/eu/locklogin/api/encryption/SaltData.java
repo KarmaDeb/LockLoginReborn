@@ -28,7 +28,7 @@ public final class SaltData {
      *
      * @param salt the password salt
      */
-    public final void assing(final String salt) {
+    public void assing(final String salt) {
         file.set(password, salt);
     }
 
@@ -37,7 +37,7 @@ public final class SaltData {
      *
      * @return the password salt
      */
-    public final String getSalt() {
+    public String getSalt() {
         return file.getString(password, "");
     }
 }

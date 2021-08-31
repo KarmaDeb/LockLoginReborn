@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.api.event.user;
  */
 
 import eu.locklogin.api.module.plugin.api.event.util.Event;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,7 +49,7 @@ public final class AccountCloseEvent extends Event {
      * @return the player who created
      * the account
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return modulePlayer;
     }
 
@@ -59,7 +59,7 @@ public final class AccountCloseEvent extends Event {
      * @return the issuer who requested the
      * account close
      */
-    public final String getIssuer() {
+    public String getIssuer() {
         return issuer;
     }
 
@@ -79,7 +79,7 @@ public final class AccountCloseEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
+    public boolean isHandled() {
         return handled;
     }
 
@@ -100,7 +100,7 @@ public final class AccountCloseEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }

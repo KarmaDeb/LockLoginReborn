@@ -16,6 +16,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.GoogleAuthFactory;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.LoginConfig;
@@ -98,16 +99,21 @@ public final class User {
                 plugin.getPluginLoader().disablePlugin(plugin);
                 throw new IllegalStateException("Cannot initialize user with a null player account manager");
             } else {
+                AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
+                database.assign(StringUtils.stripColor(player.getName()));
+                database.assign(StringUtils.stripColor(player.getDisplayName()));
+                database.assign(StringUtils.stripColor(player.getPlayerListName()));
+
                 //Try to fix the empty manager values that are
                 //required
                 if (manager.exists()) {
                     String name = manager.getName();
                     AccountID id = manager.getUUID();
 
-                    if (name.replaceAll("\\s", "").isEmpty())
+                    if (StringUtils.isNullOrEmpty(name))
                         manager.setName(StringUtils.stripColor(player.getDisplayName()));
 
-                    if (id.getId().replaceAll("\\s", "").isEmpty())
+                    if (StringUtils.isNullOrEmpty(id.getId()))
                         manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
                 }
 
@@ -277,8 +283,9 @@ public final class User {
         } else {
             //Make sure to avoid null messages
             if (parsed.length == 1) {
-                if (!parsed[0].replace(messages.prefix(), "").replaceAll("\\s", "").isEmpty())
+                if (!StringUtils.isNullOrEmpty(parsed[0].replace(messages.prefix(), ""))) {
                     player.sendMessage(StringUtils.toColor(parsed[0]));
+                }
             }
         }
     }

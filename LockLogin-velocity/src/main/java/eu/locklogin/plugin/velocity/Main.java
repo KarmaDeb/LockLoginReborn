@@ -27,7 +27,7 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -57,7 +57,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.38", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.40", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -146,32 +146,44 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 console.getData().setGravPrefix("&4Grave &e>> &7");
 
                 Consumer<MessageSender> onMessage = messageSender -> {
-                    Player player = messageSender.getPlayer().getPlayer();
+                    if (messageSender.getSender() instanceof ModulePlayer) {
+                        ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                        Player player = mp.getPlayer();
 
-                    if (player != null) {
-                        player.sendMessage(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                        if (player != null) {
+                            User user = new User(player);
+                            user.send(messageSender.getMessage());
+                        }
                     }
                 };
                 Consumer<ActionBarSender> onActionBar = messageSender -> {
                     Player player = messageSender.getPlayer().getPlayer();
 
                     if (player != null) {
-                        player.sendActionBar(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                        if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
+                            player.sendActionBar(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                        }
                     }
                 };
                 Consumer<TitleSender> onTitle = messageSender -> {
                     Player player = messageSender.getPlayer().getPlayer();
 
                     if (player != null) {
+                        if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                            return;
+
                         TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
                         title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
                     }
                 };
                 Consumer<MessageSender> onKick = messageSender -> {
-                    Player player = messageSender.getPlayer().getPlayer();
+                    if (messageSender.getSender() instanceof ModulePlayer) {
+                        ModulePlayer mp = (ModulePlayer) messageSender.getSender();
+                        Player player = mp.getPlayer();
 
-                    if (player != null) {
-                        player.disconnect(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                        if (player != null) {
+                            player.disconnect(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                        }
                     }
                 };
                 Consumer<ModulePlayer> onLogin = modulePlayer -> {
@@ -199,6 +211,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                             ModulePlugin.callEvent(event);
 
                             user.checkServer(0);
+                            user.send(event.getAuthMessage());
                         }
                     }
                 };
@@ -232,9 +245,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     Iterator<File> iterator = files.iterator();
                     do {
                         File file = iterator.next();
-                        if (file.isFile()) {
-                            LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
-                        }
+                        LockLogin.getLoader().loadModule(file, LoadRule.PREPLUGIN);
                     } while (iterator.hasNext());
                 }
 
@@ -244,6 +255,15 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 AllowedCommand.scan();
 
                 Manager.initialize();
+
+                if (moduleFiles != null) {
+                    List<File> files = Arrays.asList(moduleFiles);
+                    Iterator<File> iterator = files.iterator();
+                    do {
+                        File file = iterator.next();
+                        LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
+                    } while (iterator.hasNext());
+                }
             } else {
                 Main.server.getConsoleCommandSource().sendMessage(Component.text().content(StringUtils.toColor("&cTried to load LockLogin but is not even loaded by velocity!")).build());
             }

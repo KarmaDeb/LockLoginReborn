@@ -70,7 +70,7 @@ public final class HelpPage {
     /**
      * Scan for command data and fill pages
      */
-    public final void scan() {
+    public void scan() {
         removeUnloaded();
         Set<CommandData> tmpData = ModulePlugin.getCommandsData();
 
@@ -99,7 +99,7 @@ public final class HelpPage {
      *
      * @return the help pages
      */
-    public final Set<String> getHelp() {
+    public Set<String> getHelp() {
         return new LinkedHashSet<>(pages.getOrDefault(current_page, new LinkedHashSet<>()));
     }
 

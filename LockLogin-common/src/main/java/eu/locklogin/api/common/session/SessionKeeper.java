@@ -17,10 +17,13 @@ package eu.locklogin.api.common.session;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import org.jetbrains.annotations.NotNull;
 
+import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class SessionKeeper {
 
-    private final static Set<UUID> sessions = new HashSet<>();
+    private final static Map<UUID, InetAddress> sessions = new ConcurrentHashMap<>();
 
     private final ModulePlayer player;
 
@@ -55,7 +58,7 @@ public final class SessionKeeper {
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
 
                 if (config.enableSessions()) {
-                    sessions.add(player.getUUID());
+                    sessions.put(player.getUUID(), player.getAddress());
 
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
@@ -64,7 +67,7 @@ public final class SessionKeeper {
 
                         @Override
                         public void run() {
-                            if (back == 0 || !sessions.contains(id)) {
+                            if (back == 0 || !sessions.containsKey(id)) {
                                 sessions.remove(id);
                                 timer.cancel();
                             }
@@ -83,7 +86,18 @@ public final class SessionKeeper {
      * @return if the player has old session
      */
     public final boolean hasSession() {
-        return sessions.contains(player.getUUID());
+        return sessions.containsKey(player.getUUID());
+    }
+
+    /**
+     * Get if the player is the owner of the session
+     *
+     * @param address the session address
+     * @return if the player is owner of the session
+     */
+    public final boolean isOwner(final @NotNull InetAddress address) {
+        InetAddress ip = sessions.getOrDefault(player.getUUID(), null);
+        return ip != null && Arrays.equals(ip.getAddress(), address.getAddress());
     }
 
     /**

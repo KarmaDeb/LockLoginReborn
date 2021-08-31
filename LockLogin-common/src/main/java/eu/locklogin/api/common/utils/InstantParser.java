@@ -14,11 +14,11 @@ package eu.locklogin.api.common.utils;
 import eu.locklogin.api.file.plugin.PluginProperties;
 
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LockLogin instant parser
@@ -45,7 +45,7 @@ public final class InstantParser {
      *
      * @return the instant year
      */
-    public final int getYear() {
+    public int getYear() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -57,7 +57,7 @@ public final class InstantParser {
      *
      * @return the instant month
      */
-    public final String getMonth() {
+    public String getMonth() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -69,7 +69,7 @@ public final class InstantParser {
      *
      * @return the instant day
      */
-    public final int getDay() {
+    public int getDay() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -81,7 +81,7 @@ public final class InstantParser {
      *
      * @return the instant hour
      */
-    public final int getHour() {
+    public int getHour() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -93,7 +93,7 @@ public final class InstantParser {
      *
      * @return the instant minute
      */
-    public final int getMinute() {
+    public int getMinute() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -105,7 +105,7 @@ public final class InstantParser {
      *
      * @return the instant second
      */
-    public final int getSecond() {
+    public int getSecond() {
         ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
         Calendar calendar = GregorianCalendar.from(instantZone);
 
@@ -118,43 +118,44 @@ public final class InstantParser {
      *
      * @return the parsed instant to string
      */
-    public final String parse() {
+    public String parse() {
         return getYear() + " / " + getMonth() + " / " + getDay() + " " + getHour() + ":" + getMinute() + ":" + getSecond();
     }
 
     /**
      * Get the time ago from the specified instant
      *
-     * @param instance the instant
+     * @param difference the instant
      * @return the time ago
      */
-    public final String getDifference(final Instant instance) {
+    public String getDifference(final Instant difference) {
         PluginProperties properties = new PluginProperties();
 
-        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-        Calendar calendar = GregorianCalendar.from(instantZone);
+        ZonedDateTime instZT = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        ZonedDateTime diffZT = ZonedDateTime.ofInstant(difference, ZoneId.systemDefault());
 
-        ZonedDateTime instanceZone = ZonedDateTime.ofInstant(instance, ZoneId.systemDefault());
-        Calendar instanceCalendar = GregorianCalendar.from(instanceZone);
+        Period period = Period.between(instZT.toLocalDate(), diffZT.toLocalDate());
 
-        int creation_year = calendar.get(Calendar.YEAR);
-        int creation_month = calendar.get(Calendar.MONTH);
-        int creation_day = calendar.get(Calendar.DAY_OF_MONTH);
-        int creation_hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int creation_minute = calendar.get(Calendar.MINUTE);
-        int creation_second = calendar.get(Calendar.SECOND);
+        long diffInMillis = GregorianCalendar.from(diffZT).getTime().getTime() - GregorianCalendar.from(instZT).getTime().getTime();
 
-        int today_year = instanceCalendar.get(Calendar.YEAR);
-        int today_month = instanceCalendar.get(Calendar.MONTH);
-        int today_day = instanceCalendar.get(Calendar.DAY_OF_MONTH);
-        int today_hour = instanceCalendar.get(Calendar.HOUR_OF_DAY);
-        int today_minute = instanceCalendar.get(Calendar.MINUTE);
-        int today_second = instanceCalendar.get(Calendar.SECOND);
+        List<TimeUnit> units = new ArrayList<>(EnumSet.allOf(TimeUnit.class));
+        Collections.reverse(units);
 
-        return Math.abs(today_year - creation_year) + " " + properties.getProperty("year", "year(s)") + ", " +
-                Math.abs(today_month - creation_month) + " " + properties.getProperty("month", "month(s)") + ", " +
-                Math.abs(today_day - creation_day) + " " + properties.getProperty("day", "day(s)") + " " +
-        properties.getProperty("time_at", "at") + " " + Math.abs(today_hour - creation_hour) + ":" + Math.abs(today_minute - creation_minute) +
-                " " + Math.abs(today_second - creation_second);
+        Map<TimeUnit, Long> result = new LinkedHashMap<>();
+        long millisRest = diffInMillis;
+        for ( TimeUnit unit : units ) {
+
+            long diff = unit.convert(millisRest,TimeUnit.MILLISECONDS);
+            long diffInMillisForUnit = unit.toMillis(diff);
+            millisRest = millisRest - diffInMillisForUnit;
+
+            result.put(unit,diff);
+        }
+
+        return Math.abs(period.getYears()) + " " + properties.getProperty("year", "year(s)") + ", " +
+                Math.abs(period.getMonths()) + " " + properties.getProperty("month", "month(s)") + ", " +
+                Math.abs(result.get(TimeUnit.DAYS).intValue()) + " " + properties.getProperty("day", "day(s)") + ", " +
+                Math.abs(result.get(TimeUnit.HOURS).intValue()) + ":" + Math.abs(result.get(TimeUnit.MINUTES).intValue()) +
+                " " + Math.abs(result.get(TimeUnit.SECONDS).intValue());
     }
 }

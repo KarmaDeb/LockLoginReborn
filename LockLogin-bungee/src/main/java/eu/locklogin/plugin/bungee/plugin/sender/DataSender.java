@@ -29,7 +29,8 @@ import net.md_5.bungee.api.connection.Server;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.logger;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class DataSender {

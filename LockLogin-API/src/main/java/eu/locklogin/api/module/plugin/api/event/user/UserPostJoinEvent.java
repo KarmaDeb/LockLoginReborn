@@ -14,7 +14,7 @@ package eu.locklogin.api.module.plugin.api.event.user;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 
 /**
  * This event is fired when a player joins
@@ -44,7 +44,7 @@ public final class UserPostJoinEvent extends GenericJoinEvent {
      *
      * @return the event player
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return modulePlayer;
     }
 
@@ -54,7 +54,7 @@ public final class UserPostJoinEvent extends GenericJoinEvent {
      * @return the event instance
      */
     @Override
-    public final Object getEvent() {
+    public Object getEvent() {
         return eventObj;
     }
 }

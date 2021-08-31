@@ -42,7 +42,7 @@ public final class Argon2Util {
      * @param type the argon password type
      * @return the hashed password if it's not argon
      */
-    public final String hashPassword(final HashType type) {
+    public String hashPassword(final HashType type) {
         switch (type) {
             case ARGON2I:
                 Argon2 argon2i = Argon2.create().type(Argon2Type.Argon2i);
@@ -62,7 +62,7 @@ public final class Argon2Util {
      * @param type  the encryption type
      * @return if the password matches
      */
-    public final boolean checkPassword(final String token, final HashType type) {
+    public boolean checkPassword(final String token, final HashType type) {
         switch (type) {
             case ARGON2I:
             case ARGON2ID:

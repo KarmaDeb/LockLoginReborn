@@ -30,7 +30,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -45,6 +45,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class MessageListener {
@@ -87,8 +88,8 @@ public final class MessageListener {
                                         AccountManager manager = user.getManager();
 
                                         if (session.isValid()) {
-                                            if (!manager.hasPin() || CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() || pin.equalsIgnoreCase("error")) {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
+                                            if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() && !pin.equalsIgnoreCase("error")) {
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
 
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                         (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
@@ -97,15 +98,37 @@ public final class MessageListener {
 
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                                 session.setPinLogged(true);
+                                                if (manager.has2FA()) {
+                                                    session.set2FALogged(false);
+                                                } else {
+                                                    session.set2FALogged(true);
 
-                                                user.checkServer(0);
+                                                    DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                                                    DataSender.send(player, gauth);
+
+                                                    user.checkServer(0);
+                                                }
                                             } else {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("open").build());
+                                                if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
 
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), "", null);
-                                                ModulePlugin.callEvent(event);
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.ERROR, fromPlayer(player),
+                                                            (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
+                                                    ModulePlugin.callEvent(event);
 
-                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                    session.setPinLogged(true);
+                                                    if (manager.has2FA()) {
+                                                        session.set2FALogged(false);
+                                                    } else {
+                                                        session.set2FALogged(true);
+
+                                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                                                        DataSender.send(player, gauth);
+
+                                                        user.checkServer(0);
+                                                    }
+                                                }
                                             }
                                         }
                                     }

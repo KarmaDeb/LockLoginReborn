@@ -47,7 +47,7 @@ public class FileReloader {
                     if (Config.manager.reload()) {
                         Config.manager.checkValues();
 
-                        user.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                        user.send(messages.prefix() + properties.getProperty("reload_config", "&dReloaded config file"));
 
                         PluginConfiguration config = CurrentPlatform.getConfiguration();
                         CurrentPlatform.setConfigManager(new Config());
@@ -56,7 +56,7 @@ public class FileReloader {
                 }
                 if (player.hasPermission(PluginPermission.reload_messages())) {
                     if (CurrentPlatform.getMessages().reload()) {
-                        user.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+                        user.send(messages.prefix() + properties.getProperty("reload_messages", "&dReloaded messages file"));
                     }
                 }
 
@@ -73,13 +73,13 @@ public class FileReloader {
             if (Config.manager.reload()) {
                 Config.manager.checkValues();
 
-                console.send(messages.prefix() + properties.getProperty("reload_config", "&aReloaded config file"));
+                console.send(messages.prefix() + properties.getProperty("reload_config", "&dReloaded config file"));
 
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
                 CurrentPlatform.setPrefix(config.getModulePrefix());
             }
             if (CurrentPlatform.getMessages().reload()) {
-                console.send(messages.prefix() + properties.getProperty("reload_messages", "&aReloaded messages file"));
+                console.send(messages.prefix() + properties.getProperty("reload_messages", "&adReloaded messages file"));
             }
 
             console.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));

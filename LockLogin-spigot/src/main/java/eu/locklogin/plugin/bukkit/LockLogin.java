@@ -20,8 +20,9 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.version.VersionID;
 import eu.locklogin.api.file.plugin.PluginProperties;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
@@ -103,6 +104,7 @@ public interface LockLogin {
             address = player.getAddress().getAddress();
         }
 
+        CurrentPlatform.connectPlayer(uuid, player);
         return new ModulePlayer(name, uuid, session, manager, address);
     }
 

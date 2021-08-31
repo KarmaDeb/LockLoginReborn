@@ -87,6 +87,13 @@ Sessions:
 # - Can't be resolved by the server
 IpHealthCheck: true
 
+#Validate UUIDs by generating them
+#depending on the server context
+#(online mode or offline mode)
+#This prevents an attacker from joining
+#with an spoofed UUID
+UUIDValidator: true
+
 #Hide non logged players from
 #logged ones and logged players from
 #non logged.
@@ -126,9 +133,14 @@ Captcha:
 # "BCrypt"
 # "Argon2i"
 # "Argon2id"
+# "AuthMeSHA"
+#
+# Encrypt: will encrypt the
+# passwords in Base64
 Encryption:
   Passwords: "SHA512"
   Pins: "SHA512"
+  Encrypt: true
 
 #Block login/register attempt when the
 #client has an insecure password, while
@@ -235,6 +247,21 @@ CheckNames: true
 #soMeoNe and so on until the original
 #someone removes his account completely.
 EnforceNameCheck: false
+
+#Define the name check mode
+#
+# 1:
+#   - The name contains letters and numbers
+#   - The name is over 3 and under 16 characters
+#   - Only _ as special character
+#   - UTF-8 characters allowed
+#
+# 2:
+#   - The name contains letters and numbers
+#   - The name is over 3 and under 16 characters
+#   - Only _ as special character
+#   - UTF-8 characters not allowed ( only ASCII )
+NameCheckProtocol: 2
 
 #Plugin language
 #

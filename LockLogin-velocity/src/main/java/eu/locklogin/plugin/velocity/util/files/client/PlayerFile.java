@@ -322,6 +322,23 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
+     * Import the values from the specified account manager
+     *
+     * @param account the account
+     */
+    @Override
+    protected void importFrom(final AccountManager account) {
+        if (exists()) {
+            manager.set("PLAYER", account.getName());
+            manager.set("UUID", account.getUUID().getId());
+            manager.set("PASSWORD", account.getPassword());
+            manager.set("TOKEN", account.getGAuth());
+            manager.set("PIN", account.getPin());
+            manager.set("2FA", account.has2FA());
+        }
+    }
+
+    /**
      * Get the player name
      *
      * @return the player name
@@ -385,7 +402,7 @@ public final class PlayerFile extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
+        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -398,7 +415,7 @@ public final class PlayerFile extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PASSWORD", util.hash(config.passwordEncryption(), true));
+        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -468,7 +485,7 @@ public final class PlayerFile extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PIN", util.hash(config.pinEncryption(), true));
+        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -481,7 +498,7 @@ public final class PlayerFile extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PIN", util.hash(config.pinEncryption(), true));
+        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
     }
 
     /**

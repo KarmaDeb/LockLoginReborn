@@ -14,7 +14,9 @@ package eu.locklogin.api.file.plugin;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +24,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
 /**
@@ -37,7 +38,7 @@ public final class PluginProperties {
      * @param def the default value
      * @return the messages properties
      */
-    public final String getProperty(final String name, final String def) {
+    public String getProperty(final String name, final String def) {
         File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
         propFile = FileUtilities.getFixedFile(propFile);
         try {
@@ -73,96 +74,51 @@ public final class PluginProperties {
     /**
      * Get file properties version and in-file properties
      * version to update if the version does not match
-     *
-     * @throws Throwable as part of properties#load(InputStream) and new FileInputStream(File)
      */
-    protected final void updatePropsVersion() throws Throwable {
-        String def_comment = "#HEY! IF YOU ARE MODIFYING THIS FILE FROM THE INTERNAL\n" +
-                "#LOCKLOGIN JAR, STOP NOW, IT SHOULD BE MODIFIED FROM\n" +
-                "#plugins/LockLogin/plugin_messages.properties.\n" +
-                "#   ---------------------------------------\n" +
-                "#        IMPORTANT ADVICE\n" +
-                "#\n" +
-                "#   PLEASE DO NOT MODIFY THIS FILE\n" +
-                "#   UNLESS YOU KNOW EXACTLY WHAT YOU\n" +
-                "#   ARE DOING. OTHERWISE YOU COULD CAUSE\n" +
-                "#   PLUGIN MALFUNCTIONS OR BAD MESSAGE RESPONSES\n" +
-                "#\n" +
-                "#   PLEASE DO NOT MODIFY properties_lang_version VALUE";
+    private void updatePropsVersion() {
+        try {
+            String comment = "HEY! IF YOU ARE MODIFYING THIS FILE FROM THE INTERNAL\n" +
+                    "#LOCKLOGIN JAR, STOP NOW, IT SHOULD BE MODIFIED FROM\n" +
+                    "#plugins/LockLogin/plugin_messages.properties.\n" +
+                    "#   ---------------------------------------\n" +
+                    "#        IMPORTANT ADVICE\n" +
+                    "#\n" +
+                    "#   PLEASE DO NOT MODIFY THIS FILE\n" +
+                    "#   UNLESS YOU KNOW EXACTLY WHAT YOU\n" +
+                    "#   ARE DOING. OTHERWISE YOU COULD CAUSE\n" +
+                    "#   PLUGIN MALFUNCTIONS OR BAD MESSAGE RESPONSES\n" +
+                    "#\n" +
+                    "#   PLEASE DO NOT MODIFY properties_lang_version VALUE";
 
-        InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
-        File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "lang", "plugin_messages.properties");
-        propFile = FileUtilities.getFixedFile(propFile);
-        if (in != null && propFile.exists()) {
-            InputStream inFile = new FileInputStream(propFile);
+            File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
+            propFile = FileUtilities.getFixedFile(propFile);
 
-            Properties inProps = new Properties();
-            Properties outProps = new Properties();
+            Properties inProperties = new Properties();
+            Properties outProperties = new Properties();
 
-            inProps.load(in);
-            outProps.load(inFile);
+            inProperties.load(CurrentPlatform.getMain().getResourceAsStream("/lang/plugin_messages.properties"));
+            outProperties.load(new FileInputStream(propFile));
 
-            String inVersion = inProps.getProperty("properties_lang_version", "1.0.0");
-            String outVersion = outProps.getProperty("properties_lang_version", "1.0.0");
-            int inSize = textToInt(inVersion);
-            int outSize = textToInt(outVersion);
+            String outVersion = outProperties.getProperty("properties_lang_version", "1.0.0");
+            String inVersion = inProperties.getProperty("properties_lang_version", "1.0.1");
 
-            if (inSize != outSize) {
-                if (inSize > outSize) {
-                    File oldProp = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "lang" + File.separator + "old" + File.separator + outVersion, "plugin_messages.properties");
-                    oldProp = FileUtilities.getFixedFile(oldProp);
-
-                    Files.move(propFile.toPath(), oldProp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    Files.createFile(propFile.toPath());
-
-                    InputStream inOldFile = new FileInputStream(oldProp);
-
-                    //Update out props dest
-                    outProps.load(inOldFile);
-
-                    Properties newProps = new Properties();
-                    newProps.load(inFile);
-                    for (Object key : inProps.keySet()) {
-                        if (!key.toString().equalsIgnoreCase("properties_lang_version")) {
-                            String oldValue = outProps.getProperty(key.toString(), null);
-                            if (oldValue != null) {
-                                newProps.setProperty(key.toString(), oldValue);
-                            } else {
-                                newProps.setProperty(key.toString(), inProps.getProperty(key.toString(), "INVALID VALUE"));
-                            }
-                        } else {
-                            newProps.setProperty("properties_lang_version", inProps.getProperty("properties_lang_version", "1.0.0"));
-                        }
+            if (StringUtils.compareTo(inVersion, outVersion) > 0) {
+                for (Object inKey : inProperties.keySet()) {
+                    if (outProperties.getOrDefault(inKey, null) == null) {
+                        outProperties.put(inKey, inProperties.get(inKey));
                     }
-
-                    newProps.store(Files.newBufferedWriter(propFile.toPath(), StandardCharsets.UTF_8, StandardOpenOption.CREATE), def_comment);
-
-                    inOldFile.close();
                 }
 
-                inFile.close();
+                for (Object outKey : outProperties.keySet()) {
+                    if (inProperties.getOrDefault(outKey, null) == null) {
+                        outProperties.remove(outKey);
+                    }
+                }
             }
 
-            in.close();
+            outProperties.store(Files.newBufferedWriter(propFile.toPath(), StandardCharsets.UTF_8), comment);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         }
-    }
-
-    /**
-     * Get only the numbers of a string
-     *
-     * @param text the string
-     * @return the string numbers
-     */
-    private int textToInt(final String text) {
-        StringBuilder intBuilder = new StringBuilder();
-        intBuilder.append(0);
-        for (int i = 0; i < text.length(); i++) {
-            char character = text.charAt(i);
-
-            if (Character.isDigit(character))
-                intBuilder.append(character);
-        }
-
-        return Integer.parseInt(intBuilder.toString());
     }
 }

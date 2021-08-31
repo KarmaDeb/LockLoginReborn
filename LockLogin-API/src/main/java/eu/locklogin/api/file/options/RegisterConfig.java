@@ -17,7 +17,7 @@ package eu.locklogin.api.file.options;
 /**
  * Register configuration
  */
-public class RegisterConfig {
+public final class RegisterConfig {
 
     private final boolean boss;
     private final boolean blind;
@@ -51,7 +51,7 @@ public class RegisterConfig {
      *
      * @return if the player should see a boss bar
      */
-    public final boolean hasBossBar() {
+    public boolean hasBossBar() {
         return boss;
     }
 
@@ -61,7 +61,7 @@ public class RegisterConfig {
      *
      * @return if the player should receive blind effect
      */
-    public final boolean blindEffect() {
+    public boolean blindEffect() {
         return blind;
     }
 
@@ -72,7 +72,7 @@ public class RegisterConfig {
      * @return if the player should receive
      * nausea effect
      */
-    public final boolean nauseaEffect() {
+    public boolean nauseaEffect() {
         return nausea;
     }
 
@@ -81,7 +81,7 @@ public class RegisterConfig {
      *
      * @return the register time out
      */
-    public final int timeOut() {
+    public int timeOut() {
         return timeout;
     }
 
@@ -92,7 +92,7 @@ public class RegisterConfig {
      * @return the maximum amount of accounts
      * that can register per IP
      */
-    public final int maxAccounts() {
+    public int maxAccounts() {
         return max;
     }
 
@@ -101,7 +101,7 @@ public class RegisterConfig {
      *
      * @return the login message interval
      */
-    public final int getMessageInterval() {
+    public int getMessageInterval() {
         return interval;
     }
 }

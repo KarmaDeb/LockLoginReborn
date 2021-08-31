@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.api.event.user;
  */
 
 import eu.locklogin.api.module.plugin.api.event.util.Event;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,8 +59,8 @@ public final class UserUnHookEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -80,7 +80,7 @@ public final class UserUnHookEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }
@@ -90,7 +90,7 @@ public final class UserUnHookEvent extends Event {
      *
      * @return the player
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return modulePlayer;
     }
 
@@ -100,7 +100,7 @@ public final class UserUnHookEvent extends Event {
      * @return the event instance
      */
     @Override
-    public final @Nullable Object getEvent() {
+    public @Nullable Object getEvent() {
         return eventObj;
     }
 }

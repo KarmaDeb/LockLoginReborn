@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: French (Official)
 #Editor: KarmaDev
-#Last edited: 23 - April - 2021 01:50
+#Last edited: 29 - August - 2021 00:40
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -191,6 +191,11 @@ SimilarName:
   - "&cVotre nom ressemble à un"
   - "&cdéjà enregistré un"
   - "&7{player}"
+MultipleNames:
+  - "&5Nous avons trouvé plus d'un UUID attribué à"
+  - "&d{player}&5, vous ne pouvez donc pas l'utiliser pour récupérer des données."
+  - ""
+  - "&5Mais tu peux essayer avec ses autres noms:&d {players}"
 UUIDFetchError:
   - "{ServerName}"
   - ""

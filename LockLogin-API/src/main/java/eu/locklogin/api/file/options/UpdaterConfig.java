@@ -46,7 +46,7 @@ public final class UpdaterConfig {
      *
      * @return the update channel
      */
-    public final UpdateChannel getChannel() {
+    public UpdateChannel getChannel() {
         return channel;
     }
 
@@ -55,7 +55,7 @@ public final class UpdaterConfig {
      *
      * @return if the update checker is enabled
      */
-    public final boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
@@ -64,7 +64,7 @@ public final class UpdaterConfig {
      *
      * @return the update check interval
      */
-    public final int getInterval() {
+    public int getInterval() {
         return (int) TimeUnit.MINUTES.toSeconds(time);
     }
 }

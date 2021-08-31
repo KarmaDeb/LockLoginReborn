@@ -16,7 +16,7 @@ package eu.locklogin.api.module.plugin.api.event.user;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 
 /**
  * This event is fired once per-player, and it's fired when
@@ -49,7 +49,7 @@ public final class SessionInitializationEvent extends Event {
      *
      * @return the event player
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return modulePlayer;
     }
 
@@ -58,7 +58,7 @@ public final class SessionInitializationEvent extends Event {
      *
      * @return the player session
      */
-    public final ClientSession getSession() {
+    public ClientSession getSession() {
         return session;
     }
 
@@ -78,8 +78,8 @@ public final class SessionInitializationEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public final boolean isHandled() {
-        return handled;
+    public boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -99,7 +99,7 @@ public final class SessionInitializationEvent extends Event {
      * @param status the handle status
      * @param reason the handle reason
      */
-    public final void setHandled(final boolean status, final String reason) {
+    public void setHandled(final boolean status, final String reason) {
         handled = status;
         handleReason = reason;
     }

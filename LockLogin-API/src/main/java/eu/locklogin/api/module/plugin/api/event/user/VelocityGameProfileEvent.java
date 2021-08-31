@@ -6,9 +6,12 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
  * This event is fired when velocity requests a
  * game profile
  */
-public class VelocityGameProfileEvent extends Event {
+public final class VelocityGameProfileEvent extends Event {
 
     private final Object eventObj;
+
+    private boolean handled = false;
+    private String handleReason = "";
 
     /**
      * Initialize the velocity game profile event
@@ -35,8 +38,8 @@ public class VelocityGameProfileEvent extends Event {
      * @return if the event has been handled
      */
     @Override
-    public boolean isHandled() {
-        return false;
+    public final boolean isHandled() {
+        return isHandleable() && handled;
     }
 
     /**
@@ -47,7 +50,7 @@ public class VelocityGameProfileEvent extends Event {
      */
     @Override
     public String getHandleReason() {
-        return "";
+        return handleReason;
     }
 
     /**
@@ -58,6 +61,8 @@ public class VelocityGameProfileEvent extends Event {
      */
     @Override
     public void setHandled(boolean status, String reason) {
+        handled = status;
+        handleReason = reason;
     }
 
     /**

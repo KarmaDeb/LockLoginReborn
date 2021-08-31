@@ -49,6 +49,10 @@ public final class ProxyCheck {
      * to retrieve all the proxies
      */
     public static void scan() {
+        if (Name.notAscii('c')) {
+
+        }
+
         if (proxies.isEmpty()) {
             try {
                 InputStream input = ProxyCheck.class.getResourceAsStream("/security/proxies.txt");

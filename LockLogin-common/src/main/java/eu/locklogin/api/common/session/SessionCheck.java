@@ -4,7 +4,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.module.plugin.client.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.BossProvider;
@@ -81,42 +81,50 @@ public final class SessionCheck<T> implements Runnable {
 
             int time = tmp_time;
             AccountManager manager = player.getAccount();
+            SessionKeeper keeper = new SessionKeeper(player);
             SimpleScheduler timer = new SourceSecondsTimer(source, time, false).multiThreading(false);
             timer.secondChangeAction((timer_time) -> {
                 if (!cancel_queue.contains(player.getUUID())) {
                     ClientSession session = player.getSession();
                     if (!session.isLogged()) {
-                        if (boss != null) {
-                            if (timer_time == ((int) Math.round(((double) time / 2)))) {
-                                boss.color(BossColor.YELLOW);
-                                BAR_COLOR = "&e";
-                            }
 
-                            if (timer_time == ((int) Math.round(((double) time / 3)))) {
-                                boss.color(BossColor.RED);
-                                BAR_COLOR = "&c";
+                        if (keeper.hasSession() && keeper.isOwner(player.getAddress())) {
+                            player.requestLogin();
+                        } else {
+                            if (boss != null) {
+                                if (timer_time == ((int) Math.round(((double) time / 2)))) {
+                                    boss.color(BossColor.YELLOW);
+                                    BAR_COLOR = "&e";
+                                }
+
+                                if (timer_time == ((int) Math.round(((double) time / 3)))) {
+                                    boss.color(BossColor.RED);
+                                    BAR_COLOR = "&c";
+                                }
+
+                                if (manager.isRegistered()) {
+                                    boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                } else {
+                                    boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                                }
                             }
 
                             if (manager.isRegistered()) {
-                                boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
+                                    player.sendTitle(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time), 0, 5, 0);
                             } else {
-                                boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                                if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
+                                    player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                             }
-                        }
-
-                        if (manager.isRegistered()) {
-                            if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
-                                player.sendTitle(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time), 0, 5, 0);
-                        } else {
-                            if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
-                                player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                         }
                     } else {
                         timer.cancel();
+                        keeper.destroy();
                     }
                 } else {
                     timer.cancel();
                     cancel_queue.remove(player.getUUID());
+                    keeper.destroy();
                 }
             }).endAction(() -> {
                 if (onEnd != null)
@@ -131,6 +139,7 @@ public final class SessionCheck<T> implements Runnable {
                     player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
 
                 under_check.remove(player.getUUID());
+                keeper.destroy();
             }).cancelAction((cancelTime) -> {
                 if (onEnd != null)
                     onEnd.run();
@@ -139,6 +148,7 @@ public final class SessionCheck<T> implements Runnable {
                     boss.cancel();
 
                 under_check.remove(player.getUUID());
+                keeper.destroy();
             });
 
             timer.start();
@@ -160,7 +170,7 @@ public final class SessionCheck<T> implements Runnable {
             time = config.loginOptions().getMessageInterval();
 
         SimpleScheduler timer = new SourceSecondsTimer(source, time, true);
-        timer.endAction(() -> {
+        timer.restartAction(() -> {
             ClientSession session = player.getSession();
             if (!session.isLogged()) {
                 if (manager.isRegistered())

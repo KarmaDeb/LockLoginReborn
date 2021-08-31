@@ -16,10 +16,9 @@ package eu.locklogin.module.manager.bungee.command;
 
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.plugin.bungee.util.player.User;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-
-import static eu.locklogin.module.manager.LockLoginManager.module;
 
 public final class ModuleHelpCommand extends Command {
 
@@ -39,10 +38,10 @@ public final class ModuleHelpCommand extends Command {
      * @param parameters the command parameters
      */
     @Override
-    public void processCommand(final String arg, final Object sender, final String... parameters) {
-        if (sender instanceof ProxiedPlayer) {
-            ProxiedPlayer player = (ProxiedPlayer) sender;
-            User user = new User(player);
+    public void processCommand(final String arg, final ModuleSender sender, final String... parameters) {
+        if (sender instanceof ModulePlayer) {
+            ModulePlayer player = (ModulePlayer) sender;
+            User user = new User(player.getPlayer());
 
             user.send("&5&m--------------&r&e LockLogin module commands &5&m--------------");
 
@@ -71,13 +70,13 @@ public final class ModuleHelpCommand extends Command {
                 }
             }
         } else {
-            module.getConsole().sendMessage("&5&m--------------&r&e LockLogin module commands &5&m--------------");
+            sender.sendMessage("&5&m--------------&r&e LockLogin module commands &5&m--------------");
 
             if (parameters.length == 0) {
                 HelpPage page = new HelpPage(0);
                 page.scan();
 
-                for (String str : page.getHelp()) module.getConsole().sendMessage(str);
+                for (String str : page.getHelp()) sender.sendMessage(str);
             } else {
                 try {
                     int pageNumber = Integer.parseInt(parameters[0]);
@@ -89,12 +88,12 @@ public final class ModuleHelpCommand extends Command {
                     HelpPage page = new HelpPage(pageNumber);
                     page.scan();
 
-                    for (String str : page.getHelp()) module.getConsole().sendMessage(str);
+                    for (String str : page.getHelp()) sender.sendMessage(str);
                 } catch (Throwable ex) {
                     HelpPage page = new HelpPage(0);
                     page.scan();
 
-                    for (String str : page.getHelp()) module.getConsole().sendMessage(str);
+                    for (String str : page.getHelp()) sender.sendMessage(str);
                 }
             }
         }

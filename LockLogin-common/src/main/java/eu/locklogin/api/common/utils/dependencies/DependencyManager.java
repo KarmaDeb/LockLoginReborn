@@ -25,8 +25,6 @@
 
 package eu.locklogin.api.common.utils.dependencies;
 
-import eu.locklogin.api.common.utils.dependencies.Dependency;
-import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 
 import java.nio.file.Path;

@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: English (Official)
 #Editor: KarmaDev
-#Last edited: 22 - April - 2021 01:30
+#Last edited: 29 - August - 2021 00:40
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -62,9 +62,9 @@ RegisterSubtitle: "&b{time} &7to register"
 MaxRegisters:
   - "{ServerName}"
   - ""
-  - "&cYou've reached max registered accounts in the server"
+  - "&5You've reached max registered accounts in the server"
   - ""
-  - "&cIf you think this is an error, please, report it on"
+  - "&5If you think this is an error, please, report it on"
   - "&7https://discordexample.gg"
 
 #Session messages - Login
@@ -139,14 +139,14 @@ AccountRemoved: "&5&oYour account have been deleted"
 ForcedAccountRemoval:
   - "{ServerName}"
   - ""
-  - "&cYour account has been removed by"
-  - "&can administrator ( &7{player}&c )"
-  - "&cand has been blocked temporally"
-  - "&cto avoid data lost, until a staff member"
-  - "&cunlocks it"
+  - "&5Your account has been removed by"
+  - "&5an administrator ( &7{player}&5 )"
+  - "&5and has been blocked temporally"
+  - "&5to avoid data lost, until a staff member"
+  - "&5unlocks it"
   - ""
-  - "&cIf you didn't call this action, please"
-  - "&creport this action at: &7https://discordexample.gg"
+  - "&5If you didn't call this action, please"
+  - "&5report this action at: &7https://discordexample.gg"
 ForcedAccountRemovalAdmin: "&dAccount of {player} removed, don't forget to run /account unlock {player}!"
 
 #Spawn utilities ( includes take back )
@@ -172,33 +172,38 @@ PlayerAlreadyIn: "&5&o{player} is already in {alias}!"
 IpBlocked:
   - "{ServerName}"
   - ""
-  - "&cLockLogin systems have detected an"
-  - "&cunusual traffic on your IP and has been blocked"
+  - "&5LockLogin systems have detected an"
+  - "&5unusual traffic on your IP and has been blocked"
   - "&f{time} {time_format}"
 AntiBot:
   - "&f{ServerName}"
   - ""
-  - "&cAdd this server to your server list"
-  - "&cIf you already have it, reload server list"
+  - "&5Add this server to your server list"
+  - "&5If you already have it, reload server list"
 IllegalName:
   - "{ServerName}"
   - ""
-  - "&cYour name can't contain:"
+  - "&5Your name can't contain:"
   - "{chars}"
 SimilarName:
   - "{ServerName}"
   - ""
-  - "&cYour name is similar to an"
-  - "&calready registered one"
+  - "&5Your name is similar to an"
+  - "&5already registered one"
   - "&7{player}"
+MultipleNames:
+  - "&5We found more than one UUID assigned to"
+  - "&d{player}&5, so you can't use it to fetch data."
+  - ""
+  - "&5But you can try with his other names:&d {players}"
 UUIDFetchError:
   - "{ServerName}"
   - ""
-  - "&cSomething went wrong while fetching your UUID"
-  - "&cwith client name..."
+  - "&5Something went wrong while fetching your UUID"
+  - "&5with client name..."
 IpProxyError:
   - "{ServerName}"
   - ""
-  - "&cYour IP address seems a bit suspicious"
-  - "&cIf you think this is an error, please contact"
-  - "&cthe staff at: &7https://discordexample.gg"
+  - "&5Your IP address seems a bit suspicious"
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"

@@ -133,6 +133,17 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin should validate UUIDs
+     *
+     * @return if the plugin should validate
+     * UUIDs
+     */
+    @Override
+    public boolean uuidValidator() {
+        return cfg.getBoolean("UUIDValidator", true);
+    }
+
+    /**
      * Get the session life time
      *
      * @return the session life time
@@ -186,6 +197,9 @@ public final class Config extends PluginConfiguration {
                 return HashType.ARGON2I;
             case "argon2id":
                 return HashType.ARGON2ID;
+            case "authme":
+            case "authmesha":
+                return HashType.AUTHME_SHA;
             case "512":
             case "sha512":
             default:
@@ -196,6 +210,7 @@ public final class Config extends PluginConfiguration {
     @Override
     public final HashType pinEncryption() {
         String value = cfg.getString("Encryption.Pins", "SHA512");
+        assert value != null;
 
         switch (value.toLowerCase()) {
             case "256":
@@ -207,11 +222,25 @@ public final class Config extends PluginConfiguration {
                 return HashType.ARGON2I;
             case "argon2id":
                 return HashType.ARGON2ID;
+            case "authme":
+            case "authmesha":
+                return HashType.AUTHME_SHA;
             case "512":
             case "sha512":
             default:
                 return HashType.SHA512;
         }
+    }
+
+    /**
+     * Get if the plugin should encrypt the passwords
+     * in Base64
+     *
+     * @return if the plugin should encrypt in Base64
+     */
+    @Override
+    public boolean encryptBase64() {
+        return cfg.getBoolean("Encryption.Encrypt", true);
     }
 
     /**
@@ -307,6 +336,16 @@ public final class Config extends PluginConfiguration {
     @Override
     public boolean enforceNameCheck() {
         return cfg.getBoolean("EnforceNameCheck", false);
+    }
+
+    /**
+     * Get the name check protocol
+     *
+     * @return the name check protocol
+     */
+    @Override
+    public int nameCheckProtocol() {
+        return cfg.getInt("NameCheckProtocol", 2);
     }
 
     @Override
@@ -439,7 +478,7 @@ public final class Config extends PluginConfiguration {
 
             String update_channel = cfg.getString("Updater.Channel", "RELEASE");
 
-            String account_system = cfg.getString("AccountSys", "File");
+            int nameCheckProtocol = cfg.getInt("NameCheckProtocol", 2);
 
             String module_prefix = cfg.getString("ModulePrefix", "$");
 
@@ -493,11 +532,15 @@ public final class Config extends PluginConfiguration {
             }
 
             switch (password_encryption.toLowerCase()) {
-                case "sha512":
+                case "256":
                 case "sha256":
                 case "bcrypt":
                 case "argon2i":
                 case "argon2id":
+                case "authme":
+                case "authmesha":
+                case "512":
+                case "sha512":
                     break;
                 default:
                     password_encryption = "SHA512";
@@ -507,11 +550,15 @@ public final class Config extends PluginConfiguration {
             }
 
             switch (pin_encryption.toLowerCase()) {
-                case "sha512":
+                case "256":
                 case "sha256":
                 case "bcrypt":
                 case "argon2i":
                 case "argon2id":
+                case "authme":
+                case "authmesha":
+                case "512":
+                case "sha512":
                     break;
                 default:
                     pin_encryption = "SHA512";
@@ -534,16 +581,11 @@ public final class Config extends PluginConfiguration {
                     changes = true;
             }
 
-            switch (account_system.toLowerCase()) {
-                case "file":
-                case "mysql":
-                case "sql":
-                    break;
-                default:
-                    account_system = "File";
-                    cfg.set("AccountSys", account_system);
+            if (nameCheckProtocol != 1 && nameCheckProtocol != 2) {
+                nameCheckProtocol = 2;
 
-                    changes = true;
+                cfg.set("NameCheckProtocol", nameCheckProtocol);
+                changes = true;
             }
 
             if (module_prefix.replaceAll("\\s", "").isEmpty()) {

@@ -40,6 +40,7 @@ public final class CurrentPlatform {
     private static String karma_api = "1.2.4";
 
     private static Class<? extends AccountManager> manager;
+    private static Class<? extends AccountManager> default_manager;
     private static Class<? extends AccountManager> last_manager;
 
     private static Class<? extends ClientSession> sessionManager;
@@ -63,6 +64,9 @@ public final class CurrentPlatform {
      * @param clazz the account manager class
      */
     public static void setAccountsManager(final Class<? extends AccountManager> clazz) {
+        if (default_manager == null)
+            default_manager = manager;
+
         last_manager = manager;
         manager = clazz;
     }
@@ -242,6 +246,30 @@ public final class CurrentPlatform {
         } catch (Throwable ex) {
             try {
                 Constructor<? extends AccountManager> constructor = manager.getConstructor(constructorParams);
+                constructor.setAccessible(true);
+                return constructor.newInstance(parameters);
+            } catch (Throwable exc) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get the default account manager
+     *
+     * @param constructorParams the constructor parameters types
+     * @param parameters        the constructor parameter objects
+     * @return the current account manager
+     */
+    @Nullable
+    public static AccountManager getDefaultAccountManager(final Class<?>[] constructorParams, final Object... parameters) {
+        try {
+            Constructor<? extends AccountManager> constructor = default_manager.getDeclaredConstructor(constructorParams);
+            constructor.setAccessible(true);
+            return constructor.newInstance(parameters);
+        } catch (Throwable ex) {
+            try {
+                Constructor<? extends AccountManager> constructor = default_manager.getConstructor(constructorParams);
                 constructor.setAccessible(true);
                 return constructor.newInstance(parameters);
             } catch (Throwable exc) {

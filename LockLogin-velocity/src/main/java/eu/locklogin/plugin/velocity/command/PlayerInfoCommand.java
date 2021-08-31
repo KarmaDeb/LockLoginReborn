@@ -23,6 +23,8 @@ import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
+import eu.locklogin.api.common.utils.other.name.NameSearchResult;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -196,48 +198,54 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                         break;
                                 }
                             } else {
-                                offline = new OfflineClient(target);
-                                manager = offline.getAccount();
+                                NameSearchResult nsr = AccountNameDatabase.find(target);
 
-                                if (manager != null) {
-                                    AccountID id = manager.getUUID();
-                                    LockedAccount account = new LockedAccount(id);
-                                    LockedData data = account.getData();
-                                    User tarUser = null;
+                                if (nsr.singleResult()) {
+                                    offline = new OfflineClient(target);
+                                    manager = offline.getAccount();
 
-                                    Optional<Player> tar = server.getPlayer(UUID.fromString(id.getId()));
+                                    if (manager != null) {
+                                        AccountID id = manager.getUUID();
+                                        LockedAccount account = new LockedAccount(id);
+                                        LockedData data = account.getData();
+                                        User tarUser = null;
 
-                                    if (tar.isPresent())
-                                        tarUser = new User(tar.get());
+                                        Optional<Player> tar = server.getPlayer(UUID.fromString(id.getId()));
 
-                                    user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
-                                    user.send("&r");
+                                        if (tar.isPresent())
+                                            tarUser = new User(tar.get());
 
-                                    List<String> parsed = parseMessages(data.isLocked());
+                                        user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
+                                        user.send("&r");
 
-                                    InstantParser creation_parser = new InstantParser(manager.getCreationTime());
-                                    String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
+                                        List<String> parsed = parseMessages(data.isLocked());
 
-                                    int msg = -1;
-                                    user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
-                                    if (data.isLocked()) {
-                                        Instant date = data.getLockDate();
-                                        InstantParser parser = new InstantParser(date);
-                                        String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
+                                        InstantParser creation_parser = new InstantParser(manager.getCreationTime());
+                                        String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
 
-                                        user.send(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), dateString));
+                                        int msg = -1;
+                                        user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
+                                        if (data.isLocked()) {
+                                            Instant date = data.getLockDate();
+                                            InstantParser parser = new InstantParser(date);
+                                            String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
+
+                                            user.send(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), dateString));
+                                        }
+                                        user.send(StringUtils.formatString(parsed.get(++msg), manager.getName()));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), manager.getUUID().getId()));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), (!manager.getPassword().replaceAll("\\s", "").isEmpty())));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), (manager.hasPin())));
+                                        user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
+                                    } else {
+                                        user.send(messages.prefix() + messages.neverPlayer(target));
                                     }
-                                    user.send(StringUtils.formatString(parsed.get(++msg), manager.getName()));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), manager.getUUID().getId()));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), (!manager.getPassword().replaceAll("\\s", "").isEmpty())));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), (manager.hasPin())));
-                                    user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
                                 } else {
-                                    user.send(messages.prefix() + messages.neverPlayer(target));
+                                    user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                 }
                             }
                             break;

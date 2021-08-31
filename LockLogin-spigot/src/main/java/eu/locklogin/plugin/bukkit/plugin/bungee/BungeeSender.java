@@ -23,7 +23,7 @@ import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeSender {

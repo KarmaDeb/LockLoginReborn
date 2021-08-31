@@ -14,12 +14,14 @@ package eu.locklogin.api.module.plugin.client;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+
 /**
  * ModulePlayer action bar sender, this
  * contains the module player who should see
  * the message, and the message
  */
-public class ActionBarSender {
+public final class ActionBarSender {
 
     private final ModulePlayer target;
     private final String message;
@@ -40,7 +42,7 @@ public class ActionBarSender {
      *
      * @return the message player
      */
-    public final ModulePlayer getPlayer() {
+    public ModulePlayer getPlayer() {
         return target;
     }
 
@@ -49,7 +51,7 @@ public class ActionBarSender {
      *
      * @return the message
      */
-    public final String getMessage() {
+    public String getMessage() {
         return message;
     }
 }

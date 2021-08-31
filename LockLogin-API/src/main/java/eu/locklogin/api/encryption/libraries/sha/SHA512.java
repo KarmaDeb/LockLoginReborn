@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * SHA512 utilities
  */
-public class SHA512 {
+public final class SHA512 {
 
     /**
      * basically number of iterations
@@ -112,7 +112,7 @@ public class SHA512 {
      * @param password The password to hash
      * @return token of salt,pepper(pepper is not stored),id cost and hash
      */
-    public final String hash(String password) {
+    public String hash(String password) {
         byte[] salt = new byte[SIZE / 4]; // size of salt
         random.nextBytes(salt); // generate new salt
         char ppr = pepper[random.nextInt(pepper.length)]; // get random pepper
@@ -132,7 +132,7 @@ public class SHA512 {
      * @param token    the token of password stored in database
      * @return true if passwords match
      */
-    public final boolean auth(String password, String token) {
+    public boolean auth(String password, String token) {
         String[] info = token.split("\\$");
         String salt_str = info[1];
         Pattern layout = Pattern.compile("\\$" + salt_str + "\\$(\\d\\d\\d?)\\$(.{512})");
