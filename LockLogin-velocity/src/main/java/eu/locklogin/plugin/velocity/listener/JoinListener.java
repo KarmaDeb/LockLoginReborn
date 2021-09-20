@@ -43,10 +43,8 @@ import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
-import eu.locklogin.api.module.plugin.api.event.user.VelocityGameProfileEvent;
+import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
+import eu.locklogin.api.module.plugin.api.event.user.*;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
@@ -80,6 +78,10 @@ import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.*;
 
 public final class JoinListener {
 
+    private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
+    private final static ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+    private final static PluginMessages messages = CurrentPlatform.getMessages();
+
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -94,108 +96,142 @@ public final class JoinListener {
      */
     public JoinListener() {
         PlayerPool.whenValid((player) -> {
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-
             InetSocketAddress ip = player.getRemoteAddress();
             User user = new User(player);
 
-            Optional<ServerConnection> tmp_server = player.getCurrentServer();
-            if (tmp_server.isPresent()) {
-                ServerConnection connection = tmp_server.get();
+            PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
+            ProxyCheck proxyCheck = new ProxyCheck(ip);
+            if (proxyCheck.isProxy()) {
+                validationResult = PluginIpValidationEvent.ValidationResult.INVALID.withReason("IP has been detected as proxy");
+            }
 
-                RegisteredServer server = connection.getServer();
-                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+            PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip.getAddress(), PluginIpValidationEvent.ValidationProcess.PROXY_IP,
+                    validationResult,
+                    validationResult.getReason(), null);
+            ModulePlugin.callEvent(ipEvent);
 
-                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                    if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
-                        DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+            if (!ipEvent.isHandled()) {
+                switch (ipEvent.getResult()) {
+                    case SUCCESS:
+                        Optional<ServerConnection> tmp_server = player.getCurrentServer();
+                        if (tmp_server.isPresent()) {
+                            ServerConnection connection = tmp_server.get();
 
-                    if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                                .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                                .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
-                                .build());
-                    }
+                            RegisteredServer server = connection.getServer();
+
+                            if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
+                                    DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
+
+                                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
+                                            .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
+                                            .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                            .build());
+                                }
+                            }
+                            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
+                            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());
+                        }
+
+                        CurrentPlatform.requestDataContainerUpdate();
+
+                        MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
+                        DataSender.send(player, validation);
+
+                        user.applySessionEffects();
+
+                        if (config.clearChat()) {
+                            for (int i = 0; i < 150; i++)
+                                server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                        }
+
+                        ClientSession session = user.getSession();
+                        session.validate();
+
+                        if (!config.captchaOptions().isEnabled())
+                            session.setCaptchaLogged(true);
+
+                        SimpleScheduler tmp_timer = null;
+                        if (!session.isCaptchaLogged()) {
+                            tmp_timer = new SourceSecondsTimer(main, 1, true);
+                            tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
+                        }
+
+                        MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
+                                .addBoolData(session.isLogged())
+                                .addBoolData(session.is2FALogged())
+                                .addBoolData(session.isPinLogged())
+                                .addBoolData(user.isRegistered()).build();
+                        DataSender.send(player, join);
+
+                        SimpleScheduler timer = tmp_timer;
+                        SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                            user.restorePotionEffects();
+                            player.sendActionBar(Component.text().content("").build());
+
+                            if (timer != null)
+                                timer.cancel();
+                        });
+                        server.getScheduler().buildTask(plugin, check).schedule();
+
+                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
+
+                        player.getCurrentServer().ifPresent(server -> {
+                            if (Proxy.isAuth(server.getServerInfo())) {
+                                user.checkServer(0);
+                            }
+                        });
+
+                        GenericJoinEvent event = new UserPostJoinEvent(user.getModule(), null);
+                        ModulePlugin.callEvent(event);
+
+                        if (event.isHandled()) {
+                            user.kick(event.getHandleReason());
+                        }
+
+                        if (!ipEvent.getResult().equals(validationResult)) {
+                            logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                    ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                        }
+                        break;
+                    case INVALID:
+                    case ERROR:
+                    default:
+                        if (!ipEvent.getResult().equals(validationResult)) {
+                            logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                    ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                        }
+
+                        logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", StringUtils.stripColor(player.getUsername()), ipEvent.getResult().getReason());
+                        user.kick(StringUtils.toColor(
+                                StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                        ipEvent.getResult().getReason())));
+                        break;
                 }
-                DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
-                DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());
-            }
-
-            CurrentPlatform.requestDataContainerUpdate();
-
-            MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-            DataSender.send(player, validation);
-
-            PluginMessages messages = CurrentPlatform.getMessages();
-
-            ProxyCheck proxy = new ProxyCheck(ip);
-            if (proxy.isProxy()) {
-                user.kick(messages.ipProxyError());
-                return;
-            }
-
-            user.applySessionEffects();
-
-            if (config.clearChat()) {
-                for (int i = 0; i < 150; i++)
-                    server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
-            }
-
-            ClientSession session = user.getSession();
-            session.validate();
-
-            if (!config.captchaOptions().isEnabled())
-                session.setCaptchaLogged(true);
-
-            SimpleScheduler tmp_timer = null;
-            if (!session.isCaptchaLogged()) {
-                tmp_timer = new SourceSecondsTimer(main, 1, true);
-                tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
-            }
-
-            MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                    .addBoolData(session.isLogged())
-                    .addBoolData(session.is2FALogged())
-                    .addBoolData(session.isPinLogged())
-                    .addBoolData(user.isRegistered()).build();
-            DataSender.send(player, join);
-
-            SimpleScheduler timer = tmp_timer;
-            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
-                user.restorePotionEffects();
-                player.sendActionBar(Component.text().content("").build());
-
-                if (timer != null)
-                    timer.cancel();
-            });
-            server.getScheduler().buildTask(plugin, check).schedule();
-
-            DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
-
-            player.getCurrentServer().ifPresent(server -> {
-                if (Proxy.isAuth(server.getServerInfo())) {
-                    user.checkServer(0);
-                }
-            });
-
-            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(player), null);
-            ModulePlugin.callEvent(event);
-
-            if (event.isHandled()) {
-                user.kick(event.getHandleReason());
+            } else {
+                user.kick(StringUtils.toColor(ipEvent.getHandleReason()));
             }
         });
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    public final void onServerPing(ProxyPingEvent e) {
-        ClientData client = new ClientData(e.getConnection().getRemoteAddress().getAddress());
-        if (!client.isVerified())
+    public void onServerPing(ProxyPingEvent e) {
+        InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
+        ClientData client = new ClientData(ip);
+
+        if (!client.isVerified()) {
             client.setVerified(true);
+
+            PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                    PluginIpValidationEvent.ValidationResult.SUCCESS,
+                    "Plugin added the IP to the IP validation queue", e);
+            ModulePlugin.callEvent(ipEvent);
+        }
     }
 
     @Subscribe(order = PostOrder.LAST)
-    public final void onGameProfileRequest(GameProfileRequestEvent e) {
+    public void onGameProfileRequest(GameProfileRequestEvent e) {
         VelocityGameProfileEvent event = new VelocityGameProfileEvent(e);
         ModulePlugin.callEvent(event);
 
@@ -204,150 +240,171 @@ public final class JoinListener {
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    public final void onPreLogin(PreLoginEvent e) {
-        PluginMessages messages = CurrentPlatform.getMessages();
+    public void onPreLogin(PreLoginEvent e) {
         InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
 
+        PluginIpValidationEvent.ValidationResult validationResult = validateIP(ip);
+
+        PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.VALID_IP,
+                validationResult,
+                validationResult.getReason(),
+                e);
+        ModulePlugin.callEvent(ipEvent);
+
         String conn_name = e.getUsername();
+        UUID gen_uuid = UUIDGen.getUUID(e.getUsername());
         UUID tar_uuid = ids.getOrDefault(conn_name, UUIDGen.getUUID(conn_name));
 
-        ids.remove(conn_name);
+        if (!ipEvent.isHandled()) {
+            switch (ipEvent.getResult()) {
+                case SUCCESS:
+                    if (e.getResult().isAllowed()) {
+                        //If the anti bot is disabled, verify the IP to avoid
+                        //errors
+                        if (!config.antiBot()) {
+                            ClientData client = new ClientData(ip);
+                            client.setVerified(true);
+                        }
 
-        String address = "null";
-        try {
-            address = ip.getHostAddress();
-        } catch (Throwable ignored) {}
-        if (e.getResult().isAllowed()) {
-            try {
-                if (validateIP(ip)) {
-                    PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        if (config.registerOptions().maxAccounts() > 0) {
+                            AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
 
-                    if (config.registerOptions().maxAccounts() > 0) {
-                        AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
+                            if (data.allow(config.registerOptions().maxAccounts())) {
+                                data.save();
 
-                        if (data.allow(config.registerOptions().maxAccounts())) {
-                            data.save();
+                                int amount = data.getAlts().size();
+                                if (amount > 2) {
+                                    for (Player online : server.getAllPlayers()) {
+                                        User user = new User(online);
 
-                            int amount = data.getAlts().size();
-                            if (amount > 2) {
-                                for (Player online : server.getAllPlayers()) {
-                                    User user = new User(online);
-
-                                    if (user.hasPermission(PluginPermission.altInfo())) {
-                                        user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                        if (user.hasPermission(PluginPermission.altInfo())) {
+                                            user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                        }
                                     }
+
+                                    if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
+                                        console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                                 }
-
-                                if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
-                                    console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                            } else {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxRegisters())).build()));
+                                return;
                             }
-                        } else {
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxRegisters())).build()));
-                            return;
                         }
-                    }
 
-                    if (config.bruteForceOptions().getMaxTries() > 0) {
-                        BruteForce protection = new BruteForce(ip);
-                        if (protection.isBlocked()) {
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))).build()));
-                            return;
+                        if (config.bruteForceOptions().getMaxTries() > 0) {
+                            BruteForce protection = new BruteForce(ip);
+                            if (protection.isBlocked()) {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))).build()));
+                                return;
+                            }
                         }
-                    }
 
-                    if (config.antiBot()) {
-                        ClientData client = new ClientData(ip);
-                        if (client.isVerified()) {
-                            String name = e.getUsername();
-
-                            if (client.canAssign(config.accountsPerIP(), name, tar_uuid)) {
-                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), name);
+                        if (config.antiBot()) {
+                            ClientData client = new ClientData(ip);
+                            if (client.isVerified()) {
+                                if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
+                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
+                                } else {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
+                                    return;
+                                }
                             } else {
                                 e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
                                 return;
                             }
                         } else {
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
-                            return;
-                        }
-                    }
-
-                    if (config.checkNames()) {
-                        Name name = new Name(conn_name);
-                        name.check();
-
-                        if (name.notValid()) {
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
-                            return;
-                        }
-                    }
-
-                    OfflineClient offline = new OfflineClient(conn_name);
-                    AccountManager manager = offline.getAccount();
-                    if (manager != null) {
-                        if (config.enforceNameCheck()) {
-                            if (!manager.getName().equals(conn_name)) {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.similarName(manager.getName()))).build()));
+                            ClientData client = new ClientData(ip);
+                            if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
+                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
+                            } else {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
                                 return;
                             }
                         }
 
-                        LockedAccount account = new LockedAccount(manager.getUUID());
-                        LockedData data = account.getData();
+                        if (config.uuidValidator()) {
+                            if (!gen_uuid.equals(tar_uuid)) {
+                                FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                if (!util.isFloodClient()) {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
+                                    return;
+                                }
+                            }
+                        }
 
-                        if (data.isLocked()) {
-                            String administrator = data.getAdministrator();
-                            Instant date = data.getLockDate();
-                            InstantParser parser = new InstantParser(date);
-                            String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+                        if (config.checkNames()) {
+                            Name name = new Name(conn_name);
+                            name.check();
 
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"))).build()));
-                            logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
+                            if (name.notValid()) {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
+                                return;
+                            }
+                        }
+
+                        OfflineClient offline = new OfflineClient(conn_name);
+                        AccountManager manager = offline.getAccount();
+                        if (manager != null) {
+                            if (config.enforceNameCheck()) {
+                                if (!manager.getName().equals(conn_name)) {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.similarName(manager.getName()))).build()));
+                                    return;
+                                }
+                            }
+
+                            LockedAccount account = new LockedAccount(manager.getUUID());
+                            LockedData data = account.getData();
+
+                            if (data.isLocked()) {
+                                String administrator = data.getAdministrator();
+                                Instant date = data.getLockDate();
+                                InstantParser parser = new InstantParser(date);
+                                String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"))).build()));
+                                logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
+                                return;
+                            }
+                        }
+
+                        GenericJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, conn_name, e);
+                        ModulePlugin.callEvent(event);
+
+                        if (event.isHandled()) {
+                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
                             return;
                         }
+
+                        PlayerPool.addPlayer(tar_uuid);
+                    }
+                    break;
+                case INVALID:
+                case ERROR:
+                default:
+                    if (!ipEvent.getResult().equals(validationResult)) {
+                        logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                     }
 
-                    UserPreJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, e.getUsername(), e);
-                    ModulePlugin.callEvent(event);
+                    logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", conn_name, ipEvent.getResult().getReason());
+                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(
+                            StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                    ipEvent.getResult().getReason()))).build())
+                           );
 
-                    if (event.isHandled()) {
-                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
-                        return;
-                    }
-
-                    PlayerPool.addPlayer(tar_uuid);
-                } else {
-                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipProxyError())).build()));
-                    logger.scheduleLog(Level.GRAVE, "Player {0}[{2}] tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", conn_name, address, tar_uuid);
-                }
-            } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
-                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipProxyError())).build()));
-                logger.scheduleLog(Level.GRAVE, "Player {0}[{2}] tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", conn_name, address, tar_uuid);
+                    break;
             }
+        } else {
+            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(ipEvent.getHandleReason())).build()));
         }
+
+        ids.remove(conn_name);
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    public final void onLogin(LoginEvent e) {
+    public void onLogin(LoginEvent e) {
         if (e.getResult().isAllowed()) {
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-            PluginMessages messages = CurrentPlatform.getMessages();
-
-            if (config.uuidValidator()) {
-                UUID tar_uuid = e.getPlayer().getGameProfile().getId();
-                UUID gen_uuid = UUIDGen.getUUID(e.getPlayer().getGameProfile().getName());
-
-                if (!gen_uuid.equals(tar_uuid)) {
-                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                    if (!util.isFloodClient()) {
-                        e.setResult(ResultedEvent.ComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
-                        return;
-                    }
-                }
-            }
-
-            UserJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
+            GenericJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
             ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {
@@ -358,7 +415,7 @@ public final class JoinListener {
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    public final void onSwitch(ServerConnectedEvent e) {
+    public void onSwitch(ServerConnectedEvent e) {
         server.getScheduler().buildTask(plugin, () -> {
             Player player = e.getPlayer();
             User user = new User(player);
@@ -408,18 +465,22 @@ public final class JoinListener {
      * @param ip the ip address
      * @return if the ip is valid
      */
-    private boolean validateIP(final InetAddress ip) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
+    private PluginIpValidationEvent.ValidationResult validateIP(final InetAddress ip) {
+        try {
+            if (config.ipHealthCheck()) {
+                if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
+                    return PluginIpValidationEvent.ValidationResult.INVALID.withReason("The IP host address is null or empty");
+                }
 
-        if (config.ipHealthCheck()) {
-            if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
-                return false;
+                Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
+                return (matcher.matches() ?
+                        PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin determined IP is valid") :
+                        PluginIpValidationEvent.ValidationResult.INVALID.withReason("Plugin determined IP is not valid for regex"));
             }
 
-            Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
-            return matcher.matches();
+            return PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore invalid IPs");
+        } catch (Throwable ex) {
+            return PluginIpValidationEvent.ValidationResult.ERROR.withReason("Failed to check IP: " + ex.fillInStackTrace());
         }
-
-        return true;
     }
 }

@@ -220,9 +220,13 @@ Updater:
 #           spawn you must use /setloginspawn
 # TakeBack -> Teleport the player back to his
 #             latest location after logging in
+# SpawnDistance -> The minimum distance required
+#                  from spawn to store the last
+#                  player location
 Spawn:
   Manage: false
   TakeBack: false
+  SpawnDistance: 30
 
 #Enable clear chat feature, this
 #option will clear ONLY CONNECTED

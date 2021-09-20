@@ -37,11 +37,18 @@ public class NameSearchResult {
      * @return if the result is valid
      */
     public final boolean isValidResult() {
-        try {
-            return !StringUtils.isNullOrEmpty(uuids[0]);
-        } catch (Throwable ex) {
-            return false;
+        boolean valid = false;
+
+        if (uuids != null) {
+            for (UUID uuid : uuids) {
+                if (uuid != null) {
+                    valid = true;
+                    break;
+                }
+            }
         }
+
+        return valid;
     }
 
     /**
@@ -50,7 +57,11 @@ public class NameSearchResult {
      * @return if the result contains multiple uuids
      */
     public final boolean singleResult() {
-        return isValidResult() && uuids.length == 1;
+        if (isValidResult()) {
+            return uuids.length == 1;
+        }
+
+        return true;
     }
 
     /**

@@ -29,10 +29,11 @@ import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
+import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -57,7 +58,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerPreLoginEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
 import java.net.InetAddress;
@@ -83,172 +83,214 @@ public final class JoinListener implements Listener {
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public final void onServerPing(ServerListPingEvent e) {
+    public void onServerPing(ServerListPingEvent e) {
         if (!config.isBungeeCord()) {
             ClientData client = new ClientData(e.getAddress());
-            if (!client.isVerified())
+            if (!client.isVerified()) {
                 client.setVerified(true);
-        }
-    }
 
-    @SuppressWarnings("all")
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void onPreLogin(AsyncPlayerPreLoginEvent e) {
-        InetAddress ip = e.getAddress();
-
-        String address = "null";
-        try {
-            address = ip.getHostAddress();
-        } catch (Throwable ignored) {}
-        if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
-            try {
-                if (validateIP(ip)) {
-                    if (!config.isBungeeCord()) {
-                        UUID gen_uuid = UUIDGen.getUUID(e.getName());
-                        UUID tar_uuid = e.getUniqueId();
-
-                        if (config.registerOptions().maxAccounts() > 0) {
-                            AccountData data = new AccountData(ip, AccountID.fromUUID(e.getUniqueId()));
-
-                            if (data.allow(config.registerOptions().maxAccounts())) {
-                                data.save();
-
-                                int amount = data.getAlts().size();
-                                if (amount > 2) {
-                                    for (Player online : plugin.getServer().getOnlinePlayers()) {
-                                        if (online.hasPermission(altAlert())) {
-                                            User user = new User(online);
-                                            user.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
-                                        }
-                                    }
-
-                                    if (!messages.altFound(e.getName(), amount).replaceAll("\\s", "").isEmpty())
-                                        console.send(messages.prefix() + messages.altFound(e.getName(), amount - 1));
-                                }
-                            } else {
-                                e.disallow(PlayerPreLoginEvent.Result.KICK_FULL, StringUtils.toColor(messages.maxRegisters()));
-                                return;
-                            }
-                        }
-
-                        if (config.bruteForceOptions().getMaxTries() > 0) {
-                            BruteForce protection = new BruteForce(ip);
-                            if (protection.isBlocked()) {
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft())));
-                                return;
-                            }
-                        }
-
-                        if (config.antiBot()) {
-                            ClientData client = new ClientData(ip);
-                            if (client.isVerified()) {
-                                String name = e.getName();
-
-                                if (client.canAssign(config.accountsPerIP(), name, tar_uuid)) {
-                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), name);
-                                } else {
-                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
-                                    return;
-                                }
-                            } else {
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.antiBot()));
-                                return;
-                            }
-                        }
-
-                        if (!gen_uuid.equals(tar_uuid)) {
-                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                            if (!util.isFloodClient()) {
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
-                                return;
-                            }
-                        }
-
-                        if (config.checkNames()) {
-                            Name name = new Name(e.getName());
-                            name.check();
-
-                            if (name.notValid()) {
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
-                                return;
-                            }
-                        }
-
-                        Player player = plugin.getServer().getPlayer(tar_uuid);
-                        if (player != null) {
-                            if (config.allowSameIP()) {
-                                InetSocketAddress playerIP = player.getAddress();
-                                if (playerIP != null) {
-                                    if (!playerIP.getAddress().equals(ip)) {
-                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.alreadyPlaying()));
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-
-                        OfflineClient offline = new OfflineClient(e.getName());
-                        AccountManager manager = offline.getAccount();
-                        if (manager != null) {
-                            if (config.enforceNameCheck()) {
-                                if (!manager.getName().equals(e.getName())) {
-                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.similarName(manager.getName())));
-                                    return;
-                                }
-                            }
-
-                            LockedAccount account = new LockedAccount(manager.getUUID());
-                            LockedData data = account.getData();
-
-                            if (data.isLocked()) {
-                                String administrator = data.getAdministrator();
-                                Instant date = data.getLockDate();
-                                InstantParser parser = new InstantParser(date);
-                                String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
-
-                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]")));
-                                logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", e.getName(), administrator, dateString);
-                                return;
-                            }
-                        }
-
-                        //Allow the player at the eyes of the plugin
-                        e.allow();
-                    } else {
-                        SimpleScheduler timer = new SourceSecondsTimer(plugin, 5, false);
-                        timer.endAction(() -> {
-                            Player online = plugin.getServer().getPlayer(e.getUniqueId());
-                            if (online != null && online.isOnline()) {
-                                User user = new User(online);
-                                if (!user.getSession().isValid())
-                                    user.kick(messages.bungeeProxy());
-                            }
-                        }).start();
-                    }
-
-                    if (!config.isBungeeCord()) {
-                        UserPreJoinEvent event = new UserPreJoinEvent(e.getAddress(), e.getUniqueId(), e.getName(), e);
-                        ModulePlugin.callEvent(event);
-
-                        if (event.isHandled()) {
-                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
-                            return;
-                        }
-                    }
-                } else {
-                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
-                    logger.scheduleLog(Level.GRAVE, "Player {0} tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message", e.getName(), address);
-                }
-            } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
-                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.ipProxyError()));
-                logger.scheduleLog(Level.GRAVE, "Player {0} tried to join with an invalid IP address ( {1} ), his connection got rejected with ip is proxy message caused by exception", e.getName(), address);
+                PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                        PluginIpValidationEvent.ValidationResult.SUCCESS,
+                        "Plugin added the IP to the IP validation queue", e);
+                ModulePlugin.callEvent(ipEvent);
             }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onLogin(PlayerLoginEvent e) {
+    public void onPreLogin(AsyncPlayerPreLoginEvent e) {
+        InetAddress ip = e.getAddress();
+
+        PluginIpValidationEvent.ValidationResult validationResult = validateIP(ip);
+        if (config.isBungeeCord()) {
+            validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin is BungeeCord mode, the IP validation process is done in BungeeCord/Velocity");
+        }
+
+        PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.VALID_IP,
+                validationResult,
+                validationResult.getReason(),
+                e);
+        ModulePlugin.callEvent(ipEvent);
+
+        String conn_name = e.getName();
+        UUID gen_uuid = UUIDGen.getUUID(e.getName());
+        UUID tar_uuid = e.getUniqueId();
+
+        if (!ipEvent.isHandled()) {
+            switch (ipEvent.getResult()) {
+                case SUCCESS:
+                    if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
+                        if (!config.isBungeeCord()) {
+                            //If the anti bot is disabled, verify the IP to avoid
+                            //errors
+                            if (!config.antiBot()) {
+                                ClientData client = new ClientData(ip);
+                                client.setVerified(true);
+                            }
+
+                            if (config.registerOptions().maxAccounts() > 0) {
+                                AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
+
+                                if (data.allow(config.registerOptions().maxAccounts())) {
+                                    data.save();
+
+                                    int amount = data.getAlts().size();
+                                    if (amount > 2) {
+                                        for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                            if (online.hasPermission(altAlert())) {
+                                                User user = new User(online);
+                                                user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                            }
+                                        }
+
+                                        if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
+                                            console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                    }
+                                } else {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_FULL, StringUtils.toColor(messages.maxRegisters()));
+                                    return;
+                                }
+                            }
+
+                            if (config.bruteForceOptions().getMaxTries() > 0) {
+                                BruteForce protection = new BruteForce(ip);
+                                if (protection.isBlocked()) {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft())));
+                                    return;
+                                }
+                            }
+
+                            ClientData client = new ClientData(ip);
+                            if (config.antiBot()) {
+                                if (client.isVerified()) {
+                                    if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
+                                        logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
+                                    } else {
+                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
+                                        return;
+                                    }
+                                } else {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.antiBot()));
+                                    return;
+                                }
+                            } else {
+                                if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
+                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
+                                } else {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
+                                    return;
+                                }
+                            }
+
+                            if (config.uuidValidator()) {
+                                if (!gen_uuid.equals(tar_uuid)) {
+                                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                    if (!util.isFloodClient()) {
+                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
+                                        return;
+                                    }
+                                }
+                            }
+
+                            if (config.checkNames()) {
+                                Name name = new Name(conn_name);
+                                name.check();
+
+                                if (name.notValid()) {
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
+                                    return;
+                                }
+                            }
+
+                            Player player = plugin.getServer().getPlayer(tar_uuid);
+                            if (player != null) {
+                                if (config.allowSameIP()) {
+                                    InetSocketAddress playerIP = player.getAddress();
+                                    if (playerIP != null) {
+                                        if (!playerIP.getAddress().equals(ip)) {
+                                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.alreadyPlaying()));
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+
+                            OfflineClient offline = new OfflineClient(e.getName());
+                            AccountManager manager = offline.getAccount();
+                            if (manager != null) {
+                                if (config.enforceNameCheck()) {
+                                    if (!manager.getName().equals(e.getName())) {
+                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.similarName(manager.getName())));
+                                        return;
+                                    }
+                                }
+
+                                LockedAccount account = new LockedAccount(manager.getUUID());
+                                LockedData data = account.getData();
+
+                                if (data.isLocked()) {
+                                    String administrator = data.getAdministrator();
+                                    Instant date = data.getLockDate();
+                                    InstantParser parser = new InstantParser(date);
+                                    String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+
+                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]")));
+                                    logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
+                                    return;
+                                }
+                            }
+
+                            if (!ipEvent.getResult().equals(validationResult)) {
+                                logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                        ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                            }
+
+                            e.allow();
+                        } else {
+                            SimpleScheduler timer = new SourceSecondsTimer(plugin, 5, false);
+                            timer.endAction(() -> {
+                                Player online = plugin.getServer().getPlayer(tar_uuid);
+                                if (online != null && online.isOnline()) {
+                                    User user = new User(online);
+                                    if (!user.getSession().isValid())
+                                        user.kick(messages.bungeeProxy());
+                                }
+                            }).start();
+                        }
+
+                        if (!config.isBungeeCord()) {
+                            GenericJoinEvent event = new UserPreJoinEvent(ip, tar_uuid, conn_name, e);
+                            ModulePlugin.callEvent(event);
+
+                            if (event.isHandled()) {
+                                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                                return;
+                            }
+                        }
+                    }
+                    break;
+                case INVALID:
+                case ERROR:
+                default:
+                    if (!ipEvent.getResult().equals(validationResult)) {
+                        logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                    }
+
+                    logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", e.getName(), ipEvent.getResult().getReason());
+                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+                            StringUtils.toColor(
+                                    StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                            ipEvent.getResult().getReason())));
+                    break;
+            }
+        } else {
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(ipEvent.getHandleReason()));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onLogin(PlayerLoginEvent e) {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
 
@@ -267,18 +309,13 @@ public final class JoinListener implements Listener {
                 if (!config.captchaOptions().isEnabled())
                     session.setCaptchaLogged(true);
 
-                //Allow the player at the eyes of the plugin
-                e.allow();
-
                 //Check if the player has a session keeper active, if yes, restore his
                 //login status
                 forceSessionLogin(player);
-            }
 
-            if (!config.isBungeeCord()) {
-                OfflinePlayer offline = plugin.getServer().getOfflinePlayer(e.getPlayer().getUniqueId());
+                OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
-                UserJoinEvent event = new UserJoinEvent(e.getAddress(), e.getPlayer().getUniqueId(), offline.getName(), e);
+                GenericJoinEvent event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
                 ModulePlugin.callEvent(event);
 
                 if (event.isHandled()) {
@@ -289,80 +326,115 @@ public final class JoinListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onPostLogin(PlayerJoinEvent e) {
+    public void onPostLogin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
-        ClientSession session = user.getSession();
 
+        PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
         if (!config.isBungeeCord()) {
             ProxyCheck proxy = new ProxyCheck(ip);
             if (proxy.isProxy()) {
-                user.kick(messages.ipProxyError());
-                return;
-            }
-
-            user.savePotionEffects();
-            user.applySessionEffects();
-
-            new AsyncScheduler().addTask(() -> {
-                if (config.clearChat()) {
-                    for (int i = 0; i < 150; i++)
-                        player.sendMessage("");
-                }
-            });
-
-            String barMessage = messages.captcha(session.getCaptcha());
-            try {
-                if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-                    barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-            } catch (Throwable ignored) {}
-
-            BarMessage bar = new BarMessage(player, barMessage);
-            if (!session.isCaptchaLogged())
-                bar.send(true);
-
-            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
-                user.restorePotionEffects();
-
-                bar.setMessage("");
-                bar.stop();
-            });
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-        }
-
-        if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
-            user.setTempSpectator(true);
-
-        if (config.hideNonLogged()) {
-            ClientVisor visor = new ClientVisor(player);
-            if (!session.isLogged()) {
-                visor.vanish();
-            }
-            visor.checkVanish();
-        }
-
-        if (config.enableSpawn()) {
-            Spawn spawn = new Spawn(player.getWorld());
-            spawn.load();
-
-            spawn.teleport(player);
-        }
-
-        if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
-            if (config.takeBack()) {
-                LastLocation location = new LastLocation(player);
-                location.teleport();
+                validationResult = PluginIpValidationEvent.ValidationResult.INVALID.withReason("IP has been detected as proxy");
             }
         }
 
-        if (!config.isBungeeCord()) {
-            UserPostJoinEvent event = new UserPostJoinEvent(fromPlayer(e.getPlayer()), e);
-            ModulePlugin.callEvent(event);
+        PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip.getAddress(), PluginIpValidationEvent.ValidationProcess.PROXY_IP,
+                validationResult,
+                validationResult.getReason(), e);
+        ModulePlugin.callEvent(ipEvent);
 
-            if (event.isHandled()) {
-                user.kick(event.getHandleReason());
+        if (!ipEvent.isHandled()) {
+            switch (ipEvent.getResult()) {
+                case SUCCESS:
+                    ClientSession session = user.getSession();
+
+                    if (!config.isBungeeCord()) {
+                        user.savePotionEffects();
+                        user.applySessionEffects();
+
+                        AsyncScheduler.queue(() -> {
+                            if (config.clearChat()) {
+                                for (int i = 0; i < 150; i++)
+                                    player.sendMessage("");
+                            }
+                        });
+
+                        String barMessage = messages.captcha(session.getCaptcha());
+                        try {
+                            if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                                barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                        } catch (Throwable ignored) {
+                        }
+
+                        BarMessage bar = new BarMessage(player, barMessage);
+                        if (!session.isCaptchaLogged())
+                            bar.send(true);
+
+                        SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                            user.restorePotionEffects();
+
+                            bar.setMessage("");
+                            bar.stop();
+                        });
+
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+                    }
+
+                    if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+                        user.setTempSpectator(true);
+
+                    if (config.hideNonLogged()) {
+                        ClientVisor visor = new ClientVisor(player);
+                        if (!session.isLogged()) {
+                            visor.hide();
+                        }
+                    }
+
+                    if (config.enableSpawn()) {
+                        Spawn spawn = new Spawn(player.getWorld());
+                        spawn.load();
+
+                        spawn.teleport(player);
+                    }
+
+                    if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+                        if (config.takeBack()) {
+                            LastLocation location = new LastLocation(player);
+                            location.teleport();
+                        }
+                    }
+
+                    if (!config.isBungeeCord()) {
+                        GenericJoinEvent event = new UserPostJoinEvent(user.getModule(), e);
+                        ModulePlugin.callEvent(event);
+
+                        if (event.isHandled()) {
+                            user.kick(event.getHandleReason());
+                        }
+                    }
+
+                    if (!ipEvent.getResult().equals(validationResult)) {
+                        logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                    }
+                    break;
+                case ERROR:
+                case INVALID:
+                default:
+                    if (!ipEvent.getResult().equals(validationResult)) {
+                        logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                    }
+
+                    logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", StringUtils.stripColor(player.getDisplayName()), ipEvent.getResult().getReason());
+                    user.kick(StringUtils.toColor(
+                            StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                    ipEvent.getResult().getReason())));
+                    break;
             }
+        } else {
+            user.kick(StringUtils.toColor(ipEvent.getHandleReason()));
         }
     }
 
@@ -372,17 +444,23 @@ public final class JoinListener implements Listener {
      * @param ip the ip address
      * @return if the ip is valid
      */
-    private boolean validateIP(final InetAddress ip) {
-        if (config.ipHealthCheck()) {
-            if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
-                return false;
+    private PluginIpValidationEvent.ValidationResult validateIP(final InetAddress ip) {
+        try {
+            if (config.ipHealthCheck()) {
+                if (StringUtils.isNullOrEmpty(ip.getHostAddress())) {
+                    return PluginIpValidationEvent.ValidationResult.INVALID.withReason("The IP host address is null or empty");
+                }
+
+                Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
+                return (matcher.matches() ?
+                        PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin determined IP is valid") :
+                        PluginIpValidationEvent.ValidationResult.INVALID.withReason("Plugin determined IP is not valid for regex"));
             }
 
-            Matcher matcher = IPv4_PATTERN.matcher(ip.getHostAddress());
-            return matcher.matches();
+            return PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore invalid IPs");
+        } catch (Throwable ex) {
+            return PluginIpValidationEvent.ValidationResult.ERROR.withReason("Failed to check IP: " + ex.fillInStackTrace());
         }
-
-        return true;
     }
 
     /**
@@ -391,26 +469,26 @@ public final class JoinListener implements Listener {
      *
      * @param player the player
      */
-    protected void forceSessionLogin(final Player player) {
-        ModulePlayer modulePlayer = fromPlayer(player);
+    private void forceSessionLogin(final Player player) {
+        User user = new User(player);
 
-        SessionKeeper keeper = new SessionKeeper(modulePlayer);
-        if (keeper.hasSession()) {
-            User user = new User(player);
-            ClientSession session = user.getSession();
+        tryAsync(() -> {
+            SessionKeeper keeper = new SessionKeeper(user.getModule());
+            if (keeper.hasSession()) {
+                ClientSession session = user.getSession();
 
-            session.setCaptchaLogged(true);
-            session.setLogged(true);
-            session.setPinLogged(true);
-            session.set2FALogged(true);
+                session.setCaptchaLogged(true);
+                session.setLogged(true);
+                session.setPinLogged(true);
+                session.set2FALogged(true);
 
-            keeper.destroy();
+                keeper.destroy();
 
-            if (config.hideNonLogged()) {
-                ClientVisor visor = new ClientVisor(player);
-                visor.unVanish();
-                visor.checkVanish();
+                if (config.hideNonLogged()) {
+                    ClientVisor visor = new ClientVisor(player);
+                    visor.show();
+                }
             }
-        }
+        });
     }
 }

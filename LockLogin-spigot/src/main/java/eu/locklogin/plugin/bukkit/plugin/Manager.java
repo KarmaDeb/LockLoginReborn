@@ -86,6 +86,7 @@ import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 public final class Manager {
 
+    private static VersionUpdater updater = null;
     private static int changelog_requests = 0;
     private static int updater_id = 0;
     private static int alert_id = 0;
@@ -191,6 +192,8 @@ public final class Manager {
     }
 
     public static void terminate() {
+        endPlayers();
+
         try {
             console.send("Finalizing console filter, please wait", Level.INFO);
             Logger coreLogger = (Logger) LogManager.getRootLogger();
@@ -230,8 +233,6 @@ public final class Manager {
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send(" ");
         console.send("&e-----------------------");
-
-        endPlayers();
     }
 
     /**
@@ -417,8 +418,10 @@ public final class Manager {
     /**
      * Perform a version check
      */
-    protected static void performVersionCheck() {
-        VersionUpdater updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+    static void performVersionCheck() {
+        if (updater == null)
+            updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+
         updater.fetch(true).whenComplete((fetch, trouble) -> {
             if (trouble == null) {
                 if (!fetch.isUpdated()) {
@@ -581,11 +584,10 @@ public final class Manager {
 
                 if (config.hideNonLogged()) {
                     ClientVisor visor = new ClientVisor(player);
-                    visor.vanish();
-                    visor.checkVanish();
+                    visor.hide();
                 }
 
-                UserHookEvent event = new UserHookEvent(fromPlayer(player), null);
+                UserHookEvent event = new UserHookEvent(user.getModule(), null);
                 ModulePlugin.callEvent(event);
             }
         });
@@ -597,7 +599,7 @@ public final class Manager {
      * This is util after plugin updates or
      * plugin unload using third-party loaders
      */
-    protected static void endPlayers() {
+    static void endPlayers() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             InetSocketAddress ip = player.getAddress();
             User user = new User(player);
@@ -610,7 +612,7 @@ public final class Manager {
 
                 Config config = new Config();
                 if (!config.isBungeeCord()) {
-                    SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+                    SessionKeeper keeper = new SessionKeeper(user.getModule());
                     keeper.store();
                 }
 
@@ -633,10 +635,9 @@ public final class Manager {
             user.setTempSpectator(false);
 
             ClientVisor visor = new ClientVisor(player);
-            visor.unVanish();
-            visor.checkVanish();
+            visor.show();
 
-            UserUnHookEvent event = new UserUnHookEvent(fromPlayer(player), null);
+            UserUnHookEvent event = new UserUnHookEvent(user.getModule(), null);
             ModulePlugin.callEvent(event);
         }
     }
@@ -676,5 +677,14 @@ public final class Manager {
         }
 
         return StringUtils.replaceLast(builder.toString(), ", ", "");
+    }
+
+    /**
+     * Get the version updater
+     *
+     * @return the version updater
+     */
+    public static VersionUpdater getUpdater() {
+        return updater;
     }
 }

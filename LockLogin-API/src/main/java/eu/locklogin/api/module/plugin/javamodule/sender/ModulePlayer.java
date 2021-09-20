@@ -185,6 +185,34 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     }
 
     /**
+     * Get if the module player is connected to server
+     *
+     * @return if the module player is connected to server
+     */
+    public boolean isPlaying() {
+        Object player = getPlayerObject();
+        if (player != null) {
+            try {
+                switch (CurrentPlatform.getPlatform()) {
+                    case BUKKIT:
+                        Method isOnline = player.getClass().getMethod("isOnline");
+                        return (boolean) isOnline.invoke(player);
+                    case BUNGEE:
+                        Method isConnected = player.getClass().getMethod("isConnected");
+                        return (boolean) isConnected.invoke(player);
+                    case VELOCITY:
+                        Method isActive = player.getClass().getMethod("isActive");
+                        return (boolean) isActive.invoke(player);
+                }
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Send a message to the player
      *
      * @param message the message to send
@@ -192,7 +220,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      */
     @Override
     public void sendMessage(final String message, final Object... replaces) {
-        if (onChat != null) {
+        if (onChat != null && isPlaying()) {
             onChat.accept(new MessageSender(this, StringUtils.formatString(message, replaces)));
         }
     }
@@ -203,7 +231,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @param message the message to send
      */
     public void sendActionBar(final String message) {
-        if (onBar != null) {
+        if (onBar != null && isPlaying()) {
             onBar.accept(new ActionBarSender(this, message));
         }
     }
@@ -215,7 +243,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @param subtitle the subtitle
      */
     public void sendTitle(final String title, final String subtitle) {
-        if (onTitle != null) {
+        if (onTitle != null && isPlaying()) {
             onTitle.accept(new TitleSender(this, title, subtitle, 2, 5, 2));
         }
     }
@@ -230,7 +258,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @param hideIn the time that will take to hide the title
      */
     public void sendTitle(final String title, final String subtitle, final int fadeOut, final int keepIn, final int hideIn) {
-        if (onTitle != null) {
+        if (onTitle != null && isPlaying()) {
             onTitle.accept(new TitleSender(this, title, subtitle, fadeOut, keepIn, fadeOut));
         }
     }
@@ -241,7 +269,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @param reason the kick reason
      */
     public void requestKick(final String reason) {
-        if (onKick != null) {
+        if (onKick != null && isPlaying()) {
             onKick.accept(new MessageSender(this, reason));
         }
     }
@@ -250,7 +278,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * Request client force-login
      */
     public void requestLogin() {
-        if (onLogin != null) {
+        if (onLogin != null && isPlaying()) {
             onLogin.accept(this);
         }
     }
@@ -259,7 +287,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * Request client close session
      */
     public void requestUnlogin() {
-        if (onClose != null) {
+        if (onClose != null && isPlaying()) {
             onClose.accept(this);
         }
     }

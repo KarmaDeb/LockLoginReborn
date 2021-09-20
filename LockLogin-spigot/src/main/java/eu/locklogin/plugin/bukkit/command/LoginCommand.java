@@ -125,7 +125,7 @@ public final class LoginCommand implements CommandExecutor {
                                     }
 
                                     if (!manager.has2FA() && !manager.hasPin()) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, user.getModule(), messages.logged(), null);
                                         ModulePlugin.callEvent(event);
 
                                         user.setTempSpectator(false);
@@ -139,12 +139,11 @@ public final class LoginCommand implements CommandExecutor {
                                         }
 
                                         ClientVisor visor = new ClientVisor(player);
-                                        visor.unVanish();
-                                        visor.checkVanish();
+                                        visor.show();
 
                                         user.send(messages.prefix() + event.getAuthMessage());
                                     } else {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, user.getModule(), messages.logged(), null);
                                         ModulePlugin.callEvent(event);
 
                                         if (manager.hasPin()) {
@@ -167,7 +166,7 @@ public final class LoginCommand implements CommandExecutor {
                                             player.performCommand("2fa setup " + password);
                                     }
                                 } else {
-                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
+                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
                                     ModulePlugin.callEvent(event);
 
                                     if (protection != null) {

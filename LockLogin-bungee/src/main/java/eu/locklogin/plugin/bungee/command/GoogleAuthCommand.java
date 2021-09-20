@@ -38,7 +38,8 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.util.List;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.console;
+import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
 @SystemCommand(command = "2fa")
 public final class GoogleAuthCommand extends Command {
@@ -181,7 +182,11 @@ public final class GoogleAuthCommand extends Command {
                                                 session.set2FALogged(true);
                                                 session.setPinLogged(true);
 
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.gAuthCorrect(), null);
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2,
+                                                        UserAuthenticateEvent.Result.SUCCESS,
+                                                        user.getModule(),
+                                                        messages.gAuthCorrect(),
+                                                        null);
                                                 ModulePlugin.callEvent(event);
 
                                                 user.send(messages.prefix() + event.getAuthMessage());
@@ -195,13 +200,21 @@ public final class GoogleAuthCommand extends Command {
 
                                                 user.checkServer(0);
                                             } else {
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.gAuthIncorrect(), null);
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2,
+                                                        UserAuthenticateEvent.Result.FAILED,
+                                                        user.getModule(),
+                                                        messages.gAuthIncorrect(),
+                                                        null);
                                                 ModulePlugin.callEvent(event);
 
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                             }
                                         } catch (Throwable ex) {
-                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.gAuthIncorrect(), null);
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2,
+                                                    UserAuthenticateEvent.Result.ERROR,
+                                                    user.getModule(),
+                                                    messages.gAuthIncorrect(),
+                                                    null);
                                             ModulePlugin.callEvent(event);
 
                                             user.send(messages.prefix() + event.getAuthMessage());

@@ -22,6 +22,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
+import eu.locklogin.plugin.bungee.util.player.UserDatabase;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.ServerKickEvent;
@@ -30,50 +31,59 @@ import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bungee.LockLogin.fromPlayer;
 import static eu.locklogin.plugin.bungee.LockLogin.getSocketIp;
 
 public final class QuitListener implements Listener {
 
+    private final static Set<UUID> kicked = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     @EventHandler(priority = EventPriority.HIGHEST)
-    public final void onQuit(PlayerDisconnectEvent e) {
+    public void onQuit(PlayerDisconnectEvent e) {
         ProxiedPlayer player = e.getPlayer();
+        if (!kicked.contains(player.getUniqueId())) {
+            if (!player.isConnected()) {
+                InetSocketAddress ip = getSocketIp(player.getSocketAddress());
+                User user = new User(player);
+                if (user.getChecker().isUnderCheck()) {
+                    user.getChecker().cancelCheck();
+                }
 
-        if (!player.isConnected()) {
-            InetSocketAddress ip = getSocketIp(player.getSocketAddress());
-            User user = new User(player);
-            if (user.getChecker().isUnderCheck()) {
-                user.getChecker().cancelCheck();
-            }
+                SessionKeeper keeper = new SessionKeeper(user.getModule());
+                keeper.store();
 
-            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
-            keeper.store();
+                if (ip != null) {
+                    ClientData data = new ClientData(ip.getAddress());
+                    data.removeClient(ClientData.getNameByID(player.getUniqueId()));
 
-            if (ip != null) {
-                ClientData data = new ClientData(ip.getAddress());
-                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
+                    ClientSession session = user.getSession();
+                    session.invalidate();
+                    session.setLogged(false);
+                    session.setPinLogged(false);
+                    session.set2FALogged(false);
 
-                ClientSession session = user.getSession();
-                session.invalidate();
-                session.setLogged(false);
-                session.setPinLogged(false);
-                session.set2FALogged(false);
+                    DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
+                }
 
-                UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
+                user.removeSessionCheck();
+                UserDatabase.removeUser(player);
+
+                UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
                 ModulePlugin.callEvent(event);
-
-                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
-
-            user.removeSessionCheck();
+        } else {
+            kicked.remove(player.getUniqueId());
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public final void onKick(ServerKickEvent e) {
+    public void onKick(ServerKickEvent e) {
         ProxiedPlayer player = e.getPlayer();
-
+        kicked.add(player.getUniqueId());
         if (!player.isConnected()) {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
@@ -81,7 +91,7 @@ public final class QuitListener implements Listener {
                 user.getChecker().cancelCheck();
             }
 
-            SessionKeeper keeper = new SessionKeeper(fromPlayer(player));
+            SessionKeeper keeper = new SessionKeeper(user.getModule());
             keeper.store();
 
             if (ip != null) {
@@ -94,13 +104,14 @@ public final class QuitListener implements Listener {
                 session.setPinLogged(false);
                 session.set2FALogged(false);
 
-                UserQuitEvent event = new UserQuitEvent(fromPlayer(e.getPlayer()), e);
-                ModulePlugin.callEvent(event);
-
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
 
             user.removeSessionCheck();
+            UserDatabase.removeUser(player);
+
+            UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
+            ModulePlugin.callEvent(event);
         }
     }
 }

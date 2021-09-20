@@ -27,6 +27,7 @@ import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.Permission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -40,6 +41,7 @@ import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +61,6 @@ public final class User {
     private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
 
-    private final AccountManager manager;
     private final Player player;
 
     /**
@@ -73,52 +74,78 @@ public final class User {
     public User(final Player _player) throws IllegalStateException {
         player = _player;
 
-        if (!sessions.containsKey(player.getUniqueId())) {
-            if (CurrentPlatform.isValidSessionManager()) {
-                ClientSession session = CurrentPlatform.getSessionManager(null);
+        User loaded = UserDatabase.loadUser(player);
+        if (loaded == null) {
+            if (CurrentPlatform.isValidAccountManager()) {
+                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, player);
 
-                if (session == null) {
-                    throw new IllegalStateException("Cannot initialize user with a null session manager");
+                if (manager == null) {
+                    throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
-                    session.initialize();
+                    AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
+                    database.assign(StringUtils.stripColor(player.getUsername()));
+                    database.assign(StringUtils.stripColor(player.getGameProfile().getName()));
 
-                    SessionInitializationEvent event = new SessionInitializationEvent(fromPlayer(player), session, null);
-                    ModulePlugin.callEvent(event);
+                    //Try to fix the empty manager values that are
+                    //required
+                    if (manager.exists()) {
+                        String name = manager.getName();
+                        AccountID id = manager.getUUID();
 
-                    sessions.put(player.getUniqueId(), session);
+                        if (name.replaceAll("\\s", "").isEmpty())
+                            manager.setName(StringUtils.stripColor(player.getGameProfile().getName()));
+
+                        if (id.getId().replaceAll("\\s", "").isEmpty())
+                            manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
+                    }
+
+                    managers.put(player.getUniqueId(), manager);
                 }
             } else {
-                throw new IllegalStateException("Cannot initialize user with a null session manager");
+                throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
             }
-        }
 
-        if (CurrentPlatform.isValidAccountManager()) {
-            manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, player);
+            if (!sessions.containsKey(player.getUniqueId())) {
+                if (CurrentPlatform.isValidSessionManager()) {
+                    ClientSession session = CurrentPlatform.getSessionManager(null);
 
-            if (manager == null) {
-                throw new IllegalStateException("Cannot initialize user with a null player account manager");
-            } else {
-                AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                database.assign(StringUtils.stripColor(player.getUsername()));
-                database.assign(StringUtils.stripColor(player.getGameProfile().getName()));
+                    if (session == null) {
+                        throw new IllegalStateException("Cannot initialize user with a null session manager");
+                    } else {
+                        session.initialize();
 
-                //Try to fix the empty manager values that are
-                //required
-                if (manager.exists()) {
-                    String name = manager.getName();
-                    AccountID id = manager.getUUID();
+                        ModulePlayer modulePlayer = new ModulePlayer(
+                                player.getGameProfile().getName(),
+                                player.getUniqueId(),
+                                session,
+                                managers.get(player.getUniqueId()),
+                                player.getRemoteAddress().getAddress());
+                        CurrentPlatform.connectPlayer(modulePlayer, player);
 
-                    if (name.replaceAll("\\s", "").isEmpty())
-                        manager.setName(StringUtils.stripColor(player.getGameProfile().getName()));
+                        SessionInitializationEvent event = new SessionInitializationEvent(modulePlayer, session, null);
+                        ModulePlugin.callEvent(event);
 
-                    if (id.getId().replaceAll("\\s", "").isEmpty())
-                        manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
+                        sessions.put(player.getUniqueId(), session);
+                    }
+                } else {
+                    throw new IllegalStateException("Cannot initialize user with a null session manager");
                 }
-
-                managers.put(player.getUniqueId(), manager);
             }
+
+            UserDatabase.insert(player, this);
         } else {
-            throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
+            ModulePlayer modulePlayer = CurrentPlatform.getServer().getPlayer(player.getUniqueId());
+            if (modulePlayer == null || modulePlayer.getAddress() == null) {
+                InetSocketAddress ip = player.getRemoteAddress();
+
+                modulePlayer = new ModulePlayer(
+                        player.getGameProfile().getName(),
+                        player.getUniqueId(),
+                        sessions.get(player.getUniqueId()),
+                        managers.get(player.getUniqueId()),
+                        (ip == null ? null : ip.getAddress()));
+                CurrentPlatform.connectPlayer(modulePlayer, player);
+            }
         }
     }
 
@@ -299,7 +326,7 @@ public final class User {
     /**
      * Restore the player potion effects
      */
-    public synchronized final void restorePotionEffects() {
+    public synchronized void restorePotionEffects() {
         MessageData data = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER, player)
                 .addBoolData(false).build();
         DataSender.send(player, data);
@@ -308,7 +335,7 @@ public final class User {
     /**
      * Remove the user session check
      */
-    public final void removeSessionCheck() {
+    public void removeSessionCheck() {
         sessionChecks.remove(player.getUniqueId());
     }
 
@@ -317,8 +344,35 @@ public final class User {
      *
      * @return the client session checker
      */
-    public final SessionCheck<Player> getChecker() {
-        return sessionChecks.computeIfAbsent(player.getUniqueId(), (session) -> new SessionCheck<>(source, fromPlayer(player), new BossMessage(source, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN)));
+    public SessionCheck<Player> getChecker() {
+        SessionCheck<Player> checker = sessionChecks.getOrDefault(player.getUniqueId(), null);
+        if (checker == null) {
+            ModulePlayer sender = getModule();
+            if (sender == null) {
+                sender = new ModulePlayer(
+                        player.getGameProfile().getName(),
+                        player.getUniqueId(),
+                        getSession(),
+                        managers.get(player.getUniqueId()),
+                        player.getRemoteAddress().getAddress());
+
+                CurrentPlatform.connectPlayer(sender, player);
+            }
+
+            checker = new SessionCheck<>(source, sender, new BossMessage(source, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN));
+            sessionChecks.put(player.getUniqueId(), checker);
+        }
+
+        return checker;
+    }
+
+    /**
+     * Get the module player of this player
+     *
+     * @return this player module player
+     */
+    public ModulePlayer getModule() {
+        return CurrentPlatform.getServer().getPlayer(player.getUniqueId());
     }
 
     /**
@@ -328,7 +382,7 @@ public final class User {
      */
     @NotNull
     public final AccountManager getManager() {
-        return manager;
+        return managers.get(player.getUniqueId());
     }
 
     /**

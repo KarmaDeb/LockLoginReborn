@@ -267,7 +267,7 @@ public final class ModuleLoader {
                                         clazz_map.put(module_class, module);
 
                                         module.enable();
-                                        module.getPlugin().getVersionManager().updaterEnabled();
+                                        module.getPlugin().getVersionManager().fetch();
 
                                         CurrentPlatform.getPluginAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
                                     }

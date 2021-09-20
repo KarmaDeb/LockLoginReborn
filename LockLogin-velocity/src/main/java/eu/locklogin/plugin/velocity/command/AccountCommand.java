@@ -171,7 +171,7 @@ public class AccountCommand extends BungeeLikeCommand {
 
                                     user.send(messages.prefix() + messages.closed());
 
-                                    AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
+                                    AccountCloseEvent self = new AccountCloseEvent(user.getModule(), player.getGameProfile().getName(), null);
                                     ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
@@ -186,9 +186,9 @@ public class AccountCommand extends BungeeLikeCommand {
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
                                                 target.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p.get())));
+                                                user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
-                                                AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(player), player.getGameProfile().getName(), null);
+                                                AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), player.getGameProfile().getName(), null);
                                                 ModulePlugin.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
@@ -410,9 +410,9 @@ public class AccountCommand extends BungeeLikeCommand {
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     target.performCommand("account close");
-                                    console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p.get())));
+                                    console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
-                                    AccountCloseEvent event = new AccountCloseEvent(fromPlayer(tar_p.get()), config.serverName(), null);
+                                    AccountCloseEvent event = new AccountCloseEvent(target.getModule(), config.serverName(), null);
                                     ModulePlugin.callEvent(event);
                                 } else {
                                     console.send(messages.prefix() + messages.targetAccessError(tar_name));
@@ -427,44 +427,9 @@ public class AccountCommand extends BungeeLikeCommand {
                         break;
                     case "remove":
                     case "delete":
-                        if (args.length == 2) {
-                            tar_name = args[1];
-                            nsr = AccountNameDatabase.find(tar_name);
-
-                            if (nsr.singleResult()) {
-                                Optional<Player> online = server.getPlayer(tar_name);
-                                offline = new OfflineClient(tar_name);
-
-                                manager = offline.getAccount();
-                                if (manager != null) {
-                                    LockedAccount account = new LockedAccount(manager.getUUID());
-                                    manager.setUnsafePassword("");
-                                    manager.setUnsafePin("");
-                                    manager.setUnsafeGAuth("");
-                                    manager.set2FA(false);
-
-                                    console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(tar_name));
-
-                                    if (online.isPresent()) {
-                                        DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
-                                        User onlineUser = new User(online.get());
-
-                                        onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
-                                    }
-
-                                    account.lock(StringUtils.stripColor("{ServerName}"));
-                                } else {
-                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
-                                }
-                            } else {
-                                console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
-                            }
-                        } else {
-                            console.send(messages.prefix() + messages.remove());
-                        }
-                        break;
                     default:
                         console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                        break;
                 }
             }
         }

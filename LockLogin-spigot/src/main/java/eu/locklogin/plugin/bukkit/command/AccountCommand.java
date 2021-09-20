@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 @SystemCommand(command = "account")
 public class AccountCommand implements CommandExecutor {
@@ -163,11 +162,11 @@ public class AccountCommand implements CommandExecutor {
 
                                     if (config.hideNonLogged()) {
                                         ClientVisor visor = new ClientVisor(player);
-                                        visor.vanish();
+                                        visor.hide();
                                     }
 
                                     user.send(messages.prefix() + messages.closed());
-                                    AccountCloseEvent self = new AccountCloseEvent(fromPlayer(player), user.getManager().getName(), null);
+                                    AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
                                     ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
@@ -182,9 +181,9 @@ public class AccountCommand implements CommandExecutor {
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
                                                 player.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
+                                                user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
-                                                AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), user.getManager().getName(), null);
+                                                AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
                                                 ModulePlugin.callEvent(issuer);
                                             } else {
                                                 user.send(messages.prefix() + messages.targetAccessError(tar_name));
@@ -373,9 +372,9 @@ public class AccountCommand implements CommandExecutor {
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
                                     tar_p.performCommand("account close");
-                                    console.send(messages.prefix() + messages.forcedCloseAdmin(fromPlayer(tar_p)));
+                                    console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
-                                    AccountCloseEvent issuer = new AccountCloseEvent(fromPlayer(tar_p), config.serverName(), null);
+                                    AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
                                     ModulePlugin.callEvent(issuer);
                                 } else {
                                     console.send(messages.prefix() + messages.targetAccessError(tar_name));
@@ -390,41 +389,9 @@ public class AccountCommand implements CommandExecutor {
                         break;
                     case "remove":
                     case "delete":
-                        if (args.length == 2) {
-                            tar_name = args[1];
-                            nsr = AccountNameDatabase.find(tar_name);
-
-                            if (nsr.singleResult()) {
-                                Player online = LockLogin.plugin.getServer().getPlayer(tar_name);
-                                offline = new OfflineClient(tar_name);
-
-                                manager = offline.getAccount();
-                                if (manager != null) {
-                                    LockedAccount account = new LockedAccount(manager.getUUID());
-                                    manager.setUnsafePassword("");
-                                    manager.setUnsafePin("");
-                                    manager.setUnsafeGAuth("");
-                                    manager.set2FA(false);
-
-                                    if (online != null) {
-                                        User onlineUser = new User(online);
-                                        onlineUser.kick(messages.forcedAccountRemoval("{ServerName}"));
-                                    }
-
-                                    account.lock(StringUtils.stripColor("{ServerName}"));
-                                    console.send(messages.prefix() + messages.forcedAccountRemovalAdmin(tar_name));
-                                } else {
-                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
-                                }
-                            } else {
-                                console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
-                            }
-                        } else {
-                            console.send(messages.prefix() + messages.remove());
-                        }
-                        break;
                     default:
                         console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                        break;
                 }
             }
         }

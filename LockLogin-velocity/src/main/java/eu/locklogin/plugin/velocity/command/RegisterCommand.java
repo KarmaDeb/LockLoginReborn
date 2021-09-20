@@ -115,7 +115,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
                                         if (!manager.hasPin())
                                             session.setPinLogged(true);
 
-                                        AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
+                                        AccountCreatedEvent event = new AccountCreatedEvent(user.getModule(), null);
                                         ModulePlugin.callEvent(event);
 
                                         user.restorePotionEffects();

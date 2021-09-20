@@ -61,12 +61,12 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final String serverName() {
+    public String serverName() {
         return cfg.getString("ServerName", StringUtils.randomString(8, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER));
     }
 
     @Override
-    public final RegisterConfig registerOptions() {
+    public RegisterConfig registerOptions() {
         boolean boss = cfg.getBoolean("Register.Boss", true);
         boolean blind = cfg.getBoolean("Register.Blind", false);
         boolean nausea = cfg.getBoolean("Register.Nausea", false);
@@ -78,7 +78,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final LoginConfig loginOptions() {
+    public LoginConfig loginOptions() {
         boolean boss = cfg.getBoolean("Login.Boss", true);
         boolean blind = cfg.getBoolean("Login.Blind", false);
         boolean nausea = cfg.getBoolean("Login.Nausea", false);
@@ -151,7 +151,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final CaptchaConfig captchaOptions() {
+    public CaptchaConfig captchaOptions() {
         boolean enabled = cfg.getBoolean("Captcha.Enabled", true);
         int length = cfg.getInt("Captcha.Difficulty.Length", 8);
         boolean letters = cfg.getBoolean("Captcha.Difficulty.Letters", true);
@@ -162,7 +162,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final HashType passwordEncryption() {
+    public HashType passwordEncryption() {
         String value = cfg.getString("Encryption.Passwords", "SHA512");
         assert value != null;
 
@@ -187,7 +187,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final HashType pinEncryption() {
+    public HashType pinEncryption() {
         String value = cfg.getString("Encryption.Pins", "SHA512");
         assert value != null;
 
@@ -236,7 +236,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final BruteForceConfig bruteForceOptions() {
+    public BruteForceConfig bruteForceOptions() {
         int tries = cfg.getInt("BruteForce", 3);
         int time = cfg.getInt("BruteForce.BlockTime", 30);
 
@@ -244,27 +244,27 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final boolean antiBot() {
+    public boolean antiBot() {
         return cfg.getBoolean("AntiBot", true);
     }
 
     @Override
-    public final boolean allowSameIP() {
+    public boolean allowSameIP() {
         return cfg.getBoolean("AllowSameIp", true);
     }
 
     @Override
-    public final boolean enablePin() {
+    public boolean enablePin() {
         return cfg.getBoolean("Pin", true);
     }
 
     @Override
-    public final boolean enable2FA() {
+    public boolean enable2FA() {
         return cfg.getBoolean("2FA", true);
     }
 
     @Override
-    public final UpdaterConfig getUpdaterOptions() {
+    public UpdaterConfig getUpdaterOptions() {
         String channel = cfg.getString("Updater.Channel", "RELEASE");
         assert channel != null;
 
@@ -281,27 +281,39 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final boolean enableSpawn() {
+    public boolean enableSpawn() {
         return cfg.getBoolean("Spawn.Manage", false);
     }
 
     @Override
-    public final boolean takeBack() {
+    public boolean takeBack() {
         return cfg.getBoolean("Spawn.Back", false);
     }
 
+    /**
+     * Get the minimum distance between the spawn and the
+     * player to store his last location
+     *
+     * @return the minimum distance between the spawn and player
+     * to store last location
+     */
     @Override
-    public final boolean clearChat() {
+    public int spawnDistance() {
+        return cfg.getInt("Spawn.SpawnDistance", 30);
+    }
+
+    @Override
+    public boolean clearChat() {
         return cfg.getBoolean("ClearChat", false);
     }
 
     @Override
-    public final int accountsPerIP() {
+    public int accountsPerIP() {
         return cfg.getInt("AccountsPerIp", 2);
     }
 
     @Override
-    public final boolean checkNames() {
+    public boolean checkNames() {
         return cfg.getBoolean("CheckNames", true);
     }
 
@@ -329,7 +341,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final Lang getLang() {
+    public Lang getLang() {
         String val = cfg.getString("Lang", "en_EN");
         assert val != null;
 
@@ -356,12 +368,12 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public final String getLangName() {
+    public String getLangName() {
         return cfg.getString("Lang", "en_EN");
     }
 
     @Override
-    public final String getModulePrefix() {
+    public String getModulePrefix() {
         String value = cfg.getString("ModulePrefix", "$");
         assert value != null;
 
@@ -419,6 +431,8 @@ public final class Config extends PluginConfiguration {
             String pin_encryption = cfg.getString("Encryption.Pin", "SHA512");
 
             String update_channel = cfg.getString("Updater.Channel", "RELEASE");
+
+            int spawnDist = cfg.getInt("Spawn.SpawnDistance", 30);
 
             int nameCheckProtocol = cfg.getInt("NameCheckProtocol", 2);
 
@@ -527,6 +541,13 @@ public final class Config extends PluginConfiguration {
                     cfg.set("Updater.Channel", update_channel);
 
                     changes = true;
+            }
+
+            if (spawnDist < 0) {
+                spawnDist = 0;
+                cfg.set("Spawn.SpawnDistance", spawnDist);
+
+                changes = true;
             }
 
             if (nameCheckProtocol != 1 && nameCheckProtocol != 2) {

@@ -21,16 +21,16 @@ public class UsersListener implements EventListener {
         SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() + 1);
     }
 
-    @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)
+    @ModuleEventHandler(priority = ModuleEventHandler.Priority.LAST)
     public final void unHook(UserUnHookEvent e) {
         SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
-        CurrentPlatform.disconnectPlayer(e.getPlayer().getUUID());
+        CurrentPlatform.disconnectPlayer(e.getPlayer());
     }
 
-    @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)
+    @ModuleEventHandler(priority = ModuleEventHandler.Priority.LAST)
     public final void onQuit(UserQuitEvent e) {
         SessionDataContainer.setLogged(SessionDataContainer.getLogged() - 1);
-        CurrentPlatform.disconnectPlayer(e.getPlayer().getUUID());
+        CurrentPlatform.disconnectPlayer(e.getPlayer());
     }
 
     @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)

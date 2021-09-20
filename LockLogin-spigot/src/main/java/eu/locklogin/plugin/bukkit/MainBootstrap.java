@@ -16,9 +16,9 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
@@ -43,7 +43,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 public class MainBootstrap implements KarmaBootstrap {
 
@@ -56,6 +55,7 @@ public class MainBootstrap implements KarmaBootstrap {
     private final DependencyManager manager = new DependencyManager(this);
 
     public MainBootstrap(final JavaPlugin main) {
+
         loader = (Main) main;
 
         try {
@@ -155,11 +155,14 @@ public class MainBootstrap implements KarmaBootstrap {
 
                     if (config.hideNonLogged()) {
                         ClientVisor visor = new ClientVisor(player);
-                        visor.unVanish();
-                        visor.checkVanish();
+                        visor.show();
                     }
 
-                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                            UserAuthenticateEvent.Result.SUCCESS,
+                            modulePlayer,
+                            "",
+                            null);
                     ModulePlugin.callEvent(event);
 
                     user.send(event.getAuthMessage());

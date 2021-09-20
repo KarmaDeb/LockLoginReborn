@@ -14,20 +14,15 @@ package eu.locklogin.plugin.bungee;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.version.VersionID;
 import eu.locklogin.api.file.plugin.PluginProperties;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
+import ml.karmaconfigs.api.common.karma.APISource;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -35,13 +30,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Files;
-import java.util.UUID;
 
 public interface LockLogin {
 
     Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
 
-    Console console = new Console(plugin);
+    Console console = APISource.getConsole();
 
     String name = plugin.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
@@ -73,17 +67,6 @@ public interface LockLogin {
             }
 
         return new ModuleLoader();
-    }
-
-    static ModulePlayer fromPlayer(final ProxiedPlayer player) {
-        String name = player.getName();
-        UUID uuid = player.getUniqueId();
-        ClientSession session = User.getSession(player);
-        AccountManager manager = User.getManager(player);
-        InetAddress address = getIp(player.getSocketAddress());
-
-        CurrentPlatform.connectPlayer(uuid, player);
-        return new ModulePlayer(name, uuid, session, manager, address);
     }
 
     @Nullable

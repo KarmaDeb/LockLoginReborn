@@ -17,9 +17,9 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -46,7 +46,8 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.console;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.PLUGIN_CHANNEL;
 
@@ -175,7 +176,11 @@ public class MainBootstrap implements KarmaBootstrap {
                         DataSender.send(player, pin);
                         DataSender.send(player, gauth);
 
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), "", null);
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                                UserAuthenticateEvent.Result.SUCCESS,
+                                modulePlayer,
+                                "",
+                                null);
                         ModulePlugin.callEvent(event);
 
                         user.checkServer(0);

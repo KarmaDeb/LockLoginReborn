@@ -110,7 +110,7 @@ public final class RegisterCommand implements CommandExecutor {
                                         if (!manager.hasPin())
                                             session.setPinLogged(true);
 
-                                        AccountCreatedEvent event = new AccountCreatedEvent(fromPlayer(player), null);
+                                        AccountCreatedEvent event = new AccountCreatedEvent(user.getModule(), null);
                                         ModulePlugin.callEvent(event);
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());

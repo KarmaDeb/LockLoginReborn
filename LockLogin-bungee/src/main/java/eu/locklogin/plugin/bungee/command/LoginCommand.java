@@ -132,7 +132,11 @@ public final class LoginCommand extends Command {
 
                                     boolean checkServer = false;
                                     if (!manager.has2FA() && !manager.hasPin()) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                                UserAuthenticateEvent.Result.SUCCESS,
+                                                user.getModule(),
+                                                messages.logged(),
+                                                null);
                                         ModulePlugin.callEvent(event);
                                         MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
                                         MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
@@ -146,7 +150,11 @@ public final class LoginCommand extends Command {
                                         user.send(messages.prefix() + event.getAuthMessage());
                                         checkServer = true;
                                     } else {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.logged(), null);
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                                UserAuthenticateEvent.Result.SUCCESS_TEMP,
+                                                user.getModule(),
+                                                messages.logged(),
+                                                null);
                                         ModulePlugin.callEvent(event);
 
                                         if (manager.hasPin()) {
@@ -175,7 +183,11 @@ public final class LoginCommand extends Command {
                                             user.performCommand("2fa setup " + password);
                                     }
                                 } else {
-                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, fromPlayer(player), messages.incorrectPassword(), null);
+                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                            UserAuthenticateEvent.Result.ERROR,
+                                            user.getModule(),
+                                            messages.incorrectPassword(),
+                                            null);
                                     ModulePlugin.callEvent(event);
 
                                     if (protection != null) {

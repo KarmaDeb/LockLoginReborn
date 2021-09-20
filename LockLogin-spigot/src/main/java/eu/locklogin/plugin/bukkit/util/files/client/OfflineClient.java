@@ -46,7 +46,7 @@ public final class OfflineClient {
      * @return the offline client account
      */
     @Nullable
-    public final AccountManager getAccount() throws IllegalStateException {
+    public AccountManager getAccount() throws IllegalStateException {
         if (CurrentPlatform.isValidAccountManager()) {
             AccountManager current = CurrentPlatform.getAccountManager(null);
             if (current != null) {

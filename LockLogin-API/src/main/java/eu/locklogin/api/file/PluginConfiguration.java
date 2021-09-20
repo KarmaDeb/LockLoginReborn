@@ -181,6 +181,15 @@ public abstract class PluginConfiguration {
     public abstract boolean takeBack();
 
     /**
+     * Get the minimum distance between the spawn and the
+     * player to store his last location
+     *
+     * @return the minimum distance between the spawn and player
+     * to store last location
+     */
+    public abstract int spawnDistance();
+
+    /**
      * Get if the plugin should clear player chat
      *
      * @return if the player chat should be cleared when

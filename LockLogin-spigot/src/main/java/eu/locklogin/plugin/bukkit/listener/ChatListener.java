@@ -31,12 +31,11 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
-import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
 
 public final class ChatListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onChat(AsyncPlayerChatEvent e) {
+    public void onChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
         User user = new User(player);
         ClientSession session = user.getSession();
@@ -66,13 +65,13 @@ public final class ChatListener implements Listener {
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
+                ModulePlugin.fireCommand(user.getModule(), e.getMessage(), e);
             }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onCommand(PlayerCommandPreprocessEvent e) {
+    public void onCommand(PlayerCommandPreprocessEvent e) {
         Player player = e.getPlayer();
         User user = new User(player);
         ClientSession session = user.getSession();
@@ -106,7 +105,7 @@ public final class ChatListener implements Listener {
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getMessage())) {
                 e.setCancelled(true);
-                ModulePlugin.fireCommand(fromPlayer(player), e.getMessage(), e);
+                ModulePlugin.fireCommand(user.getModule(), e.getMessage(), e);
             }
         }
     }

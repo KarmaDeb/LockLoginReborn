@@ -18,7 +18,9 @@ import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.ModuleServer;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
@@ -497,10 +499,16 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
             }
 
             jar.close();
-        } catch (Throwable ignored) {
+        } catch (Throwable ignored) {}
+        if (!url.endsWith(".txt")) {
+            if (url.endsWith("/")) {
+                url = url + "latest.txt";
+            } else {
+                url = url + "/latest.txt";
+            }
         }
 
-        return url;
+        return url.replaceAll("\\s", "%20");
     }
 
     /**
@@ -627,6 +635,24 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     public final ModuleConsole getConsole() {
         return new ModuleConsole(this);
+    }
+
+    /**
+     * Get the module server
+     *
+     * @return the module sender
+     */
+    public final ModuleServer getServer() {
+        return CurrentPlatform.getServer();
+    }
+
+    /**
+     * Get the module updater
+     *
+     * @return the module updater
+     */
+    public final JavaModuleVersion getUpdater() {
+        return getPlugin().getVersionManager();
     }
 
     /**

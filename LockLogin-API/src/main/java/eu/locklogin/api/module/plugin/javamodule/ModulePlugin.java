@@ -20,10 +20,11 @@ import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginProcessCommandEvent;
+import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -76,6 +77,126 @@ public final class ModulePlugin {
      * @param event the event to call
      */
     public static void callEvent(final Event event) {
+        Set<Method> last_invocation = new LinkedHashSet<>();
+        Set<Method> normal_invocation = new LinkedHashSet<>();
+        Set<PluginModule> passed = new LinkedHashSet<>();
+
+        Map<PluginModule, Method> after = new LinkedHashMap<>();
+        Map<PluginModule, PluginModule> afterOwner = new LinkedHashMap<>();
+
+        for (PluginModule module : module_listeners.keySet()) {
+            //Allow only loaded modules
+            if (ModuleLoader.isLoaded(module)) {
+                Set<EventListener> handlers = module_listeners.getOrDefault(module, Collections.emptySet());
+
+                for (EventListener handler : handlers) {
+                    //Only call the event if the event class is instance of the
+                    //listener class
+                    Method[] methods = handler.getClass().getMethods();
+                    for (Method method : methods) {
+                        if (method.isAnnotationPresent(ModuleEventHandler.class)) {
+                            if (method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
+                                ModuleEventHandler methodHandler = method.getAnnotation(ModuleEventHandler.class);
+                                switch (methodHandler.priority()) {
+                                    case FIRST:
+                                        if (methodHandler.ignoreHandled() && event.isHandled())
+                                            continue;
+
+                                        try {
+                                            method.invoke(handler, event);
+                                        } catch (Throwable ex) {
+                                            ex.printStackTrace();
+                                        }
+                                        passed.add(module);
+                                        break;
+                                    case LAST:
+                                        if (methodHandler.ignoreHandled() && event.isHandled())
+                                            continue;
+
+                                        last_invocation.add(method);
+                                        break;
+                                    case AFTER:
+                                        if (methodHandler.ignoreHandled() && event.isHandled())
+                                            continue;
+
+                                        if (!passed.contains(module)) {
+                                            PluginModule afterModule = ModuleLoader.getByFile(ModuleLoader.getModuleFile(methodHandler.after()));
+                                            if (afterModule != null) {
+                                                after.put(afterModule, method);
+                                                afterOwner.put(afterModule, module);
+                                            } else {
+                                                try {
+                                                    method.invoke(handler, event);
+                                                    passed.add(module);
+                                                } catch (Throwable ex) {
+                                                    ex.printStackTrace();
+                                                }
+                                            }
+                                        } else {
+                                            try {
+                                                method.invoke(handler, event);
+                                            } catch (Throwable ex) {
+                                                ex.printStackTrace();
+                                            }
+                                        }
+                                    case NORMAL:
+                                    default:
+                                        if (methodHandler.ignoreHandled() && event.isHandled())
+                                            continue;
+
+                                        normal_invocation.add(method);
+                                        break;
+                                }
+                            }
+                        }
+                    }
+
+                    for (Method method : normal_invocation) {
+                        try {
+                            method.invoke(handler, event);
+                            passed.add(module);
+
+                            if (after.containsKey(module) && after.getOrDefault(module, null) != null) {
+                                try {
+                                    after.get(module).invoke(handler, event);
+                                    passed.add(afterOwner.get(module));
+                                } catch (Throwable ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        } catch (Throwable ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+
+                    for (Method method : last_invocation) {
+                        try {
+                            method.invoke(handler, event);
+                            passed.add(module);
+
+                            if (after.containsKey(module) && after.getOrDefault(module, null) != null) {
+                                try {
+                                    after.get(module).invoke(handler, event);
+                                    passed.add(afterOwner.get(module));
+                                } catch (Throwable ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        } catch (Throwable ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Call an event to all the listeners
+     *
+     * @param event the event to call
+     */
+    public static void callEvent(final GenericJoinEvent event) {
         Set<Method> last_invocation = new LinkedHashSet<>();
         Set<Method> normal_invocation = new LinkedHashSet<>();
         Set<PluginModule> passed = new LinkedHashSet<>();

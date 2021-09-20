@@ -23,6 +23,7 @@ import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
@@ -40,6 +41,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -71,57 +73,85 @@ public final class User {
     public User(final Player _player) throws IllegalStateException {
         player = _player;
 
-        if (!sessions.containsKey(player.getUniqueId())) {
-            if (CurrentPlatform.isValidSessionManager()) {
-                ClientSession session = CurrentPlatform.getSessionManager(null);
+        User loaded = UserDatabase.loadUser(player);
+        if (loaded == null) {
+            if (CurrentPlatform.isValidAccountManager()) {
+                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, plugin.getServer().getOfflinePlayer(player.getUniqueId()));
 
-                if (session == null) {
+                if (manager == null) {
+                    plugin.getPluginLoader().disablePlugin(plugin);
+                    throw new IllegalStateException("Cannot initialize user with a null player account manager");
+                } else {
+                    AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
+                    database.assign(StringUtils.stripColor(player.getName()));
+                    database.assign(StringUtils.stripColor(player.getDisplayName()));
+                    database.assign(StringUtils.stripColor(player.getPlayerListName()));
+
+                    //Try to fix the empty manager values that are
+                    //required
+                    if (manager.exists()) {
+                        String name = manager.getName();
+                        AccountID id = manager.getUUID();
+
+                        if (StringUtils.isNullOrEmpty(name))
+                            manager.setName(StringUtils.stripColor(player.getDisplayName()));
+
+                        if (StringUtils.isNullOrEmpty(id.getId()))
+                            manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
+                    }
+
+                    managers.put(player.getUniqueId(), manager);
+                }
+            } else {
+                plugin.getPluginLoader().disablePlugin(plugin);
+                throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
+            }
+
+            if (!sessions.containsKey(player.getUniqueId())) {
+                if (CurrentPlatform.isValidSessionManager()) {
+                    ClientSession session = CurrentPlatform.getSessionManager(null);
+
+                    if (session == null) {
+                        plugin.getPluginLoader().disablePlugin(plugin);
+                        throw new IllegalStateException("Cannot initialize user with a null session manager");
+                    } else {
+                        session.initialize();
+
+                        InetSocketAddress ip = player.getAddress();
+
+                        ModulePlayer modulePlayer = new ModulePlayer(
+                                player.getName(),
+                                player.getUniqueId(),
+                                session,
+                                managers.get(player.getUniqueId()),
+                                (ip == null ? null : ip.getAddress()));
+                        CurrentPlatform.connectPlayer(modulePlayer, player);
+
+                        SessionInitializationEvent event = new SessionInitializationEvent(modulePlayer, session, null);
+                        ModulePlugin.callEvent(event);
+
+                        sessions.put(player.getUniqueId(), session);
+                    }
+                } else {
                     plugin.getPluginLoader().disablePlugin(plugin);
                     throw new IllegalStateException("Cannot initialize user with a null session manager");
-                } else {
-                    session.initialize();
-
-                    SessionInitializationEvent event = new SessionInitializationEvent(fromPlayer(player), session, null);
-                    ModulePlugin.callEvent(event);
-
-                    sessions.put(player.getUniqueId(), session);
                 }
-            } else {
-                plugin.getPluginLoader().disablePlugin(plugin);
-                throw new IllegalStateException("Cannot initialize user with a null session manager");
             }
-        }
 
-        if (CurrentPlatform.isValidAccountManager()) {
-            AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, plugin.getServer().getOfflinePlayer(player.getUniqueId()));
-
-            if (manager == null) {
-                plugin.getPluginLoader().disablePlugin(plugin);
-                throw new IllegalStateException("Cannot initialize user with a null player account manager");
-            } else {
-                AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                database.assign(StringUtils.stripColor(player.getName()));
-                database.assign(StringUtils.stripColor(player.getDisplayName()));
-                database.assign(StringUtils.stripColor(player.getPlayerListName()));
-
-                //Try to fix the empty manager values that are
-                //required
-                if (manager.exists()) {
-                    String name = manager.getName();
-                    AccountID id = manager.getUUID();
-
-                    if (StringUtils.isNullOrEmpty(name))
-                        manager.setName(StringUtils.stripColor(player.getDisplayName()));
-
-                    if (StringUtils.isNullOrEmpty(id.getId()))
-                        manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
-                }
-
-                managers.put(player.getUniqueId(), manager);
-            }
+            UserDatabase.insert(player, this);
         } else {
-            plugin.getPluginLoader().disablePlugin(plugin);
-            throw new IllegalStateException("Cannot initialize user with an invalid player account manager");
+            ModulePlayer modulePlayer = CurrentPlatform.getServer().getPlayer(player.getUniqueId());
+            if (modulePlayer == null || modulePlayer.getAddress() == null) {
+                InetSocketAddress ip = player.getAddress();
+
+                modulePlayer = new ModulePlayer(
+                        player.getName(),
+                        player.getUniqueId(),
+                        sessions.get(player.getUniqueId()),
+                        managers.get(player.getUniqueId()),
+                        (ip == null ? null : ip.getAddress()));
+                CurrentPlatform.connectPlayer(modulePlayer, player);
+            }
         }
     }
 
@@ -144,30 +174,10 @@ public final class User {
     }
 
     /**
-     * Get the player session
-     *
-     * @param player the player
-     * @return the player session
-     */
-    public static ClientSession getSession(final Player player) {
-        return sessions.get(player.getUniqueId());
-    }
-
-    /**
-     * Get the player account manager
-     *
-     * @param player the player
-     * @return the player account manager
-     */
-    public static AccountManager getManager(final Player player) {
-        return managers.getOrDefault(player.getUniqueId(), CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, player));
-    }
-
-    /**
      * Apply the user the "LockLoginUser" metadata
      * value
      */
-    public synchronized final void applyLockLoginUser() {
+    public synchronized void applyLockLoginUser() {
         trySync(() -> player.setMetadata("LockLoginUser", new FixedMetadataValue(plugin, player.getUniqueId().toString())));
     }
 
@@ -176,7 +186,7 @@ public final class User {
      *
      * @param status the temp spectator status
      */
-    public synchronized final void setTempSpectator(final boolean status) {
+    public synchronized void setTempSpectator(final boolean status) {
         trySync(() -> {
             if (status) {
                 temp_spectator.put(player.getUniqueId(), player.getGameMode());
@@ -191,7 +201,7 @@ public final class User {
     /**
      * Save the current player potion effects
      */
-    public synchronized final void savePotionEffects() {
+    public synchronized void savePotionEffects() {
         trySync(() -> {
             if (!effects.containsKey(player.getUniqueId()))
                 effects.put(player.getUniqueId(), player.getActivePotionEffects());
@@ -202,7 +212,7 @@ public final class User {
      * Apply the session potion effect
      * types
      */
-    public synchronized final void applySessionEffects() {
+    public synchronized void applySessionEffects() {
         trySync(() -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             List<PotionEffect> apply = new ArrayList<>();
@@ -210,9 +220,9 @@ public final class User {
                 LoginConfig login = config.loginOptions();
 
                 if (login.blindEffect()) {
-                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * login.timeOut(), 5, false, false);
+                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (login.timeOut() + 4), 5, false, false);
                     if (login.nauseaEffect()) {
-                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * login.timeOut(), 5, false, false);
+                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (login.timeOut() + 4), 5, false, false);
                         apply.add(nausea);
                     }
                     apply.add(blind);
@@ -221,9 +231,9 @@ public final class User {
                 RegisterConfig register = config.registerOptions();
 
                 if (register.blindEffect()) {
-                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * register.timeOut(), 5, false, false);
+                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (register.timeOut() + 4), 5, false, false);
                     if (register.nauseaEffect()) {
-                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * register.timeOut(), 5, false, false);
+                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (register.timeOut() + 4), 5, false, false);
                         apply.add(nausea);
                     }
                     apply.add(blind);
@@ -238,7 +248,7 @@ public final class User {
     /**
      * Restore the player potion effects
      */
-    public synchronized final void restorePotionEffects() {
+    public synchronized void restorePotionEffects() {
         trySync(() -> {
             player.getActivePotionEffects().forEach(effect -> {
                 try {
@@ -263,7 +273,7 @@ public final class User {
      * Remove the user the "LockLoginUser" metadata
      * value
      */
-    public final void removeLockLoginUser() {
+    public void removeLockLoginUser() {
         trySync(() -> player.removeMetadata("LockLoginUser", plugin));
     }
 
@@ -272,7 +282,7 @@ public final class User {
      *
      * @param message the message to send
      */
-    public final void send(final String message) {
+    public void send(final String message) {
         String[] parsed = parseMessage(message);
 
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -295,7 +305,7 @@ public final class User {
      *
      * @param message the message to send
      */
-    public final void send(final TextComponent message) {
+    public void send(final TextComponent message) {
         player.spigot().sendMessage(message);
     }
 
@@ -305,7 +315,7 @@ public final class User {
      * @param title    the title to send
      * @param subtitle the subtitle to send
      */
-    public final void send(final String title, final String subtitle) {
+    public void send(final String title, final String subtitle) {
         TitleMessage titleMessage = new TitleMessage(player, title, subtitle);
         titleMessage.send(0, 5, 0);
     }
@@ -315,7 +325,7 @@ public final class User {
      *
      * @param reason the reason of the kick
      */
-    public synchronized final void kick(final String reason) {
+    public synchronized void kick(final String reason) {
         trySync(() -> {
             String[] parsed = parseMessage(reason);
 
@@ -334,7 +344,7 @@ public final class User {
     /**
      * Remove the user session check
      */
-    public final void removeSessionCheck() {
+    public void removeSessionCheck() {
         sessionChecks.remove(player.getUniqueId());
     }
 
@@ -343,8 +353,38 @@ public final class User {
      *
      * @return the client session checker
      */
-    public final SessionCheck<Player> getChecker() {
-        return sessionChecks.computeIfAbsent(player.getUniqueId(), (session) -> new SessionCheck<>(plugin, fromPlayer(player), new BossMessage(plugin, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN)));
+    public SessionCheck<Player> getChecker() {
+        SessionCheck<Player> checker = sessionChecks.getOrDefault(player.getUniqueId(), null);
+        if (checker == null) {
+            ModulePlayer sender = getModule();
+
+            if (sender == null) {
+                InetSocketAddress ip = player.getAddress();
+
+                sender = new ModulePlayer(
+                        player.getName(),
+                        player.getUniqueId(),
+                        getSession(),
+                        managers.get(player.getUniqueId()),
+                        (ip != null ? ip.getAddress() : null));
+
+                CurrentPlatform.connectPlayer(sender, player);
+            }
+
+            checker = new SessionCheck<>(plugin, sender, new BossMessage(plugin, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN));
+            sessionChecks.put(player.getUniqueId(), checker);
+        }
+
+        return checker;
+    }
+
+    /**
+     * Get the module player of this player
+     *
+     * @return this player module player
+     */
+    public ModulePlayer getModule() {
+        return CurrentPlatform.getServer().getPlayer(player.getUniqueId());
     }
 
     /**
@@ -354,23 +394,8 @@ public final class User {
      * @throws IllegalStateException if the current manager is null
      */
     @NotNull
-    public final AccountManager getManager() throws IllegalStateException {
-        if (CurrentPlatform.isValidAccountManager()) {
-            try {
-                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, player);
-
-                if (manager != null) {
-                    managers.put(player.getUniqueId(), manager);
-                    return manager;
-                } else {
-                    throw new IllegalStateException("Cannot get user manager with null player account manager, does it has an OfflinePlayer constructor?");
-                }
-            } catch (Throwable ex) {
-                throw new IllegalStateException("Failed to initialize user account with current account manager, does it has an OfflinePlayer constructor?");
-            }
-        } else {
-            throw new IllegalStateException("Cannot get user manager with an invalid player account manager");
-        }
+    public AccountManager getManager() throws IllegalStateException {
+        return managers.get(player.getUniqueId());
     }
 
     /**
@@ -379,7 +404,7 @@ public final class User {
      * @return the player session
      */
     @NotNull
-    public final ClientSession getSession() {
+    public ClientSession getSession() {
         return sessions.get(player.getUniqueId());
     }
 
@@ -389,7 +414,7 @@ public final class User {
      * @return the user google auth token
      * factory
      */
-    public final GoogleAuthFactory getTokenFactory() {
+    public GoogleAuthFactory getTokenFactory() {
         return new GoogleAuthFactory(player.getUniqueId(), StringUtils.toColor(player.getDisplayName()));
     }
 
@@ -400,11 +425,11 @@ public final class User {
      *
      * @return if the current player is LockLogin user
      */
-    public final boolean isLockLoginUser() {
+    public boolean isLockLoginUser() {
         return player.hasMetadata("LockLoginUser");
     }
 
-    public final void setRegistered(final boolean status) {
+    public void setRegistered(final boolean status) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.isBungeeCord()) {
             if (status) {

@@ -42,7 +42,7 @@ public final class Session extends ClientSession {
      * Initialize the session
      */
     @Override
-    public final void initialize() {
+    public void initialize() {
         initialized = Instant.now();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();

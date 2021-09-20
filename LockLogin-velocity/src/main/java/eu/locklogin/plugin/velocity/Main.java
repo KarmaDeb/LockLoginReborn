@@ -27,9 +27,9 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.velocity.plugin.Manager;
@@ -57,13 +57,15 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.12.40", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.13.0", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " "));
+
+    private static Console console;
 
     static ProxyServer server;
     static PluginContainer container;
@@ -75,6 +77,9 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
+        console = new Console(this).messageRequest((message) -> server.getConsoleCommandSource().sendMessage(
+                Component.text().content(StringUtils.toColor(message)).build()));
+
         APISource.setSourceProvider(this);
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(Main.class);
@@ -207,7 +212,11 @@ public class Main implements KarmaBootstrap, KarmaSource {
                             DataSender.send(player, pin);
                             DataSender.send(player, gauth);
 
-                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API, UserAuthenticateEvent.Result.SUCCESS, LockLogin.fromPlayer(player), "", null);
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                                    UserAuthenticateEvent.Result.SUCCESS,
+                                    user.getModule(),
+                                    "",
+                                    null);
                             ModulePlugin.callEvent(event);
 
                             user.checkServer(0);
@@ -359,5 +368,10 @@ public class Main implements KarmaBootstrap, KarmaSource {
             default:
                 return host + "release.kupdter";
         }
+    }
+
+    @Override
+    public Console console() {
+        return console;
     }
 }

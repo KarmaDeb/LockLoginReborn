@@ -31,8 +31,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.fromPlayer;
-
 public final class OtherListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -62,7 +60,7 @@ public final class OtherListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onDamageByEntity(EntityDamageByEntityEvent e) {
+    public void onDamageByEntity(EntityDamageByEntityEvent e) {
         if (!e.isCancelled()) {
             Entity target = e.getEntity();
             Entity damager = e.getDamager();
@@ -81,7 +79,7 @@ public final class OtherListener implements Listener {
                                 Player attacker = (Player) damager;
                                 User at_user = new User(attacker);
 
-                                at_user.send(messages.prefix() + messages.notVerified(fromPlayer(victim)));
+                                at_user.send(messages.prefix() + messages.notVerified(tar_user.getModule()));
                                 e.setCancelled(true);
                             } else {
                                 e.setCancelled(true);
@@ -105,7 +103,7 @@ public final class OtherListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onMove(PlayerMoveEvent e) {
+    public void onMove(PlayerMoveEvent e) {
         if (!e.isCancelled()) {
             Player player = e.getPlayer();
             User user = new User(player);

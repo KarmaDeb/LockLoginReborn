@@ -30,8 +30,8 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
@@ -92,7 +92,8 @@ public final class MessageListener {
                                                 DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
 
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS), fromPlayer(player),
+                                                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
+                                                        user.getModule(),
                                                         (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                                 ModulePlugin.callEvent(event);
 
@@ -112,7 +113,9 @@ public final class MessageListener {
                                                 if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
                                                     DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
 
-                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.ERROR, fromPlayer(player),
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                            UserAuthenticateEvent.Result.ERROR,
+                                                            user.getModule(),
                                                             (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                                     ModulePlugin.callEvent(event);
 

@@ -37,21 +37,8 @@ public final class LockedAccount {
     /**
      * Lock the account
      */
-    public final void lock(final String administrator) {
-        //Remove the lock file if has been created as directory
-        File file = lockedFile.getFile();
-
-        if (file.exists() && file.isDirectory()) {
-            try {
-                Files.delete(file.toPath());
-            } catch (Throwable ex) {
-                return;
-            }
-        }
-
-        if (!file.exists()) {
-            lockedFile.create();
-        }
+    public void lock(final String administrator) {
+        lockedFile.create();
 
         lockedFile.set("ISSUER", administrator);
         lockedFile.set("DATE", Instant.now());
@@ -60,7 +47,7 @@ public final class LockedAccount {
     /**
      * Unlock the account
      */
-    public final boolean unlock() {
+    public boolean unlock() {
         try {
             return Files.deleteIfExists(lockedFile.getFile().toPath());
         } catch (Throwable ex) {
@@ -73,7 +60,7 @@ public final class LockedAccount {
      *
      * @return the locked account data
      */
-    public final LockedData getData() {
+    public LockedData getData() {
         String administrator = lockedFile.getString("ISSUER", "NONE");
         Instant date = Instant.parse(lockedFile.getString("DATE", Instant.now().toString()));
 

@@ -2,6 +2,9 @@ package eu.locklogin.api.module.plugin.api.event.server;
 
 import eu.locklogin.api.module.PluginModule;
 
+/**
+ * This event is fired when a module sends a message to the server
+ */
 public final class ModuleServerMessageEvent extends ServerSendMessageEvent {
 
     private final PluginModule module;
@@ -59,8 +62,17 @@ public final class ModuleServerMessageEvent extends ServerSendMessageEvent {
      *
      * @return the amount of replacements
      */
-    public int getReplaces() {
+    public int getReplacesAmount() {
         return replaces.length;
+    }
+
+    /**
+     * Get the message replaces
+     *
+     * @return the message replaces
+     */
+    public Object[] getReplaces() {
+        return replaces;
     }
 
     /**

@@ -19,6 +19,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public final class CurrentPlatform {
     private static Class<?> main;
 
     private static String prefix = "$";
-    private static String karma_api = "1.2.4";
+    private static String karma_api = "1.3.1-SNAPSHOT";
 
     private static Class<? extends AccountManager> manager;
     private static Class<? extends AccountManager> default_manager;
@@ -57,6 +58,7 @@ public final class CurrentPlatform {
     private static boolean online;
 
     private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
+    private final static ModuleServer server = new ModuleServer();
 
     /**
      * Set the current account manager
@@ -176,20 +178,26 @@ public final class CurrentPlatform {
     /**
      * Connect a new player to the plugin
      *
-     * @param id the player uuid
+     * @param mp the module player
      * @param player the player
      */
-    public static void connectPlayer(final UUID id, final Object player) {
-        players.put(id, player);
+    public static void connectPlayer(final ModulePlayer mp, final Object player) {
+        players.put(mp.getUUID(), player);
+        server.connectPlayer(mp);
     }
 
     /**
      * Disconnect a player from the plugin
      *
-     * @param id the player uuid
+     * @param mp the player
      */
-    public static void disconnectPlayer(final UUID id) {
-        players.remove(id);
+    public static void disconnectPlayer(final ModulePlayer mp) {
+        players.remove(mp.getUUID());
+        server.disconnectPlayer(mp);
+    }
+
+    public static ModuleServer getServer() {
+        return server;
     }
 
     /**

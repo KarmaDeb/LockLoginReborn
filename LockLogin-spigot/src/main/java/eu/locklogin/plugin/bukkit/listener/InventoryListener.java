@@ -137,7 +137,7 @@ public final class InventoryListener implements Listener {
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     BungeeDataStorager storager = new BungeeDataStorager();
 
-                    if (!StringUtils.isNullOrEmpty(user.getManager().getPin()) || storager.needsPinConfirmation(player)) {
+                    if (user.getManager().hasPin() || storager.needsPinConfirmation(player)) {
                         PinInventory pin = new PinInventory(player);
                         pin.open();
                     }

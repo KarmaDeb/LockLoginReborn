@@ -157,7 +157,11 @@ public final class PinInventory implements InventoryHolder {
                         }
 
                         if (manager.has2FA()) {
-                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS_TEMP, fromPlayer(player), messages.gAuthInstructions(), null);
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                    UserAuthenticateEvent.Result.SUCCESS_TEMP,
+                                    user.getModule(),
+                                    messages.gAuthInstructions(),
+                                    null);
                             ModulePlugin.callEvent(event);
 
                             user.send(messages.prefix() + event.getAuthMessage());
@@ -165,7 +169,11 @@ public final class PinInventory implements InventoryHolder {
                         } else {
                             user.setTempSpectator(false);
 
-                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.SUCCESS, fromPlayer(player), messages.logged(), null);
+                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                    UserAuthenticateEvent.Result.SUCCESS,
+                                    user.getModule(),
+                                    messages.logged(),
+                                    null);
                             ModulePlugin.callEvent(event);
 
                             if (config.takeBack()) {
@@ -174,8 +182,7 @@ public final class PinInventory implements InventoryHolder {
                             }
 
                             ClientVisor visor = new ClientVisor(player);
-                            visor.unVanish();
-                            visor.checkVanish();
+                            visor.show();
 
                             user.send(messages.prefix() + event.getAuthMessage());
                             session.setPinLogged(true);
@@ -186,7 +193,11 @@ public final class PinInventory implements InventoryHolder {
 
                         close();
                     } else {
-                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN, UserAuthenticateEvent.Result.FAILED, fromPlayer(player), messages.incorrectPin(), null);
+                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                UserAuthenticateEvent.Result.FAILED,
+                                user.getModule(),
+                                messages.incorrectPin(),
+                                null);
                         ModulePlugin.callEvent(event);
 
                         user.send(messages.prefix() + event.getAuthMessage());

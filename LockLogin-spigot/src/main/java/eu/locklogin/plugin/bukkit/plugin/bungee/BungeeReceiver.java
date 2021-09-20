@@ -155,8 +155,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     session.set2FALogged(true);
 
                                     ClientVisor visor = new ClientVisor(player);
-                                    visor.unVanish();
-                                    visor.checkVanish();
+                                    visor.show();
                                     break;
                                 case CLOSE:
                                     if (session.isLogged()) {

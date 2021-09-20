@@ -14,85 +14,119 @@ package eu.locklogin.plugin.bukkit.util.player;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.ClientSession;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.LinkedHashSet;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.tryAsync;
+import static eu.locklogin.plugin.bukkit.LockLogin.trySync;
 
 @SuppressWarnings("deprecation")
 public final class ClientVisor {
 
     private final Player player;
 
-    private final static Set<UUID> vanished = new LinkedHashSet<>();
+    private final static Map<UUID, Set<UUID>> vanished = new ConcurrentHashMap<>();
 
     /**
      * Initialize the client visor
      *
-     * @param _player the player
+     * @param cl the client
      */
-    public ClientVisor(final Player _player) {
-        player = _player;
+    public ClientVisor(final Player cl) {
+        player = cl;
     }
 
     /**
-     * Vanish the specified player
+     * Hide the player
      */
-    public final void vanish() {
-        /*
-        vanished.add(player.getUniqueId());
+    public void hide() {
+        Set<UUID> affected = new HashSet<>();
+        Set<UUID> tarAffected;
 
-        for (Player online : plugin.getServer().getOnlinePlayers()) {
-            player.hidePlayer(online);
-            online.hidePlayer(player);
-        }*/
+        for (Player connected : Bukkit.getOnlinePlayers()) {
+            tarAffected = vanished.getOrDefault(connected.getUniqueId(), new HashSet<>());
+
+            if (connected.canSee(player)) {
+                affected.add(connected.getUniqueId());
+            }
+
+            if (player.canSee(connected)) {
+                tarAffected.add(player.getUniqueId());
+                vanished.put(connected.getUniqueId(), tarAffected);
+            }
+        }
+
+        vanished.put(player.getUniqueId(), affected);
+
+        check();
     }
 
     /**
-     * Show the player again
-     * to other players
+     * Show the player
      */
-    public final void unVanish() {
-        /*
-        vanished.remove(player.getUniqueId());
+    public void show() {
+        Set<UUID> affected = vanished.getOrDefault(player.getUniqueId(), new HashSet<>());
 
-        for (Player online : plugin.getServer().getOnlinePlayers()) {
-            player.showPlayer(online);
-            online.showPlayer(player);
-        }*/
+        for (UUID affect : affected) {
+            Set<UUID> tarAffected = vanished.getOrDefault(affect, new HashSet<>());
+
+            tarAffected.remove(player.getUniqueId());
+            vanished.put(affect, tarAffected);
+        }
+
+        check();
     }
 
     /**
-     * Check for all vanished players
+     * Check everyone can see everyone
      */
-    public final void checkVanish() {
-        /*
-        Player last = null;
+    private void check() {
+        tryAsync(() -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                User user = new User(player);
+                ClientSession session = user.getSession();
 
-        for (Player online : plugin.getServer().getOnlinePlayers()) {
-            if (!vanished.contains(online.getUniqueId())) {
-                for (UUID id : vanished) {
-                    Player vanished = plugin.getServer().getPlayer(id);
-                    if (vanished != null && vanished.isOnline()) {
-                        if (online.canSee(vanished) || vanished.canSee(online)) {
-                            online.hidePlayer(vanished);
-                            vanished.hidePlayer(online);
+                Set<UUID> affected = vanished.getOrDefault(player.getUniqueId(), new HashSet<>());
+
+                if (!affected.isEmpty()) {
+                    for (UUID sub : affected) {
+                        OfflinePlayer offline = Bukkit.getOfflinePlayer(sub);
+                        Player connected = offline.getPlayer();
+                        if (connected != null) {
+                            User target = new User(connected);
+                            ClientSession tarSession = target.getSession();
+
+                            if (session.isLogged() && session.isTempLogged()) {
+                                if (tarSession.isLogged() && tarSession.isTempLogged()) {
+                                    trySync(() -> {
+                                        connected.showPlayer(player);
+                                        player.showPlayer(connected);
+                                    });
+
+                                    affected.remove(sub);
+                                }
+                            } else {
+                                trySync(() -> {
+                                    connected.hidePlayer(player);
+                                    player.hidePlayer(connected);
+                                });
+                            }
+                        } else {
+                            affected.remove(sub);
                         }
                     }
+
+                    vanished.put(player.getUniqueId(), affected);
                 }
             }
-
-            if (last != null) {
-                if (!vanished.contains(last.getUniqueId()) && !vanished.contains(online.getUniqueId())) {
-                    if (!online.canSee(last) || !last.canSee(online)) {
-                        online.showPlayer(last);
-                        last.showPlayer(online);
-                    }
-                }
-            }
-
-            last = online;
-        }*/
+        });
     }
 }

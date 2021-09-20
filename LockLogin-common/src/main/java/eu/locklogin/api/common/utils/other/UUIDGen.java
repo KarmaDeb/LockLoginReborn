@@ -60,7 +60,7 @@ public final class UUIDGen {
             } catch (Throwable ex) {
                 return fixUUID(UUIDObject.get("id").toString());
             }
-        } catch (Throwable e) {
+        } catch (Throwable ex) {
             return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
         }
     }

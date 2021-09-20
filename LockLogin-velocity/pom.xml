@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.40</version>
+        <version>1.13.0</version>
     </parent>
 
     <artifactId>LockLogin-velocity</artifactId>
@@ -23,7 +23,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -111,7 +111,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>
@@ -197,12 +197,6 @@
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
             <version>1.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Velocity</artifactId>
-            <version>${project.karmaapi}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

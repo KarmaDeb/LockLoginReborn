@@ -147,6 +147,11 @@ public final class SessionCheck<T> implements Runnable {
                 if (boss != null)
                     boss.cancel();
 
+                ClientSession session = player.getSession();
+
+                if (!session.isLogged())
+                    player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+
                 under_check.remove(player.getUUID());
                 keeper.destroy();
             });
@@ -187,7 +192,7 @@ public final class SessionCheck<T> implements Runnable {
     /**
      * Cancel the player session check
      */
-    public final void cancelCheck() {
+    public void cancelCheck() {
         cancel_queue.add(player.getUUID());
     }
 
@@ -196,7 +201,7 @@ public final class SessionCheck<T> implements Runnable {
      *
      * @return if the player is under session check
      */
-    public final boolean isUnderCheck() {
+    public boolean isUnderCheck() {
         return under_check.contains(player.getUUID());
     }
 }

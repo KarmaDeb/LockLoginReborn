@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.12.40</version>
+        <version>1.13.0</version>
     </parent>
 
     <artifactId>LockLogin-spigot</artifactId>
@@ -53,12 +53,6 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Bukkit</artifactId>
-            <version>${project.karmaapi}</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>

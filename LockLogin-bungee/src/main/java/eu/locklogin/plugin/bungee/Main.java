@@ -18,13 +18,16 @@ import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
+import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.ResourceDownloader;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
+import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
@@ -32,6 +35,7 @@ import java.io.File;
 public final class Main extends Plugin implements KarmaSource {
 
     private final KarmaBootstrap plugin;
+    private static Console console;
 
     private final static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
@@ -39,6 +43,9 @@ public final class Main extends Plugin implements KarmaSource {
             .getPath().replaceAll("%20", " "));
 
     public Main() throws Throwable {
+        console = new Console(this).messageRequest((message) -> getProxy().getConsole().sendMessage(
+                TextComponent.fromLegacyText(StringUtils.toColor(message))));
+
         APISource.setSourceProvider(this);
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
@@ -55,8 +62,7 @@ public final class Main extends Plugin implements KarmaSource {
                 "locklogin.injar",
                 downloadURL,
                 "plugin", getDescription().getVersion());
-        if (!downloader.isDownloaded())
-            downloader.download();
+        downloader.download();
 
         SubJarLoader loader = new SubJarLoader(getClass().getClassLoader(), downloader.getDestFile());
         plugin = loader.instantiate("eu.locklogin.plugin.bungee.MainBootstrap", Plugin.class, this);
@@ -110,5 +116,10 @@ public final class Main extends Plugin implements KarmaSource {
             default:
                 return host + "release.kupdter";
         }
+    }
+
+    @Override
+    public Console console() {
+        return console;
     }
 }
