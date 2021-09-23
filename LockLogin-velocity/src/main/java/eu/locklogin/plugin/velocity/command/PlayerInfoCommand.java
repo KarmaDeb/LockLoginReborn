@@ -51,10 +51,11 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public PlayerInfoCommand(String label) {
-        super(label);
+    public PlayerInfoCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**

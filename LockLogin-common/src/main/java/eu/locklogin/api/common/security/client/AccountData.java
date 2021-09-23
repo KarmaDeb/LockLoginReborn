@@ -18,7 +18,7 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

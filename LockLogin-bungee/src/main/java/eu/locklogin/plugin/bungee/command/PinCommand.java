@@ -28,6 +28,8 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
+import java.util.List;
+
 import static eu.locklogin.plugin.bungee.LockLogin.console;
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
@@ -38,9 +40,10 @@ public class PinCommand extends Command {
      * Construct a new command with no permissions or aliases.
      *
      * @param name the name of this command
+     * @param aliases the command aliases
      */
-    public PinCommand(String name) {
-        super(name);
+    public PinCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**

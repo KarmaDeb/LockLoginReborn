@@ -19,6 +19,7 @@ import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
@@ -72,7 +73,7 @@ public final class QuitListener implements Listener {
                 user.removeSessionCheck();
                 UserDatabase.removeUser(player);
 
-                UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
+                Event event = new UserQuitEvent(user.getModule(), e);
                 ModulePlugin.callEvent(event);
             }
         } else {
@@ -110,7 +111,7 @@ public final class QuitListener implements Listener {
             user.removeSessionCheck();
             UserDatabase.removeUser(player);
 
-            UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
+            Event event = new UserQuitEvent(user.getModule(), e);
             ModulePlugin.callEvent(event);
         }
     }

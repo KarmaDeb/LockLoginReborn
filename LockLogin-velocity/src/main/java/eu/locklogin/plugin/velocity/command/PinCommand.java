@@ -28,6 +28,8 @@ import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 
+import java.util.List;
+
 import static eu.locklogin.plugin.velocity.LockLogin.console;
 import static eu.locklogin.plugin.velocity.LockLogin.properties;
 
@@ -37,10 +39,11 @@ public class PinCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public PinCommand(String label) {
-        super(label);
+    public PinCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**

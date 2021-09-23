@@ -15,6 +15,7 @@ package eu.locklogin.api.account;
  */
 
 import eu.locklogin.api.module.plugin.api.event.plugin.MigrationRequestEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 
 /**
@@ -41,7 +42,7 @@ public final class MigrationManager {
      * Initialize the migration
      */
     public void startMigration() {
-        MigrationRequestEvent event = new MigrationRequestEvent(current, target, null);
+        Event event = new MigrationRequestEvent(current, target, null);
         ModulePlugin.callEvent(event);
 
         if (!target.exists())

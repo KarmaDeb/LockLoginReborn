@@ -39,10 +39,11 @@ public final class AliasCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public AliasCommand(String label) {
-        super(label);
+    public AliasCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**

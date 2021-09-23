@@ -15,7 +15,7 @@ package eu.locklogin.api.account;
  */
 
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import java.io.File;
 

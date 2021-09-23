@@ -18,6 +18,7 @@ import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
@@ -26,6 +27,7 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.AsyncScheduler;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
@@ -64,7 +66,7 @@ public final class LockLoginCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        AsyncScheduler.queue(() -> {
+        APISource.asyncScheduler().queue(() -> {
             PluginMessages messages = CurrentPlatform.getMessages();
 
             VersionUpdater updater = Manager.getUpdater();
@@ -85,7 +87,7 @@ public final class LockLoginCommand implements CommandExecutor {
                             case "applyupdates":
                                 if (player.hasPermission(applyUpdates())) {
                                     //BukkitManager.update(sender);
-                                    UpdateRequestEvent event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
+                                    Event event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
                                     ModulePlugin.callEvent(event);
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(applyUpdates()));
@@ -254,7 +256,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                 FileReloader.reload(null);
                                 break;
                             case "applyupdates":
-                                UpdateRequestEvent event = new UpdateRequestEvent(sender, true, null);
+                                Event event = new UpdateRequestEvent(sender, true, null);
                                 ModulePlugin.callEvent(event);
                                 break;
                             case "modules":

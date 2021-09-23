@@ -26,6 +26,7 @@ import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
 import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.URLUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin implements KarmaSource {
@@ -36,7 +37,7 @@ public final class Main extends JavaPlugin implements KarmaSource {
     public Main() throws Throwable {
         console = new Console(this).messageRequest((message) -> getServer().getConsoleSender().sendMessage(StringUtils.toColor(message)));
 
-        APISource.setSourceProvider(this);
+        APISource.setProvider(this);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setPlatform(Platform.BUKKIT);
         CurrentPlatform.setOnline(getServer().getOnlineMode());
@@ -97,15 +98,19 @@ public final class Main extends JavaPlugin implements KarmaSource {
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        switch (config.getUpdaterOptions().getChannel()) {
-            case SNAPSHOT:
-                return host + "snapshot.kupdter";
-            case RC:
-                return host + "candidate.kupdter";
-            case RELEASE:
-            default:
-                return host + "release.kupdter";
+        if (config != null) {
+            switch (config.getUpdaterOptions().getChannel()) {
+                case SNAPSHOT:
+                    return host + "snapshot.kupdter";
+                case RC:
+                    return host + "candidate.kupdter";
+                case RELEASE:
+                default:
+                    return host + "release.kupdter";
+            }
         }
+
+        return host + "release.kupdter";
     }
 
     @Override

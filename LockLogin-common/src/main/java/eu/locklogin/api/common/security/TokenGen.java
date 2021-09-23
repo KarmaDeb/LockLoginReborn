@@ -23,7 +23,7 @@ public final class TokenGen {
      * @param password the keys password
      */
     public static void generate(final String password) {
-        TokenStorage storage = new TokenStorage(APISource.get());
+        TokenStorage storage = new TokenStorage(APISource.getSource());
 
         boolean generate = false;
         try {
@@ -52,7 +52,7 @@ public final class TokenGen {
             UUID tokenID = storage.store(generated, password, calendar.toInstant());
             APISource.getConsole().send("Communication token has been generated with ID {0}", Level.INFO, tokenID.toString());
 
-            KarmaFile idData = new KarmaFile(APISource.get(), "data.lldb", "cache", "keys");
+            KarmaFile idData = new KarmaFile(APISource.getSource(), "data.lldb", "cache", "keys");
             idData.set("LOCAL_TOKEN", tokenID.toString());
         }
     }
@@ -63,7 +63,7 @@ public final class TokenGen {
      * @param name the node name
      */
     public static void assignDefaultNodeName(final String name) {
-        KarmaFile idData = new KarmaFile(APISource.get(), "data.lldb", "cache", "keys");
+        KarmaFile idData = new KarmaFile(APISource.getSource(), "data.lldb", "cache", "keys");
         idData.set("DEFAULT_NODE", name);
     }
 
@@ -75,9 +75,9 @@ public final class TokenGen {
      * @param password the node password
      */
     public static void assign(final String token, final String node, final String password, final Instant expiration) throws Exception {
-        KarmaFile idData = new KarmaFile(APISource.get(), "data.lldb", "cache", "keys");
+        KarmaFile idData = new KarmaFile(APISource.getSource(), "data.lldb", "cache", "keys");
 
-        TokenStorage storage = new TokenStorage(APISource.get());
+        TokenStorage storage = new TokenStorage(APISource.getSource());
         UUID tokenID = storage.store(token, password, expiration);
 
         idData.set(node, tokenID);
@@ -89,7 +89,7 @@ public final class TokenGen {
      * @return the default node name
      */
     public static String requestNode() {
-        KarmaFile idData = new KarmaFile(APISource.get(), "data.lldb", "cache", "keys");
+        KarmaFile idData = new KarmaFile(APISource.getSource(), "data.lldb", "cache", "keys");
         return idData.getString("DEFAULT_NODE", StringUtils.randomString(3, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE));
     }
 
@@ -101,7 +101,7 @@ public final class TokenGen {
      * @return the token
      */
     public static String request(final String node, final String password) {
-        TokenStorage storage = new TokenStorage(APISource.get());
+        TokenStorage storage = new TokenStorage(APISource.getSource());
         try {
             return storage.load(find(node), password);
         } catch (TokenNotFoundException ex) {
@@ -122,7 +122,7 @@ public final class TokenGen {
      * @return the token UUID
      */
     public static UUID find(final String node) {
-        KarmaFile idData = new KarmaFile(APISource.get(), "data.lldb", "cache", "keys");
+        KarmaFile idData = new KarmaFile(APISource.getSource(), "data.lldb", "cache", "keys");
         return UUID.fromString(idData.getString(node, UUID.randomUUID().toString()));
     }
 
@@ -133,7 +133,7 @@ public final class TokenGen {
      * @return the token expiration
      */
     public static Instant expiration(final String node) {
-        TokenStorage storage = new TokenStorage(APISource.get());
+        TokenStorage storage = new TokenStorage(APISource.getSource());
         return storage.expiration(find(node));
     }
 

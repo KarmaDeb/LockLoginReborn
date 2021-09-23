@@ -37,6 +37,7 @@ import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
@@ -181,7 +182,7 @@ public final class JoinListener implements Listener {
                             user.checkServer(0);
                         }
 
-                        GenericJoinEvent event = new UserPostJoinEvent(user.getModule(), null);
+                        Event event = new UserPostJoinEvent(user.getModule(), null);
                         ModulePlugin.callEvent(event);
 
                         if (event.isHandled()) {
@@ -221,7 +222,7 @@ public final class JoinListener implements Listener {
         if (!client.isVerified()) {
             client.setVerified(true);
 
-            PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+            Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
                     PluginIpValidationEvent.ValidationResult.SUCCESS,
                     "Plugin added the IP to the IP validation queue", e);
             ModulePlugin.callEvent(ipEvent);
@@ -355,7 +356,7 @@ public final class JoinListener implements Listener {
                             }
                         }
 
-                        GenericJoinEvent event = new UserPreJoinEvent(ip, gen_uuid, conn_name, e);
+                        Event event = new UserPreJoinEvent(ip, gen_uuid, conn_name, e);
                         ModulePlugin.callEvent(event);
 
                         if (event.isHandled()) {
@@ -407,7 +408,7 @@ public final class JoinListener implements Listener {
                 }
             }
 
-            GenericJoinEvent event = new UserJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
+            Event event = new UserJoinEvent(getIp(e.getConnection().getSocketAddress()), e.getConnection().getUniqueId(), e.getConnection().getName(), e);
             ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {

@@ -34,6 +34,7 @@ import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -45,9 +46,11 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.timer.AsyncScheduler;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.OfflinePlayer;
@@ -89,7 +92,7 @@ public final class JoinListener implements Listener {
             if (!client.isVerified()) {
                 client.setVerified(true);
 
-                PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                Event ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
                         PluginIpValidationEvent.ValidationResult.SUCCESS,
                         "Plugin added the IP to the IP validation queue", e);
                 ModulePlugin.callEvent(ipEvent);
@@ -259,7 +262,7 @@ public final class JoinListener implements Listener {
                         }
 
                         if (!config.isBungeeCord()) {
-                            GenericJoinEvent event = new UserPreJoinEvent(ip, tar_uuid, conn_name, e);
+                            Event event = new UserPreJoinEvent(ip, tar_uuid, conn_name, e);
                             ModulePlugin.callEvent(event);
 
                             if (event.isHandled()) {
@@ -294,34 +297,42 @@ public final class JoinListener implements Listener {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
 
-            User user = new User(player);
-            if (!user.isLockLoginUser())
-                user.applyLockLoginUser();
+            LateScheduler<Event> result = new AsyncLateScheduler<>();
+            tryAsync(() -> {
+                User user = new User(player);
+                if (!user.isLockLoginUser())
+                    user.applyLockLoginUser();
 
-            if (!config.isBungeeCord()) {
-                ClientSession session = user.getSession();
-                session.validate();
-                session.setPinLogged(false);
-                session.set2FALogged(false);
-                session.setLogged(false);
+                if (!config.isBungeeCord()) {
+                    ClientSession session = user.getSession();
+                    session.validate();
+                    session.setPinLogged(false);
+                    session.set2FALogged(false);
+                    session.setLogged(false);
 
-                //Automatically mark players as captcha verified if captcha is disabled
-                if (!config.captchaOptions().isEnabled())
-                    session.setCaptchaLogged(true);
+                    //Automatically mark players as captcha verified if captcha is disabled
+                    if (!config.captchaOptions().isEnabled())
+                        session.setCaptchaLogged(true);
 
-                //Check if the player has a session keeper active, if yes, restore his
-                //login status
-                forceSessionLogin(player);
+                    //Check if the player has a session keeper active, if yes, restore his
+                    //login status
+                    forceSessionLogin(player);
 
-                OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
+                    OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
-                GenericJoinEvent event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
-                ModulePlugin.callEvent(event);
-
-                if (event.isHandled()) {
-                    e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                    Event event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
+                    result.complete(event);
                 }
-            }
+            });
+            result.whenComplete((event) -> {
+                if (!config.isBungeeCord()) {
+                    ModulePlugin.callEvent(event);
+
+                    if (event.isHandled()) {
+                        e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                    }
+                }
+            });
         }
     }
 
@@ -347,72 +358,77 @@ public final class JoinListener implements Listener {
         if (!ipEvent.isHandled()) {
             switch (ipEvent.getResult()) {
                 case SUCCESS:
-                    ClientSession session = user.getSession();
+                    LateScheduler<Event> result = new AsyncLateScheduler<>();
 
-                    if (!config.isBungeeCord()) {
-                        user.savePotionEffects();
-                        user.applySessionEffects();
+                    tryAsync(() -> {
+                        ClientSession session = user.getSession();
 
-                        AsyncScheduler.queue(() -> {
+                        if (!config.isBungeeCord()) {
+                            user.savePotionEffects();
+                            user.applySessionEffects();
+
                             if (config.clearChat()) {
                                 for (int i = 0; i < 150; i++)
                                     player.sendMessage("");
                             }
-                        });
 
-                        String barMessage = messages.captcha(session.getCaptcha());
-                        try {
-                            if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-                                barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                        } catch (Throwable ignored) {
+                            String barMessage = messages.captcha(session.getCaptcha());
+                            try {
+                                if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                                    barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                            } catch (Throwable ignored) {
+                            }
+
+                            BarMessage bar = new BarMessage(player, barMessage);
+                            if (!session.isCaptchaLogged())
+                                bar.send(true);
+
+                            SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
+                                user.restorePotionEffects();
+
+                                bar.setMessage("");
+                                bar.stop();
+                            });
+
+                            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+
+                            if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+                                user.setTempSpectator(true);
+
+                            if (config.hideNonLogged()) {
+                                ClientVisor visor = new ClientVisor(player);
+                                if (!session.isLogged()) {
+                                    visor.hide();
+                                }
+                            }
+
+                            if (config.enableSpawn()) {
+                                trySync(() -> player.teleport(player.getWorld().getSpawnLocation()));
+
+                                Spawn spawn = new Spawn(player.getWorld());
+                                spawn.load().whenComplete(() -> spawn.teleport(player));
+                            }
                         }
 
-                        BarMessage bar = new BarMessage(player, barMessage);
-                        if (!session.isCaptchaLogged())
-                            bar.send(true);
-
-                        SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
-                            user.restorePotionEffects();
-
-                            bar.setMessage("");
-                            bar.stop();
-                        });
-
-                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-                    }
-
-                    if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
-                        user.setTempSpectator(true);
-
-                    if (config.hideNonLogged()) {
-                        ClientVisor visor = new ClientVisor(player);
-                        if (!session.isLogged()) {
-                            visor.hide();
+                        if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+                            if (config.takeBack()) {
+                                LastLocation location = new LastLocation(player);
+                                location.teleport();
+                            }
                         }
-                    }
 
-                    if (config.enableSpawn()) {
-                        Spawn spawn = new Spawn(player.getWorld());
-                        spawn.load();
+                        Event event = new UserPostJoinEvent(user.getModule(), e);
+                        result.complete(event);
+                    });
+                    result.whenComplete((event) -> {
+                        if (!config.isBungeeCord()) {
+                            ModulePlugin.callEvent(event);
 
-                        spawn.teleport(player);
-                    }
-
-                    if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
-                        if (config.takeBack()) {
-                            LastLocation location = new LastLocation(player);
-                            location.teleport();
+                            if (event.isHandled()) {
+                                user.kick(event.getHandleReason());
+                            }
                         }
-                    }
-
-                    if (!config.isBungeeCord()) {
-                        GenericJoinEvent event = new UserPostJoinEvent(user.getModule(), e);
-                        ModulePlugin.callEvent(event);
-
-                        if (event.isHandled()) {
-                            user.kick(event.getHandleReason());
-                        }
-                    }
+                    });
 
                     if (!ipEvent.getResult().equals(validationResult)) {
                         logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",

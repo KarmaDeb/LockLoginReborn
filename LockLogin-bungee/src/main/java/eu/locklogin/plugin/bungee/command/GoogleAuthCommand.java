@@ -49,8 +49,8 @@ public final class GoogleAuthCommand extends Command {
      *
      * @param name the name of this command
      */
-    public GoogleAuthCommand(String name) {
-        super(name);
+    public GoogleAuthCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**

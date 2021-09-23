@@ -21,6 +21,7 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
@@ -33,10 +34,12 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
+import java.util.List;
+
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
-@SystemCommand(command = "register")
+@SystemCommand(command = "register", aliases = {"reg"})
 public final class RegisterCommand extends Command {
 
     /**
@@ -44,8 +47,8 @@ public final class RegisterCommand extends Command {
      *
      * @param name the name of this command
      */
-    public RegisterCommand(String name) {
-        super(name);
+    public RegisterCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**
@@ -115,7 +118,7 @@ public final class RegisterCommand extends Command {
                                         if (!manager.hasPin())
                                             session.setPinLogged(true);
 
-                                        AccountCreatedEvent event = new AccountCreatedEvent(user.getModule(), null);
+                                        Event event = new AccountCreatedEvent(user.getModule(), null);
                                         ModulePlugin.callEvent(event);
 
                                         user.restorePotionEffects();

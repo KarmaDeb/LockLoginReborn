@@ -54,8 +54,8 @@ public final class PlayerInfoCommand extends Command {
      *
      * @param name the name of this command
      */
-    public PlayerInfoCommand(String name) {
-        super(name);
+    public PlayerInfoCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**

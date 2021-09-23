@@ -26,6 +26,7 @@ import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -122,7 +123,7 @@ public final class User {
                                 player.getRemoteAddress().getAddress());
                         CurrentPlatform.connectPlayer(modulePlayer, player);
 
-                        SessionInitializationEvent event = new SessionInitializationEvent(modulePlayer, session, null);
+                        Event event = new SessionInitializationEvent(modulePlayer, session, null);
                         ModulePlugin.callEvent(event);
 
                         sessions.put(player.getUniqueId(), session);

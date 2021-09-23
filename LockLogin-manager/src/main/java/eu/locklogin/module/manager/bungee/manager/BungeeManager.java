@@ -23,7 +23,7 @@ import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -325,9 +325,8 @@ public class BungeeManager {
 
         RestartCache cache = new RestartCache();
         cache.storeUserData();
-        cache.storeBungeeKey();
 
-        PluginStatusChangeEvent update_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_START, null);
+        eu.locklogin.api.module.plugin.api.event.util.Event update_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_START, null);
         ModulePlugin.callEvent(update_start);
 
         Timer load_timer = new Timer();
@@ -347,7 +346,7 @@ public class BungeeManager {
                             issuer.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.getProperty("updater_moved", "&dMoved new plugin instance, replacing the current one..."))));
                             load(current_jar);
 
-                            PluginStatusChangeEvent update_end = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_END, null);
+                            eu.locklogin.api.module.plugin.api.event.util.Event update_end = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_END, null);
                             ModulePlugin.callEvent(update_end);
                         } catch (Throwable ex) {
                             ex.printStackTrace();

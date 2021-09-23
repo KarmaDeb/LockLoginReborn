@@ -31,7 +31,7 @@ import static eu.locklogin.plugin.velocity.LockLogin.properties;
 public final class ChatListener {
 
     @Subscribe(order = PostOrder.FIRST)
-    public final void onChat(PlayerChatEvent e) {
+    public void onChat(PlayerChatEvent e) {
         Player player = e.getPlayer();
         User user = new User(player);
         ClientSession session = user.getSession();
@@ -76,7 +76,7 @@ public final class ChatListener {
             if (session.isValid()) {
                 if (!session.isLogged()) {
                     String command = getCommand(e.getCommand());
-                    if (!command.equals("register") && !command.equals("login") && !AllowedCommand.isAllowed(command)) {
+                    if (!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !AllowedCommand.isAllowed(command)) {
                         e.setResult(CommandExecuteEvent.CommandResult.denied());
                     }
 

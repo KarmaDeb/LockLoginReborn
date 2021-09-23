@@ -46,7 +46,7 @@ public final class Main extends Plugin implements KarmaSource {
         console = new Console(this).messageRequest((message) -> getProxy().getConsole().sendMessage(
                 TextComponent.fromLegacyText(StringUtils.toColor(message))));
 
-        APISource.setSourceProvider(this);
+        APISource.setProvider(this);
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
@@ -107,15 +107,19 @@ public final class Main extends Plugin implements KarmaSource {
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        switch (config.getUpdaterOptions().getChannel()) {
-            case SNAPSHOT:
-                return host + "snapshot.kupdter";
-            case RC:
-                return host + "candidate.kupdter";
-            case RELEASE:
-            default:
-                return host + "release.kupdter";
+        if (config != null) {
+            switch (config.getUpdaterOptions().getChannel()) {
+                case SNAPSHOT:
+                    return host + "snapshot.kupdter";
+                case RC:
+                    return host + "candidate.kupdter";
+                case RELEASE:
+                default:
+                    return host + "release.kupdter";
+            }
         }
+
+        return host + "release.kupdter";
     }
 
     @Override

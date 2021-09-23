@@ -13,7 +13,7 @@ package eu.locklogin.plugin.bukkit.util.files.data;
 
 import eu.locklogin.api.account.AccountID;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -23,8 +23,7 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.isNullOrEmpty;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class LastLocation {
 
@@ -184,7 +183,7 @@ public final class LastLocation {
      * Save the player last location
      * and fall distance
      */
-    public final void save() {
+    public void save() {
         if (player != null) {
             Location location = player.getLocation();
             assert location.getWorld() != null;
@@ -202,7 +201,7 @@ public final class LastLocation {
     /**
      * Fix the player location
      */
-    public final void fix() {
+    public void fix() {
         String x_string = file.getString("X", "");
         String y_string = file.getString("Y", "");
         String z_string = file.getString("Z", "");
@@ -254,7 +253,7 @@ public final class LastLocation {
     /**
      * Remove the player last location
      */
-    public final void remove() {
+    public void remove() {
         file.set("X", "");
         file.set("Y", "");
         file.set("Z", "");
@@ -267,7 +266,7 @@ public final class LastLocation {
     /**
      * Load the player last location
      */
-    public final void teleport() {
+    public void teleport() {
         if (player != null) {
             String x_string = file.getString("X", "");
             String y_string = file.getString("Y", "");
@@ -298,8 +297,10 @@ public final class LastLocation {
 
                     //Store the player fall distance so when he joins back
                     //it gets restored and fall damage won't be prevented
-                    player.setFallDistance(fall_distance);
-                    player.teleport(last_location);
+                    trySync(() -> {
+                        player.setFallDistance(fall_distance);
+                        player.teleport(last_location);
+                    });
 
                     //Unset the last location
                     remove();

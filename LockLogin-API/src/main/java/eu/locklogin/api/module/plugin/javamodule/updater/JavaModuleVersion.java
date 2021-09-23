@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.javamodule.updater;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import ml.karmaconfigs.api.common.timer.AsyncScheduler;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
@@ -65,7 +65,7 @@ public final class JavaModuleVersion {
         LateScheduler<VersionUpdater.VersionFetchResult> result = new AsyncLateScheduler<>();
 
         OfflineResult backup = new OfflineResult(module);
-        AsyncScheduler.queue(() -> {
+        APISource.asyncScheduler().queue(() -> {
             if (updater != null) {
                 if (recently_cached.contains(module)) {
                     updater.get().whenComplete((getResult, error) -> {

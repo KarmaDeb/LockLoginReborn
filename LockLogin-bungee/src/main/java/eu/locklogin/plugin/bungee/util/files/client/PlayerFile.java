@@ -8,6 +8,7 @@ import eu.locklogin.api.encryption.CryptTarget;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
@@ -297,7 +298,7 @@ public final class PlayerFile extends AccountManager {
     @Override
     public boolean remove(final String issuer) {
         try {
-            AccountRemovedEvent event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
+            Event event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
             ModulePlugin.callEvent(event);
 
             return Files.deleteIfExists(manager.getFile().toPath());

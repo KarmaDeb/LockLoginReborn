@@ -49,10 +49,11 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public GoogleAuthCommand(String label) {
-        super(label);
+    public GoogleAuthCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**

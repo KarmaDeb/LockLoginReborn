@@ -18,6 +18,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
@@ -37,7 +38,7 @@ public class FileReloader {
      * @param player the player that called the action
      */
     public static void reload(final ProxiedPlayer player) {
-        PluginStatusChangeEvent reload_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_START, null);
+        Event reload_start = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_START, null);
         ModulePlugin.callEvent(reload_start);
 
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -97,7 +98,7 @@ public class FileReloader {
             HelpPage.updatePagesPrefix();
         }
 
-        PluginStatusChangeEvent reload_finish = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_END, null);
+        Event reload_finish = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.RELOAD_END, null);
         ModulePlugin.callEvent(reload_finish);
     }
 }

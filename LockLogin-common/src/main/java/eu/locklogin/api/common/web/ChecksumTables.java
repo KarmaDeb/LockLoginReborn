@@ -6,8 +6,8 @@ import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.FileUtilities;
 import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import java.io.*;
 import java.net.HttpURLConnection;

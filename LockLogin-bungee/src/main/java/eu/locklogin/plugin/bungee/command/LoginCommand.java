@@ -39,21 +39,25 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.net.InetAddress;
+import java.util.List;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.MessageData;
 
-@SystemCommand(command = "login")
+@SystemCommand(command = "login", aliases = {"log"})
 public final class LoginCommand extends Command {
+
+    private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
+    private final static PluginMessages messages = CurrentPlatform.getMessages();
 
     /**
      * Construct a new command with no permissions or aliases.
      *
      * @param name the name of this command
      */
-    public LoginCommand(String name) {
-        super(name);
+    public LoginCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**
@@ -64,13 +68,9 @@ public final class LoginCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        PluginMessages messages = CurrentPlatform.getMessages();
-
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;
             User user = new User(player);
-
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
             ClientSession session = user.getSession();
             if (session.isValid()) {

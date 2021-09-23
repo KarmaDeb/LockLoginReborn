@@ -27,7 +27,7 @@ import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.FileReloader;
 import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.timer.AsyncScheduler;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -38,6 +38,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 
 import java.io.File;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,10 +52,11 @@ public final class LockLoginCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public LockLoginCommand(String label) {
-        super(label);
+    public LockLoginCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**
@@ -65,7 +67,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        AsyncScheduler.queue(() -> {
+        APISource.asyncScheduler().queue(() -> {
             PluginMessages messages = CurrentPlatform.getMessages();
 
             VersionUpdater updater = Manager.getUpdater();

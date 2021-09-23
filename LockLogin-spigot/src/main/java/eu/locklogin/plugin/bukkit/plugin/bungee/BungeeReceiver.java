@@ -32,8 +32,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.logger;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeReceiver implements PluginMessageListener {
@@ -74,8 +73,10 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     session.validate();
 
                                     if (config.enableSpawn()) {
+                                        trySync(() -> player.teleport(player.getWorld().getSpawnLocation()));
+
                                         Spawn spawn = new Spawn(player.getWorld());
-                                        spawn.teleport(player);
+                                        spawn.load().whenComplete(() -> spawn.teleport(player));
                                     }
 
                                     session.setLogged(input.readBoolean());

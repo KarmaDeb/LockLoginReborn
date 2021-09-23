@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public final class AccountNameDatabase {
 
-    private final static KarmaFile nameDatabase = new KarmaFile(APISource.get(), "names.lldb", "data");
+    private final static KarmaFile nameDatabase = new KarmaFile(APISource.getSource(), "names.lldb", "data");
     private final UUID uuid;
 
     /**

@@ -15,6 +15,7 @@ import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.TitleSender;
@@ -223,7 +224,7 @@ public class MainBootstrap implements KarmaBootstrap {
                 } while (iterator.hasNext());
             }
 
-            PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
+            Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
             ModulePlugin.callEvent(event);
 
             AllowedCommand.scan();
@@ -243,7 +244,7 @@ public class MainBootstrap implements KarmaBootstrap {
 
     @Override
     public void disable() {
-        PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
+        Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
         ModulePlugin.callEvent(event);
 
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();

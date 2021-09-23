@@ -41,8 +41,8 @@ public final class AliasCommand extends Command {
      *
      * @param name the name of this command
      */
-    public AliasCommand(String name) {
-        super(name);
+    public AliasCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**

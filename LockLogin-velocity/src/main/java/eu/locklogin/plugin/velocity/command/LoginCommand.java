@@ -39,21 +39,23 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.net.InetAddress;
+import java.util.List;
 
 import static eu.locklogin.plugin.velocity.LockLogin.*;
 import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.MessageData;
 
-@SystemCommand(command = "login")
+@SystemCommand(command = "login", aliases = {"log"})
 public final class LoginCommand extends BungeeLikeCommand {
 
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public LoginCommand(String label) {
-        super(label);
+    public LoginCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**

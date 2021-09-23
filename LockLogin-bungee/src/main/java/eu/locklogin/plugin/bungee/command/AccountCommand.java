@@ -28,6 +28,7 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
@@ -38,6 +39,9 @@ import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.FixedLateScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ChatMessageType;
@@ -47,6 +51,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
@@ -59,8 +64,8 @@ public class AccountCommand extends Command {
      *
      * @param name the name of this command
      */
-    public AccountCommand(String name) {
-        super(name);
+    public AccountCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**
@@ -71,166 +76,68 @@ public class AccountCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-        PluginMessages messages = CurrentPlatform.getMessages();
+        LateScheduler<Event> eventCall = new FixedLateScheduler<>();
 
-        if (sender instanceof ProxiedPlayer) {
-            ProxiedPlayer player = (ProxiedPlayer) sender;
-            User user = new User(player);
+        APISource.asyncScheduler().queue(() -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
-            if (user.getSession().isValid()) {
-                if (args.length == 0) {
-                    user.send(messages.prefix() + messages.accountArguments());
-                } else {
-                    ClientSession session;
-                    switch (args[0].toLowerCase()) {
-                        case "change":
-                            if (args.length == 3) {
-                                String password = args[1];
-                                String new_pass = args[2];
+            if (sender instanceof ProxiedPlayer) {
+                ProxiedPlayer player = (ProxiedPlayer) sender;
+                User user = new User(player);
 
-                                AccountManager manager = user.getManager();
+                if (user.getSession().isValid()) {
+                    if (args.length == 0) {
+                        user.send(messages.prefix() + messages.accountArguments());
+                    } else {
+                        ClientSession session;
+                        switch (args[0].toLowerCase()) {
+                            case "change":
+                                if (args.length == 3) {
+                                    String password = args[1];
+                                    String new_pass = args[2];
 
-                                CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                if (util.validate()) {
-                                    if (!password.equals(new_pass)) {
-                                        manager.setPassword(new_pass);
-                                        user.send(messages.prefix() + messages.changeDone());
-                                    } else {
-                                        user.send(messages.prefix() + messages.changeSame());
-                                    }
-                                } else {
-                                    user.send(messages.prefix() + messages.incorrectPassword());
-                                }
-                            } else {
-                                user.send(messages.prefix() + messages.change());
-                            }
-                            break;
-                        case "unlock":
-                            if (user.hasPermission(PluginPermission.account())) {
-                                if (args.length == 2) {
-                                    String target = args[1];
-                                    NameSearchResult nsr = AccountNameDatabase.find(target);
+                                    AccountManager manager = user.getManager();
 
-                                    if (nsr.singleResult()) {
-                                        OfflineClient offline = new OfflineClient(target);
-
-                                        AccountManager manager = offline.getAccount();
-                                        if (manager != null) {
-                                            LockedAccount account = new LockedAccount(manager.getUUID());
-                                            LockedData data = account.getData();
-
-                                            if (data.isLocked()) {
-                                                if (account.unlock()) {
-                                                    user.send(messages.prefix() + messages.accountUnLocked(target));
-                                                } else {
-                                                    user.send(messages.prefix() + messages.accountNotLocked(target));
-                                                    logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
-                                                }
-                                            } else {
-                                                user.send(messages.prefix() + messages.accountNotLocked(target));
-                                            }
+                                    CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                    if (util.validate()) {
+                                        if (!password.equals(new_pass)) {
+                                            manager.setPassword(new_pass);
+                                            user.send(messages.prefix() + messages.changeDone());
                                         } else {
-                                            user.send(messages.prefix() + messages.neverPlayer(target));
+                                            user.send(messages.prefix() + messages.changeSame());
                                         }
                                     } else {
-                                        user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
+                                        user.send(messages.prefix() + messages.incorrectPassword());
                                     }
                                 } else {
-                                    user.send(messages.prefix() + messages.accountUnLock());
+                                    user.send(messages.prefix() + messages.change());
                                 }
-                            } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.unlockAccount()));
-                            }
-                            break;
-                        case "close":
-                            switch (args.length) {
-                                case 1:
-                                    user.removeSessionCheck();
-                                    session = user.getSession();
-                                    session.setLogged(false);
-                                    session.setPinLogged(false);
-                                    session.set2FALogged(false);
-
-                                    DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
-
-                                    user.applySessionEffects();
-
-                                    if (config.clearChat()) {
-                                        for (int i = 0; i < 150; i++)
-                                            plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
-                                    }
-
-                                    SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                    plugin.getProxy().getScheduler().runAsync(plugin, check);
-
-                                    user.send(messages.prefix() + messages.closed());
-                                    AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
-                                    ModulePlugin.callEvent(self);
-                                    break;
-                                case 2:
-                                    if (user.hasPermission(PluginPermission.account())) {
-                                        String tar_name = args[1];
-                                        ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
-
-                                        if (tar_p != null && tar_p.isConnected()) {
-                                            User target = new User(tar_p);
-                                            target.removeSessionCheck();
-                                            session = target.getSession();
-
-                                            if (session.isValid() && session.isLogged() && session.isTempLogged()) {
-                                                target.send(messages.prefix() + messages.forcedClose());
-                                                target.performCommand("account close");
-                                                user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
-
-                                                AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
-                                                ModulePlugin.callEvent(issuer);
-                                            } else {
-                                                user.send(messages.prefix() + messages.targetAccessError(tar_name));
-                                            }
-                                        } else {
-                                            user.send(messages.prefix() + messages.connectionError(tar_name));
-                                        }
-                                    } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.closeAccount()));
-                                    }
-                                    break;
-                                default:
-                                    user.send(messages.prefix() + messages.close());
-                                    break;
-                            }
-                            break;
-                        case "delete":
-                        case "remove":
-                            switch (args.length) {
-                                case 2:
-                                    if (user.hasPermission(PluginPermission.account())) {
+                                break;
+                            case "unlock":
+                                if (user.hasPermission(PluginPermission.account())) {
+                                    if (args.length == 2) {
                                         String target = args[1];
                                         NameSearchResult nsr = AccountNameDatabase.find(target);
 
                                         if (nsr.singleResult()) {
-                                            ProxiedPlayer online = plugin.getProxy().getPlayer(target);
                                             OfflineClient offline = new OfflineClient(target);
 
                                             AccountManager manager = offline.getAccount();
                                             if (manager != null) {
                                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                                manager.setUnsafePassword("");
-                                                manager.setUnsafePin("");
-                                                manager.setUnsafeGAuth("");
-                                                manager.set2FA(false);
+                                                LockedData data = account.getData();
 
-                                                user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
-
-                                                if (online != null) {
-                                                    DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
-                                                    User onlineUser = new User(online);
-                                                    onlineUser.removeSessionCheck();
-
-                                                    onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                if (data.isLocked()) {
+                                                    if (account.unlock()) {
+                                                        user.send(messages.prefix() + messages.accountUnLocked(target));
+                                                    } else {
+                                                        user.send(messages.prefix() + messages.accountNotLocked(target));
+                                                        logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
+                                                    }
+                                                } else {
+                                                    user.send(messages.prefix() + messages.accountNotLocked(target));
                                                 }
-
-                                                account.lock(StringUtils.stripColor(player.getDisplayName()));
                                             } else {
                                                 user.send(messages.prefix() + messages.neverPlayer(target));
                                             }
@@ -238,200 +145,303 @@ public class AccountCommand extends Command {
                                             user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.delAccount()));
+                                        user.send(messages.prefix() + messages.accountUnLock());
                                     }
-                                    break;
-                                case 3:
-                                    user.removeSessionCheck();
-                                    AccountManager manager = user.getManager();
-                                    session = user.getSession();
+                                } else {
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.unlockAccount()));
+                                }
+                                break;
+                            case "close":
+                                switch (args.length) {
+                                    case 1:
+                                        user.removeSessionCheck();
+                                        session = user.getSession();
+                                        session.setLogged(false);
+                                        session.setPinLogged(false);
+                                        session.set2FALogged(false);
 
-                                    String password = args[1];
-                                    String confirmation = args[2];
+                                        DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
 
-                                    if (password.equals(confirmation)) {
-                                        CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                        if (util.validate()) {
-                                            user.send(messages.prefix() + messages.accountRemoved());
-                                            manager.remove(player.getName());
+                                        user.applySessionEffects();
 
-                                            //Completely restart the client session
-                                            session.setPinLogged(false);
-                                            session.set2FALogged(false);
-                                            session.setLogged(false);
-                                            session.invalidate();
-                                            session.validate();
-
-                                            DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
-
-                                            user.applySessionEffects();
-
-                                            if (config.clearChat()) {
-                                                for (int i = 0; i < 150; i++)
-                                                    plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
-                                            }
-
-                                            SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                            plugin.getProxy().getScheduler().runAsync(plugin, check);
-                                        } else {
-                                            user.send(messages.prefix() + messages.incorrectPassword());
+                                        if (config.clearChat()) {
+                                            for (int i = 0; i < 150; i++)
+                                                plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
                                         }
-                                    } else {
-                                        user.send(messages.prefix() + messages.removeAccountMatch());
-                                    }
-                                    break;
-                                default:
-                                    user.send(messages.prefix() + messages.remove());
-                                    break;
-                            }
-                            break;
-                        case "alts":
-                            if (user.hasPermission(PluginPermission.altInfo())) {
-                                if (args.length == 2) {
-                                    String target = args[1];
-                                    NameSearchResult nsr = AccountNameDatabase.find(target);
 
-                                    if (nsr.singleResult()) {
-                                        OfflineClient offline = new OfflineClient(target);
-                                        AccountManager manager = offline.getAccount();
+                                        SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                        plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                                        if (manager != null) {
-                                            AccountData data = new AccountData(null, manager.getUUID());
-                                            Set<AccountID> ids = data.getReverseAlts();
-                                            Set<AccountManager> accounts = new HashSet<>();
+                                        user.send(messages.prefix() + messages.closed());
+                                        AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
+                                        eventCall.complete(self);
+                                        break;
+                                    case 2:
+                                        if (user.hasPermission(PluginPermission.account())) {
+                                            String tar_name = args[1];
+                                            ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
 
-                                            Set<String> added_ids = new HashSet<>();
-                                            for (AccountID id : ids) {
-                                                if (!added_ids.contains(id.getId())) {
-                                                    added_ids.add(id.getId());
+                                            if (tar_p != null && tar_p.isConnected()) {
+                                                User target = new User(tar_p);
+                                                target.removeSessionCheck();
+                                                session = target.getSession();
 
-                                                    offline = new OfflineClient(id);
-                                                    manager = offline.getAccount();
+                                                if (session.isValid() && session.isLogged() && session.isTempLogged()) {
+                                                    target.send(messages.prefix() + messages.forcedClose());
+                                                    target.performCommand("account close");
+                                                    user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
-                                                    if (manager != null)
-                                                        accounts.add(new GlobalAccount(manager));
+                                                    AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
+                                                    eventCall.complete(issuer);
+                                                } else {
+                                                    user.send(messages.prefix() + messages.targetAccessError(tar_name));
                                                 }
+                                            } else {
+                                                user.send(messages.prefix() + messages.connectionError(tar_name));
                                             }
-
-                                            int sent = 0;
-                                            int max = accounts.size();
-                                            for (AccountManager account : accounts) {
-                                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
-
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
-                                                sent++;
-                                            }
-
-                                            AccountParser parser = new AccountParser(accounts);
-                                            DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
                                         } else {
-                                            user.send(messages.prefix() + messages.neverPlayer(target));
+                                            user.send(messages.prefix() + messages.permissionError(PluginPermission.closeAccount()));
+                                        }
+                                        break;
+                                    default:
+                                        user.send(messages.prefix() + messages.close());
+                                        break;
+                                }
+                                break;
+                            case "delete":
+                            case "remove":
+                                switch (args.length) {
+                                    case 2:
+                                        if (user.hasPermission(PluginPermission.account())) {
+                                            String target = args[1];
+                                            NameSearchResult nsr = AccountNameDatabase.find(target);
+
+                                            if (nsr.singleResult()) {
+                                                ProxiedPlayer online = plugin.getProxy().getPlayer(target);
+                                                OfflineClient offline = new OfflineClient(target);
+
+                                                AccountManager manager = offline.getAccount();
+                                                if (manager != null) {
+                                                    LockedAccount account = new LockedAccount(manager.getUUID());
+                                                    manager.setUnsafePassword("");
+                                                    manager.setUnsafePin("");
+                                                    manager.setUnsafeGAuth("");
+                                                    manager.set2FA(false);
+
+                                                    user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+
+                                                    if (online != null) {
+                                                        DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
+                                                        User onlineUser = new User(online);
+                                                        onlineUser.removeSessionCheck();
+
+                                                        onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                    }
+
+                                                    account.lock(StringUtils.stripColor(player.getDisplayName()));
+                                                } else {
+                                                    user.send(messages.prefix() + messages.neverPlayer(target));
+                                                }
+                                            } else {
+                                                user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
+                                            }
+                                        } else {
+                                            user.send(messages.prefix() + messages.permissionError(PluginPermission.delAccount()));
+                                        }
+                                        break;
+                                    case 3:
+                                        user.removeSessionCheck();
+                                        AccountManager manager = user.getManager();
+                                        session = user.getSession();
+
+                                        String password = args[1];
+                                        String confirmation = args[2];
+
+                                        if (password.equals(confirmation)) {
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            if (util.validate()) {
+                                                user.send(messages.prefix() + messages.accountRemoved());
+                                                manager.remove(player.getName());
+
+                                                //Completely restart the client session
+                                                session.setPinLogged(false);
+                                                session.set2FALogged(false);
+                                                session.setLogged(false);
+                                                session.invalidate();
+                                                session.validate();
+
+                                                DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
+
+                                                user.applySessionEffects();
+
+                                                if (config.clearChat()) {
+                                                    for (int i = 0; i < 150; i++)
+                                                        plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                                                }
+
+                                                SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                                plugin.getProxy().getScheduler().runAsync(plugin, check);
+                                            } else {
+                                                user.send(messages.prefix() + messages.incorrectPassword());
+                                            }
+                                        } else {
+                                            user.send(messages.prefix() + messages.removeAccountMatch());
+                                        }
+                                        break;
+                                    default:
+                                        user.send(messages.prefix() + messages.remove());
+                                        break;
+                                }
+                                break;
+                            case "alts":
+                                if (user.hasPermission(PluginPermission.altInfo())) {
+                                    if (args.length == 2) {
+                                        String target = args[1];
+                                        NameSearchResult nsr = AccountNameDatabase.find(target);
+
+                                        if (nsr.singleResult()) {
+                                            OfflineClient offline = new OfflineClient(target);
+                                            AccountManager manager = offline.getAccount();
+
+                                            if (manager != null) {
+                                                AccountData data = new AccountData(null, manager.getUUID());
+                                                Set<AccountID> ids = data.getReverseAlts();
+                                                Set<AccountManager> accounts = new HashSet<>();
+
+                                                Set<String> added_ids = new HashSet<>();
+                                                for (AccountID id : ids) {
+                                                    if (!added_ids.contains(id.getId())) {
+                                                        added_ids.add(id.getId());
+
+                                                        offline = new OfflineClient(id);
+                                                        manager = offline.getAccount();
+
+                                                        if (manager != null)
+                                                            accounts.add(new GlobalAccount(manager));
+                                                    }
+                                                }
+
+                                                int sent = 0;
+                                                int max = accounts.size();
+                                                for (AccountManager account : accounts) {
+                                                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+
+                                                    DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                    sent++;
+                                                }
+
+                                                AccountParser parser = new AccountParser(accounts);
+                                                DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                            } else {
+                                                user.send(messages.prefix() + messages.neverPlayer(target));
+                                            }
+                                        } else {
+                                            user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
                                         }
                                     } else {
-                                        user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
+                                        user.send(messages.prefix() + messages.lookupUsage());
                                     }
                                 } else {
-                                    user.send(messages.prefix() + messages.lookupUsage());
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.altInfo()));
                                 }
-                            } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.altInfo()));
-                            }
-                            break;
-                        case "session":
-                            if (config.enableSessions()) {
-                                AccountManager manager = user.getManager();
-                                PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
-                                if (persistent.toggleSession()) {
-                                    user.send(messages.prefix() + messages.sessionEnabled());
+                                break;
+                            case "session":
+                                if (config.enableSessions()) {
+                                    AccountManager manager = user.getManager();
+                                    PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
+                                    if (persistent.toggleSession()) {
+                                        user.send(messages.prefix() + messages.sessionEnabled());
+                                    } else {
+                                        user.send(messages.prefix() + messages.sessionDisabled());
+                                    }
                                 } else {
-                                    user.send(messages.prefix() + messages.sessionDisabled());
+                                    user.send(messages.prefix() + messages.sessionServerDisabled());
+                                }
+                                break;
+                            default:
+                                user.send(messages.prefix() + messages.accountArguments());
+                                break;
+                        }
+                    }
+                } else {
+                    user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
+                }
+            } else {
+                if (args.length == 0) {
+                    console.send(messages.prefix() + messages.accountArguments());
+                } else {
+                    String tar_name;
+                    OfflineClient offline;
+                    AccountManager manager;
+                    NameSearchResult nsr;
+
+                    switch (args[0].toLowerCase()) {
+                        case "unlock":
+                            tar_name = args[1];
+                            nsr = AccountNameDatabase.find(tar_name);
+
+                            if (nsr.singleResult()) {
+                                offline = new OfflineClient(tar_name);
+
+                                manager = offline.getAccount();
+                                if (manager != null) {
+                                    LockedAccount account = new LockedAccount(manager.getUUID());
+                                    LockedData data = account.getData();
+
+                                    if (data.isLocked()) {
+                                        if (account.unlock()) {
+                                            console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                        } else {
+                                            console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                            logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                        }
+                                    } else {
+                                        console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
                                 }
                             } else {
-                                user.send(messages.prefix() + messages.sessionServerDisabled());
+                                console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
                             }
                             break;
+                        case "close":
+                            if (args.length == 2) {
+                                tar_name = args[1];
+                                ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
+
+                                if (tar_p != null && tar_p.isConnected()) {
+                                    User target = new User(tar_p);
+                                    target.removeSessionCheck();
+                                    ClientSession session = target.getSession();
+
+                                    if (session.isValid() && session.isLogged() && session.isTempLogged()) {
+                                        target.send(messages.prefix() + messages.forcedClose());
+                                        target.performCommand("account close");
+                                        console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
+
+                                        AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
+                                        eventCall.complete(issuer);
+                                    } else {
+                                        console.send(messages.prefix() + messages.targetAccessError(tar_name));
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + messages.connectionError(tar_name));
+                                }
+                                break;
+                            } else {
+                                console.send(messages.prefix() + messages.close());
+                            }
+                            break;
+                        case "remove":
+                        case "delete":
                         default:
-                            user.send(messages.prefix() + messages.accountArguments());
+                            console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
                             break;
                     }
                 }
-            } else {
-                user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
-        } else {
-            if (args.length == 0) {
-                console.send(messages.prefix() + messages.accountArguments());
-            } else {
-                String tar_name;
-                OfflineClient offline;
-                AccountManager manager;
-                NameSearchResult nsr;
-
-                switch (args[0].toLowerCase()) {
-                    case "unlock":
-                        tar_name = args[1];
-                        nsr = AccountNameDatabase.find(tar_name);
-
-                        if (nsr.singleResult()) {
-                            offline = new OfflineClient(tar_name);
-
-                            manager = offline.getAccount();
-                            if (manager != null) {
-                                LockedAccount account = new LockedAccount(manager.getUUID());
-                                LockedData data = account.getData();
-
-                                if (data.isLocked()) {
-                                    if (account.unlock()) {
-                                        console.send(messages.prefix() + messages.accountUnLocked(tar_name));
-                                    } else {
-                                        console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                        logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
-                                    }
-                                } else {
-                                    console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                }
-                            } else {
-                                console.send(messages.prefix() + messages.neverPlayer(tar_name));
-                            }
-                        } else {
-                            console.send(messages.multipleNames(tar_name, AccountNameDatabase.otherPossible(tar_name)));
-                        }
-                        break;
-                    case "close":
-                        if (args.length == 2) {
-                            tar_name = args[1];
-                            ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
-
-                            if (tar_p != null && tar_p.isConnected()) {
-                                User target = new User(tar_p);
-                                target.removeSessionCheck();
-                                ClientSession session = target.getSession();
-
-                                if (session.isValid() && session.isLogged() && session.isTempLogged()) {
-                                    target.send(messages.prefix() + messages.forcedClose());
-                                    target.performCommand("account close");
-                                    console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
-
-                                    AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
-                                    ModulePlugin.callEvent(issuer);
-                                } else {
-                                    console.send(messages.prefix() + messages.targetAccessError(tar_name));
-                                }
-                            } else {
-                                console.send(messages.prefix() + messages.connectionError(tar_name));
-                            }
-                            break;
-                        } else {
-                            console.send(messages.prefix() + messages.close());
-                        }
-                        break;
-                    case "remove":
-                    case "delete":
-                    default:
-                        console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
-                        break;
-                }
-            }
-        }
+        });
+        eventCall.whenComplete(ModulePlugin::callEvent);
     }
 }

@@ -20,25 +20,31 @@ import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginProcessCommandEvent;
-import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.Logger;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
  * LockLogin java module manager
  */
+@SuppressWarnings("unused")
 public final class ModulePlugin {
 
-    private final static Map<PluginModule, Set<eu.locklogin.api.module.plugin.api.event.util.EventListener>> module_listeners = new LinkedHashMap<>();
+    private final static Logger logger = new Logger(APISource.getSource());
+
+    private final static Map<PluginModule, Set<EventListener>> module_listeners = new LinkedHashMap<>();
     private final static Map<PluginModule, Set<Command>> module_commands = new LinkedHashMap<>();
+
     private final PluginModule module;
 
     /**
@@ -90,8 +96,6 @@ public final class ModulePlugin {
                 Set<EventListener> handlers = module_listeners.getOrDefault(module, Collections.emptySet());
 
                 for (EventListener handler : handlers) {
-                    //Only call the event if the event class is instance of the
-                    //listener class
                     Method[] methods = handler.getClass().getMethods();
                     for (Method method : methods) {
                         if (method.isAnnotationPresent(ModuleEventHandler.class)) {
@@ -104,9 +108,9 @@ public final class ModulePlugin {
 
                                         try {
                                             method.invoke(handler, event);
-                                        } catch (Throwable ex) {
-                                            ex.printStackTrace();
-                                        }
+
+                                            logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
+                                        } catch (Throwable ignored) {}
                                         passed.add(module);
                                         break;
                                     case LAST:
@@ -120,24 +124,27 @@ public final class ModulePlugin {
                                             continue;
 
                                         if (!passed.contains(module)) {
-                                            PluginModule afterModule = ModuleLoader.getByFile(ModuleLoader.getModuleFile(methodHandler.after()));
-                                            if (afterModule != null) {
-                                                after.put(afterModule, method);
-                                                afterOwner.put(afterModule, module);
-                                            } else {
-                                                try {
-                                                    method.invoke(handler, event);
-                                                    passed.add(module);
-                                                } catch (Throwable ex) {
-                                                    ex.printStackTrace();
+                                            File moduleFile = ModuleLoader.getModuleFile(methodHandler.after());
+                                            if (moduleFile != null) {
+                                                PluginModule afterModule = ModuleLoader.getByFile(moduleFile);
+                                                if (afterModule != null) {
+                                                    after.put(afterModule, method);
+                                                    afterOwner.put(afterModule, module);
+                                                } else {
+                                                    try {
+                                                        method.invoke(handler, event);
+                                                        passed.add(module);
+                                                    } catch (Throwable ex) {
+                                                        ex.printStackTrace();
+                                                    }
                                                 }
                                             }
                                         } else {
                                             try {
                                                 method.invoke(handler, event);
-                                            } catch (Throwable ex) {
-                                                ex.printStackTrace();
-                                            }
+
+                                                logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
+                                            } catch (Throwable ignored) {}
                                         }
                                     case NORMAL:
                                     default:
@@ -164,9 +171,9 @@ public final class ModulePlugin {
                                     ex.printStackTrace();
                                 }
                             }
-                        } catch (Throwable ex) {
-                            ex.printStackTrace();
-                        }
+
+                            logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
+                        } catch (Throwable ignored) {}
                     }
 
                     for (Method method : last_invocation) {
@@ -182,129 +189,9 @@ public final class ModulePlugin {
                                     ex.printStackTrace();
                                 }
                             }
-                        } catch (Throwable ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    /**
-     * Call an event to all the listeners
-     *
-     * @param event the event to call
-     */
-    public static void callEvent(final GenericJoinEvent event) {
-        Set<Method> last_invocation = new LinkedHashSet<>();
-        Set<Method> normal_invocation = new LinkedHashSet<>();
-        Set<PluginModule> passed = new LinkedHashSet<>();
-
-        Map<PluginModule, Method> after = new LinkedHashMap<>();
-        Map<PluginModule, PluginModule> afterOwner = new LinkedHashMap<>();
-
-        for (PluginModule module : module_listeners.keySet()) {
-            //Allow only loaded modules
-            if (ModuleLoader.isLoaded(module)) {
-                Set<EventListener> handlers = module_listeners.getOrDefault(module, Collections.emptySet());
-
-                for (EventListener handler : handlers) {
-                    //Only call the event if the event class is instance of the
-                    //listener class
-                    Method[] methods = handler.getClass().getMethods();
-                    for (Method method : methods) {
-                        if (method.isAnnotationPresent(ModuleEventHandler.class)) {
-                            if (method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
-                                ModuleEventHandler methodHandler = method.getAnnotation(ModuleEventHandler.class);
-                                switch (methodHandler.priority()) {
-                                    case FIRST:
-                                        if (methodHandler.ignoreHandled() && event.isHandled())
-                                            continue;
-
-                                        try {
-                                            method.invoke(handler, event);
-                                        } catch (Throwable ex) {
-                                            ex.printStackTrace();
-                                        }
-                                        passed.add(module);
-                                        break;
-                                    case LAST:
-                                        if (methodHandler.ignoreHandled() && event.isHandled())
-                                            continue;
-
-                                        last_invocation.add(method);
-                                        break;
-                                    case AFTER:
-                                        if (methodHandler.ignoreHandled() && event.isHandled())
-                                            continue;
-
-                                        if (!passed.contains(module)) {
-                                            PluginModule afterModule = ModuleLoader.getByFile(ModuleLoader.getModuleFile(methodHandler.after()));
-                                            if (afterModule != null) {
-                                                after.put(afterModule, method);
-                                                afterOwner.put(afterModule, module);
-                                            } else {
-                                                try {
-                                                    method.invoke(handler, event);
-                                                    passed.add(module);
-                                                } catch (Throwable ex) {
-                                                    ex.printStackTrace();
-                                                }
-                                            }
-                                        } else {
-                                            try {
-                                                method.invoke(handler, event);
-                                            } catch (Throwable ex) {
-                                                ex.printStackTrace();
-                                            }
-                                        }
-                                    case NORMAL:
-                                    default:
-                                        if (methodHandler.ignoreHandled() && event.isHandled())
-                                            continue;
-
-                                        normal_invocation.add(method);
-                                        break;
-                                }
-                            }
-                        }
-                    }
-
-                    for (Method method : normal_invocation) {
-                        try {
-                            method.invoke(handler, event);
-                            passed.add(module);
-
-                            if (after.containsKey(module) && after.getOrDefault(module, null) != null) {
-                                try {
-                                    after.get(module).invoke(handler, event);
-                                    passed.add(afterOwner.get(module));
-                                } catch (Throwable ex) {
-                                    ex.printStackTrace();
-                                }
-                            }
-                        } catch (Throwable ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    for (Method method : last_invocation) {
-                        try {
-                            method.invoke(handler, event);
-                            passed.add(module);
-
-                            if (after.containsKey(module) && after.getOrDefault(module, null) != null) {
-                                try {
-                                    after.get(module).invoke(handler, event);
-                                    passed.add(afterOwner.get(module));
-                                } catch (Throwable ex) {
-                                    ex.printStackTrace();
-                                }
-                            }
-                        } catch (Throwable ex) {
-                            ex.printStackTrace();
-                        }
+                            logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
+                        } catch (Throwable ignored) {}
                     }
                 }
             }
@@ -348,7 +235,7 @@ public final class ModulePlugin {
                         List<String> valid_args = Arrays.asList(handler.validAliases());
                         if (valid_args.stream().anyMatch(argument::equalsIgnoreCase)) {
                             try {
-                                PluginProcessCommandEvent event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
+                                Event event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
                                 ModulePlugin.callEvent(event);
 
                                 if (!event.isHandled()) {
@@ -358,7 +245,7 @@ public final class ModulePlugin {
                             } catch (Throwable ex) {
                                 try {
                                     //Legacy API support
-                                    PluginProcessCommandEvent event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
+                                    Event event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
                                     ModulePlugin.callEvent(event);
 
                                     if (!event.isHandled()) {
@@ -452,25 +339,14 @@ public final class ModulePlugin {
      * @throws IllegalStateException if the module tries to register
      *                               a listener while not loaded
      */
-    public final void registerListener(final eu.locklogin.api.module.plugin.api.event.util.EventListener event) throws IllegalStateException {
+    public void registerListener(final EventListener event) throws IllegalStateException {
         if (ModuleLoader.isLoaded(module)) {
-            Set<eu.locklogin.api.module.plugin.api.event.util.EventListener> current = getRegisteredListeners();
-            Set<eu.locklogin.api.module.plugin.api.event.util.EventListener> updated = new LinkedHashSet<>();
+            Set<EventListener> listeners = module_listeners.getOrDefault(module, Collections.newSetFromMap(new LinkedHashMap<>()));
 
-            boolean added = false;
-            for (eu.locklogin.api.module.plugin.api.event.util.EventListener registered : current) {
-                if (registered.getClass().getName().equals(event.getClass().getName())) {
-                    added = true;
-                    updated.add(event);
-                } else {
-                    updated.add(registered);
-                }
-            }
+            logger.scheduleLog(Level.INFO, "Registered event listener {0} of module {1}", event.getClass().getName(), module.name());
 
-            if (!added)
-                updated.add(event);
-
-            module_listeners.put(module, updated);
+            listeners.add(event);
+            module_listeners.put(module, listeners);
         } else {
             throw new IllegalStateException("Module " + module.name() + " tried to register a listener while not registered!");
         }
@@ -483,7 +359,7 @@ public final class ModulePlugin {
      * @throws IllegalStateException if the module tries to register a command
      *                               while not registered
      */
-    public final void registerCommand(final Command command) throws IllegalStateException {
+    public void registerCommand(final Command command) throws IllegalStateException {
         if (ModuleLoader.isLoaded(module)) {
             Set<Command> current = getRegisteredCommands();
             Set<Command> updated = new LinkedHashSet<>();
@@ -510,18 +386,18 @@ public final class ModulePlugin {
     /**
      * Remove a listener from the registered listeners
      *
-     * @param listener the listener to remove
+     * @param event the listener to remove
      */
-    public final void unregisterListener(final eu.locklogin.api.module.plugin.api.event.util.EventListener listener) {
-        Set<eu.locklogin.api.module.plugin.api.event.util.EventListener> current = getRegisteredListeners();
-        Set<eu.locklogin.api.module.plugin.api.event.util.EventListener> updated = new LinkedHashSet<>();
-
-        for (eu.locklogin.api.module.plugin.api.event.util.EventListener registered : current) {
-            if (!registered.getClass().getName().equals(listener.getClass().getName()))
-                updated.add(registered);
+    public void unregisterListener(final EventListener event) {
+        Set<EventListener> listeners = module_listeners.getOrDefault(module, Collections.newSetFromMap(new LinkedHashMap<>()));
+        for (EventListener listener : listeners) {
+            if (listener.getClass().getName().equals(event.getClass().getName())) {
+                logger.scheduleLog(Level.INFO, "Unregistered event listener {0} of module {1}", event.getClass().getName(), module.name());
+                listeners.remove(event);
+            }
         }
 
-        module_listeners.put(module, updated);
+        module_listeners.put(module, listeners);
     }
 
     /**
@@ -529,7 +405,7 @@ public final class ModulePlugin {
      *
      * @param command the command to remove
      */
-    public final void unregisterCommand(final Command command) {
+    public void unregisterCommand(final Command command) {
         Set<Command> current = getRegisteredCommands();
         Set<Command> updated = new LinkedHashSet<>();
 
@@ -544,14 +420,14 @@ public final class ModulePlugin {
     /**
      * Unregister all the listeners
      */
-    public final void unregisterListeners() {
-        module_listeners.remove(module);
+    public void unregisterListeners() {
+        module_listeners.clear();
     }
 
     /**
      * Unregister all the commands
      */
-    public final void unregisterCommands() {
+    public void unregisterCommands() {
         module_commands.remove(module);
     }
 
@@ -560,8 +436,8 @@ public final class ModulePlugin {
      *
      * @return all the registered listeners
      */
-    public final Set<EventListener> getRegisteredListeners() {
-        return module_listeners.getOrDefault(module, Collections.emptySet());
+    public Set<EventListener> getRegisteredListeners() {
+        return module_listeners.getOrDefault(module, Collections.newSetFromMap(new LinkedHashMap<>()));
     }
 
     /**
@@ -569,19 +445,8 @@ public final class ModulePlugin {
      *
      * @return all the registered commands
      */
-    public final Set<Command> getRegisteredCommands() {
+    public Set<Command> getRegisteredCommands() {
         return module_commands.getOrDefault(module, Collections.emptySet());
-    }
-
-    /**
-     * Get the module console sender
-     *
-     * @return the module console sender
-     * @deprecated the developer can use {@link PluginModule#getConsole()} now
-     */
-    @Deprecated
-    public final ModuleConsole getConsoleSender() {
-        return new ModuleConsole(module);
     }
 
     /**
@@ -589,7 +454,7 @@ public final class ModulePlugin {
      *
      * @return the module version manager
      */
-    public final JavaModuleVersion getVersionManager() {
+    public JavaModuleVersion getVersionManager() {
         return new JavaModuleVersion(module);
     }
 
@@ -598,7 +463,7 @@ public final class ModulePlugin {
      *
      * @return the module messenger
      */
-    public final ModuleMessageService getMessenger() {
+    public ModuleMessageService getMessenger() {
         return new ModuleMessageService(module);
     }
 }

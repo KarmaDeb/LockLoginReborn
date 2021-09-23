@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.0</version>
+    <version>1.13.1</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -48,7 +48,7 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.manager>v3</project.manager>
+        <project.manager>v4</project.manager>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.properties.version>1.0.1</project.properties.version>
         <project.name>LockLogin</project.name>

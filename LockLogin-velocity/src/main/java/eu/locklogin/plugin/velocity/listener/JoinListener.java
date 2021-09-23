@@ -45,6 +45,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
 import eu.locklogin.api.module.plugin.api.event.user.*;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
@@ -183,7 +184,7 @@ public final class JoinListener {
                             }
                         });
 
-                        GenericJoinEvent event = new UserPostJoinEvent(user.getModule(), null);
+                        Event event = new UserPostJoinEvent(user.getModule(), null);
                         ModulePlugin.callEvent(event);
 
                         if (event.isHandled()) {
@@ -223,7 +224,7 @@ public final class JoinListener {
         if (!client.isVerified()) {
             client.setVerified(true);
 
-            PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+            Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
                     PluginIpValidationEvent.ValidationResult.SUCCESS,
                     "Plugin added the IP to the IP validation queue", e);
             ModulePlugin.callEvent(ipEvent);
@@ -232,7 +233,7 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.LAST)
     public void onGameProfileRequest(GameProfileRequestEvent e) {
-        VelocityGameProfileEvent event = new VelocityGameProfileEvent(e);
+        Event event = new VelocityGameProfileEvent(e);
         ModulePlugin.callEvent(event);
 
         ids.put(e.getGameProfile().getName(), e.getGameProfile().getId());
@@ -367,7 +368,7 @@ public final class JoinListener {
                             }
                         }
 
-                        GenericJoinEvent event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, conn_name, e);
+                        Event event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, conn_name, e);
                         ModulePlugin.callEvent(event);
 
                         if (event.isHandled()) {
@@ -404,7 +405,7 @@ public final class JoinListener {
     @Subscribe(order = PostOrder.FIRST)
     public void onLogin(LoginEvent e) {
         if (e.getResult().isAllowed()) {
-            GenericJoinEvent event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
+            Event event = new UserJoinEvent(e.getPlayer().getRemoteAddress().getAddress(), e.getPlayer().getUniqueId(), e.getPlayer().getUsername(), e);
             ModulePlugin.callEvent(event);
 
             if (event.isHandled()) {

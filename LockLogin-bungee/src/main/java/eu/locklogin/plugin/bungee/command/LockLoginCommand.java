@@ -18,6 +18,7 @@ import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
@@ -26,7 +27,7 @@ import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.timer.AsyncScheduler;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.StringUtils;
@@ -37,6 +38,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.io.File;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,8 +55,8 @@ public final class LockLoginCommand extends Command {
      *
      * @param name the name of this command
      */
-    public LockLoginCommand(String name) {
-        super(name);
+    public LockLoginCommand(final String name, final List<String> aliases) {
+        super(name, "", aliases.toArray(new String[0]));
     }
 
     /**
@@ -65,7 +67,7 @@ public final class LockLoginCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        AsyncScheduler.queue(() -> {
+        APISource.asyncScheduler().queue(() -> {
             PluginMessages messages = CurrentPlatform.getMessages();
 
             VersionUpdater updater = Manager.getUpdater();
@@ -86,7 +88,7 @@ public final class LockLoginCommand extends Command {
                             case "applyupdates":
                                 if (user.hasPermission(applyUpdates())) {
                                     //BukkitManager.update(sender);
-                                    UpdateRequestEvent event = new UpdateRequestEvent(sender, user.hasPermission(applyUnsafeUpdates()), null);
+                                    Event event = new UpdateRequestEvent(sender, user.hasPermission(applyUnsafeUpdates()), null);
                                     ModulePlugin.callEvent(event);
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(applyUpdates()));
@@ -255,7 +257,7 @@ public final class LockLoginCommand extends Command {
                                 FileReloader.reload(null);
                                 break;
                             case "applyupdates":
-                                UpdateRequestEvent event = new UpdateRequestEvent(sender, true, null);
+                                Event event = new UpdateRequestEvent(sender, true, null);
                                 ModulePlugin.callEvent(event);
                                 break;
                             case "modules":

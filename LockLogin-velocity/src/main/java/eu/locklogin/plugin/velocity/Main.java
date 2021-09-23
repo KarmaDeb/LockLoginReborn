@@ -25,6 +25,7 @@ import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.TitleSender;
@@ -57,7 +58,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.13.0", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
+@Plugin(id = "locklogin", name = "LockLogin", version = "1.13.1", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
 public class Main implements KarmaBootstrap, KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
@@ -80,7 +81,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
         console = new Console(this).messageRequest((message) -> server.getConsoleCommandSource().sendMessage(
                 Component.text().content(StringUtils.toColor(message)).build()));
 
-        APISource.setSourceProvider(this);
+        APISource.setProvider(this);
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
@@ -258,7 +259,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     } while (iterator.hasNext());
                 }
 
-                PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
+                Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
                 ModulePlugin.callEvent(event);
 
                 AllowedCommand.scan();
@@ -281,7 +282,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Override
     public void disable() {
-        PluginStatusChangeEvent event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
+        Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
         ModulePlugin.callEvent(event);
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
         if (moduleFiles != null)
@@ -359,15 +360,19 @@ public class Main implements KarmaBootstrap, KarmaSource {
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        switch (config.getUpdaterOptions().getChannel()) {
-            case SNAPSHOT:
-                return host + "snapshot.kupdter";
-            case RC:
-                return host + "candidate.kupdter";
-            case RELEASE:
-            default:
-                return host + "release.kupdter";
+        if (config != null) {
+            switch (config.getUpdaterOptions().getChannel()) {
+                case SNAPSHOT:
+                    return host + "snapshot.kupdter";
+                case RC:
+                    return host + "candidate.kupdter";
+                case RELEASE:
+                default:
+                    return host + "release.kupdter";
+            }
         }
+
+        return host + "release.kupdter";
     }
 
     @Override

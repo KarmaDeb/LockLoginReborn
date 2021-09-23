@@ -23,6 +23,7 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
@@ -33,19 +34,22 @@ import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
+import java.util.List;
+
 import static eu.locklogin.plugin.velocity.LockLogin.*;
 import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.CHANNEL_PLAYER;
 
-@SystemCommand(command = "register")
+@SystemCommand(command = "register", aliases = {"reg"})
 public final class RegisterCommand extends BungeeLikeCommand {
 
     /**
      * Initialize the bungee like command
      *
-     * @param label the command label
+     * @param name the command name
+     * @param aliases the command aliases
      */
-    public RegisterCommand(String label) {
-        super(label);
+    public RegisterCommand(final String name, final List<String> aliases) {
+        super(name, aliases.toArray(new String[0]));
     }
 
     /**
@@ -115,7 +119,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
                                         if (!manager.hasPin())
                                             session.setPinLogged(true);
 
-                                        AccountCreatedEvent event = new AccountCreatedEvent(user.getModule(), null);
+                                        Event event = new AccountCreatedEvent(user.getModule(), null);
                                         ModulePlugin.callEvent(event);
 
                                         user.restorePotionEffects();

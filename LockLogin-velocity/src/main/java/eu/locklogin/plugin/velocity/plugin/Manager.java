@@ -41,6 +41,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.Main;
@@ -231,13 +232,14 @@ public final class Manager {
             if (clazz.isAnnotationPresent(SystemCommand.class)) {
                 try {
                     String command = SystemCommand.manager.getDeclaredCommand(clazz);
+                    List<String> aliases = SystemCommand.manager.getDeclaredAliases(clazz);
 
                     if (command != null && !command.replaceAll("\\s", "").isEmpty()) {
-                        Object instance = clazz.getDeclaredConstructor(String.class).newInstance(command);
+                        Object instance = clazz.getDeclaredConstructor(String.class, List.class).newInstance(command, aliases);
 
                         if (instance instanceof BungeeLikeCommand) {
                             BungeeLikeCommand executor = (BungeeLikeCommand) instance;
-                            server.getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()));
+                            server.getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()), executor.getAliasses());
                             registered.add("/" + command);
                         } else {
                             unregistered.add(command);
@@ -580,7 +582,7 @@ public final class Manager {
 
                     user.checkServer(0);
 
-                    UserHookEvent event = new UserHookEvent(user.getModule(), null);
+                    Event event = new UserHookEvent(user.getModule(), null);
                     ModulePlugin.callEvent(event);
                 }).delay(2, TimeUnit.SECONDS).schedule();
             }
@@ -614,7 +616,7 @@ public final class Manager {
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
             }
 
-            UserUnHookEvent event = new UserUnHookEvent(user.getModule(), null);
+            Event event = new UserUnHookEvent(user.getModule(), null);
             ModulePlugin.callEvent(event);
         }
     }

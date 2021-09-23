@@ -40,8 +40,12 @@ commands:
     description: The command to set login spawn, must be enabled in config.yml!
   register:
     description: The command that allows a player to register
+    aliases:
+      - reg
   login:
     description: The command that allows a player to login into his account
+    aliases:
+      - log
   pin:
     description: The command that allows a player to manage his pin
   2fa:

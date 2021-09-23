@@ -24,6 +24,7 @@ import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
@@ -69,7 +70,7 @@ public final class QuitListener {
                 user.removeSessionCheck();
                 UserDatabase.removeUser(player);
 
-                UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
+                Event event = new UserQuitEvent(user.getModule(), e);
                 ModulePlugin.callEvent(event);
             }
         }
@@ -105,7 +106,7 @@ public final class QuitListener {
             user.removeSessionCheck();
             UserDatabase.removeUser(player);
 
-            UserQuitEvent event = new UserQuitEvent(user.getModule(), e);
+            Event event = new UserQuitEvent(user.getModule(), e);
             ModulePlugin.callEvent(event);
         }
     }

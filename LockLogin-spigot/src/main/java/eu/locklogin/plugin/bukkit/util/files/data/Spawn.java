@@ -14,6 +14,8 @@ package eu.locklogin.plugin.bukkit.util.files.data;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -48,7 +50,7 @@ public final class Spawn {
      * location
      */
     public void teleport(final Player player) {
-        trySync(() -> {
+        tryAsync(() -> {
             assert spawn_location.getWorld() != null;
 
             Block middle_down = spawn_location.getBlock().getRelative(BlockFace.UP);
@@ -59,7 +61,7 @@ public final class Spawn {
                 spawn_location = highest.getLocation().add(0D, 1D, 0D);
             }
 
-            plugin.getServer().getScheduler().runTask(plugin, () -> player.teleport(spawn_location));
+            trySync(() -> player.teleport(spawn_location));
         });
     }
 
@@ -81,45 +83,54 @@ public final class Spawn {
 
     /**
      * Load the spawn location
+     *
+     * @return when the spawn has been loaded
      */
-    public void load() {
-        String x_string = spawnFile.getString("X", "");
-        String y_string = spawnFile.getString("Y", "");
-        String z_string = spawnFile.getString("Z", "");
-        String pitch_string = spawnFile.getString("PITCH", "");
-        String yaw_string = spawnFile.getString("YAW", "");
-        String world_string = spawnFile.getString("WORLD", "");
+    public LateScheduler<Void> load() {
+        LateScheduler<Void> result = new AsyncLateScheduler<>();
 
-        if (isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
-            return;
+        tryAsync(() -> {
+            String x_string = spawnFile.getString("X", "");
+            String y_string = spawnFile.getString("Y", "");
+            String z_string = spawnFile.getString("Z", "");
+            String pitch_string = spawnFile.getString("PITCH", "");
+            String yaw_string = spawnFile.getString("YAW", "");
+            String world_string = spawnFile.getString("WORLD", "");
 
-        try {
-            double x = Double.parseDouble(x_string);
-            double y = Double.parseDouble(y_string);
-            double z = Double.parseDouble(z_string);
+            if (isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
+                return;
 
-            float pitch = Float.parseFloat(pitch_string);
-            float yaw = Float.parseFloat(yaw_string);
+            try {
+                double x = Double.parseDouble(x_string);
+                double y = Double.parseDouble(y_string);
+                double z = Double.parseDouble(z_string);
 
-            World world = plugin.getServer().getWorld(world_string);
+                float pitch = Float.parseFloat(pitch_string);
+                float yaw = Float.parseFloat(yaw_string);
 
-            if (world == null) {
-                try {
-                    console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
-                    world = plugin.getServer().createWorld(WorldCreator.name(world_string));
-                } catch (Throwable ex) {
-                    console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
-                    return;
+                World world = plugin.getServer().getWorld(world_string);
+
+                if (world == null) {
+                    try {
+                        console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
+                        world = plugin.getServer().createWorld(WorldCreator.name(world_string));
+                    } catch (Throwable ex) {
+                        console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
+                        return;
+                    }
                 }
-            }
 
-            if (world != null) {
-                spawn_location = new Location(world, x, y, z);
-                spawn_location.setPitch(pitch);
-                spawn_location.setYaw(yaw);
-            }
-        } catch (Throwable ignored) {
-        }
+                if (world != null) {
+                    spawn_location = new Location(world, x, y, z);
+                    spawn_location.setPitch(pitch);
+                    spawn_location.setYaw(yaw);
+
+                    result.complete(null);
+                }
+            } catch (Throwable ignored) {}
+        });
+
+        return result;
     }
 
     /**

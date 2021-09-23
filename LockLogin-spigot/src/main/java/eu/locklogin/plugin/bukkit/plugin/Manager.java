@@ -33,6 +33,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
@@ -75,10 +76,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 import static ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT;
@@ -238,7 +236,7 @@ public final class Manager {
     /**
      * Register plugin commands
      */
-    protected static void registerCommands() {
+    static void registerCommands() {
         Set<String> unregistered = new LinkedHashSet<>();
         Set<String> registered = new HashSet<>();
 
@@ -248,6 +246,7 @@ public final class Manager {
             if (clazz.isAnnotationPresent(SystemCommand.class)) {
                 try {
                     String command = SystemCommand.manager.getDeclaredCommand(clazz);
+                    List<String> aliases = SystemCommand.manager.getDeclaredAliases(clazz);
                     boolean bungee = SystemCommand.manager.getBungeeStatus(clazz);
 
                     if (command == null || command.replaceAll("\\s", "").isEmpty()) {
@@ -273,6 +272,7 @@ public final class Manager {
                     if (instance instanceof CommandExecutor) {
                         CommandExecutor executor = (CommandExecutor) instance;
                         pluginCMD.setExecutor(executor);
+                        pluginCMD.setAliases(aliases);
 
                         registered.add("/" + command);
                         for (String alias : pluginCMD.getAliases())
@@ -587,7 +587,7 @@ public final class Manager {
                     visor.hide();
                 }
 
-                UserHookEvent event = new UserHookEvent(user.getModule(), null);
+                Event event = new UserHookEvent(user.getModule(), null);
                 ModulePlugin.callEvent(event);
             }
         });
@@ -637,7 +637,7 @@ public final class Manager {
             ClientVisor visor = new ClientVisor(player);
             visor.show();
 
-            UserUnHookEvent event = new UserUnHookEvent(user.getModule(), null);
+            Event event = new UserUnHookEvent(user.getModule(), null);
             ModulePlugin.callEvent(event);
         }
     }
