@@ -19,6 +19,7 @@ import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.version.VersionID;
 import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
@@ -51,7 +52,7 @@ public interface LockLogin {
             .getLocation()
             .getPath().replaceAll("%20", " "));
 
-    Logger logger = new Logger(plugin);
+    Logger logger = CurrentPlatform.getLogger();
 
     PluginProperties properties = new PluginProperties();
 

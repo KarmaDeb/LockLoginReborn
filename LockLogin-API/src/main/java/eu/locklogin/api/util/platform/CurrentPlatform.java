@@ -20,7 +20,10 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import ml.karmaconfigs.api.common.Logger;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
@@ -59,6 +62,7 @@ public final class CurrentPlatform {
 
     private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
     private final static ModuleServer server = new ModuleServer();
+    private final static Logger logger = new Logger(APISource.getSource());
 
     /**
      * Set the current account manager
@@ -196,6 +200,18 @@ public final class CurrentPlatform {
         server.disconnectPlayer(mp);
     }
 
+    /**
+     * Get the LockLogin logger
+     */
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    /**
+     * Get the current LockLogin server
+     *
+     * @return the current LockLogin server
+     */
     public static ModuleServer getServer() {
         return server;
     }

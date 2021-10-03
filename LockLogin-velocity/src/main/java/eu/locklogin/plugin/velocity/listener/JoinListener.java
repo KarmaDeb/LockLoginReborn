@@ -31,7 +31,6 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -219,16 +218,11 @@ public final class JoinListener {
     @Subscribe(order = PostOrder.FIRST)
     public void onServerPing(ProxyPingEvent e) {
         InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
-        ClientData client = new ClientData(ip);
 
-        if (!client.isVerified()) {
-            client.setVerified(true);
-
-            Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
-                    PluginIpValidationEvent.ValidationResult.SUCCESS,
-                    "Plugin added the IP to the IP validation queue", e);
-            ModulePlugin.callEvent(ipEvent);
-        }
+        Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                PluginIpValidationEvent.ValidationResult.SUCCESS,
+                "Plugin added the IP to the IP validation queue", e);
+        ModulePlugin.callEvent(ipEvent);
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -260,13 +254,6 @@ public final class JoinListener {
             switch (ipEvent.getResult()) {
                 case SUCCESS:
                     if (e.getResult().isAllowed()) {
-                        //If the anti bot is disabled, verify the IP to avoid
-                        //errors
-                        if (!config.antiBot()) {
-                            ClientData client = new ClientData(ip);
-                            client.setVerified(true);
-                        }
-
                         if (config.registerOptions().maxAccounts() > 0) {
                             AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
 
@@ -296,29 +283,6 @@ public final class JoinListener {
                             BruteForce protection = new BruteForce(ip);
                             if (protection.isBlocked()) {
                                 e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))).build()));
-                                return;
-                            }
-                        }
-
-                        if (config.antiBot()) {
-                            ClientData client = new ClientData(ip);
-                            if (client.isVerified()) {
-                                if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
-                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                                } else {
-                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
-                                    return;
-                                }
-                            } else {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
-                                return;
-                            }
-                        } else {
-                            ClientData client = new ClientData(ip);
-                            if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
-                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                            } else {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.antiBot())).build()));
                                 return;
                             }
                         }

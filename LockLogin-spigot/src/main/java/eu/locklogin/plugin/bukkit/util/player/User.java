@@ -31,6 +31,7 @@ import ml.karmaconfigs.api.bukkit.reflections.BossMessage;
 import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -84,9 +85,11 @@ public final class User {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
                     AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                    database.assign(StringUtils.stripColor(player.getName()));
-                    database.assign(StringUtils.stripColor(player.getDisplayName()));
-                    database.assign(StringUtils.stripColor(player.getPlayerListName()));
+                    APISource.asyncScheduler().queue(() -> {
+                        database.assign(StringUtils.stripColor(player.getName()));
+                        database.assign(StringUtils.stripColor(player.getDisplayName()));
+                        database.assign(StringUtils.stripColor(player.getPlayerListName()));
+                    });
 
                     //Try to fix the empty manager values that are
                     //required

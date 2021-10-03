@@ -46,23 +46,23 @@ public final class OfflineClient {
      * @return the offline client account
      */
     @Nullable
-    public AccountManager getAccount() throws IllegalStateException {
+    public AccountManager getAccount() {
+        AccountManager result = null;
+
         if (CurrentPlatform.isValidAccountManager()) {
             AccountManager current = CurrentPlatform.getAccountManager(null);
             if (current != null) {
                 Set<AccountManager> managers = current.getAccounts();
 
                 for (AccountManager manager : managers) {
-                    if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching))
-                        return manager;
+                    if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching)) {
+                        result = manager;
+                        break;
+                    }
                 }
-            } else {
-                throw new IllegalStateException("Couldn't continue with plugin task: Fetch offline accounts. Because account manager is null, maybe it doesn't has an empty constructor?");
             }
-        } else {
-            throw new IllegalStateException("Couldn't continue with plugin task: Fetch offline accounts. Because account manager is not valid");
         }
 
-        return null;
+        return result;
     }
 }

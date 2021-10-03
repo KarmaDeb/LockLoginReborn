@@ -15,7 +15,6 @@ package eu.locklogin.plugin.bungee.listener;
  */
 
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
@@ -48,7 +47,6 @@ public final class QuitListener implements Listener {
         ProxiedPlayer player = e.getPlayer();
         if (!kicked.contains(player.getUniqueId())) {
             if (!player.isConnected()) {
-                InetSocketAddress ip = getSocketIp(player.getSocketAddress());
                 User user = new User(player);
                 if (user.getChecker().isUnderCheck()) {
                     user.getChecker().cancelCheck();
@@ -57,18 +55,13 @@ public final class QuitListener implements Listener {
                 SessionKeeper keeper = new SessionKeeper(user.getModule());
                 keeper.store();
 
-                if (ip != null) {
-                    ClientData data = new ClientData(ip.getAddress());
-                    data.removeClient(ClientData.getNameByID(player.getUniqueId()));
+                ClientSession session = user.getSession();
+                session.invalidate();
+                session.setLogged(false);
+                session.setPinLogged(false);
+                session.set2FALogged(false);
 
-                    ClientSession session = user.getSession();
-                    session.invalidate();
-                    session.setLogged(false);
-                    session.setPinLogged(false);
-                    session.set2FALogged(false);
-
-                    DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
-                }
+                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
 
                 user.removeSessionCheck();
                 UserDatabase.removeUser(player);
@@ -86,7 +79,6 @@ public final class QuitListener implements Listener {
         ProxiedPlayer player = e.getPlayer();
         kicked.add(player.getUniqueId());
         if (!player.isConnected()) {
-            InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
             if (user.getChecker().isUnderCheck()) {
                 user.getChecker().cancelCheck();
@@ -95,18 +87,13 @@ public final class QuitListener implements Listener {
             SessionKeeper keeper = new SessionKeeper(user.getModule());
             keeper.store();
 
-            if (ip != null) {
-                ClientData data = new ClientData(ip.getAddress());
-                data.removeClient(ClientData.getNameByID(player.getUniqueId()));
+            ClientSession session = user.getSession();
+            session.invalidate();
+            session.setLogged(false);
+            session.setPinLogged(false);
+            session.set2FALogged(false);
 
-                ClientSession session = user.getSession();
-                session.invalidate();
-                session.setLogged(false);
-                session.setPinLogged(false);
-                session.set2FALogged(false);
-
-                DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
-            }
+            DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
 
             user.removeSessionCheck();
             UserDatabase.removeUser(player);

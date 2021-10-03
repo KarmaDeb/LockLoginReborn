@@ -20,6 +20,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
@@ -260,13 +261,19 @@ public final class PlayerFile extends AccountManager {
             for (File file : files) {
                 if (file.getName().endsWith(".lldb")) {
                     console.send("Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
-                    KarmaYamlManager oldManager = new KarmaYamlManager(source, file.getName(), "playerdata");
 
-                    File newFile = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts", file.getName());
-                    KarmaFile user = new KarmaFile(newFile);
+                    Path accountsFolder = new File(source.getDataPath().toFile() + File.separator + "data", "accounts").toPath();
+                    Path newFile = accountsFolder.resolve(file.getName());
 
                     try {
-                        Files.move(file.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        if (!Files.exists(accountsFolder)) {
+                            Files.createDirectories(accountsFolder);
+                        }
+                        if (!Files.exists(newFile)) {
+                            Files.createFile(newFile);
+                        }
+
+                        Files.move(file.toPath(), newFile, StandardCopyOption.REPLACE_EXISTING);
                     } catch (Throwable ignored) {}
                 }
 

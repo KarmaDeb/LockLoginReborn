@@ -78,9 +78,15 @@ public class AccountCommand extends Command {
     public void execute(CommandSender sender, String[] args) {
         LateScheduler<Event> eventCall = new FixedLateScheduler<>();
 
+        PluginMessages messages = CurrentPlatform.getMessages();
+        sender.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", "account"))));
+
         APISource.asyncScheduler().queue(() -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
-            PluginMessages messages = CurrentPlatform.getMessages();
 
             if (sender instanceof ProxiedPlayer) {
                 ProxiedPlayer player = (ProxiedPlayer) sender;
@@ -223,22 +229,32 @@ public class AccountCommand extends Command {
                                                 AccountManager manager = offline.getAccount();
                                                 if (manager != null) {
                                                     LockedAccount account = new LockedAccount(manager.getUUID());
-                                                    manager.setUnsafePassword("");
-                                                    manager.setUnsafePin("");
-                                                    manager.setUnsafeGAuth("");
-                                                    manager.set2FA(false);
+                                                    if (account.getData().isLocked()) {
+                                                        user.send(messages.prefix() + messages.neverPlayer(target));
+                                                    } else {
+                                                        manager.setUnsafePassword("");
+                                                        manager.setUnsafePin("");
+                                                        manager.setUnsafeGAuth("");
+                                                        manager.set2FA(false);
 
-                                                    user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                                        user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                                        console.send(messages.prefix() +
+                                                                        properties.getProperty(
+                                                                                "account_removed",
+                                                                                "&dAccount of {0} removed by {1}"),
+                                                                target,
+                                                                StringUtils.stripColor(player.getName()));
 
-                                                    if (online != null) {
-                                                        DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
-                                                        User onlineUser = new User(online);
-                                                        onlineUser.removeSessionCheck();
+                                                        if (online != null) {
+                                                            DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
+                                                            User onlineUser = new User(online);
+                                                            onlineUser.removeSessionCheck();
 
-                                                        onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                            onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                        }
+
+                                                        account.lock(StringUtils.stripColor(player.getDisplayName()));
                                                     }
-
-                                                    account.lock(StringUtils.stripColor(player.getDisplayName()));
                                                 } else {
                                                     user.send(messages.prefix() + messages.neverPlayer(target));
                                                 }
@@ -435,6 +451,48 @@ public class AccountCommand extends Command {
                             break;
                         case "remove":
                         case "delete":
+                            String target = args[1];
+                            nsr = AccountNameDatabase.find(target);
+
+                            if (nsr.singleResult()) {
+                                ProxiedPlayer online = plugin.getProxy().getPlayer(target);
+                                offline = new OfflineClient(target);
+
+                                manager = offline.getAccount();
+                                if (manager != null) {
+                                    LockedAccount account = new LockedAccount(manager.getUUID());
+                                    if (account.getData().isLocked()) {
+                                        console.send(messages.prefix() + messages.neverPlayer(target));
+                                    } else {
+                                        manager.setUnsafePassword("");
+                                        manager.setUnsafePin("");
+                                        manager.setUnsafeGAuth("");
+                                        manager.set2FA(false);
+
+                                        console.send(messages.prefix() +
+                                                        properties.getProperty(
+                                                                "account_removed",
+                                                                "&dAccount of {0} removed by {1}"),
+                                                target,
+                                                config.serverName());
+
+                                        if (online != null) {
+                                            DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
+                                            User onlineUser = new User(online);
+                                            onlineUser.removeSessionCheck();
+
+                                            onlineUser.kick(messages.forcedAccountRemoval(config.serverName()));
+                                        }
+
+                                        account.lock("{ServerName}");
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + messages.neverPlayer(target));
+                                }
+                            } else {
+                                console.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
+                            }
+                            break;
                         default:
                             console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
                             break;
@@ -442,6 +500,7 @@ public class AccountCommand extends Command {
                 }
             }
         });
+
         eventCall.whenComplete(ModulePlugin::callEvent);
     }
 }

@@ -21,6 +21,8 @@ import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
+import ml.karmaconfigs.api.common.Logger;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
@@ -28,6 +30,7 @@ import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +111,27 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
     public final void reload() {
         unload();
         load();
+    }
+
+    /**
+     * Log something into the plugin's logger
+     *
+     * @param level the log level
+     * @param info the info to log
+     */
+    public final void log(final Level level, final Object info) {
+        Logger logger = new Logger(getSource());
+
+        if (info instanceof Throwable) {
+            Throwable error = (Throwable) info;
+            logger.scheduleLog(level, error);
+        } else {
+            try {
+                logger.scheduleLog(level, info.toString());
+            } catch (Throwable ex) {
+                logger.scheduleLog(level, String.valueOf(info));
+            }
+        }
     }
 
     /**

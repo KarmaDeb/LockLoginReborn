@@ -27,10 +27,11 @@ public final class LockedAccount {
     /**
      * Initialize the locked account
      *
-     * @param id the account id
+     * @param accId the account id
      */
-    public LockedAccount(final AccountID id) {
-        File file = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", id.getId() + ".locked");
+    public LockedAccount(final AccountID accId) {
+
+        File file = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", accId.getId() + ".locked");
         lockedFile = new KarmaFile(file);
     }
 

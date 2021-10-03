@@ -176,12 +176,12 @@ public final class SessionCheck<T> implements Runnable {
 
         SimpleScheduler timer = new SourceSecondsTimer(source, time, true);
         timer.restartAction(() -> {
-            ClientSession session = player.getSession();
-            if (!session.isLogged()) {
-                if (manager.isRegistered())
+            if (under_check.contains(player.getUUID())) {
+                if (manager.isRegistered()) {
                     player.sendMessage(messages.prefix() + messages.login());
-                else
+                } else {
                     player.sendMessage(messages.prefix() + messages.register());
+                }
             } else {
                 timer.cancel();
             }

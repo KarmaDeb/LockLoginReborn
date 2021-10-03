@@ -19,7 +19,6 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -30,7 +29,6 @@ import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
-import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
@@ -46,7 +44,6 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
@@ -88,15 +85,10 @@ public final class JoinListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onServerPing(ServerListPingEvent e) {
         if (!config.isBungeeCord()) {
-            ClientData client = new ClientData(e.getAddress());
-            if (!client.isVerified()) {
-                client.setVerified(true);
-
-                Event ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
-                        PluginIpValidationEvent.ValidationResult.SUCCESS,
-                        "Plugin added the IP to the IP validation queue", e);
-                ModulePlugin.callEvent(ipEvent);
-            }
+            Event ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                    PluginIpValidationEvent.ValidationResult.SUCCESS,
+                    "Plugin added the IP to the IP validation queue", e);
+            ModulePlugin.callEvent(ipEvent);
         }
     }
 
@@ -124,13 +116,6 @@ public final class JoinListener implements Listener {
                 case SUCCESS:
                     if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
                         if (!config.isBungeeCord()) {
-                            //If the anti bot is disabled, verify the IP to avoid
-                            //errors
-                            if (!config.antiBot()) {
-                                ClientData client = new ClientData(ip);
-                                client.setVerified(true);
-                            }
-
                             if (config.registerOptions().maxAccounts() > 0) {
                                 AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
 
@@ -159,28 +144,6 @@ public final class JoinListener implements Listener {
                                 BruteForce protection = new BruteForce(ip);
                                 if (protection.isBlocked()) {
                                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft())));
-                                    return;
-                                }
-                            }
-
-                            ClientData client = new ClientData(ip);
-                            if (config.antiBot()) {
-                                if (client.isVerified()) {
-                                    if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
-                                        logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                                    } else {
-                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
-                                        return;
-                                    }
-                                } else {
-                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.antiBot()));
-                                    return;
-                                }
-                            } else {
-                                if (client.canAssign(config.accountsPerIP(), conn_name, tar_uuid)) {
-                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                                } else {
-                                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, StringUtils.toColor(messages.maxIP()));
                                     return;
                                 }
                             }

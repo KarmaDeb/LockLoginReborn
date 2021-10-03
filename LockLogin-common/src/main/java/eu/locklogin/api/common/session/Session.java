@@ -62,7 +62,7 @@ public final class Session extends ClientSession {
      * Validate the session
      */
     @Override
-    public final void validate() {
+    public void validate() {
         bungee_verified = true;
     }
 
@@ -70,7 +70,7 @@ public final class Session extends ClientSession {
      * Invalidate the session
      */
     @Override
-    public final void invalidate() {
+    public void invalidate() {
         bungee_verified = false;
     }
 
@@ -80,7 +80,7 @@ public final class Session extends ClientSession {
      * @return the session initialization time
      */
     @Override
-    public final Instant getInitialization() {
+    public Instant getInitialization() {
         return initialized;
     }
 
@@ -91,7 +91,7 @@ public final class Session extends ClientSession {
      * bungeecord
      */
     @Override
-    public final boolean isValid() {
+    public boolean isValid() {
         return bungee_verified;
     }
 
@@ -101,7 +101,7 @@ public final class Session extends ClientSession {
      * @return if the session is captcha-logged
      */
     @Override
-    public final boolean isCaptchaLogged() {
+    public boolean isCaptchaLogged() {
         return captcha_logged;
     }
 
@@ -111,7 +111,7 @@ public final class Session extends ClientSession {
      * @param status the captcha log status
      */
     @Override
-    public final void setCaptchaLogged(final boolean status) {
+    public void setCaptchaLogged(final boolean status) {
         captcha_logged = status;
     }
 
@@ -121,7 +121,7 @@ public final class Session extends ClientSession {
      * @return if the session is logged
      */
     @Override
-    public final boolean isLogged() {
+    public boolean isLogged() {
         return logged;
     }
 
@@ -131,7 +131,7 @@ public final class Session extends ClientSession {
      * @param status the session login status
      */
     @Override
-    public final void setLogged(final boolean status) {
+    public void setLogged(final boolean status) {
         logged = status;
     }
 
@@ -141,7 +141,7 @@ public final class Session extends ClientSession {
      * @return if the session is temp logged
      */
     @Override
-    public final boolean isTempLogged() {
+    public boolean isTempLogged() {
         return gAuth_logged && pin_logged;
     }
 
@@ -161,7 +161,7 @@ public final class Session extends ClientSession {
      * @param status the session 2fa log status
      */
     @Override
-    public final void set2FALogged(final boolean status) {
+    public void set2FALogged(final boolean status) {
         gAuth_logged = status;
     }
 
@@ -181,7 +181,7 @@ public final class Session extends ClientSession {
      * @param status the session pin log status
      */
     @Override
-    public final void setPinLogged(final boolean status) {
+    public void setPinLogged(final boolean status) {
         pin_logged = status;
     }
 
@@ -191,7 +191,7 @@ public final class Session extends ClientSession {
      * @return the session captcha
      */
     @Override
-    public final String getCaptcha() {
+    public String getCaptcha() {
         return captcha;
     }
 }

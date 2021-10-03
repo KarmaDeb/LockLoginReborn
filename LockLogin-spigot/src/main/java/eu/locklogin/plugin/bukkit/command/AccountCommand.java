@@ -51,8 +51,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.trySync;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "account")
 public class AccountCommand implements CommandExecutor {
@@ -73,9 +72,15 @@ public class AccountCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         LateScheduler<Event> eventCall = new FixedLateScheduler<>();
 
+        PluginMessages messages = CurrentPlatform.getMessages();
+        sender.sendMessage(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", label)));
+
         APISource.asyncScheduler().queue(() -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
-            PluginMessages messages = CurrentPlatform.getMessages();
 
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -223,19 +228,29 @@ public class AccountCommand implements CommandExecutor {
                                                 AccountManager manager = offline.getAccount();
                                                 if (manager != null) {
                                                     LockedAccount account = new LockedAccount(manager.getUUID());
-                                                    manager.setUnsafePassword("");
-                                                    manager.setUnsafePin("");
-                                                    manager.setUnsafeGAuth("");
-                                                    manager.set2FA(false);
+                                                    if (account.getData().isLocked()) {
+                                                        user.send(messages.prefix() + messages.neverPlayer(target));
+                                                    } else {
+                                                        manager.setUnsafePassword("");
+                                                        manager.setUnsafePin("");
+                                                        manager.setUnsafeGAuth("");
+                                                        manager.set2FA(false);
 
-                                                    user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                                        user.send(messages.prefix() + messages.forcedAccountRemovalAdmin(target));
+                                                        console.send(messages.prefix() +
+                                                                        properties.getProperty(
+                                                                                "account_removed",
+                                                                                "&dAccount of {0} removed by {1}"),
+                                                                target,
+                                                                StringUtils.stripColor(player.getName()));
 
-                                                    if (online != null) {
-                                                        User onlineUser = new User(online);
-                                                        onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                        if (online != null) {
+                                                            User onlineUser = new User(online);
+                                                            onlineUser.kick(messages.forcedAccountRemoval(player.getDisplayName()));
+                                                        }
+
+                                                        account.lock(StringUtils.stripColor(player.getDisplayName()));
                                                     }
-
-                                                    account.lock(StringUtils.stripColor(player.getDisplayName()));
                                                 } else {
                                                     user.send(messages.prefix() + messages.neverPlayer(target));
                                                 }
@@ -397,6 +412,45 @@ public class AccountCommand implements CommandExecutor {
                             break;
                         case "remove":
                         case "delete":
+                            String target = args[1];
+                            nsr = AccountNameDatabase.find(target);
+
+                            if (nsr.singleResult()) {
+                                Player online = plugin.getServer().getPlayer(target);
+                                offline = new OfflineClient(target);
+
+                                manager = offline.getAccount();
+                                if (manager != null) {
+                                    LockedAccount account = new LockedAccount(manager.getUUID());
+                                    if (account.getData().isLocked()) {
+                                        console.send(messages.prefix() + messages.neverPlayer(target));
+                                    } else {
+                                        manager.setUnsafePassword("");
+                                        manager.setUnsafePin("");
+                                        manager.setUnsafeGAuth("");
+                                        manager.set2FA(false);
+
+                                        console.send(messages.prefix() +
+                                                        properties.getProperty(
+                                                                "account_removed",
+                                                                "&dAccount of {0} removed by {1}"),
+                                                target,
+                                                config.serverName());
+
+                                        if (online != null) {
+                                            User onlineUser = new User(online);
+                                            onlineUser.kick(messages.forcedAccountRemoval(config.serverName()));
+                                        }
+
+                                        account.lock("{ServerName}");
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + messages.neverPlayer(target));
+                                }
+                            } else {
+                                console.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
+                            }
+                            break;
                         default:
                             console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
                             break;

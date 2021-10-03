@@ -20,7 +20,6 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.security.client.ClientData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -33,7 +32,6 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
-import eu.locklogin.api.module.plugin.api.event.user.GenericJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
@@ -217,16 +215,11 @@ public final class JoinListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onServerPing(ProxyPingEvent e) {
         InetAddress ip = getIp(e.getConnection().getSocketAddress());
-        ClientData client = new ClientData(ip);
 
-        if (!client.isVerified()) {
-            client.setVerified(true);
-
-            Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
-                    PluginIpValidationEvent.ValidationResult.SUCCESS,
-                    "Plugin added the IP to the IP validation queue", e);
-            ModulePlugin.callEvent(ipEvent);
-        }
+        Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                PluginIpValidationEvent.ValidationResult.SUCCESS,
+                "Plugin added the IP to the IP validation queue", e);
+        ModulePlugin.callEvent(ipEvent);
     }
 
     @SuppressWarnings("all")
@@ -249,13 +242,6 @@ public final class JoinListener implements Listener {
             switch (ipEvent.getResult()) {
                 case SUCCESS:
                     if (!e.isCancelled()) {
-                        //If the anti bot is disabled, verify the IP to avoid
-                        //errors
-                        if (!config.antiBot()) {
-                            ClientData client = new ClientData(ip);
-                            client.setVerified(true);
-                        }
-
                         if (config.registerOptions().maxAccounts() > 0) {
                             AccountData data = new AccountData(ip, AccountID.fromUUID(gen_uuid));
 
@@ -287,32 +273,6 @@ public final class JoinListener implements Listener {
                             if (protection.isBlocked()) {
                                 e.setCancelled(true);
                                 e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))));
-                                return;
-                            }
-                        }
-
-                        if (config.antiBot()) {
-                            ClientData client = new ClientData(ip);
-                            if (client.isVerified()) {
-                                if (client.canAssign(config.accountsPerIP(), conn_name, gen_uuid)) {
-                                    logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                                } else {
-                                    e.setCancelled(true);
-                                    e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.maxIP())));
-                                    return;
-                                }
-                            } else {
-                                e.setCancelled(true);
-                                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.antiBot())));
-                                return;
-                            }
-                        } else {
-                            ClientData client = new ClientData(ip);
-                            if (client.canAssign(config.accountsPerIP(), conn_name, gen_uuid)) {
-                                logger.scheduleLog(Level.INFO, "Assigned IP address {0} to client {1}", ip.getHostAddress(), conn_name);
-                            } else {
-                                e.setCancelled(true);
-                                e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.maxIP())));
                                 return;
                             }
                         }

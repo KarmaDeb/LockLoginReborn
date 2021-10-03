@@ -41,8 +41,9 @@ public final class Message extends PluginMessages {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         RGBTextComponent component = new RGBTextComponent(true, true);
-        if (original.contains("<captcha>") && !config.captchaOptions().isEnabled())
-            original = original.replace("<captcha>", "");
+        if ((original.contains("<captcha>") || original.contains("{captcha}")) && !config.captchaOptions().isEnabled())
+            original = original.replace("<captcha>", "").replace("{captcha}", "");
+
         return component.parse(original.replace("{ServerName}", config.serverName()));
     }
 

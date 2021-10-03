@@ -24,7 +24,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * LockLogin plugin messages
@@ -99,23 +101,30 @@ public final class PluginProperties {
             inProperties.load(CurrentPlatform.getMain().getResourceAsStream("/lang/plugin_messages.properties"));
             outProperties.load(new FileInputStream(propFile));
 
+            Map<Object, Object> props = new ConcurrentHashMap<>();
+            for (Object key : outProperties.keySet()) {
+                props.put(key, outProperties.get(key));
+            }
+            outProperties.clear();
+
             String outVersion = outProperties.getProperty("properties_lang_version", "1.0.0");
             String inVersion = inProperties.getProperty("properties_lang_version", "1.0.1");
 
             if (StringUtils.compareTo(inVersion, outVersion) > 0) {
                 for (Object inKey : inProperties.keySet()) {
-                    if (outProperties.getOrDefault(inKey, null) == null) {
-                        outProperties.put(inKey, inProperties.get(inKey));
+                    if (props.getOrDefault(inKey, null) == null) {
+                        props.put(inKey, inProperties.get(inKey));
                     }
                 }
 
-                for (Object outKey : outProperties.keySet()) {
+                for (Object outKey : props.keySet()) {
                     if (inProperties.getOrDefault(outKey, null) == null) {
-                        outProperties.remove(outKey);
+                        props.remove(outKey);
                     }
                 }
             }
 
+            outProperties.putAll(props);
             outProperties.store(Files.newBufferedWriter(propFile.toPath(), StandardCharsets.UTF_8), comment);
         } catch (Throwable ex) {
             ex.printStackTrace();

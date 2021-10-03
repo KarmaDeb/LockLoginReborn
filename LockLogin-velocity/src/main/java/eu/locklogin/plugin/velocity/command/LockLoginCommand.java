@@ -43,8 +43,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static eu.locklogin.plugin.velocity.LockLogin.console;
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.*;
 
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand extends BungeeLikeCommand {
@@ -67,9 +66,15 @@ public final class LockLoginCommand extends BungeeLikeCommand {
      */
     @Override
     public void execute(CommandSource sender, String[] args) {
-        APISource.asyncScheduler().queue(() -> {
-            PluginMessages messages = CurrentPlatform.getMessages();
+        PluginMessages messages = CurrentPlatform.getMessages();
 
+        sender.sendMessage(Component.text().content(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {command} command, please wait for feedback")
+                .replace("{command}", "locklogin"))).build());
+
+        APISource.asyncScheduler().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;

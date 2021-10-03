@@ -163,13 +163,6 @@ BruteForce:
   Tries: 3
   BlockTime: 30
 
-#AntiBot is a feature that
-#will try to keep bots away
-#from your server by just checking
-#if the connecting player has pinged
-#the server (bots doesn't ping servers)
-AntiBot: true
-
 #AllowSameIP is a feature that will
 #allow a player that is already connected
 #to join the server if his IP is the same
@@ -233,10 +226,6 @@ Spawn:
 #PLAYER chat, there won't be a change
 #for other players
 ClearChat: false
-
-#The maximum amount of accounts allowed
-#TO BE IN THE SERVER per IP
-AccountsPerIp: 2
 
 #Toggle LockLogin name verifier when
 #a player joins the server, using

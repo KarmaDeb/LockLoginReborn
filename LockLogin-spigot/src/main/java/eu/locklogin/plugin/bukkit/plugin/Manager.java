@@ -17,7 +17,7 @@ package eu.locklogin.plugin.bukkit.plugin;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.TokenGen;
-import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -310,7 +310,7 @@ public final class Manager {
     /**
      * Setup the plugin files
      */
-    protected static void setupFiles() {
+    static void setupFiles() {
         Set<String> failed = new LinkedHashSet<>();
 
         File cfg = new File(plugin.getDataFolder(), "config.yml");
@@ -372,7 +372,7 @@ public final class Manager {
     /**
      * Register plugin metrics
      */
-    protected static void registerMetrics() {
+    static void registerMetrics() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Metrics metrics = new Metrics(plugin, 6513);
 
@@ -388,7 +388,7 @@ public final class Manager {
     /**
      * Register the plugin listeners
      */
-    protected static void registerListeners() {
+    static void registerListeners() {
         Listener onJoin = new JoinListener();
         Listener onQuit = new QuitListener();
         Listener onChat = new ChatListener();
@@ -407,7 +407,7 @@ public final class Manager {
     /**
      * Load the plugin cache if exists
      */
-    protected static void loadCache() {
+    static void loadCache() {
         RestartCache cache = new RestartCache();
         cache.loadBungeeKey();
         cache.loadUserData();
@@ -490,7 +490,7 @@ public final class Manager {
     /**
      * Schedule the version check process
      */
-    protected static void scheduleVersionCheck() {
+    static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         SimpleScheduler timer = new SourceSecondsTimer(plugin, config.getUpdaterOptions().getInterval(), true).multiThreading(true).endAction(Manager::performVersionCheck);
@@ -504,7 +504,7 @@ public final class Manager {
     /**
      * Schedule the alert system
      */
-    protected static void scheduleAlertSystem() {
+    static void scheduleAlertSystem() {
         SimpleScheduler timer = new SourceSecondsTimer(plugin, 30, true).multiThreading(true).endAction(() -> {
             AlertSystem system = new AlertSystem();
             system.checkAlerts();
@@ -524,7 +524,7 @@ public final class Manager {
      * This is util after plugin updates or
      * plugin load using third-party loaders
      */
-    protected static void initPlayers() {
+    static void initPlayers() {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             PluginMessages messages = CurrentPlatform.getMessages();
@@ -533,18 +533,6 @@ public final class Manager {
                 User user = new User(player);
                 ClientSession session = user.getSession();
                 InetSocketAddress ip = player.getAddress();
-
-                if (ip != null) {
-                    ClientData client = new ClientData(ip.getAddress());
-
-                    if (!client.isVerified())
-                        client.setVerified(true);
-
-                    if (!client.canAssign(config.accountsPerIP(), player.getName(), player.getUniqueId())) {
-                        user.kick(StringUtils.toColor(messages.maxIP()));
-                        return;
-                    }
-                }
 
                 if (!config.isBungeeCord()) {
                     ProxyCheck proxy = new ProxyCheck(ip);
@@ -601,15 +589,9 @@ public final class Manager {
      */
     static void endPlayers() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            InetSocketAddress ip = player.getAddress();
             User user = new User(player);
 
             if (user.isLockLoginUser()) {
-                if (ip != null) {
-                    ClientData client = new ClientData(ip.getAddress());
-                    client.removeClient(ClientData.getNameByID(player.getUniqueId()));
-                }
-
                 Config config = new Config();
                 if (!config.isBungeeCord()) {
                     SessionKeeper keeper = new SessionKeeper(user.getModule());

@@ -34,6 +34,7 @@ import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -43,8 +44,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static eu.locklogin.plugin.bungee.LockLogin.console;
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
@@ -67,9 +67,14 @@ public final class LockLoginCommand extends Command {
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
-        APISource.asyncScheduler().queue(() -> {
-            PluginMessages messages = CurrentPlatform.getMessages();
+        PluginMessages messages = CurrentPlatform.getMessages();
+        sender.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", "locklogin"))));
 
+        APISource.asyncScheduler().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof ProxiedPlayer) {
                 ProxiedPlayer player = (ProxiedPlayer) sender;

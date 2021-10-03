@@ -35,6 +35,7 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.velocity.makeiteasy.BossMessage;
@@ -84,8 +85,10 @@ public final class User {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
                     AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                    database.assign(StringUtils.stripColor(player.getUsername()));
-                    database.assign(StringUtils.stripColor(player.getGameProfile().getName()));
+                    APISource.asyncScheduler().queue(() -> {
+                        database.assign(StringUtils.stripColor(player.getUsername()));
+                        database.assign(StringUtils.stripColor(player.getGameProfile().getName()));
+                    });
 
                     //Try to fix the empty manager values that are
                     //required

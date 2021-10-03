@@ -45,8 +45,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.*;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
@@ -66,9 +65,14 @@ public final class LockLoginCommand implements CommandExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        APISource.asyncScheduler().queue(() -> {
-            PluginMessages messages = CurrentPlatform.getMessages();
+        PluginMessages messages = CurrentPlatform.getMessages();
+        sender.sendMessage(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", label)));
 
+        APISource.asyncScheduler().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;

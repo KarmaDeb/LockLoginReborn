@@ -108,14 +108,11 @@ public final class RegisterCommand extends BungeeLikeCommand {
 
                                         session.setLogged(true);
 
-                                        if (!manager.has2FA()) {
-                                            if (user.hasPermission(PluginPermission.forceFA())) {
-                                                user.performCommand("2fa setup " + password);
-                                            } else {
-                                                session.set2FALogged(true);
-                                            }
+                                        if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermission.forceFA())) {
+                                            user.performCommand("2fa setup " + password);
+                                        } else {
+                                            session.set2FALogged(true);
                                         }
-
                                         if (!manager.hasPin())
                                             session.setPinLogged(true);
 

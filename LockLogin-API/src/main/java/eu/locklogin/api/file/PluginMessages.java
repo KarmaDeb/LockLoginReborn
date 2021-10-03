@@ -479,12 +479,12 @@ public abstract class PluginMessages {
 
         String format;
         if (time <= 59) {
-            format = time + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+            format = time + " " + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
         } else {
             if (minutes <= 59) {
                 format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
             } else {
-                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
             }
         }
 
@@ -505,12 +505,12 @@ public abstract class PluginMessages {
 
         String format;
         if (time <= 59) {
-            format = time + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+            format = time + " " + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
         } else {
             if (minutes <= 59) {
                 format = minutes + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
             } else {
-                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+                format = hours + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
             }
         }
 
@@ -636,7 +636,7 @@ public abstract class PluginMessages {
             if (minutes <= 59) {
                 format = minutes + " " + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
             } else {
-                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
             }
         }
 
@@ -662,7 +662,7 @@ public abstract class PluginMessages {
             if (minutes <= 59) {
                 format = minutes + " " + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
             } else {
-                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
             }
         }
 

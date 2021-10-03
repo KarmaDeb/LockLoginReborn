@@ -6,7 +6,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.TokenGen;
-import eu.locklogin.api.common.security.client.ClientData;
+import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
@@ -86,13 +86,7 @@ public final class BungeeReceiver implements PluginMessageListener {
 
                                     break;
                                 case QUIT:
-                                    InetSocketAddress ip = player.getAddress();
                                     if (user.isLockLoginUser()) {
-                                        if (ip != null) {
-                                            ClientData client = new ClientData(ip.getAddress());
-                                            client.removeClient(ClientData.getNameByID(player.getUniqueId()));
-                                        }
-
                                         //Last location will be always saved since if the server
                                         //owner wants to enable it, it would be good to see
                                         //the player last location has been stored to avoid

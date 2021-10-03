@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.security.client;
+package eu.locklogin.api.account;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -13,6 +13,7 @@ package eu.locklogin.api.common.security.client;
  * as the successor of the GNU Library Public License, version 2, hence
  * the version number 2.1.]
  */
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 
 import java.net.InetAddress;
 import java.util.*;
@@ -21,12 +22,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * LockLogin client data
  */
+@SuppressWarnings("unused")
 public final class ClientData {
 
     private final static Map<UUID, Integer> id_amount = new ConcurrentHashMap<>();
     private final static Map<UUID, String[]> id_name = new ConcurrentHashMap<>();
-
-    private final static Map<UUID, String> client_names = new ConcurrentHashMap<>();
 
     private final static Set<UUID> verified = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -46,8 +46,11 @@ public final class ClientData {
      *
      * @param status the ip verification status
      */
-    public final void setVerified(final boolean status) {
-        UUID id = getAddressID();
+    public void setVerified(final boolean status) {
+        UUID id = UUID.randomUUID();
+        if (ip != null) {
+            id = UUID.nameUUIDFromBytes(ip.getAddress());
+        }
 
         if (status) {
             verified.add(id);
@@ -64,8 +67,13 @@ public final class ClientData {
      *
      * @return the amount of verified accounts the IP has
      */
-    public final int getVerified() {
-        return id_amount.getOrDefault(getAddressID(), 0);
+    public int getVerified() {
+        UUID id = UUID.randomUUID();
+        if (ip != null) {
+            id = UUID.nameUUIDFromBytes(ip.getAddress());
+        }
+
+        return id_amount.getOrDefault(id, 0);
     }
 
     /**
@@ -73,33 +81,39 @@ public final class ClientData {
      *
      * @return if the ip address is verified
      */
-    public final boolean isVerified() {
-        return verified.contains(getAddressID());
+    public boolean notVerified() {
+        UUID id = UUID.randomUUID();
+        if (ip != null) {
+            id = UUID.nameUUIDFromBytes(ip.getAddress());
+        }
+
+        return !verified.contains(id);
     }
 
     /**
      * Tries to assign the client
      *
      * @param maximum the maximum amount of clients
-     * @param client the client name
-     * @param clientID the client id
+     * @param player the client
      * @return if the client could be assigned
      */
-    public final boolean canAssign(final int maximum, final String client, final UUID clientID) {
-        UUID id = getAddressID();
+    public boolean canAssign(final int maximum, final ModulePlayer player) {
+        UUID id = UUID.randomUUID();
+        if (ip != null) {
+            id = UUID.nameUUIDFromBytes(ip.getAddress());
+        }
 
+        String name = player.getName();
         String[] clients = id_name.getOrDefault(id, new String[0]);
         Set<String> clientSet = new HashSet<>(Arrays.asList(clients));
         int amount = id_amount.getOrDefault(id, 0);
 
-        if (!clientSet.contains(client)) {
+        if (!clientSet.contains(name)) {
             if (amount < maximum) {
-                clientSet.add(client);
+                clientSet.add(name);
 
                 id_name.put(id, clientSet.toArray(new String[0]));
                 id_amount.put(id, amount + 1);
-
-                client_names.put(clientID, client);
 
                 return true;
             }
@@ -113,16 +127,19 @@ public final class ClientData {
     /**
      * Remove a client from the verified clients
      *
-     * @param client the client
+     * @param player the client
      */
-    public final void removeClient(final String client) {
-        UUID id = getAddressID();
+    public void removeClient(final ModulePlayer player) {
+        UUID id = UUID.randomUUID();
+        if (ip != null) {
+            id = UUID.nameUUIDFromBytes(ip.getAddress());
+        }
 
         String[] clients = id_name.getOrDefault(id, new String[0]);
         Set<String> clientSet = new HashSet<>(Arrays.asList(clients));
         int amount = id_amount.getOrDefault(id, 0);
 
-        clientSet.remove(client);
+        clientSet.remove(player.getName());
 
         if (!clientSet.isEmpty()) {
             id_amount.put(id, amount - 1);
@@ -136,25 +153,15 @@ public final class ClientData {
     }
 
     /**
-     * Generate an UUID from the ip
+     * Generate a UUID from the ip
      *
      * @return the ip address UUID
      */
-    public final UUID getAddressID() {
+    public UUID getAddressID() {
         if (ip != null) {
             return UUID.nameUUIDFromBytes(ip.getAddress());
         }
 
         return UUID.randomUUID();
-    }
-
-    /**
-     * Get the client name by its id
-     *
-     * @param id the client id
-     * @return the client name
-     */
-    public static String getNameByID(final UUID id) {
-        return client_names.getOrDefault(id, "");
     }
 }

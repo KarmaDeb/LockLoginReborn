@@ -19,10 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.tryAsync;
@@ -94,7 +91,7 @@ public final class ClientVisor {
                 User user = new User(player);
                 ClientSession session = user.getSession();
 
-                Set<UUID> affected = vanished.getOrDefault(player.getUniqueId(), new HashSet<>());
+                Set<UUID> affected = vanished.getOrDefault(player.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
 
                 if (!affected.isEmpty()) {
                     for (UUID sub : affected) {

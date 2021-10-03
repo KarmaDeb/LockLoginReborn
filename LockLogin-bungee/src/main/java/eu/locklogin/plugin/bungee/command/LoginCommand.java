@@ -95,120 +95,125 @@ public final class LoginCommand extends Command {
                                 user.send(messages.prefix() + messages.login());
                                 break;
                             case 1:
-                                password = args[0];
+                                if (session.isCaptchaLogged()) {
+                                    password = args[0];
 
-                                Password checker = new Password(password);
-                                checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                    Password checker = new Password(password);
+                                    checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
 
-                                BruteForce protection = null;
-                                InetAddress ip = getIp(player.getSocketAddress());
-                                if (ip != null)
-                                    protection = new BruteForce(ip);
+                                    BruteForce protection = null;
+                                    InetAddress ip = getIp(player.getSocketAddress());
+                                    if (ip != null)
+                                        protection = new BruteForce(ip);
 
-                                CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                if (utils.validate()) {
-                                    if (!checker.isSecure()) {
-                                        user.send(messages.prefix() + messages.loginInsecure());
+                                    CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                    if (utils.validate()) {
+                                        if (!checker.isSecure()) {
+                                            user.send(messages.prefix() + messages.loginInsecure());
 
-                                        if (config.blockUnsafePasswords()) {
-                                            manager.setPassword(null);
+                                            if (config.blockUnsafePasswords()) {
+                                                manager.setPassword(null);
 
-                                            SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                            plugin.getProxy().getScheduler().runAsync(plugin, check);
-                                            return;
-                                        }
-                                    }
-
-                                    MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-
-                                    if (utils.needsRehash(config.passwordEncryption())) {
-                                        //Set the player password again to update his hash
-                                        manager.setPassword(password);
-                                        logger.scheduleLog(Level.INFO, "Updated password hash of {0} from {1} to {2}",
-                                                StringUtils.stripColor(player.getDisplayName()),
-                                                utils.getTokenHash().name(),
-                                                config.passwordEncryption().name());
-                                    }
-
-                                    boolean checkServer = false;
-                                    if (!manager.has2FA() && !manager.hasPin()) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
-                                                UserAuthenticateEvent.Result.SUCCESS,
-                                                user.getModule(),
-                                                messages.logged(),
-                                                null);
-                                        ModulePlugin.callEvent(event);
-                                        MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
-                                        MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-
-                                        DataSender.send(player, pin);
-                                        DataSender.send(player, gauth);
-
-                                        session.set2FALogged(true);
-                                        session.setPinLogged(true);
-
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                        checkServer = true;
-                                    } else {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
-                                                UserAuthenticateEvent.Result.SUCCESS_TEMP,
-                                                user.getModule(),
-                                                messages.logged(),
-                                                null);
-                                        ModulePlugin.callEvent(event);
-
-                                        if (manager.hasPin()) {
-                                            session.setPinLogged(false);
-
-                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
-                                        } else {
-                                            user.send(messages.prefix() + event.getAuthMessage());
-                                            user.send(messages.prefix() + messages.gAuthInstructions());
-                                        }
-                                    }
-
-                                    session.setLogged(true);
-                                    if (protection != null)
-                                        protection.success();
-
-                                    user.restorePotionEffects();
-
-                                    DataSender.send(player, login);
-
-                                    if (checkServer)
-                                        user.checkServer(0);
-
-                                    if (!manager.has2FA()) {
-                                        if (user.hasPermission(PluginPermission.forceFA()))
-                                            user.performCommand("2fa setup " + password);
-                                    }
-                                } else {
-                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
-                                            UserAuthenticateEvent.Result.ERROR,
-                                            user.getModule(),
-                                            messages.incorrectPassword(),
-                                            null);
-                                    ModulePlugin.callEvent(event);
-
-                                    if (protection != null) {
-                                        protection.fail();
-
-                                        BruteForceConfig bruteForce = config.bruteForceOptions();
-                                        LoginConfig loginConfig = config.loginOptions();
-
-                                        if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
-                                            protection.block(bruteForce.getBlockTime());
-                                            user.kick(messages.ipBlocked(protection.getBlockLeft()));
-                                        } else {
-                                            if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
-                                                protection.success();
-                                                user.kick(event.getAuthMessage());
-                                            } else {
-                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                                plugin.getProxy().getScheduler().runAsync(plugin, check);
+                                                return;
                                             }
                                         }
+
+                                        MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+
+                                        if (utils.needsRehash(config.passwordEncryption())) {
+                                            //Set the player password again to update his hash
+                                            manager.setPassword(password);
+                                            logger.scheduleLog(Level.INFO, "Updated password hash of {0} from {1} to {2}",
+                                                    StringUtils.stripColor(player.getDisplayName()),
+                                                    utils.getTokenHash().name(),
+                                                    config.passwordEncryption().name());
+                                        }
+
+                                        boolean checkServer = false;
+                                        if (!manager.has2FA() && !manager.hasPin()) {
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                                    UserAuthenticateEvent.Result.SUCCESS,
+                                                    user.getModule(),
+                                                    messages.logged(),
+                                                    null);
+                                            ModulePlugin.callEvent(event);
+                                            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+
+                                            DataSender.send(player, pin);
+                                            DataSender.send(player, gauth);
+
+                                            session.set2FALogged(true);
+                                            session.setPinLogged(true);
+
+                                            user.send(messages.prefix() + event.getAuthMessage());
+                                            checkServer = true;
+                                        } else {
+                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                                    UserAuthenticateEvent.Result.SUCCESS_TEMP,
+                                                    user.getModule(),
+                                                    messages.logged(),
+                                                    null);
+                                            ModulePlugin.callEvent(event);
+
+                                            if (manager.hasPin()) {
+                                                session.setPinLogged(false);
+
+                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
+                                            } else {
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                user.send(messages.prefix() + messages.gAuthInstructions());
+                                            }
+                                        }
+
+                                        session.setLogged(true);
+                                        if (protection != null)
+                                            protection.success();
+
+                                        user.restorePotionEffects();
+
+                                        DataSender.send(player, login);
+
+                                        if (checkServer)
+                                            user.checkServer(0);
+
+                                        if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermission.forceFA())) {
+                                            user.performCommand("2fa setup " + password);
+                                        }
                                     } else {
-                                        user.send(messages.prefix() + event.getAuthMessage());
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
+                                                UserAuthenticateEvent.Result.ERROR,
+                                                user.getModule(),
+                                                messages.incorrectPassword(),
+                                                null);
+                                        ModulePlugin.callEvent(event);
+
+                                        if (protection != null) {
+                                            protection.fail();
+
+                                            BruteForceConfig bruteForce = config.bruteForceOptions();
+                                            LoginConfig loginConfig = config.loginOptions();
+
+                                            if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
+                                                protection.block(bruteForce.getBlockTime());
+                                                user.kick(messages.ipBlocked(protection.getBlockLeft()));
+                                            } else {
+                                                if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
+                                                    protection.success();
+                                                    user.kick(event.getAuthMessage());
+                                                } else {
+                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                }
+                                            }
+                                        } else {
+                                            user.send(messages.prefix() + event.getAuthMessage());
+                                        }
+                                    }
+                                } else {
+                                    if (config.captchaOptions().isEnabled()) {
+                                        user.send(messages.prefix() + messages.invalidCaptcha());
                                     }
                                 }
                                 break;

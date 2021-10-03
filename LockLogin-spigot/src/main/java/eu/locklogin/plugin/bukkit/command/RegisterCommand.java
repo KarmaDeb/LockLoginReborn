@@ -103,12 +103,10 @@ public final class RegisterCommand implements CommandExecutor {
 
                                             session.setLogged(true);
 
-                                            if (!manager.has2FA()) {
-                                                if (player.hasPermission(forceFA())) {
-                                                    trySync(() -> player.performCommand("2fa setup " + password));
-                                                } else {
-                                                    session.set2FALogged(true);
-                                                }
+                                            if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
+                                                trySync(() -> player.performCommand("2fa setup " + password));
+                                            } else {
+                                                session.set2FALogged(true);
                                             }
                                             if (!manager.hasPin())
                                                 session.setPinLogged(true);
@@ -120,7 +118,7 @@ public final class RegisterCommand implements CommandExecutor {
                                         }
                                     } else {
                                         if (config.captchaOptions().isEnabled()) {
-                                            user.send(messages.prefix() + messages.register());
+                                            user.send(messages.prefix() + messages.invalidCaptcha());
                                         }
                                     }
                                     break;
