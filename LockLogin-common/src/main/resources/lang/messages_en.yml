@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: English (Official)
 #Editor: KarmaDev
-#Last edited: 29 - August - 2021 00:40
+#Last edited: 5 - October - 2021 01:47
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -36,7 +36,6 @@ Back: "&eBack"
 PlayerNotVerified: "&5&oYou can't fight against {player} while he's not logged/registered"
 AlreadyPlaying: "&5&oThat player is already playing"
 PlayerInfoUsage: "&5&oValid playerinfo sub-arguments: &e<player|players>&7, &e<@[alias]>"
-MaxIp: "&5&oMax account per IP reached on the server"
 ConnectionError: "&5&oThe player {player} is not online"
 LookUpUsage: "&5&oPlease, use /account alts <player>"
 AltFound: "&5&o{player} could have {alts} alt accounts, type /account alts {player} for more info"
@@ -175,11 +174,6 @@ IpBlocked:
   - "&5LockLogin systems have detected an"
   - "&5unusual traffic on your IP and has been blocked"
   - "&f{time} {time_format}"
-AntiBot:
-  - "&f{ServerName}"
-  - ""
-  - "&5Add this server to your server list"
-  - "&5If you already have it, reload server list"
 IllegalName:
   - "{ServerName}"
   - ""

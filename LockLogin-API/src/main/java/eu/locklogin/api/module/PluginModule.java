@@ -22,7 +22,6 @@ import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import ml.karmaconfigs.api.common.Logger;
-import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.JarAppender;
 import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
@@ -46,6 +45,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * LockLogin plugin module
@@ -543,15 +543,24 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * @return the resource stream
      */
     public final InputStream getResource(final String name, final String... dirs) {
-        if (dirs.length > 0) {
-            StringBuilder dirBuilder = new StringBuilder();
-            for (String str : dirs)
-                dirBuilder.append(str).append("/");
+        InputStream stream = null;
 
-            return getClass().getResourceAsStream(dirBuilder + name);
-        } else {
-            return getClass().getResourceAsStream("/" + name);
+        try {
+            ZipFile zip = new ZipFile(getModule());
+            StringBuilder pathBuilder = new StringBuilder();
+            for (String dir : dirs)
+                pathBuilder.append(dir).append("/");
+
+            String path = StringUtils.replaceLast(pathBuilder.toString(), "/", "");
+            ZipEntry entry = zip.getEntry(path + "/" + name);
+            stream = zip.getInputStream(entry);
+
+            zip.close();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         }
+
+        return stream;
     }
 
     /**
@@ -560,7 +569,16 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * @return the module data folder
      */
     public final File getDataFolder() {
-        return new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + File.separator + "plugin" + File.separator + "modules", this.name());
+        File mainJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " "));
+        File parent = mainJar.getParentFile();
+        File dataFolder;
+        if (StringUtils.isNullOrEmpty(this.name())) {
+            dataFolder = new File(parent, StringUtils.randomString(5, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER));
+        } else {
+            dataFolder = new File(parent, this.name());
+        }
+
+        return dataFolder;
     }
 
     /**
@@ -570,7 +588,16 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     @Override
     public final Path getDataPath() {
-        return getDataFolder().toPath();
+        File mainJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " "));
+        File parent = mainJar.getParentFile();
+        File dataFolder;
+        if (StringUtils.isNullOrEmpty(this.name())) {
+            dataFolder = new File(parent, StringUtils.randomString(5, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER));
+        } else {
+            dataFolder = new File(parent, this.name());
+        }
+
+        return dataFolder.toPath();
     }
 
     /**
@@ -599,15 +626,11 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * @return the module file
      */
     public final File getFile(final String name, final String... path) {
-        if (path.length > 0) {
-            StringBuilder path_builder = new StringBuilder();
-            for (String sub_path : path)
-                path_builder.append(File.separator).append(sub_path);
+        Path main = getDataPath();
+        for (String dir : path)
+            main = main.resolve(dir);
 
-            return new File(getDataFolder().getAbsolutePath().replace("%20", " ") + path_builder, name);
-        } else {
-            return new File(getDataFolder(), name);
-        }
+        return main.resolve(name).toFile();
     }
 
     /**

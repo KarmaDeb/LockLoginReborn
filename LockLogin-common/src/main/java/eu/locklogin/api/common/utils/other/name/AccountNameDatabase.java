@@ -3,6 +3,8 @@ package eu.locklogin.api.common.utils.other.name;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.Key;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,21 +44,28 @@ public final class AccountNameDatabase {
      * @param name the username/nickname
      * @return the name search result
      */
-    public static NameSearchResult find(final String name) {
-        Set<UUID> ids = new LinkedHashSet<>();
+    public static LateScheduler<NameSearchResult> find(final String name) {
+        LateScheduler<NameSearchResult> result = new AsyncLateScheduler<>();
 
-        for (Key key : nameDatabase.getKeys(false)) {
-            String path = key.getPath();
-            List<String> values = nameDatabase.getStringList(path);
+        APISource.asyncScheduler().queue(() -> {
+            Set<UUID> ids = new LinkedHashSet<>();
 
-            if (values.contains(name)) {
-                try {
-                    ids.add(UUID.fromString(path));
-                } catch (Throwable ignored) {}
+            for (Key key : nameDatabase.getKeys(false)) {
+                String path = key.getPath();
+                List<String> values = nameDatabase.getStringList(path);
+
+                if (values.contains(name)) {
+                    try {
+                        ids.add(UUID.fromString(path));
+                    } catch (Throwable ignored) {}
+                }
             }
-        }
 
-        return new NameSearchResult(ids.toArray(new UUID[0]));
+            NameSearchResult nsr = new NameSearchResult(ids.toArray(new UUID[0]));
+            result.complete(nsr);
+        });
+
+        return result;
     }
 
     /**
@@ -65,21 +74,28 @@ public final class AccountNameDatabase {
      * @param name the name
      * @return the other possible names
      */
-    public static String[] otherPossible(final String name) {
-        Set<String> names = new LinkedHashSet<>();
+    public static LateScheduler<String[]> otherPossible(final String name) {
+        LateScheduler<String[]> result = new AsyncLateScheduler<>();
 
-        for (Key key : nameDatabase.getKeys(false)) {
-            String path = key.getPath();
-            List<String> values = nameDatabase.getStringList(path);
+        APISource.asyncScheduler().queue(() -> {
+            Set<String> names = new LinkedHashSet<>();
 
-            if (values.contains(name)) {
-                try {
-                    names.addAll(values);
-                } catch (Throwable ignored) {}
+            for (Key key : nameDatabase.getKeys(false)) {
+                String path = key.getPath();
+                List<String> values = nameDatabase.getStringList(path);
+
+                if (values.contains(name)) {
+                    try {
+                        names.addAll(values);
+                    } catch (Throwable ignored) {}
+                }
             }
-        }
-        names.remove(name);
+            names.remove(name);
 
-        return names.toArray(new String[0]);
+            String[] rs = names.toArray(new String[0]);
+            result.complete(rs);
+        });
+
+        return result;
     }
 }

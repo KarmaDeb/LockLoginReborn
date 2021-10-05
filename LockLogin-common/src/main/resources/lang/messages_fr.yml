@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: French (Official)
 #Editor: KarmaDev
-#Last edited: 29 - August - 2021 00:40
+#Last edited: 5 - October - 2021 01:47
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -35,7 +35,6 @@ Back: "&eBack"
 #Session messages - Manager
 PlayerNotVerified: "&5&oVous ne pouvez pas vous battre contre {player} alors qu'il n'est pas connecté/enregistré"
 AlreadyPlaying: "&5&oLe joueur joue déjà"
-MaxIp: "&5&oCompte maximum par IP atteint sur le serveur"
 ConnectionError: "&5&oLe joueur {player} n'est pas en ligne"
 PlayerInfoUsage: "&5&oSous-arguments playerinfo valides: &e<player|players>&7, &e<@[alias]>"
 LookUpUsage: "&5&oS'il vous plaît, utilisez /account alts <player>"
@@ -175,11 +174,6 @@ IpBlocked:
   - "&cLes systèmes LockLogin ont détecté un"
   - "&ctrafic inhabituel sur votre adresse IP et a été bloqué"
   - "&f{time} {time_format}"
-AntiBot:
-  - "{ServerName}"
-  - ""
-  - "&cAjouter ce serveur à votre liste de serveurs"
-  - "&cSi vous l'avez déjà, recharger la liste des serveurs"
 IllegalName:
   - "{ServerName}"
   - ""

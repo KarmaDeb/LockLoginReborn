@@ -17,7 +17,6 @@ package eu.locklogin.plugin.bukkit.plugin;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.TokenGen;
-import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;

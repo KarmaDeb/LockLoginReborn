@@ -47,11 +47,23 @@ public final class ModuleConsole extends ModuleSender {
      */
     public void sendMessage(final String message, final Object... replaces) {
         if (ModuleLoader.isLoaded(module)) {
-            ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
-            ModulePlugin.callEvent(event);
+            if (message.contains("\n")) {
+                String[] data = message.split("\n");
+                for (String str : data) {
+                    ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, str  + "&r", replaces);
+                    ModulePlugin.callEvent(event);
 
-            if (!event.isHandled()) {
-                APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+                    if (!event.isHandled()) {
+                        APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+                    }
+                }
+            } else {
+                ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
+                ModulePlugin.callEvent(event);
+
+                if (!event.isHandled()) {
+                    APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+                }
             }
         }
     }
@@ -65,12 +77,24 @@ public final class ModuleConsole extends ModuleSender {
      */
     public void sendMessage(final MessageLevel level, final String message, final Object... replaces) {
         if (ModuleLoader.isLoaded(module)) {
-            String prefix = getPrefixManager().forLevel(level);
+            if (message.contains("\n")) {
+                String[] data = message.split("\n");
+                for (String str : data) {
+                    ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, str + "&r", replaces);
+                    ModulePlugin.callEvent(event);
 
-            ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
-            ModulePlugin.callEvent(event);
+                    if (!event.isHandled()) {
+                        APISource.getConsole().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
+                    }
+                }
+            } else {
+                ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, message, replaces);
+                ModulePlugin.callEvent(event);
 
-            APISource.getConsole().send("{0}{1}", prefix, event.getMessage(), event.getReplaces());
+                if (!event.isHandled()) {
+                    APISource.getConsole().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
+                }
+            }
         }
     }
 

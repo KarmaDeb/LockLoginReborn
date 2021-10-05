@@ -6,7 +6,6 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.TokenGen;
-import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
@@ -27,7 +26,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

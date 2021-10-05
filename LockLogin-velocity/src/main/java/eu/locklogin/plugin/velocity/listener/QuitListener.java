@@ -20,7 +20,6 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
@@ -30,7 +29,6 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import eu.locklogin.plugin.velocity.util.player.UserDatabase;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;

@@ -22,7 +22,6 @@ import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginProcessCommandEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -239,22 +238,13 @@ public final class ModulePlugin {
                                 ModulePlugin.callEvent(event);
 
                                 if (!event.isHandled()) {
-                                    Method processCommandMethod = handler.getClass().getMethod("processCommand", String.class, ModuleSender.class, String[].class);
-                                    processCommandMethod.invoke(handler, argument, sender, arguments);
+                                    handler.processCommand(argument, sender, arguments);
+
+                                    logger.scheduleLog(Level.INFO, "Passed command {0} ( from module {1} ) into sender {2}",
+                                            argument, module.name(), sender.getName());
                                 }
                             } catch (Throwable ex) {
-                                try {
-                                    //Legacy API support
-                                    Event event = new PluginProcessCommandEvent(argument, sender, parentEvent, arguments);
-                                    ModulePlugin.callEvent(event);
-
-                                    if (!event.isHandled()) {
-                                        Method processCommandMethod = handler.getClass().getMethod("processCommand", String.class, Object.class, String[].class);
-                                        processCommandMethod.invoke(handler, argument, (sender instanceof ModulePlayer ? ((ModulePlayer) sender).getPlayer() : sender), arguments);
-                                    }
-                                } catch (Throwable exc) {
-                                    exc.printStackTrace();
-                                }
+                                ex.printStackTrace();
                             }
                         }
                     }
@@ -361,25 +351,14 @@ public final class ModulePlugin {
      */
     public void registerCommand(final Command command) throws IllegalStateException {
         if (ModuleLoader.isLoaded(module)) {
-            Set<Command> current = getRegisteredCommands();
-            Set<Command> updated = new LinkedHashSet<>();
+            Set<Command> commands = module_commands.getOrDefault(module, Collections.newSetFromMap(new LinkedHashMap<>()));
 
-            boolean added = false;
-            for (Command registered : current) {
-                if (registered.getClass().getName().equals(command.getClass().getName())) {
-                    added = true;
-                    updated.add(command);
-                } else {
-                    updated.add(registered);
-                }
-            }
+            logger.scheduleLog(Level.INFO, "Registered command {0} of module {1}", command.validAliases()[0], module.name());
 
-            if (!added)
-                updated.add(command);
-
-            module_commands.put(module, updated);
+            commands.add(command);
+            module_commands.put(module, commands);
         } else {
-            throw new IllegalStateException("Module " + module.name() + " tried to register a command while not registered!");
+            throw new IllegalStateException("Module " + module.name() + " tried to register a listener while not registered!");
         }
     }
 
@@ -406,15 +385,15 @@ public final class ModulePlugin {
      * @param command the command to remove
      */
     public void unregisterCommand(final Command command) {
-        Set<Command> current = getRegisteredCommands();
-        Set<Command> updated = new LinkedHashSet<>();
-
-        for (Command registered : current) {
-            if (!registered.getClass().getName().equals(command.getClass().getName()))
-                updated.add(registered);
+        Set<Command> commands = module_commands.getOrDefault(module, Collections.newSetFromMap(new LinkedHashMap<>()));
+        for (Command cmd : commands) {
+            if (cmd.getClass().getName().equals(command.getClass().getName())) {
+                logger.scheduleLog(Level.INFO, "Unregistered command {0} of module {1}", command.validAliases()[0], module.name());
+                commands.remove(command);
+            }
         }
 
-        module_commands.put(module, updated);
+        module_commands.put(module, commands);
     }
 
     /**

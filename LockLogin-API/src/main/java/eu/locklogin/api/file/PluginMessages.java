@@ -210,17 +210,6 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @return plugin message
-     */
-    public String maxIP() {
-        String str = msg.getString("MaxIp", "&5&oMax account per IP reached on the server");
-
-        return parse(str);
-    }
-
-    /**
-     * Get a plugin message
-     *
      * @param name message replace
      * @return plugin message
      */
@@ -1432,21 +1421,6 @@ public abstract class PluginMessages {
                     .replace("{time}", String.valueOf(final_time))
                     .replace("{time_format}", format)).append("\n");
         }
-
-        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
-    }
-
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    public String antiBot() {
-        List<String> messages = msg.getStringList("AntiBot");
-        StringBuilder builder = new StringBuilder();
-
-        for (String str : messages) builder.append(str).append("\n");
 
         return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
     }

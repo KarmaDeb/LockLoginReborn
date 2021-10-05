@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Chinese (Official - Community based)
 #Editor: MAX_XiaoKui, KarmaDev
-#Last edited: 29 - August - 2021 00:40
+#Last edited: 5 - October - 2021 01:47
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -35,7 +35,6 @@ Back: "&e上一个"
 #Session messages - Manager
 PlayerNotVerified: "&5&o你不能与{player}战斗，因为他/她还没有注册/登录"
 AlreadyPlaying: "&5&o那个玩家已经在游戏中了"
-MaxIp: "&5&o服务器已达到每IP账户数量上线"
 ConnectionError: "&5&o玩家{player}不在线"
 PlayerInfoUsage: "&5&o有效的playerinfo子参数：&e<玩家>&7，&e<@[别名]>"
 LookUpUsage: "&5&o请使用/account alts <玩家>"
@@ -172,11 +171,6 @@ IpBlocked:
   - ""
   - "&cLockLogin系统在你的IP上检测到一个异常的通信并已经禁止"
   - "&f{time} {time_format}"
-AntiBot:
-  - "&f{ServerName}"
-  - ""
-  - "&c将此服务器添加到服务器列表"
-  - "&c如果你已经添加，重载服务器列表"
 IllegalName:
   - "{ServerName}"
   - ""

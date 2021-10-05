@@ -67,8 +67,6 @@ public final class PlayerInfoCommand implements CommandExecutor {
 
             if (user.getSession().isValid()) {
                 if (player.hasPermission(playerInfo())) {
-                    OfflineClient offline;
-                    AccountManager manager;
                     switch (args.length) {
                         case 0:
                             user.send(messages.prefix() + messages.infoUsage());
@@ -92,7 +90,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             Set<AccountID> everyoneAccounts = new LinkedHashSet<>();
 
                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
-                                                manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
                                                 if (manager != null)
                                                     everyoneAccounts.add(manager.getUUID());
                                             }
@@ -112,7 +110,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
                                                 if (online.hasPermission(permission)) {
 
-                                                    manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                    AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
                                                     if (manager != null)
                                                         permissionAccounts.add(manager.getUUID());
                                                 }
@@ -123,64 +121,64 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                     }
                                 }
                             } else {
-                                NameSearchResult nsr = AccountNameDatabase.find(target);
+                                AccountNameDatabase.find(target).whenComplete((nsr) -> {
+                                    if (nsr.singleResult()) {
+                                        OfflineClient offline = new OfflineClient(target);
+                                        AccountManager manager = offline.getAccount();
 
-                                if (nsr.singleResult()) {
-                                    offline = new OfflineClient(target);
-                                    manager = offline.getAccount();
+                                        if (manager != null) {
+                                            AccountID id = manager.getUUID();
+                                            LockedAccount account = new LockedAccount(id);
+                                            LockedData data = account.getData();
+                                            User tarUser;
 
-                                    if (manager != null) {
-                                        AccountID id = manager.getUUID();
-                                        LockedAccount account = new LockedAccount(id);
-                                        LockedData data = account.getData();
-                                        User tarUser;
+                                            try {
+                                                tarUser = new User(plugin.getServer().getPlayer(UUID.fromString(id.getId())));
+                                            } catch (Throwable ex) {
+                                                tarUser = null;
+                                            }
 
-                                        try {
-                                            tarUser = new User(plugin.getServer().getPlayer(UUID.fromString(id.getId())));
-                                        } catch (Throwable ex) {
-                                            tarUser = null;
+                                            user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
+                                            user.send("&r");
+
+                                            List<String> parsed = parseMessages(data.isLocked());
+
+                                            InstantParser creation_parser = new InstantParser(manager.getCreationTime());
+                                            String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
+
+                                            int msg = -1;
+                                            user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
+                                            if (data.isLocked()) {
+                                                Instant date = data.getLockDate();
+                                                InstantParser parser = new InstantParser(date);
+                                                String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
+
+                                                user.send(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
+                                                user.send(StringUtils.formatString(parsed.get(++msg), dateString));
+                                            }
+                                            user.send(StringUtils.formatString(parsed.get(++msg), manager.getName()));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), manager.getUUID().getId()));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), (!manager.getPassword().replaceAll("\\s", "").isEmpty())));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), (manager.hasPin())));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
+                                        } else {
+                                            user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
-
-                                        user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
-                                        user.send("&r");
-
-                                        List<String> parsed = parseMessages(data.isLocked());
-
-                                        InstantParser creation_parser = new InstantParser(manager.getCreationTime());
-                                        String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
-
-                                        int msg = -1;
-                                        user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
-                                        if (data.isLocked()) {
-                                            Instant date = data.getLockDate();
-                                            InstantParser parser = new InstantParser(date);
-                                            String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
-
-                                            user.send(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
-                                            user.send(StringUtils.formatString(parsed.get(++msg), dateString));
-                                        }
-                                        user.send(StringUtils.formatString(parsed.get(++msg), manager.getName()));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), manager.getUUID().getId()));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), (!manager.getPassword().replaceAll("\\s", "").isEmpty())));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), (manager.hasPin())));
-                                        user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
                                     } else {
-                                        user.send(messages.prefix() + messages.neverPlayer(target));
+                                        AccountNameDatabase.otherPossible(target).whenComplete((possible) ->  user.send(messages.multipleNames(target, possible)));
                                     }
-                                } else {
-                                    user.send(messages.multipleNames(target, AccountNameDatabase.otherPossible(target)));
-                                }
+                                });
                             }
                             break;
                         default:
                             Set<AccountID> accounts = new LinkedHashSet<>();
 
                             for (String name : args) {
-                                offline = new OfflineClient(name);
-                                manager = offline.getAccount();
+                                OfflineClient offline = new OfflineClient(name);
+                                AccountManager manager = offline.getAccount();
 
                                 if (manager != null) {
                                     accounts.add(manager.getUUID());

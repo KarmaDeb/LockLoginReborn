@@ -15,7 +15,6 @@ package eu.locklogin.plugin.bukkit.listener;
  */
 
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.account.ClientData;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
@@ -35,7 +34,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;

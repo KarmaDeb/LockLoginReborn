@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.4</version>
+        <version>1.13.6</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,7 +28,7 @@
                     <relocations>
                         <relocation>
                             <pattern>ml.karmaconfigs.api</pattern>
-                            <shadedPattern>eu.locklogin.module.manager.shaded</shadedPattern>
+                            <shadedPattern>eu.locklogin.shaded.karmaapi</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -88,7 +88,7 @@
             <groupId>ml.karmaconfigs</groupId>
             <artifactId>KarmaAPI-Bundle</artifactId>
             <version>${project.karmaapi}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -167,6 +167,12 @@
                     <artifactId>KarmaAPI-Bukkit</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

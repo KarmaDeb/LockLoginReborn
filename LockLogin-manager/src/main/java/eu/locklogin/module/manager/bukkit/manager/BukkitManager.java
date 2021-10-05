@@ -1,4 +1,4 @@
-package eu.locklogin.module.manager.bukkit;
+package eu.locklogin.module.manager.bukkit.manager;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -21,6 +21,7 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.module.manager.bukkit.Main;
 import eu.locklogin.plugin.bukkit.util.files.data.RestartCache;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.StringUtils;
