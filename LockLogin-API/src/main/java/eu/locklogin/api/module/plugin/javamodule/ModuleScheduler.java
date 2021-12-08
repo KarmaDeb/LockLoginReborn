@@ -44,41 +44,33 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public final class ModuleScheduler extends SimpleScheduler {
 
+    private final static Map<Integer, SimpleScheduler> timersData = new ConcurrentHashMap<>();
+    private final static Map<KarmaSource, Set<Integer>> runningTimers = new ConcurrentHashMap<>();
     private final int original;
-
     private final int id;
-
     private final KarmaSource source;
     private final PluginModule module;
-
+    private final Map<Integer, Set<Runnable>> secondsActions = new ConcurrentHashMap<>();
+    private final Map<Integer, Set<Consumer<Integer>>> secondsConsumer = new ConcurrentHashMap<>();
+    private final Map<Integer, Set<Consumer<Long>>> secondsLongConsumer = new ConcurrentHashMap<>();
+    private final Set<Runnable> onEndTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Runnable> onStartTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Runnable> onRestartTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private int back;
     private long period = TimeUnit.SECONDS.toMillis(1);
-
     private boolean cancel = false;
     private boolean pause = false;
     private boolean restart;
     private boolean temp_restart = false;
     private boolean thread = false;
-
-    private final static Map<Integer, SimpleScheduler> timersData = new ConcurrentHashMap<>();
-    private final static Map<KarmaSource, Set<Integer>> runningTimers = new ConcurrentHashMap<>();
-
-    private final Map<Integer, Set<Runnable>> secondsActions = new ConcurrentHashMap<>();
-    private final Map<Integer, Set<Consumer<Integer>>> secondsConsumer = new ConcurrentHashMap<>();
-    private final Map<Integer, Set<Consumer<Long>>> secondsLongConsumer = new ConcurrentHashMap<>();
-
-    private final Set<Runnable> onEndTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Set<Runnable> onStartTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Set<Runnable> onRestartTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
     private Consumer<Long> pauseAction = null;
     private Consumer<Long> cancelAction = null;
 
     /**
      * Create a new timer
      *
-     * @param owner the timer owner
-     * @param time the timer time
+     * @param owner       the timer owner
+     * @param time        the timer time
      * @param autoRestart if the timer should auto restart
      */
     public ModuleScheduler(final PluginModule owner, final Number time, final boolean autoRestart) {
@@ -98,10 +90,10 @@ public final class ModuleScheduler extends SimpleScheduler {
     /**
      * Get a timer from its id
      *
-     * @param owner the source that is trying to access
-     *              the timer
+     * @param owner   the source that is trying to access
+     *                the timer
      * @param builtId the timer id
-     * @throws TimerNotFound if the timer can't be
+     * @throws TimerNotFound      if the timer can't be
      * @throws IllegalTimerAccess if the timer is owned by other source
      */
     public ModuleScheduler(final PluginModule owner, final int builtId) throws TimerNotFound, IllegalTimerAccess {
@@ -148,7 +140,7 @@ public final class ModuleScheduler extends SimpleScheduler {
      * Start the scheduler
      *
      * @throws TimerAlreadyStarted if the timer is
-     * already started
+     *                             already started
      */
     @Override
     public final void start() throws TimerAlreadyStarted {

@@ -90,13 +90,6 @@ public abstract class AccountManager implements Serializable {
     public abstract void setName(final String name);
 
     /**
-     * Save the account password
-     *
-     * @param password the account password
-     */
-    public abstract void setPassword(final String password);
-
-    /**
      * Save the account password unsafely
      *
      * @param password the account password
@@ -111,19 +104,18 @@ public abstract class AccountManager implements Serializable {
     public abstract String getPassword();
 
     /**
+     * Save the account password
+     *
+     * @param password the account password
+     */
+    public abstract void setPassword(final String password);
+
+    /**
      * Get if the account is registered
      *
      * @return if the account is registered
      */
     public abstract boolean isRegistered();
-
-    /**
-     * Save the account google auth token
-     *
-     * @param token the account google auth
-     *              token
-     */
-    public abstract void setGAuth(final String token);
 
     /**
      * Save the account unsafe google auth token
@@ -141,11 +133,12 @@ public abstract class AccountManager implements Serializable {
     public abstract String getGAuth();
 
     /**
-     * Save the account pin
+     * Save the account google auth token
      *
-     * @param pin the account pin
+     * @param token the account google auth
+     *              token
      */
-    public abstract void setPin(final String pin);
+    public abstract void setGAuth(final String token);
 
     /**
      * Save the account unsafe pin
@@ -160,6 +153,13 @@ public abstract class AccountManager implements Serializable {
      * @return the account pin
      */
     public abstract String getPin();
+
+    /**
+     * Save the account pin
+     *
+     * @param pin the account pin
+     */
+    public abstract void setPin(final String pin);
 
     /**
      * Get if the account has pin

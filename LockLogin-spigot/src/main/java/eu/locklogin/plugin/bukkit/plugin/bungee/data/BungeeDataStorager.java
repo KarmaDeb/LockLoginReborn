@@ -15,8 +15,8 @@ import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;

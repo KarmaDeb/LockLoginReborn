@@ -15,27 +15,23 @@ package eu.locklogin.api.util.enums;
  */
 
 /**
- * Valid LockLogin langs
+ * Valid LockLogin languages
  */
 public enum Lang {
     /**
-     * LockLogin english language
+     * LockLogin English language
      */
     ENGLISH,
     /**
-     * LockLogin spanish language
+     * LockLogin Spanish language
      */
     SPANISH,
     /**
-     * LockLogin french language
+     * LockLogin French language
      */
     FRENCH,
     /**
-     * LockLogin german language
-     */
-    GERMAN,
-    /**
-     * LockLogin chinese simplified language
+     * LockLogin Chinese simplified language
      */
     CHINESE_SIMPLIFIED,
     /**
@@ -57,8 +53,6 @@ public enum Lang {
                 return "Spanish";
             case FRENCH:
                 return "French";
-            case GERMAN:
-                return "German";
             case CHINESE_SIMPLIFIED:
                 return "Chinese ( Simplified )";
             case COMMUNITY:
@@ -81,8 +75,6 @@ public enum Lang {
                 return "es_ES";
             case FRENCH:
                 return "fr_FR";
-            case GERMAN:
-                return "de_DE";
             case CHINESE_SIMPLIFIED:
                 return "zh_CN";
             case COMMUNITY:

@@ -18,7 +18,7 @@ import eu.locklogin.api.file.ProxyConfiguration;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -48,140 +48,6 @@ public final class Proxy extends ProxyConfiguration {
 
             cfg = new KarmaYamlManager(cfg_file);
         }
-    }
-
-    /**
-     * Get if the proxy has multiple bungeecord
-     * instances
-     *
-     * @return if the server has multiple bungeecord instances
-     */
-    @Override
-    public final boolean multiBungee() {
-        return cfg.getBoolean("Options.MultiBungee", false);
-    }
-
-    /**
-     * Get if the player should be sent to the
-     * servers in lobby servers or auth servers
-     *
-     * @return if the servers are enabled
-     */
-    @Override
-    public final boolean sendToServers() {
-        return cfg.getBoolean("Options.SendToServers", true);
-    }
-
-    /**
-     * Get the proxy key used to register this
-     * proxy instance
-     *
-     * @return the proxy key
-     */
-    @Override
-    public String proxyKey() {
-        String key = cfg.getString("ProxyKey", "");
-        if (StringUtils.isNullOrEmpty(key)) {
-            key = StringUtils.randomString(32, StringUtils.StringGen.NUMBERS_AND_LETTERS, StringUtils.StringType.RANDOM_SIZE);
-
-            cfg.set("ProxyKey", key);
-            cfg.save(cfg_file, plugin, "cfg/proxy.yml");
-            manager.reload();
-        }
-
-        return key;
-    }
-
-    /**
-     * Get the proxy ID
-     *
-     * @return the proxy server ID
-     */
-    @Override
-    public final UUID getProxyID() {
-        UUID uuid = UUID.randomUUID();
-
-        if (cfg.getString("ID", "").replaceAll("\\s", "").isEmpty()) {
-            cfg.set("ID", uuid.toString());
-            cfg.save(cfg_file, plugin, "cfg/proxy.yml");
-        } else {
-            try {
-                uuid = UUID.fromString(cfg.getString("ID", ""));
-            } catch (Throwable ex) {
-                cfg.set("ID", uuid.toString());
-                cfg.save(cfg_file, plugin, "cfg/proxy.yml");
-            }
-        }
-
-        return uuid;
-    }
-
-    /**
-     * Get all the lobby servers
-     *
-     * @param <T> the server type
-     * @param instance the server class instance
-     * @return all the available lobby servers
-     */
-    @Override
-    public final <T> List<T> lobbyServers(final Class<T> instance) {
-        List<String> lobbies = cfg.getStringList("Servers.Lobby");
-        List<T> servers = Collections.synchronizedList(new ArrayList<>());
-        if (lobbies.contains("*")) {
-            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
-            for (ServerInfo info : infos) {
-                if (isAssignable(info.getClass(), instance)) {
-                    servers.add(instance.cast(info));
-                }
-            }
-        } else {
-            if (!lobbies.isEmpty() && arrayValid(lobbies)) {
-                Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
-                for (ServerInfo info : infos) {
-                    if (lobbies.contains(info.getName())) {
-                        if (isAssignable(info.getClass(), instance)) {
-                            servers.add(instance.cast(info));
-                        }
-                    }
-                }
-            }
-        }
-
-        return servers;
-    }
-
-    /**
-     * Get all the auth servers
-     *
-     * @param <T> the server type
-     * @param instance the server class instance
-     * @return all the available auth servers
-     */
-    @Override
-    public final <T> List<T> authServer(final Class<T> instance) {
-        List<String> auths = cfg.getStringList("Servers.Auth");
-        List<T> servers = Collections.synchronizedList(new ArrayList<>());
-        if (auths.contains("*")) {
-            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
-            for (ServerInfo info : infos) {
-                if (isAssignable(info.getClass(), instance)) {
-                    servers.add(instance.cast(info));
-                }
-            }
-        } else {
-            if (!auths.isEmpty() && arrayValid(auths)) {
-                Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
-                for (ServerInfo info : infos) {
-                    if (auths.contains(info.getName())) {
-                        if (isAssignable(info.getClass(), instance)) {
-                            servers.add(instance.cast(info));
-                        }
-                    }
-                }
-            }
-        }
-
-        return servers;
     }
 
     /**
@@ -255,11 +121,160 @@ public final class Proxy extends ProxyConfiguration {
      * the specified item
      *
      * @param check the item to check
-     * @param type the instance
+     * @param type  the instance
      * @return if the item is an instance of the instance
      */
     private static boolean isAssignable(final Class<?> check, final Class<?> type) {
         return type.isAssignableFrom(check);
+    }
+
+    /**
+     * Get if the proxy has multiple bungeecord
+     * instances
+     *
+     * @return if the server has multiple bungeecord instances
+     */
+    @Override
+    public boolean multiBungee() {
+        return cfg.getBoolean("Options.MultiBungee", false);
+    }
+
+    /**
+     * Get if the player should be sent to the
+     * servers in lobby servers or auth servers
+     *
+     * @return if the servers are enabled
+     */
+    @Override
+    public boolean sendToServers() {
+        return cfg.getBoolean("Options.SendToServers", true);
+    }
+
+    /**
+     * Get the proxy key used to register this
+     * proxy instance
+     *
+     * @return the proxy key
+     */
+    @Override
+    public String proxyKey() {
+        String key = cfg.getString("ProxyKey", "");
+        if (StringUtils.isNullOrEmpty(key)) {
+            key = StringUtils.generateString().create();
+
+            cfg.set("ProxyKey", key);
+            cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
+
+            YamlReloader reloader = cfg.getReloader();
+            if (reloader != null) {
+                reloader.reload();
+            }
+        }
+
+        return key;
+    }
+
+    /**
+     * Get the proxy ID
+     *
+     * @return the proxy server ID
+     */
+    @Override
+    public UUID getProxyID() {
+        UUID uuid = UUID.randomUUID();
+        String id = cfg.getString("ID", "");
+
+        if (StringUtils.isNullOrEmpty(id)) {
+            cfg.set("ID", uuid.toString());
+            cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
+
+            YamlReloader reloader = cfg.getReloader();
+            if (reloader != null) {
+                reloader.reload();
+            }
+        } else {
+            try {
+                uuid = UUID.fromString(id);
+            } catch (Throwable ex) {
+                cfg.set("ID", uuid.toString());
+                cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
+
+                YamlReloader reloader = cfg.getReloader();
+                if (reloader != null) {
+                    reloader.reload();
+                }
+            }
+        }
+
+        return uuid;
+    }
+
+    /**
+     * Get all the lobby servers
+     *
+     * @param <T>      the server type
+     * @param instance the server class instance
+     * @return all the available lobby servers
+     */
+    @Override
+    public <T> List<T> lobbyServers(final Class<T> instance) {
+        List<String> lobbies = cfg.getStringList("Servers.Lobby");
+        List<T> servers = Collections.synchronizedList(new ArrayList<>());
+        if (lobbies.contains("*")) {
+            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+            for (ServerInfo info : infos) {
+                if (isAssignable(info.getClass(), instance)) {
+                    servers.add(instance.cast(info));
+                }
+            }
+        } else {
+            if (!lobbies.isEmpty() && arrayValid(lobbies)) {
+                Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+                for (ServerInfo info : infos) {
+                    if (lobbies.contains(info.getName())) {
+                        if (isAssignable(info.getClass(), instance)) {
+                            servers.add(instance.cast(info));
+                        }
+                    }
+                }
+            }
+        }
+
+        return servers;
+    }
+
+    /**
+     * Get all the auth servers
+     *
+     * @param <T>      the server type
+     * @param instance the server class instance
+     * @return all the available auth servers
+     */
+    @Override
+    public <T> List<T> authServer(final Class<T> instance) {
+        List<String> auths = cfg.getStringList("Servers.Auth");
+        List<T> servers = Collections.synchronizedList(new ArrayList<>());
+        if (auths.contains("*")) {
+            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+            for (ServerInfo info : infos) {
+                if (isAssignable(info.getClass(), instance)) {
+                    servers.add(instance.cast(info));
+                }
+            }
+        } else {
+            if (!auths.isEmpty() && arrayValid(auths)) {
+                Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+                for (ServerInfo info : infos) {
+                    if (auths.contains(info.getName())) {
+                        if (isAssignable(info.getClass(), instance)) {
+                            servers.add(instance.cast(info));
+                        }
+                    }
+                }
+            }
+        }
+
+        return servers;
     }
 
     /**

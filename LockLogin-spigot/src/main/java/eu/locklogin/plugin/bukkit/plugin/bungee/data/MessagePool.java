@@ -14,19 +14,17 @@ import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class MessagePool {
 
-    private static TriConsumer<String, Player, ByteArrayDataInput> whenValidPlayer = null;
-
     private final static Map<UUID, ByteArrayDataInput> players = new ConcurrentHashMap<>();
     private final static Map<UUID, String> channels = new ConcurrentHashMap<>();
-
     private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+    private static TriConsumer<String, Player, ByteArrayDataInput> whenValidPlayer = null;
 
     /**
      * Add a player to the player pool
      *
      * @param channel the message channel
-     * @param id the player uuid
-     * @param data the message data
+     * @param id      the player uuid
+     * @param data    the message data
      */
     public static void addPlayer(final String channel, final UUID id, final ByteArrayDataInput data) {
         Player player = plugin.getServer().getPlayer(id);

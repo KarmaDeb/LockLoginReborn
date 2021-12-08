@@ -21,7 +21,10 @@ import eu.locklogin.api.util.enums.Lang;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
 
 import java.io.File;
 
@@ -62,7 +65,24 @@ public final class Config extends PluginConfiguration {
 
     @Override
     public String serverName() {
-        return cfg.getString("ServerName", StringUtils.randomString(8, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER));
+        String server_name = cfg.getString("ServerName", "");
+        if (StringUtils.isNullOrEmpty(server_name)) {
+            server_name = StringUtils.generateString(
+                    RandomString.createBuilder()
+                            .withType(TextType.ALL_LOWER)
+                            .withContent(TextContent.ONLY_LETTERS)
+                            .withSize(8)).create();
+
+            cfg.set("ServerName", server_name);
+            cfg = cfg.save(cfg_file, source, "cfg/config.yml");
+
+            YamlReloader reloader = cfg.getReloader();
+            if (reloader != null) {
+                reloader.reload();
+            }
+        }
+
+        return server_name;
     }
 
     @Override
@@ -244,11 +264,6 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public boolean antiBot() {
-        return cfg.getBoolean("AntiBot", true);
-    }
-
-    @Override
     public boolean allowSameIP() {
         return cfg.getBoolean("AllowSameIp", true);
     }
@@ -308,11 +323,6 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-    public int accountsPerIP() {
-        return cfg.getInt("AccountsPerIp", 2);
-    }
-
-    @Override
     public boolean checkNames() {
         return cfg.getBoolean("CheckNames", true);
     }
@@ -355,9 +365,6 @@ public final class Config extends PluginConfiguration {
             case "fr_fr":
             case "french":
                 return Lang.FRENCH;
-            case "de_de":
-            case "german":
-                return Lang.GERMAN;
             case "zh_cn":
             case "chinese simplified":
             case "simplified chinese":
@@ -433,7 +440,7 @@ public final class Config extends PluginConfiguration {
             String update_channel = cfg.getString("Updater.Channel", "RELEASE");
 
             int spawnDist = cfg.getInt("Spawn.SpawnDistance", 30);
-            
+
             int nameCheckProtocol = cfg.getInt("NameCheckProtocol", 2);
 
             String module_prefix = cfg.getString("ModulePrefix", "$");
@@ -444,8 +451,13 @@ public final class Config extends PluginConfiguration {
             assert update_channel != null;
             assert module_prefix != null;
 
-            if (server_name.replaceAll("\\s", "").isEmpty()) {
-                server_name = StringUtils.randomString(8, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER);
+            if (StringUtils.isNullOrEmpty(server_name)) {
+                server_name = StringUtils.generateString(
+                        RandomString.createBuilder()
+                                .withType(TextType.ALL_LOWER)
+                                .withContent(TextContent.ONLY_LETTERS)
+                                .withSize(8)
+                ).create();
                 cfg.set("ServerName", server_name);
 
                 changes = true;
@@ -565,7 +577,12 @@ public final class Config extends PluginConfiguration {
             }
 
             if (changes) {
-                cfg.save(cfg_file, source, "cfg/config.yml");
+                cfg = cfg.save(cfg_file, source, "cfg/config.yml");
+
+                YamlReloader reloader = cfg.getReloader();
+                if (reloader != null) {
+                    reloader.reload();
+                }
             }
         }
 

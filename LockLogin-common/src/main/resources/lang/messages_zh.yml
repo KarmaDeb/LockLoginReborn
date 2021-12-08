@@ -120,6 +120,31 @@ Enabled2FA: "&d2FA已开启，你的账户现在又变得安全了"
   - "&78 - 输入/2fa <app中显示的验证码>"
 2FaLink: "&b点击这里来获取2FA二维码"
 
+#Session messages - Brute force
+PanicLogin: "&5&o请使用/panic <令 牌>"
+PanicTitle: "&c恐慌模式"
+PanicSubtitle: "&c执行 &4/panic <令 牌>"
+PanicMode: "&5&o帐户在恐慌模式下输入，在被 IP 阻止之前，您有 1 个令牌登录尝试"
+PanicDisabled: "&5&o服务器不受暴力攻击"
+PanicAlready: "&d您已经有一个蛮力令牌，您的帐户是安全的"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&d我们为您生成了恐慌令牌"
+  - "&d请将该令牌存放在保险箱中"
+  - "&d地方， 并确保没有人知道"
+  - "&d它"
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&d服务器受到保护"
+  - "&d使用锁洛金令牌的蛮力"
+  - "&d保护。从这种保护开始"
+  - "&d你必须跑/account protect 并存储"
+  - "&d生成令牌，并在"
+  - "&d服务器向您询问"
+TokenLink: "&b单击以显示令牌"
+
 #Session messages - Account management
 AccountArguments: "&5&o有效的account子参数：&e<change>&7，&e<unlock>&7，&e<close>&7，&e<remove>&7，&e<alts>"
 Change: "&5&o请使用/account change <密码> <新密码>"

@@ -5,6 +5,7 @@ import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
@@ -26,15 +27,36 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ChecksumTables {
 
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Map<String, Long> adler_tables = new HashMap<>();
     private final static Map<String, Long> crc_tables = new HashMap<>();
 
     private static boolean can_check = true;
 
     /**
+     * Get the adler check result of the table check
+     *
+     * @param dependency the dependency
+     * @return the adler result of tables
+     */
+    public static long getAdler(final PluginDependency dependency) {
+        return adler_tables.getOrDefault(dependency.getName(), 0L);
+    }
+
+    /**
+     * Get the CRC check result of the table check
+     *
+     * @param dependency the dependency
+     * @return the crc result of tables
+     */
+    public static long getCRC(final PluginDependency dependency) {
+        return crc_tables.getOrDefault(dependency.getName(), 0L);
+    }
+
+    /**
      * Start the checksum tables data fetch
      */
-    public final void checkTables() {
+    public void checkTables() {
         if (can_check) {
             can_check = false;
 
@@ -53,7 +75,7 @@ public final class ChecksumTables {
                 String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 URL check_url = URLUtils.getOrBackup(
-                        "https://locklogin.eu/checksum/" + version + "/checksum.lldb",
+                        "https://karmarepo.000webhostapp.com/locklogin/checksum/" + version + "/checksum.lldb",
                         "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb");
                 if (check_url != null) {
                     HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
@@ -61,13 +83,13 @@ public final class ChecksumTables {
 
                     int response = connection.getResponseCode();
                     if (response == HttpURLConnection.HTTP_OK) {
-                        APISource.getConsole().send("&aFetching checksum results to keep dependencies safe ( {0} )", check_url);
+                        lockLogin.console().send("&aFetching checksum results to keep dependencies safe ( {0} )", check_url);
 
                         InputStream inputStream = connection.getInputStream();
                         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                         BufferedReader bf = new BufferedReader(reader);
 
-                        File dataFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "tables.lldb");
+                        File dataFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "tables.lldb");
                         KarmaFile checksum = new KarmaFile(dataFile);
                         checksum.create();
 
@@ -96,7 +118,7 @@ public final class ChecksumTables {
                         checksum.delete();
                     } else {
                         can_check = true;
-                        APISource.getConsole().send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
+                        lockLogin.console().send("&cFailed to retrieve adler checksum from karma repository site, response code: ({0} - {1})", response, connection.getResponseMessage());
                     }
                 }
             } catch (Throwable ex) {
@@ -104,25 +126,5 @@ public final class ChecksumTables {
                 can_check = true;
             }
         }
-    }
-
-    /**
-     * Get the adler check result of the table check
-     *
-     * @param dependency the dependency
-     * @return the adler result of tables
-     */
-    public static long getAdler(final PluginDependency dependency) {
-        return adler_tables.getOrDefault(dependency.getName(), 0L);
-    }
-
-    /**
-     * Get the CRC check result of the table check
-     *
-     * @param dependency the dependency
-     * @return the crc result of tables
-     */
-    public static long getCRC(final PluginDependency dependency) {
-        return crc_tables.getOrDefault(dependency.getName(), 0L);
     }
 }

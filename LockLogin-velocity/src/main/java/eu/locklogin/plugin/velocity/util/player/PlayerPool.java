@@ -16,10 +16,9 @@ import static eu.locklogin.plugin.velocity.LockLogin.source;
 
 public class PlayerPool {
 
-    private static Consumer<Player> whenValidPlayer = null;
-
     private final static Set<UUID> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(source, 1, true).multiThreading(true);
+    private static Consumer<Player> whenValidPlayer = null;
 
     /**
      * Add a player to the player pool

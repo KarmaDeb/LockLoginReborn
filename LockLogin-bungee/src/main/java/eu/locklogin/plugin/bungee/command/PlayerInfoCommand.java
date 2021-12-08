@@ -32,7 +32,7 @@ import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;

@@ -23,8 +23,12 @@ import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.module.manager.bukkit.Main;
 import eu.locklogin.plugin.bukkit.util.files.data.RestartCache;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.VersionComparator;
+import ml.karmaconfigs.api.common.utils.string.util.VersionDiff;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -47,6 +51,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public class BukkitManager {
 
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private static CommandSender update_issuer = null;
 
     /**
@@ -188,12 +193,15 @@ public class BukkitManager {
                         String version = FileInfo.getJarVersion(file);
                         String current = versionID.resolve(versionID.getVersionID());
 
-                        if (StringUtils.compareTo(version, current) > 0) {
+                        VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
+                                .currentVersion(current).checkVersion(version));
+                        if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
                             major_files.add(file);
                         } else {
                             try {
                                 Files.deleteIfExists(file.toPath());
-                            } catch (Throwable ignored) {}
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                 }
@@ -209,10 +217,13 @@ public class BukkitManager {
                             String latest_major_version = FileInfo.getJarVersion(latest_major);
                             String current_major_version = FileInfo.getJarVersion(major);
 
-                            if (StringUtils.compareTo(latest_major_version, current_major_version) > 0) {
+                            VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
+                                    .currentVersion(current_major_version).checkVersion(latest_major_version));
+                            if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
                                 try {
                                     Files.deleteIfExists(latest_major.toPath());
-                                } catch (Throwable ignored) {}
+                                } catch (Throwable ignored) {
+                                }
                                 latest_major = major;
                             }
                         } else {
@@ -241,7 +252,7 @@ public class BukkitManager {
             update_issuer = issuer;
 
             File last_jar = getUpdateJar();
-            File curr_jar = new File(FileUtilities.getProjectFolder(), lockloginFile.getName());
+            File curr_jar = new File(FileUtilities.getProjectFolder("plugins"), lockloginFile.getName());
 
             if (last_jar != null) {
                 UpdateChannel current_channel = config.getUpdaterOptions().getChannel();

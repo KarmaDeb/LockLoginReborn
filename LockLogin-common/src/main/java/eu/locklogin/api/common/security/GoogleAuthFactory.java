@@ -77,8 +77,7 @@ public final class GoogleAuthFactory {
      * Validate the user code
      *
      * @param token the google authenticator code
-     * @param code the provided code
-     *
+     * @param code  the provided code
      * @return if the user code is valid
      */
     public final boolean validate(final String token, final int code) {

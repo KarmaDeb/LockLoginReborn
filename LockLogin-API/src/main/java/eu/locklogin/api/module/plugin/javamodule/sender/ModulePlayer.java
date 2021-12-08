@@ -21,7 +21,7 @@ import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.TitleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -36,12 +36,6 @@ import java.util.function.Consumer;
  */
 public final class ModulePlayer extends ModuleSender implements Serializable {
 
-    private final String name;
-    private final UUID uniqueId;
-    private final ClientSession session;
-    private final AccountManager manager;
-    private final InetAddress address;
-
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<MessageSender> onChat = null;
     @SuppressWarnings("FieldMayBeFinal")
@@ -54,15 +48,20 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     private static Consumer<ModulePlayer> onLogin = null;
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<ModulePlayer> onClose = null;
+    private final String name;
+    private final UUID uniqueId;
+    private final ClientSession session;
+    private final AccountManager manager;
+    private final InetAddress address;
 
     /**
      * Initialize the player object
      *
      * @param client the client name
-     * @param id the client id
-     * @param ses the client session
-     * @param acc the player account manager
-     * @param ip the player ip address
+     * @param id     the client id
+     * @param ses    the client session
+     * @param acc    the player account manager
+     * @param ip     the player ip address
      */
     public ModulePlayer(final String client, final UUID id, final ClientSession ses, final AccountManager acc, final InetAddress ip) {
         super();
@@ -171,11 +170,11 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
                         Optional<?> optional = (Optional<?>) result;
                         return optional.orElse(null);
                     } else {
-                        APISource.getConsole().send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
+                        APISource.loadProvider("LockLogin").console().send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
                         return null;
                     }
                 default:
-                    APISource.getConsole().send("&cTried to get player object from LockLoginAPI with an unknown server platform");
+                    APISource.loadProvider("LockLogin").console().send("&cTried to get player object from LockLoginAPI with an unknown server platform");
                     return null;
             }
         } catch (Throwable ex) {
@@ -215,7 +214,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     /**
      * Send a message to the player
      *
-     * @param message the message to send
+     * @param message  the message to send
      * @param replaces the message replaces
      */
     @Override
@@ -239,7 +238,7 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     /**
      * Send a title to the player
      *
-     * @param title the title
+     * @param title    the title
      * @param subtitle the subtitle
      */
     public void sendTitle(final String title, final String subtitle) {
@@ -251,11 +250,11 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     /**
      * Send a title to the player
      *
-     * @param title the title
+     * @param title    the title
      * @param subtitle the subtitle
-     * @param fadeOut the time before showing the title
-     * @param keepIn the time to show the title
-     * @param hideIn the time that will take to hide the title
+     * @param fadeOut  the time before showing the title
+     * @param keepIn   the time to show the title
+     * @param hideIn   the time that will take to hide the title
      */
     public void sendTitle(final String title, final String subtitle, final int fadeOut, final int keepIn, final int hideIn) {
         if (onTitle != null && isPlaying()) {

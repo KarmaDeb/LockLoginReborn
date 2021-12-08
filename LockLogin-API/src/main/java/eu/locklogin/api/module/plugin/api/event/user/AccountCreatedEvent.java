@@ -37,7 +37,7 @@ public final class AccountCreatedEvent extends Event {
      * Initialize the account creation event
      *
      * @param _modulePlayer the player who created the account
-     * @param _event  the event owner
+     * @param _event        the event owner
      */
     public AccountCreatedEvent(final ModulePlayer _modulePlayer, final Object _event) {
         modulePlayer = _modulePlayer;

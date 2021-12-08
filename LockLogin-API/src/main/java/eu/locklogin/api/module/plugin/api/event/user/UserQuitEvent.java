@@ -36,7 +36,7 @@ public final class UserQuitEvent extends Event {
      * Initialize the event
      *
      * @param modulePlayerObject the player object
-     * @param event        the event in where this event is fired
+     * @param event              the event in where this event is fired
      */
     public UserQuitEvent(final ModulePlayer modulePlayerObject, final Object event) {
         modulePlayer = modulePlayerObject;

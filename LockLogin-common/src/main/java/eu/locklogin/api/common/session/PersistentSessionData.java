@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public final class PersistentSessionData {
 
-    private final static File folder = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "data");
+    private final static File folder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "data");
     private final static File file = new File(folder, "sessions.lldb");
 
     private final static KarmaFile sessions = new KarmaFile(file);
@@ -44,6 +44,29 @@ public final class PersistentSessionData {
      */
     public PersistentSessionData(final AccountID uuid) {
         id = uuid;
+    }
+
+    /**
+     * Get a list of persistent accounts
+     *
+     * @return a list of persistent accounts
+     */
+    public static Set<AccountManager> getPersistentAccounts() {
+        Set<AccountManager> accounts = new LinkedHashSet<>();
+        AccountManager tmp_manager = CurrentPlatform.getAccountManager(null);
+
+        if (tmp_manager != null) {
+            Set<AccountManager> tmp_accounts = tmp_manager.getAccounts();
+            List<String> ids = sessions.getStringList("PERSISTENT");
+            for (AccountManager manager : tmp_accounts) {
+                if (manager != null) {
+                    if (ids.contains(manager.getUUID().getId()))
+                        accounts.add(manager);
+                }
+            }
+        }
+
+        return accounts;
     }
 
     /**
@@ -77,28 +100,5 @@ public final class PersistentSessionData {
     public final boolean isPersistent() {
         List<String> ids = sessions.getStringList("PERSISTENT");
         return ids.contains(id.getId());
-    }
-
-    /**
-     * Get a list of persistent accounts
-     *
-     * @return a list of persistent accounts
-     */
-    public static Set<AccountManager> getPersistentAccounts() {
-        Set<AccountManager> accounts = new LinkedHashSet<>();
-        AccountManager tmp_manager = CurrentPlatform.getAccountManager(null);
-
-        if (tmp_manager != null) {
-            Set<AccountManager> tmp_accounts = tmp_manager.getAccounts();
-            List<String> ids = sessions.getStringList("PERSISTENT");
-            for (AccountManager manager : tmp_accounts) {
-                if (manager != null) {
-                    if (ids.contains(manager.getUUID().getId()))
-                        accounts.add(manager);
-                }
-            }
-        }
-
-        return accounts;
     }
 }

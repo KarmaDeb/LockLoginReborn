@@ -26,12 +26,16 @@ import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.FileReloader;
 import eu.locklogin.plugin.velocity.plugin.Manager;
+import eu.locklogin.plugin.velocity.plugin.injector.Injector;
+import eu.locklogin.plugin.velocity.plugin.injector.VelocityInjector;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -48,10 +52,12 @@ import static eu.locklogin.plugin.velocity.LockLogin.*;
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand extends BungeeLikeCommand {
 
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
+
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public LockLoginCommand(final String name, final List<String> aliases) {
@@ -71,10 +77,10 @@ public final class LockLoginCommand extends BungeeLikeCommand {
         sender.sendMessage(Component.text().content(StringUtils.toColor(messages.prefix() + properties.
                 getProperty(
                         "processing_async",
-                        "&dProcessing {command} command, please wait for feedback")
-                .replace("{command}", "locklogin"))).build());
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", "locklogin"))).build());
 
-        APISource.asyncScheduler().queue(() -> {
+        lockLogin.async().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -84,7 +90,14 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                     case 1:
                         switch (args[0].toLowerCase()) {
                             case "reload":
-                                FileReloader.reload(player);
+                                if (user.hasPermission(PluginPermission.reload())) {
+                                    FileReloader.reload(player);
+
+                                    Injector injector = new VelocityInjector();
+                                    injector.inject();
+                                } else {
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
+                                }
                                 break;
                             case "modules":
                                 if (user.hasPermission(PluginPermission.modules())) {
@@ -139,8 +152,8 @@ public final class LockLoginCommand extends BungeeLikeCommand {
 
                                     updater.get().whenComplete((result, error) -> {
                                         if (error == null) {
-                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionType.CURRENT));
+                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionType.LATEST));
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                         }
@@ -250,6 +263,9 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                         switch (args[0].toLowerCase()) {
                             case "reload":
                                 FileReloader.reload(null);
+
+                                Injector injector = new VelocityInjector();
+                                injector.inject();
                                 break;
                             case "modules":
                                 console.send(messages.prefix() + "&dFetching modules info, please stand by");
@@ -297,8 +313,8 @@ public final class LockLoginCommand extends BungeeLikeCommand {
 
                                 updater.get().whenComplete((result, error) -> {
                                     if (error == null) {
-                                        console.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                        console.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                        console.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionType.CURRENT));
+                                        console.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionType.LATEST));
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                     }

@@ -28,7 +28,7 @@ public final class LSSHA256 {
     /**
      * Initialize the codification
      *
-     * @param value  the value to codify
+     * @param value the value to codify
      */
     public LSSHA256(final Object value) {
         this.password = value;

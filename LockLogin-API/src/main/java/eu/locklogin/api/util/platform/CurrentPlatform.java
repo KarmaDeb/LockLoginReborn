@@ -22,8 +22,7 @@ import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.loader.JarAppender;
-import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
@@ -37,32 +36,24 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class CurrentPlatform {
 
+    private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
+    private final static ModuleServer server = new ModuleServer();
+    private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
     private static Platform platform;
     private static Class<?> main;
-
     private static String prefix = "$";
     private static String karma_api = "1.3.1-SNAPSHOT";
-
     private static Class<? extends AccountManager> manager;
     private static Class<? extends AccountManager> default_manager;
     private static Class<? extends AccountManager> last_manager;
-
     private static Class<? extends ClientSession> sessionManager;
-
     private static PluginConfiguration current_config;
     private static ProxyConfiguration current_proxy;
     private static PluginMessages current_messages;
-
     @SuppressWarnings("all")
-    private static JarAppender current_appender;
-
+    private static BruteLoader current_appender;
     private static Runnable onDataContainerUpdate;
-
     private static boolean online;
-
-    private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
-    private final static ModuleServer server = new ModuleServer();
-    private final static Logger logger = new Logger(APISource.getSource());
 
     /**
      * Set the current account manager
@@ -114,18 +105,6 @@ public final class CurrentPlatform {
     }
 
     /**
-     * Set the current KarmaAPI version
-     *
-     * @param version the current KarmaAPI version
-     * @deprecated This is no longer needed as KarmaAPI
-     * is included inside the plugin
-     */
-    @Deprecated
-    public static void setKarmaAPI(final String version) {
-        karma_api = version;
-    }
-
-    /**
      * Set the action to perform when session data container
      * requests update
      *
@@ -144,45 +123,9 @@ public final class CurrentPlatform {
     }
 
     /**
-     * Set the current platform
-     *
-     * @param platform the platform
-     */
-    public static void setPlatform(final Platform platform) {
-        CurrentPlatform.platform = platform;
-    }
-
-    /**
-     * Set the current main class
-     *
-     * @param main the current main class
-     */
-    public static void setMain(final Class<?> main) {
-        CurrentPlatform.main = main;
-    }
-
-    /**
-     * Set the current server online mode
-     *
-     * @param onlineMode the online mode
-     */
-    public static void setOnline(final boolean onlineMode) {
-        online = onlineMode;
-    }
-
-    /**
-     * Set the current module commands prefix
-     *
-     * @param modulePrefix the module commands prefix
-     */
-    public static void setPrefix(final String modulePrefix) {
-        prefix = modulePrefix;
-    }
-
-    /**
      * Connect a new player to the plugin
      *
-     * @param mp the module player
+     * @param mp     the module player
      * @param player the player
      */
     public static void connectPlayer(final ModulePlayer mp, final Object player) {
@@ -226,12 +169,30 @@ public final class CurrentPlatform {
     }
 
     /**
+     * Set the current platform
+     *
+     * @param platform the platform
+     */
+    public static void setPlatform(final Platform platform) {
+        CurrentPlatform.platform = platform;
+    }
+
+    /**
      * Get the current main class
      *
      * @return the current main class
      */
     public static Class<?> getMain() {
         return main;
+    }
+
+    /**
+     * Set the current main class
+     *
+     * @param main the current main class
+     */
+    public static void setMain(final Class<?> main) {
+        CurrentPlatform.main = main;
     }
 
     /**
@@ -393,12 +354,30 @@ public final class CurrentPlatform {
     }
 
     /**
+     * Set the current server online mode
+     *
+     * @param onlineMode the online mode
+     */
+    public static void setOnline(final boolean onlineMode) {
+        online = onlineMode;
+    }
+
+    /**
      * Get the plugin modules command prefix
      *
      * @return the command prefix
      */
     public static String getPrefix() {
         return prefix;
+    }
+
+    /**
+     * Set the current module commands prefix
+     *
+     * @param modulePrefix the module commands prefix
+     */
+    public static void setPrefix(final String modulePrefix) {
+        prefix = modulePrefix;
     }
 
     /**
@@ -411,11 +390,23 @@ public final class CurrentPlatform {
     }
 
     /**
+     * Set the current KarmaAPI version
+     *
+     * @param version the current KarmaAPI version
+     * @deprecated This is no longer needed as KarmaAPI
+     * is included inside the plugin
+     */
+    @Deprecated
+    public static void setKarmaAPI(final String version) {
+        karma_api = version;
+    }
+
+    /**
      * Get the plugin appender
      *
      * @return the plugin appender
      */
-    public static JarAppender getPluginAppender() {
+    public static BruteLoader getPluginAppender() {
         return current_appender;
     }
 

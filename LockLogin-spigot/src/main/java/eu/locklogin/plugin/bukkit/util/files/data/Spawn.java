@@ -46,6 +46,59 @@ public final class Spawn {
     }
 
     /**
+     * Get if the player is near the spawn
+     *
+     * @param player the player
+     * @return if the player is near spawn
+     */
+    public static boolean isAway(final Player player) {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        if (config.enableSpawn()) {
+            Location spawn_location;
+            String x_string = spawnFile.getString("X", "");
+            String y_string = spawnFile.getString("Y", "");
+            String z_string = spawnFile.getString("Z", "");
+            String pitch_string = spawnFile.getString("PITCH", "");
+            String yaw_string = spawnFile.getString("YAW", "");
+            String world_string = spawnFile.getString("WORLD", "");
+
+            if (!isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string)) {
+                try {
+                    double x = Double.parseDouble(x_string);
+                    double y = Double.parseDouble(y_string);
+                    double z = Double.parseDouble(z_string);
+
+                    float pitch = Float.parseFloat(pitch_string);
+                    float yaw = Float.parseFloat(yaw_string);
+
+                    World world = plugin.getServer().getWorld(world_string);
+
+                    if (world == null) {
+                        try {
+                            console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
+                            world = plugin.getServer().createWorld(WorldCreator.name(world_string));
+                        } catch (Throwable ex) {
+                            console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
+                        }
+                    }
+
+                    if (world != null) {
+                        spawn_location = new Location(world, x, y, z);
+                        spawn_location.setPitch(pitch);
+                        spawn_location.setYaw(yaw);
+
+                        return player.getLocation().distance(spawn_location) >= config.spawnDistance();
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Teleport the player to the spawn
      * location
      */
@@ -127,62 +180,10 @@ public final class Spawn {
 
                     result.complete(null);
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         });
 
         return result;
-    }
-
-    /**
-     * Get if the player is near the spawn
-     *
-     * @param player the player
-     * @return if the player is near spawn
-     */
-    public static boolean isAway(final Player player) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        if (config.enableSpawn()) {
-            Location spawn_location;
-            String x_string = spawnFile.getString("X", "");
-            String y_string = spawnFile.getString("Y", "");
-            String z_string = spawnFile.getString("Z", "");
-            String pitch_string = spawnFile.getString("PITCH", "");
-            String yaw_string = spawnFile.getString("YAW", "");
-            String world_string = spawnFile.getString("WORLD", "");
-
-            if (!isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string)) {
-                try {
-                    double x = Double.parseDouble(x_string);
-                    double y = Double.parseDouble(y_string);
-                    double z = Double.parseDouble(z_string);
-
-                    float pitch = Float.parseFloat(pitch_string);
-                    float yaw = Float.parseFloat(yaw_string);
-
-                    World world = plugin.getServer().getWorld(world_string);
-
-                    if (world == null) {
-                        try {
-                            console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
-                            world = plugin.getServer().createWorld(WorldCreator.name(world_string));
-                        } catch (Throwable ex) {
-                            console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
-                        }
-                    }
-
-                    if (world != null) {
-                        spawn_location = new Location(world, x, y, z);
-                        spawn_location.setPitch(pitch);
-                        spawn_location.setYaw(yaw);
-
-                        return player.getLocation().distance(spawn_location) >= config.spawnDistance();
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-        }
-
-        return true;
     }
 }

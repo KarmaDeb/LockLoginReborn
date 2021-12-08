@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.6</version>
+    <version>1.13.9</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -41,14 +41,14 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLoginReborn.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLoginReborn.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLoginReborn/tree/master</url>
-        <tag>1.13.6</tag>
+        <tag>1.13.9</tag>
     </scm>
 
     <properties>
         <java.version>1.8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.manager>v4</project.manager>
+        <project.manager>v6</project.manager>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.properties.version>1.0.2</project.properties.version>
         <project.name>LockLogin</project.name>

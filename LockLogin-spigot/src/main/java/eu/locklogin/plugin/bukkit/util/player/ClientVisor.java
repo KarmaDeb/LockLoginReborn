@@ -28,9 +28,8 @@ import static eu.locklogin.plugin.bukkit.LockLogin.trySync;
 @SuppressWarnings("deprecation")
 public final class ClientVisor {
 
-    private final Player player;
-
     private final static Map<UUID, Set<UUID>> vanished = new ConcurrentHashMap<>();
+    private final Player player;
 
     /**
      * Initialize the client visor

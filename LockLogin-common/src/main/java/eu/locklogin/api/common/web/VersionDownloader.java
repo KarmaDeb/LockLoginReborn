@@ -12,26 +12,26 @@ package eu.locklogin.api.common.web;
  */
 
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.FixedLateScheduler;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.version.VersionFetchResult;
+import ml.karmaconfigs.api.common.version.util.VersionType;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.CompletableFuture;
 
-import static ml.karmaconfigs.api.common.version.VersionUpdater.VersionFetchResult;
-import static ml.karmaconfigs.api.common.version.VersionUpdater.VersionFetchResult.VersionType;
-
 /**
  * LockLogin version downloader
  */
 public final class VersionDownloader {
 
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private static boolean downloading = false;
-
     private final VersionFetchResult result;
 
     /**
@@ -50,8 +50,20 @@ public final class VersionDownloader {
      * @return if the downloader is already downloading the
      * latest version
      */
-    public static boolean isDownloading() {
-        return downloading;
+    public static boolean canDownload() {
+        return !downloading;
+    }
+
+    /**
+     * Get if the server owner wants the plugin to download
+     * automatically the new jars
+     *
+     * @return if the server owner wants to download
+     * automatically the new jars
+     */
+    public static boolean downloadUpdates() {
+        File no_download = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater", ".no_download");
+        return !no_download.exists();
     }
 
     /**
@@ -59,11 +71,11 @@ public final class VersionDownloader {
      *
      * @return the download result
      */
-    public final LateScheduler<File> download() {
+    public LateScheduler<File> download() {
         LateScheduler<File> future = new FixedLateScheduler<>();
 
         CompletableFuture.runAsync(() -> {
-            File dest_file = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater" + File.separator + result.resolve(VersionType.LATEST), "LockLogin.jar");
+            File dest_file = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater" + File.separator + result.resolve(VersionType.LATEST), "LockLogin.jar");
             dest_file = FileUtilities.getFixedFile(dest_file);
 
             downloading = true;
@@ -76,9 +88,9 @@ public final class VersionDownloader {
 
                 if (!dest_file.getParentFile().exists()) {
                     if (dest_file.getParentFile().mkdirs()) {
-                        APISource.getConsole().send("Created update folder for LockLogin new update", Level.INFO);
+                        lockLogin.console().send("Created update folder for LockLogin new update", Level.INFO);
                     } else {
-                        APISource.getConsole().send("An unknown error occurred while creating update folder", Level.GRAVE);
+                        lockLogin.console().send("An unknown error occurred while creating update folder", Level.GRAVE);
                     }
                 }
 
@@ -102,17 +114,5 @@ public final class VersionDownloader {
         });
 
         return future;
-    }
-
-    /**
-     * Get if the server owner wants the plugin to download
-     * automatically the new jars
-     *
-     * @return if the server owner wants to download
-     * automatically the new jars
-     */
-    public static boolean downloadUpdates() {
-        File no_download = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater", ".no_download");
-        return !no_download.exists();
     }
 }

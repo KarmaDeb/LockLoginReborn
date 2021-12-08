@@ -18,8 +18,8 @@ import eu.locklogin.plugin.velocity.listener.MessageListener;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.lang.reflect.Field;
 import java.nio.file.Files;

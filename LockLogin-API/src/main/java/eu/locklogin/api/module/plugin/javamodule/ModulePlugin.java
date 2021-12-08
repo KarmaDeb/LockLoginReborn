@@ -39,7 +39,7 @@ import java.util.*;
 @SuppressWarnings("unused")
 public final class ModulePlugin {
 
-    private final static Logger logger = new Logger(APISource.getSource());
+    private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
 
     private final static Map<PluginModule, Set<EventListener>> module_listeners = new LinkedHashMap<>();
     private final static Map<PluginModule, Set<Command>> module_commands = new LinkedHashMap<>();
@@ -109,7 +109,8 @@ public final class ModulePlugin {
                                             method.invoke(handler, event);
 
                                             logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
-                                        } catch (Throwable ignored) {}
+                                        } catch (Throwable ignored) {
+                                        }
                                         passed.add(module);
                                         break;
                                     case LAST:
@@ -143,7 +144,8 @@ public final class ModulePlugin {
                                                 method.invoke(handler, event);
 
                                                 logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
-                                            } catch (Throwable ignored) {}
+                                            } catch (Throwable ignored) {
+                                            }
                                         }
                                     case NORMAL:
                                     default:
@@ -172,7 +174,8 @@ public final class ModulePlugin {
                             }
 
                             logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable ignored) {
+                        }
                     }
 
                     for (Method method : last_invocation) {
@@ -190,7 +193,8 @@ public final class ModulePlugin {
                             }
 
                             logger.scheduleLog(Level.INFO, "Passed event {0} into module {1}", event.getClass().getSimpleName(), module.name());
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable ignored) {
+                        }
                     }
                 }
             }
@@ -200,8 +204,8 @@ public final class ModulePlugin {
     /**
      * Fire a command
      *
-     * @param sender the command sender
-     * @param cmd    the command
+     * @param sender      the command sender
+     * @param cmd         the command
      * @param parentEvent the parent event
      */
     public static void fireCommand(final ModuleSender sender, final String cmd, final Object parentEvent) {

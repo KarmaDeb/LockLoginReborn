@@ -26,10 +26,8 @@ import java.util.function.BiConsumer;
 public final class ModuleMessageService {
 
     private final static Map<PluginModule, Map<String, ModuleMessagingChannel>> channels = new HashMap<>();
-
-    private final PluginModule module;
-
     private static BiConsumer<String, byte[]> onDataSent;
+    private final PluginModule module;
 
     /**
      * Initialize the module message service
@@ -41,9 +39,37 @@ public final class ModuleMessageService {
     }
 
     /**
-     * Register a new message channel service
+     * Send a message to all the registered channels
      *
      * @param name the channel name
+     * @param data the message data
+     */
+    public static void sendMessage(final String name, final byte[] data) {
+        if (onDataSent != null)
+            onDataSent.accept(name, data);
+    }
+
+    /**
+     * Listen a message
+     *
+     * @param name the channel
+     * @param data the message data
+     */
+    public static void listenMessage(final String name, final byte[] data) {
+        for (PluginModule instance : channels.keySet()) {
+            Map<String, ModuleMessagingChannel> registered = channels.getOrDefault(instance, new HashMap<>());
+
+            ModuleMessagingChannel channel = registered.getOrDefault(name.toLowerCase(), null);
+            if (channel != null) {
+                channel.onMessageReceived(name, data);
+            }
+        }
+    }
+
+    /**
+     * Register a new message channel service
+     *
+     * @param name    the channel name
      * @param channel the channel instance
      */
     public void registerService(String name, final ModuleMessagingChannel channel) {
@@ -71,34 +97,6 @@ public final class ModuleMessageService {
                     registered.remove(name);
                     channels.put(module, registered);
                 }
-            }
-        }
-    }
-
-    /**
-     * Send a message to all the registered channels
-     *
-     * @param name the channel name
-     * @param data the message data
-     */
-    public static void sendMessage(final String name, final byte[] data) {
-        if (onDataSent != null)
-            onDataSent.accept(name, data);
-    }
-
-    /**
-     * Listen a message
-     *
-     * @param name the channel
-     * @param data the message data
-     */
-    public static void listenMessage(final String name, final byte[] data) {
-        for (PluginModule instance : channels.keySet()) {
-            Map<String, ModuleMessagingChannel> registered = channels.getOrDefault(instance, new HashMap<>());
-
-            ModuleMessagingChannel channel = registered.getOrDefault(name.toLowerCase(), null);
-            if (channel != null) {
-                channel.onMessageReceived(name, data);
             }
         }
     }

@@ -28,11 +28,12 @@ import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.timer.AsyncScheduler;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -46,10 +47,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.version;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand implements CommandExecutor {
+
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
 
     /**
      * Executes the given command, returning its success.
@@ -72,7 +76,7 @@ public final class LockLoginCommand implements CommandExecutor {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", label)));
 
-        APISource.asyncScheduler().queue(() -> {
+        lockLogin.async().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -147,8 +151,8 @@ public final class LockLoginCommand implements CommandExecutor {
 
                                     updater.get().whenComplete((result, error) -> {
                                         if (error == null) {
-                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionType.CURRENT));
+                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionType.LATEST));
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                         }
@@ -309,8 +313,8 @@ public final class LockLoginCommand implements CommandExecutor {
 
                                 updater.get().whenComplete((result, error) -> {
                                     if (error == null) {
-                                        console.send(messages.prefix() + "&7Current version:&e {0}", result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                        console.send(messages.prefix() + "&7Latest version:&e {0}", result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                        console.send(messages.prefix() + "&7Current version:&e {0}", result.resolve(VersionType.CURRENT));
+                                        console.send(messages.prefix() + "&7Latest version:&e {0}", result.resolve(VersionType.LATEST));
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                     }

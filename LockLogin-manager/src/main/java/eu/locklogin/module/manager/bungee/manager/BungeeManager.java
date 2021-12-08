@@ -24,7 +24,9 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.VersionComparator;
+import ml.karmaconfigs.api.common.utils.string.util.VersionDiff;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -184,9 +186,9 @@ public class BungeeManager {
                 }
                 Plugin plugin = (Plugin)
                         Reflections.setAccessible(
-                                Main.class.getClassLoader().getClass()
-                                        .getDeclaredConstructor(ProxyServer.class, PluginDescription.class, URL[].class)
-                        )
+                                        Main.class.getClassLoader().getClass()
+                                                .getDeclaredConstructor(ProxyServer.class, PluginDescription.class, URL[].class)
+                                )
                                 .newInstance(proxyserver, desc, new URL[]{file.toURI().toURL()})
                                 .loadClass(desc.getMain()).getDeclaredConstructor()
                                 .newInstance();
@@ -217,12 +219,15 @@ public class BungeeManager {
                         String version = FileInfo.getJarVersion(file);
                         String current = versionID.resolve(versionID.getVersionID());
 
-                        if (StringUtils.compareTo(version, current) > 0) {
+                        VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
+                                .currentVersion(current).checkVersion(version));
+                        if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
                             major_files.add(file);
                         } else {
                             try {
                                 Files.deleteIfExists(file.toPath());
-                            } catch (Throwable ignored) {}
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                 }
@@ -238,10 +243,13 @@ public class BungeeManager {
                             String latest_major_version = FileInfo.getJarVersion(latest_major);
                             String current_major_version = FileInfo.getJarVersion(major);
 
-                            if (StringUtils.compareTo(latest_major_version, current_major_version) > 0) {
+                            VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
+                                    .currentVersion(current_major_version).checkVersion(latest_major_version));
+                            if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
                                 try {
                                     Files.deleteIfExists(latest_major.toPath());
-                                } catch (Throwable ignored) {}
+                                } catch (Throwable ignored) {
+                                }
                                 latest_major = major;
                             }
                         } else {
@@ -270,7 +278,7 @@ public class BungeeManager {
             update_issuer = issuer;
 
             File last_jar = getUpdateJar();
-            File curr_jar = new File(FileUtilities.getProjectFolder(), lockloginFile.getName());
+            File curr_jar = new File(FileUtilities.getProjectFolder("plugins"), lockloginFile.getName());
 
             if (last_jar != null) {
                 UpdateChannel current_channel = config.getUpdaterOptions().getChannel();

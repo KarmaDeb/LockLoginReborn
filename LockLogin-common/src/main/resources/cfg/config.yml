@@ -262,7 +262,6 @@ NameCheckProtocol: 2
 # English ( en_EN | English )
 # Spanish ( es_ES | Spanish )
 # French ( fr_FR | French )
-# German ( de_DE | German )
 # Simplified Chinese ( zh_CN | Chinese simplified | Simplified chinese )
 # being english by default
 Lang: en_EN

@@ -33,8 +33,8 @@ public final class BungeeSender {
      * of access channel
      *
      * @param recipient the recipient used to receive and send message
-     * @param id the proxy id
-     * @param sub the proxy sub channel
+     * @param id        the proxy id
+     * @param sub       the proxy sub channel
      */
     public static void sendProxyStatus(final Player recipient, final String id, final String sub) {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
@@ -98,8 +98,8 @@ public final class BungeeSender {
      * Send a module player object to all bungeecord instance
      *
      * @param recipient the recipient used to receive and send messages
-     * @param player the module player serialized string
-     * @param id the server id who originally sent the module player object
+     * @param player    the module player serialized string
+     * @param id        the server id who originally sent the module player object
      */
     public static void sendPlayerInstance(final Player recipient, final String player, final String id) {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
@@ -131,7 +131,7 @@ public final class BungeeSender {
      * Send a plugin message to the server
      *
      * @param channel the channel name
-     * @param data the data to send
+     * @param data    the data to send
      */
     public static void sendModule(final String channel, final byte[] data) {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();

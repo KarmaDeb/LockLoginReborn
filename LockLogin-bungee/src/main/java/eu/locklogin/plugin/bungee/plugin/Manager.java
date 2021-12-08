@@ -45,6 +45,9 @@ import eu.locklogin.plugin.bungee.listener.JoinListener;
 import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.listener.QuitListener;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
+import eu.locklogin.plugin.bungee.plugin.injector.BungeeInjector;
+import eu.locklogin.plugin.bungee.plugin.injector.Injector;
+import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
@@ -57,10 +60,10 @@ import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionCheckType;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -83,7 +86,6 @@ import java.util.concurrent.TimeUnit;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
-import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 public final class Manager {
 
@@ -102,7 +104,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[33m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
@@ -186,6 +188,15 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
+        Injector injector;
+        try {
+            Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
+            injector = new WaterfallInjector();
+        } catch (Throwable ex) {
+            injector = new BungeeInjector();
+        }
+
+        injector.inject();
     }
 
     public static void terminate() {
@@ -213,7 +224,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[31m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send(" ");
         console.send("&e-----------------------");
@@ -407,7 +418,7 @@ public final class Manager {
                         }
 
                         if (VersionDownloader.downloadUpdates()) {
-                            if (!VersionDownloader.isDownloading()) {
+                            if (VersionDownloader.canDownload()) {
                                 VersionDownloader downloader = new VersionDownloader(fetch);
                                 downloader.download().whenComplete((file, error) -> {
                                     if (error != null) {
@@ -488,7 +499,7 @@ public final class Manager {
 
     /**
      * Initialize already connected players
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin load using third-party loaders
      */
@@ -582,7 +593,7 @@ public final class Manager {
 
     /**
      * Finalize connected players sessions
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin unload using third-party loaders
      */

@@ -15,8 +15,8 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.nio.file.Files;

@@ -18,26 +18,14 @@ import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
-import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.utils.URLUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
 
-public final class Main extends JavaPlugin implements KarmaSource {
+public final class Main extends KarmaPlugin {
 
-    private final KarmaBootstrap plugin;
-    private static Console console;
+    private final MainBootstrap plugin;
 
     public Main() throws Throwable {
-        console = new Console(this).messageRequest((message) -> getServer().getConsoleSender().sendMessage(StringUtils.toColor(message)));
-
-        APISource.setProvider(this);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setPlatform(Platform.BUKKIT);
         CurrentPlatform.setOnline(getServer().getOnlineMode());
@@ -45,22 +33,11 @@ public final class Main extends JavaPlugin implements KarmaSource {
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
-        String downloadURL = URLUtils.getOrBackup(
-                "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar",
-                "https://karmaconfigs.github.io/updates/LockLogin/assets/" + getDescription().getVersion() + "/LockLoginC.jar").toString();
-        ResourceDownloader downloader = ResourceDownloader.toCache(
-                this,
-                "locklogin.injar",
-                downloadURL,
-                "plugin", getDescription().getVersion());
-        downloader.download();
-
-        SubJarLoader loader = new SubJarLoader(getClass().getClassLoader(), downloader.getDestFile());
-        plugin = loader.instantiate("eu.locklogin.plugin.bukkit.MainBootstrap", JavaPlugin.class, this);
+        plugin = new MainBootstrap(this);
     }
 
     @Override
-    public void onEnable() {
+    public void enable() {
         plugin.enable();
     }
 
@@ -92,9 +69,9 @@ public final class Main extends JavaPlugin implements KarmaSource {
 
     @Override
     public String updateURL() {
-        String host = "https://locklogin.eu/version/";
+        String host = "https://karmarepo.000webhostapp.com/locklogin/version/";
         if (!URLUtils.exists(host)) {
-            host = "https://karmaconfigs.github.io/updates/LockLogin/";
+            host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -111,10 +88,5 @@ public final class Main extends JavaPlugin implements KarmaSource {
         }
 
         return host + "release.kupdter";
-    }
-
-    @Override
-    public Console console() {
-        return console;
     }
 }

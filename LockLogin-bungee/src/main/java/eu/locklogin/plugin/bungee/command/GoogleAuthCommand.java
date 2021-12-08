@@ -30,7 +30,8 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -98,9 +99,20 @@ public final class GoogleAuthCommand extends Command {
                                                     if (name.replaceAll("\\s", "").isEmpty())
                                                         name = "LockLogin";
 
-                                                    String token_url = StringUtils.formatString("https://karmaconfigs.ml/qr/?{0}%20{1}?{2}", StringUtils.stripColor(player.getDisplayName()), StringUtils.formatString("({0})", name), token);
+                                                    String token_url;
+                                                    if (URLUtils.exists("https://karmaconfigs.ml")) {
+                                                        token_url = StringUtils.formatString("https://karmaconfigs.ml/qr/?{0}%20{1}?{2}",
+                                                                /*{9}*/StringUtils.stripColor(player.getDisplayName()),
+                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
+                                                                /*{2}*/token);
+                                                    } else {
+                                                        token_url = StringUtils.formatString("https://karmarepo.000webhostapp.com/locklogin/qr/?{0}%20{1}?{2}",
+                                                                /*{9}*/StringUtils.stripColor(player.getDisplayName()),
+                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
+                                                                /*{2}*/token);
+                                                    }
 
-                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url);
+                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url.replaceAll("\\s", "-"));
                                                     user.send(c_factory.get());
 
                                                     List<Integer> scratch_codes = factory.getRecoveryCodes();

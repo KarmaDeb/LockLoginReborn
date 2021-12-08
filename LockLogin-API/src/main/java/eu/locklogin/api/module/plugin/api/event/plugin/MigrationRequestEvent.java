@@ -39,7 +39,7 @@ public final class MigrationRequestEvent extends Event {
      *
      * @param sourceAccount the source account
      * @param targetAccount the target account
-     * @param event  the event in where this event is fired
+     * @param event         the event in where this event is fired
      */
     public MigrationRequestEvent(final AccountManager sourceAccount, final AccountManager targetAccount, final Object event) {
         source = sourceAccount;

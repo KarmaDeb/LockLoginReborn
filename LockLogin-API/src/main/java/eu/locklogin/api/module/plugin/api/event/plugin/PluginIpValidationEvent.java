@@ -24,7 +24,7 @@ import java.net.InetAddress;
 
 /**
  * This event is fired when an IP is validated by LockLogin
- *
+ * <p>
  * This event is fired before {@link eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent},
  * {@link eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent} and {@link eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent}
  */
@@ -43,11 +43,11 @@ public final class PluginIpValidationEvent extends Event {
     /**
      * Initialize the plugin ip validation event
      *
-     * @param ip the ip
-     * @param pro the process
-     * @param res the result
+     * @param ip     the ip
+     * @param pro    the process
+     * @param res    the result
      * @param reason the result reason
-     * @param event the event owner
+     * @param event  the event owner
      */
     public PluginIpValidationEvent(final InetAddress ip, final ValidationProcess pro, final ValidationResult res, final String reason, final Object event) {
         address = ip;

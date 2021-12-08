@@ -9,8 +9,8 @@ import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -27,7 +27,7 @@ public abstract class PluginMessages {
 
     /**
      * Initialize the plugin messages
-     * 
+     *
      * @param source the plugin messages source
      */
     public PluginMessages(final KarmaSource source) {
@@ -47,7 +47,7 @@ public abstract class PluginMessages {
 
             if (!msg_file.exists()) {
                 if (!alerted) {
-                    APISource.getConsole().send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
+                    APISource.loadProvider("LockLogin").console().send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
                     alerted = true;
                 }
 
@@ -79,8 +79,9 @@ public abstract class PluginMessages {
                     return true;
                 }
             }
-        } catch (Throwable ignored) {}
-        
+        } catch (Throwable ignored) {
+        }
+
         return false;
     }
 
@@ -106,14 +107,16 @@ public abstract class PluginMessages {
         } catch (Throwable ex) {
             try {
                 getName = permission.getClass().getDeclaredMethod("getName");
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
-        
+
         if (getName != null && String.class.isAssignableFrom(getName.getReturnType())) {
             String name = "\"Failed to invoke permission getName method\"";
             try {
                 name = (String) getName.invoke(permission);
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
 
             return parse(msg.getString("PermissionError", "&5&oYou do not have the permission {permission}").replace("{permission}", name));
         } else {
@@ -244,7 +247,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param name message replace
+     * @param name   message replace
      * @param amount message replace
      * @return plugin message
      */
@@ -376,7 +379,7 @@ public abstract class PluginMessages {
      * Get a plugin message
      *
      * @param color message replace
-     * @param time message replace
+     * @param time  message replace
      * @return plugin message
      */
     public String registerBar(final String color, long time) {
@@ -539,7 +542,7 @@ public abstract class PluginMessages {
      * Get a plugin message
      *
      * @param color message replace
-     * @param time message replace
+     * @param time  message replace
      * @return plugin message
      */
     public String loginBar(final String color, long time) {
@@ -1001,6 +1004,113 @@ public abstract class PluginMessages {
      *
      * @return plugin message
      */
+    public String panicLogin() {
+        String str = msg.getString("PanicLogin", "&5&oPlease, use /panic <token>");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicTitle() {
+        String str = msg.getString("PanicTitle", "&cPANIC MODE");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicSubtitle() {
+        String str = msg.getString("PanicSubtitle", "&cRUN &4/panic <token>");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicMode() {
+        String str = msg.getString("PanicMode", "&5&oThe account entered in panic mode, you have 1 token login try before being IP-blocked");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicDisabled() {
+        String str = msg.getString("PanicDisabled", "&5&oThe server is not protected against brute force attacks");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicAlready() {
+        String str = msg.getString("PanicAlready", "&dYou already have a brute force token, your account is secure");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicRequested() {
+        List<String> messages = msg.getStringList("PanicRequested");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages)
+            builder.append(str).append("\n");
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String panicEnabled() {
+        List<String> messages = msg.getStringList("PanicEnabled");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages)
+            builder.append(str).append("\n");
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String tokenLink() {
+        String str = msg.getString("TokenLink", "&bClick to reveal the token");
+
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
     public String accountArguments() {
         String str = msg.getString("AccountArguments", "&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>");
 
@@ -1310,7 +1420,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param alias message replace
+     * @param alias   message replace
      * @param players message replace
      * @return plugin message
      */
@@ -1330,7 +1440,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param alias message replace
+     * @param alias   message replace
      * @param players message replace
      * @return plugin message
      */
@@ -1350,7 +1460,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param alias message replace
+     * @param alias   message replace
      * @param players message replace
      * @return plugin message
      */
@@ -1370,7 +1480,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param alias message replace
+     * @param alias   message replace
      * @param players message replace
      * @return plugin message
      */
@@ -1458,7 +1568,7 @@ public abstract class PluginMessages {
     /**
      * Get a plugin message
      *
-     * @param name messages replace
+     * @param name       messages replace
      * @param knownNames message replace
      * @return plugin message
      */
@@ -1473,7 +1583,8 @@ public abstract class PluginMessages {
 
         StringBuilder builder = new StringBuilder();
 
-        for (String str : messages) builder.append(str.replace("{player}", name).replace("{players}", names)).append("\n");
+        for (String str : messages)
+            builder.append(str.replace("{player}", name).replace("{players}", names)).append("\n");
 
         return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
     }

@@ -14,8 +14,8 @@ package eu.locklogin.api.common.utils.other;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -30,14 +30,14 @@ public class ASCIIArtGenerator {
     public static final int ART_SIZE_MEDIUM = 18;
     public static final int ART_SIZE_LARGE = 24;
     public static final int ART_SIZE_HUGE = 32;
-
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private static final String DEFAULT_ART_SYMBOL = "*";
 
     /**
      * Prints ASCII art for the specified text. For size, you can use predefined sizes or a custom size.
      * Usage - printTextArt("Hi",30,ASCIIArtFont.ART_FONT_SERIF,"@");
      *
-     * @param color     the text color
+     * @param color      the text color
      * @param artText    the text to generate
      * @param textHeight - Use a predefined size or a custom type
      * @param fontType   - Use one of the available fonts
@@ -63,10 +63,10 @@ public class ASCIIArtGenerator {
                 if (sb.toString().trim().isEmpty())
                     continue;
 
-                APISource.getConsole().send(color + sb);
+                lockLogin.console().send(color + sb);
             }
         } catch (Throwable ex) {
-            APISource.getConsole().send(color + artText);
+            lockLogin.console().send(color + artText);
         }
     }
 
@@ -78,7 +78,7 @@ public class ASCIIArtGenerator {
      * @param textHeight the text height
      */
     public final void print(String artText, int textHeight) {
-        print(Console.Colors.RESET, artText, textHeight, ASCIIArtFont.ART_FONT_DIALOG, DEFAULT_ART_SYMBOL);
+        print("\u001B[0m", artText, textHeight, ASCIIArtFont.ART_FONT_DIALOG, DEFAULT_ART_SYMBOL);
     }
 
     /**

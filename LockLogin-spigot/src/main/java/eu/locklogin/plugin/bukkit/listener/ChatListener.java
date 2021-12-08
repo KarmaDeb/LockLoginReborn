@@ -30,6 +30,10 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class ChatListener implements Listener {
@@ -110,16 +114,34 @@ public final class ChatListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void onConsoleCommand(ServerCommandEvent e) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onConsoleCommand(ServerCommandEvent e) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (!config.isBungeeCord()) {
             if (ModulePlugin.parseCommand(e.getCommand())) {
                 PluginModule module = ModulePlugin.getCommandOwner(e.getCommand());
 
                 if (module != null) {
-                    e.setCancelled(true);
-                    ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
+                    try {
+                        e.setCancelled(true);
+
+                        ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
+                    } catch (Throwable ex) {
+                        //This is on legacy spigot, I hate doing that honestly
+                        PrintStream original = System.out;
+                        System.setOut(new PrintStream(new OutputStream() {
+                            @Override
+                            public void write(int b) {
+                            }
+                        }));
+
+                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                            //I hate doing that...
+                            System.setOut(original);
+
+                            ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
+                        }, 5);
+                    }
                 }
             }
         }

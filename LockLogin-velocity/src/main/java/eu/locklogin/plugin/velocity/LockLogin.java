@@ -39,7 +39,7 @@ public interface LockLogin {
     KarmaSource source = Main.source;
     Main main = Main.get();
 
-    Console console = APISource.getConsole();
+    Console console = APISource.loadProvider("LockLogin").console();
 
     String name = main.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()

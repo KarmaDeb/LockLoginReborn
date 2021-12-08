@@ -51,14 +51,14 @@ import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
-import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
+import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionCheckType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Logger;
@@ -78,8 +78,6 @@ import java.nio.file.Files;
 import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT;
-import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 public final class Manager {
 
@@ -98,7 +96,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[33m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
@@ -226,7 +224,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[31m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send(" ");
         console.send("&e-----------------------");
@@ -441,7 +439,7 @@ public final class Manager {
                         }
 
                         if (VersionDownloader.downloadUpdates()) {
-                            if (!VersionDownloader.isDownloading()) {
+                            if (VersionDownloader.canDownload()) {
                                 VersionDownloader downloader = new VersionDownloader(fetch);
                                 downloader.download().whenComplete((file, error) -> {
                                     if (error != null) {
@@ -519,7 +517,7 @@ public final class Manager {
 
     /**
      * Initialize already connected players
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin load using third-party loaders
      */
@@ -552,7 +550,8 @@ public final class Manager {
                     try {
                         if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
                             barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
 
                     BarMessage bar = new BarMessage(player, barMessage);
                     if (!session.isCaptchaLogged())
@@ -582,7 +581,7 @@ public final class Manager {
 
     /**
      * Finalize connected players sessions
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin unload using third-party loaders
      */

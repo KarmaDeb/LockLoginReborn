@@ -15,8 +15,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.Main;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -274,7 +274,8 @@ public final class PlayerFile extends AccountManager {
                         }
 
                         Files.move(file.toPath(), newFile, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
 
                 try {
@@ -391,16 +392,6 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
-     * Get if the account is registered
-     *
-     * @return if the account is registered
-     */
-    @Override
-    public boolean isRegistered() {
-        return exists() && !StringUtils.isNullOrEmpty(getPassword());
-    }
-
-    /**
      * Set the player's password
      *
      * @param newPassword the new player password
@@ -411,6 +402,16 @@ public final class PlayerFile extends AccountManager {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
+    }
+
+    /**
+     * Get if the account is registered
+     *
+     * @return if the account is registered
+     */
+    @Override
+    public boolean isRegistered() {
+        return exists() && !StringUtils.isNullOrEmpty(getPassword());
     }
 
     /**
@@ -474,16 +475,6 @@ public final class PlayerFile extends AccountManager {
     }
 
     /**
-     * Get if the account has pin
-     *
-     * @return if the account has pin
-     */
-    @Override
-    public boolean hasPin() {
-        return exists() && !StringUtils.isNullOrEmpty(getPin());
-    }
-
-    /**
      * Set the player pin
      *
      * @param pin the pin
@@ -494,6 +485,16 @@ public final class PlayerFile extends AccountManager {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
+    }
+
+    /**
+     * Get if the account has pin
+     *
+     * @return if the account has pin
+     */
+    @Override
+    public boolean hasPin() {
+        return exists() && !StringUtils.isNullOrEmpty(getPin());
     }
 
     /**

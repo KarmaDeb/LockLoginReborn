@@ -143,13 +143,13 @@ public final class InstantParser {
 
         Map<TimeUnit, Long> result = new LinkedHashMap<>();
         long millisRest = diffInMillis;
-        for ( TimeUnit unit : units ) {
+        for (TimeUnit unit : units) {
 
-            long diff = unit.convert(millisRest,TimeUnit.MILLISECONDS);
+            long diff = unit.convert(millisRest, TimeUnit.MILLISECONDS);
             long diffInMillisForUnit = unit.toMillis(diff);
             millisRest = millisRest - diffInMillisForUnit;
 
-            result.put(unit,diff);
+            result.put(unit, diff);
         }
 
         return Math.abs(period.getYears()) + " " + properties.getProperty("year", "year(s)") + ", " +

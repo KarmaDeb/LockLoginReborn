@@ -15,7 +15,8 @@ public final class ModuleServer {
 
     private final static Set<ModulePlayer> connected = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    ModuleServer() {}
+    ModuleServer() {
+    }
 
     /**
      * Connect a player

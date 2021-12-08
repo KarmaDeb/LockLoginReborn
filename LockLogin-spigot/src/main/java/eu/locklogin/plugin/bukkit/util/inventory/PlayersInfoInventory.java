@@ -27,7 +27,7 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.inventory.object.SkullCache;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

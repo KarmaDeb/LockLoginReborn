@@ -24,7 +24,7 @@ public abstract class ClientSession implements Serializable {
 
     /**
      * Initialize the session
-     *
+     * <p>
      * In this process the captcha and instant
      * are generated, with boolean values ( all
      * should be false by default )

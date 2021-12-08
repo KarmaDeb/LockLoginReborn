@@ -59,7 +59,8 @@ public final class DataSender {
                     try {
                         server.sendPluginMessage(data.getChannel(), data.getData().toByteArray());
                         auto_data_pool.remove(message);
-                    } catch (IllegalStateException ignored) {}
+                    } catch (IllegalStateException ignored) {
+                    }
                 }
             });
             scheduler.start();

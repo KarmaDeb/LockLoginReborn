@@ -21,9 +21,7 @@ import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.bukkit.soundutil.Sound;
-import ml.karmaconfigs.api.bukkit.soundutil.SoundPlayer;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -186,12 +184,6 @@ public final class InventoryListener implements Listener {
                             case SEVEN:
                             case EIGHT:
                             case NINE:
-                                SoundPlayer pling = new SoundPlayer(plugin, Sound.BLOCK_NOTE_BLOCK_PLING);
-                                try {
-                                    pling.playTo(player, 5, getNote(action.friendly()));
-                                } catch (Throwable ignored) {
-                                }
-
                                 pin.addInput(action.friendly());
                                 pin.updateInput();
                                 break;
@@ -201,9 +193,6 @@ public final class InventoryListener implements Listener {
                             case ERASE:
                                 pin.eraseInput();
                                 pin.updateInput();
-
-                                SoundPlayer hat = new SoundPlayer(plugin, Sound.BLOCK_NOTE_BLOCK_HAT);
-                                hat.playTo(player, 5, 2.1);
                                 break;
                             case NONE:
                             default:

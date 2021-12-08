@@ -14,8 +14,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.io.File;
@@ -274,7 +274,8 @@ public final class PlayerFile extends AccountManager {
                         }
 
                         Files.move(file.toPath(), newFile, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
 
                 try {
@@ -325,7 +326,7 @@ public final class PlayerFile extends AccountManager {
      * @param status the account 2FA status
      */
     @Override
-    public final void set2FA(final boolean status) {
+    public void set2FA(final boolean status) {
         manager.set("2FA", status);
     }
 
@@ -352,7 +353,7 @@ public final class PlayerFile extends AccountManager {
      * @return the player name
      */
     @Override
-    public final String getName() {
+    public String getName() {
         return manager.getString("PLAYER", "").replace("PLAYER:", "");
     }
 
@@ -362,7 +363,7 @@ public final class PlayerFile extends AccountManager {
      * @param name the new player name
      */
     @Override
-    public final void setName(final String name) {
+    public void setName(final String name) {
         manager.set("PLAYER", name);
     }
 
@@ -372,7 +373,7 @@ public final class PlayerFile extends AccountManager {
      * @return the player UUID
      */
     @Override
-    public final AccountID getUUID() {
+    public AccountID getUUID() {
         try {
             return AccountID.fromUUID(UUID.fromString(manager.getString("UUID", UUID.randomUUID().toString()).replace("UUID:", "")));
         } catch (Throwable ex) {
@@ -386,8 +387,21 @@ public final class PlayerFile extends AccountManager {
      * @return the player password
      */
     @Override
-    public final String getPassword() {
+    public String getPassword() {
         return manager.getString("PASSWORD", "").replace("PASSWORD:", "");
+    }
+
+    /**
+     * Set the player's password
+     *
+     * @param newPassword the new player password
+     */
+    @Override
+    public void setPassword(final String newPassword) {
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -398,19 +412,6 @@ public final class PlayerFile extends AccountManager {
     @Override
     public boolean isRegistered() {
         return exists() && !StringUtils.isNullOrEmpty(getPassword());
-    }
-
-    /**
-     * Set the player's password
-     *
-     * @param newPassword the new player password
-     */
-    @Override
-    public final void setPassword(final String newPassword) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -432,7 +433,7 @@ public final class PlayerFile extends AccountManager {
      * @return the player google auth token
      */
     @Override
-    public final String getGAuth() {
+    public String getGAuth() {
         return manager.getString("TOKEN", "").replace("TOKEN:", "");
     }
 
@@ -442,7 +443,7 @@ public final class PlayerFile extends AccountManager {
      * @param token the token
      */
     @Override
-    public final void setGAuth(final String token) {
+    public void setGAuth(final String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
         manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
     }
@@ -464,13 +465,26 @@ public final class PlayerFile extends AccountManager {
      * @return the player pin
      */
     @Override
-    public final String getPin() {
+    public String getPin() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             return manager.getString("PIN", "").replace("PIN:", "");
         }
 
         return "";
+    }
+
+    /**
+     * Set the player pin
+     *
+     * @param pin the pin
+     */
+    @Override
+    public void setPin(final String pin) {
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -481,19 +495,6 @@ public final class PlayerFile extends AccountManager {
     @Override
     public boolean hasPin() {
         return exists() && !StringUtils.isNullOrEmpty(getPin());
-    }
-
-    /**
-     * Set the player pin
-     *
-     * @param pin the pin
-     */
-    @Override
-    public final void setPin(final String pin) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
     }
 
     /**
@@ -515,7 +516,7 @@ public final class PlayerFile extends AccountManager {
      * @return if the player has 2Fa in his account
      */
     @Override
-    public final boolean has2FA() {
+    public boolean has2FA() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enable2FA()) {
             return manager.getBoolean("2FA", false);

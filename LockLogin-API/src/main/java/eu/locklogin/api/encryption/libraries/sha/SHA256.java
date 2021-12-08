@@ -15,7 +15,10 @@ package eu.locklogin.api.encryption.libraries.sha;
  */
 
 import com.google.common.hash.Hashing;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
 
 import java.nio.charset.StandardCharsets;
 
@@ -29,7 +32,7 @@ public final class SHA256 {
     /**
      * Initialize the codification
      *
-     * @param value  the value to codify
+     * @param value the value to codify
      */
     public SHA256(final Object value) {
         this.password = value;
@@ -85,7 +88,10 @@ public final class SHA256 {
      */
     @SuppressWarnings("all")
     public String hash() {
-        String random_salt = StringUtils.randomString(64, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER);
+        String random_salt = StringUtils.generateString(RandomString.createBuilder().
+                withSize(64)
+                .withContent(TextContent.ONLY_LETTERS)
+                .withType(TextType.ALL_UPPER)).create();
 
         return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password.toString(), StandardCharsets.UTF_8).toString();
     }

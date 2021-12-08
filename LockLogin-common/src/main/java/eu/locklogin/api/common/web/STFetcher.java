@@ -2,8 +2,9 @@ package eu.locklogin.api.common.web;
 
 import com.google.gson.*;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -21,14 +22,29 @@ import java.util.concurrent.TimeUnit;
  */
 public final class STFetcher {
 
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Set<String> special_thanks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private static boolean can_check = true;
 
     /**
+     * Get a list with the plugin contributors
+     *
+     * @return the adler result of tables
+     */
+    public static String getDonors() {
+        StringBuilder builder = new StringBuilder();
+
+        for (String donor : special_thanks)
+            builder.append(donor).append(", ");
+
+        return StringUtils.replaceLast(builder.toString(), ", ", "");
+    }
+
+    /**
      * Start the checksum tables data fetch
      */
-    public final void check() {
+    public void check() {
         if (can_check) {
             can_check = false;
 
@@ -44,7 +60,7 @@ public final class STFetcher {
                     }
                 }, wait);
 
-                URL check_url = URLUtils.getOrBackup("https://locklogin.eu/stf/",
+                URL check_url = URLUtils.getOrBackup("https://karmarepo.000webhostapp.com/locklogin/stf/",
                         "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json");
                 HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
                 connection.setRequestMethod("GET");
@@ -60,25 +76,11 @@ public final class STFetcher {
                     for (JsonElement element : array) special_thanks.add(element.getAsString());
                 } else {
                     can_check = true;
-                    APISource.getConsole().send("&cFailed to retrieve adler checksum from locklogin.eu, response code: ({0} - {1})", response, connection.getResponseMessage());
+                    lockLogin.console().send("&cFailed to retrieve adler checksum from karma repository site, response code: ({0} - {1})", response, connection.getResponseMessage());
                 }
             } catch (Throwable ex) {
                 can_check = true;
             }
         }
-    }
-
-    /**
-     * Get a list with the plugin contributors
-     *
-     * @return the adler result of tables
-     */
-    public static String getDonors() {
-        StringBuilder builder = new StringBuilder();
-
-        for (String donor : special_thanks)
-            builder.append(donor).append(", ");
-
-        return StringUtils.replaceLast(builder.toString(), ", ", "");
     }
 }

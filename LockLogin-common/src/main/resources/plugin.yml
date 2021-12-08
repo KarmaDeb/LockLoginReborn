@@ -17,8 +17,16 @@ main: eu.locklogin.plugin.bukkit.Main
 database: false
 api-version: 1.13
 load: STARTUP
+depend:
+  - AnotherBarelyCodedKarmaPlugin
+
+#ProtocolLib soft dependency is for modules
+#that require that plugin ( LockLoginPremium
+#as example )
 softdepend:
+  - AnotherBarelyCodedKarmaPlugin
   - PlaceholderAPI
+  - ProtocolLib
 
 
 

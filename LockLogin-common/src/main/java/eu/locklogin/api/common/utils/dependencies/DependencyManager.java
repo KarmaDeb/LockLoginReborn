@@ -25,7 +25,7 @@
 
 package eu.locklogin.api.common.utils.dependencies;
 
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 
 import java.nio.file.Path;
 import java.util.EnumMap;
@@ -35,25 +35,15 @@ import java.util.EnumMap;
  */
 public class DependencyManager {
 
-    /** The plugin instance */
-    private final KarmaBootstrap plugin;
-
-    /** A map of dependencies which have already been loaded. */
-    private final EnumMap<Dependency, Path> loaded = new EnumMap<>(Dependency.class);
-
     /**
-     * LockLogin dependency manager
-     *
-     * @param plugin the plugin
+     * A map of dependencies which have already been loaded.
      */
-    public DependencyManager(KarmaBootstrap plugin) {
-        this.plugin = plugin;
-    }
+    private final static EnumMap<Dependency, Path> loaded = new EnumMap<>(Dependency.class);
 
     /**
      * Load all LockLogin dependencies
      */
-    public void loadDependencies() {
+    public static void loadDependencies() {
         for (Dependency dependency : Dependency.values()) {
             PluginDependency pd = dependency.getAsDependency();
 
@@ -73,7 +63,7 @@ public class DependencyManager {
      *
      * @param dependency the dependency
      */
-    private void loadDependency(Dependency dependency) {
+    private static void loadDependency(final Dependency dependency) {
         if (loaded.containsKey(dependency)) {
             return;
         }
@@ -81,10 +71,10 @@ public class DependencyManager {
         Path file = dependencyFile(dependency.getAsDependency());
 
         loaded.put(dependency, file);
-        plugin.getAppender().addJarToClasspath(file);
+        CurrentPlatform.getPluginAppender().add(file);
     }
 
-    private Path dependencyFile(PluginDependency pluginDependency) {
+    private static Path dependencyFile(PluginDependency pluginDependency) {
         return pluginDependency.getLocation().toPath();
     }
 }

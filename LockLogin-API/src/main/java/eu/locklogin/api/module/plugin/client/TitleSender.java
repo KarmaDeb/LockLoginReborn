@@ -34,11 +34,11 @@ public final class TitleSender {
      * Initialize the title sender
      *
      * @param tar the target
-     * @param t the title
-     * @param s the subtitle
-     * @param fo the time before showing the title
-     * @param ki the time to show the title
-     * @param hi the time that will take to hide the title
+     * @param t   the title
+     * @param s   the subtitle
+     * @param fo  the time before showing the title
+     * @param ki  the time to show the title
+     * @param hi  the time that will take to hide the title
      */
     public TitleSender(final ModulePlayer tar, final String t, final String s, final int fo, final int ki, final int hi) {
         target = tar;

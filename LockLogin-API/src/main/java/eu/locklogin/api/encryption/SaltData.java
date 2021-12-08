@@ -11,7 +11,7 @@ import java.io.File;
  */
 public final class SaltData {
 
-    private final static KarmaFile file = new KarmaFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "cache", "dba.salt"));
+    private final static KarmaFile file = new KarmaFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "cache", "dba.salt"));
     private final String password;
 
     /**

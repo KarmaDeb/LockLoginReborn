@@ -109,7 +109,7 @@ public abstract class PluginConfiguration {
     /**
      * Get if the plugin should block the player
      * login/register when he has an invalid password.
-     *
+     * <p>
      * Forcing him to change it until it's safe
      *
      * @return if the plugin should block unsafe passwords
@@ -122,13 +122,6 @@ public abstract class PluginConfiguration {
      * @return the brute force system options
      */
     public abstract BruteForceConfig bruteForceOptions();
-
-    /**
-     * Get if the anti bot is enabled
-     *
-     * @return if the anti bot is enabled
-     */
-    public abstract boolean antiBot();
 
     /**
      * Get if the plugin should allow players
@@ -196,15 +189,6 @@ public abstract class PluginConfiguration {
      * he joins
      */
     public abstract boolean clearChat();
-
-    /**
-     * Get the amount of same IPs can be
-     * simultaneously in the server
-     *
-     * @return the amount of players with
-     * same IP that can be in the server
-     */
-    public abstract int accountsPerIP();
 
     /**
      * Get if the plugin should check player names

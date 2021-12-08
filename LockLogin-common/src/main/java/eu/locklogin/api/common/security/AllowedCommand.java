@@ -33,7 +33,7 @@ public final class AllowedCommand {
      * Scan for allowed passwords
      */
     public static void scan() {
-        File file = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "allowed.lldb");
+        File file = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "allowed.lldb");
         KarmaFile allowedFile = new KarmaFile(file);
 
         if (!allowedFile.exists())

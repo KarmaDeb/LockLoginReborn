@@ -32,7 +32,7 @@ public final class AzuriomId {
 
     private final String uuid;
 
-    private final KarmaFile idData = new KarmaFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator + "azuriom", "ids.lldb"));
+    private final KarmaFile idData = new KarmaFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator + "azuriom", "ids.lldb"));
 
     /**
      * Initialize the azuriom id memory
@@ -58,6 +58,6 @@ public final class AzuriomId {
      * @return the azuriom id account file
      */
     public File getAccountFile() {
-        return new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "data" + File.separator + "accounts", uuid + ".lldb");
+        return new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator + "accounts", uuid + ".lldb");
     }
 }

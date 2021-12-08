@@ -29,7 +29,9 @@ import java.lang.annotation.Target;
 public @interface ModuleEventHandler {
 
     Priority priority() default Priority.NORMAL;
+
     String after() default "";
+
     boolean ignoreHandled() default true;
 
     /**

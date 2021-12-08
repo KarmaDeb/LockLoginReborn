@@ -33,7 +33,7 @@ public final class UserPostJoinEvent extends Event {
      * Initialize event
      *
      * @param modulePlayer the player
-     * @param event  the event in where this event is fired
+     * @param event        the event in where this event is fired
      */
     public UserPostJoinEvent(final ModulePlayer modulePlayer, final Object event) {
         this.modulePlayer = modulePlayer;

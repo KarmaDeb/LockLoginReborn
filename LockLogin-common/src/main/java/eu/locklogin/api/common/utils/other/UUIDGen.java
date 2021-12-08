@@ -15,7 +15,8 @@ package eu.locklogin.api.common.utils.other;
  */
 
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import org.apache.commons.io.IOUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.apache.commons.io.IOUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -48,11 +49,10 @@ public final class UUIDGen {
      * @param name the player name
      * @return the mojang uuid from the specified player name
      */
-    @SuppressWarnings("deprecation")
     private static UUID retrieveUUID(String name) {
         try {
             String url = "https://api.mojang.com/users/profiles/minecraft/" + name;
-            String UUIDJson = IOUtils.toString(new URL(url));
+            String UUIDJson = IOUtil.toString(new URL(url).openStream());
 
             JSONObject UUIDObject = (JSONObject) JSONValue.parseWithException(UUIDJson);
             try {
@@ -61,6 +61,8 @@ public final class UUIDGen {
                 return fixUUID(UUIDObject.get("id").toString());
             }
         } catch (Throwable ex) {
+            CurrentPlatform.getLogger().scheduleLog(Level.GRAVE, ex);
+            CurrentPlatform.getLogger().scheduleLog(Level.INFO, "Failed to fetch client UUID of {0}", name);
             return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
         }
     }

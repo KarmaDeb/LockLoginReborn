@@ -19,6 +19,15 @@ public class ServerSendMessageEvent extends Event {
     }
 
     /**
+     * Get the message
+     *
+     * @return the message
+     */
+    public final String getMessage() {
+        return message;
+    }
+
+    /**
      * Set the message
      *
      * @param msg the message
@@ -26,15 +35,6 @@ public class ServerSendMessageEvent extends Event {
     public final void setMessage(final String msg) {
         if (!handled)
             message = msg;
-    }
-
-    /**
-     * Get the message
-     *
-     * @return the message
-     */
-    public final String getMessage() {
-        return message;
     }
 
     /**

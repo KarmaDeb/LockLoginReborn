@@ -32,7 +32,8 @@ import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -49,7 +50,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public GoogleAuthCommand(final String name, final List<String> aliases) {
@@ -101,7 +102,18 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                                     if (name.replaceAll("\\s", "").isEmpty())
                                                         name = "LockLogin";
 
-                                                    String token_url = StringUtils.formatString("https://karmaconfigs.ml/qr/?{0}%20{1}?{2}", StringUtils.stripColor(player.getGameProfile().getName()), StringUtils.formatString("({0})", name), token);
+                                                    String token_url;
+                                                    if (URLUtils.exists("https://karmaconfigs.ml")) {
+                                                        token_url = StringUtils.formatString("https://karmaconfigs.ml/qr/?{0}%20{1}?{2}",
+                                                                /*{9}*/StringUtils.stripColor(player.getGameProfile().getName()),
+                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
+                                                                /*{2}*/token);
+                                                    } else {
+                                                        token_url = StringUtils.formatString("https://karmarepo.000webhostapp.com/locklogin/qr/?{0}%20{1}?{2}",
+                                                                /*{9}*/StringUtils.stripColor(player.getGameProfile().getName()),
+                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
+                                                                /*{2}*/token);
+                                                    }
 
                                                     HoverEvent<Component> hover = HoverEvent.showText(Component.text().content(StringUtils.toColor(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!"))).build());
                                                     ClickEvent click = ClickEvent.openUrl(token_url);

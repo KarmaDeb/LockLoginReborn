@@ -25,17 +25,17 @@ import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
-import ml.karmaconfigs.api.bukkit.reflections.TitleMessage;
+import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
+import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +45,7 @@ import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
 
-public class MainBootstrap implements KarmaBootstrap {
+public class MainBootstrap {
 
     private final static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
@@ -53,20 +53,18 @@ public class MainBootstrap implements KarmaBootstrap {
             .getPath().replaceAll("%20", " "));
 
     private final Main loader;
-    private final DependencyManager manager = new DependencyManager(this);
 
     public MainBootstrap(final JavaPlugin main) {
 
         loader = (Main) main;
 
         try {
-            JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());
+            JarManager.changeField(CurrentPlatform.class, "current_appender", new BruteLoader((URLClassLoader) main.getClass().getClassLoader()));
         } catch (Throwable ex) {
             ex.printStackTrace();
         }
     }
 
-    @Override
     public void enable() {
         for (Dependency pluginDependency : Dependency.values()) {
             PluginDependency dependency = pluginDependency.getAsDependency();
@@ -86,17 +84,21 @@ public class MainBootstrap implements KarmaBootstrap {
             manager.process(false);
         }
         JarManager.downloadAll();
-        manager.loadDependencies();
+        DependencyManager.loadDependencies();
 
         console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
 
         STFetcher fetcher = new STFetcher();
         fetcher.check();
 
+        /*
+        I think KarmaAPI default's prefix is better
+
         console.getData().setOkPrefix("&aOk &e>> &7");
         console.getData().setInfoPrefix("&7Info &e>> &7");
         console.getData().setWarnPrefix("&6Warning &e>> &7");
-        console.getData().setGravPrefix("&4Grave &e>> &7");
+        console.getData().setGravePrefix("&4Grave &e>> &7");
+        */
 
         Consumer<MessageSender> onMessage = messageSender -> {
             if (messageSender.getSender() instanceof ModulePlayer) {
@@ -191,8 +193,6 @@ public class MainBootstrap implements KarmaBootstrap {
         } catch (Throwable ignored) {
         }
 
-        prepareManager();
-
         LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
         File[] moduleFiles = LockLogin.getLoader().getDataFolder().listFiles();
@@ -222,7 +222,6 @@ public class MainBootstrap implements KarmaBootstrap {
         }
     }
 
-    @Override
     public void disable() {
         Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
         ModulePlugin.callEvent(event);
@@ -240,32 +239,5 @@ public class MainBootstrap implements KarmaBootstrap {
         }
 
         Manager.terminate();
-        getAppender().close();
-    }
-
-    @Override
-    public KarmaSource getSource() {
-        return loader;
-    }
-
-    /**
-     * Prepare LockLoginManager module
-     */
-    private void prepareManager() {
-        PluginDependency dependency = Dependency.MANAGER.getAsDependency();
-
-        if (FileInfo.showChecksums(lockloginFile)) {
-            System.out.println("Current checksum for " + dependency.getName());
-            System.out.println("Adler32: " + dependency.getAdlerCheck());
-            System.out.println("CRC32: " + dependency.getCRCCheck());
-            System.out.println("Fetched checksum for " + dependency.getName());
-            System.out.println("Adler32: " + ChecksumTables.getAdler(dependency));
-            System.out.println("CRC32: " + ChecksumTables.getCRC(dependency));
-        }
-
-        JarManager manager = new JarManager(dependency);
-        manager.process(true);
-
-        JarManager.downloadAll();
     }
 }

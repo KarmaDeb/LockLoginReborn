@@ -2,7 +2,7 @@ package eu.locklogin.module.manager;
 
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;

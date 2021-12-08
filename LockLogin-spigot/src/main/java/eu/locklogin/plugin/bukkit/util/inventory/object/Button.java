@@ -2,7 +2,7 @@ package eu.locklogin.plugin.bukkit.util.inventory.object;
 
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -409,7 +409,8 @@ public class Button {
                 new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE", true)), 1, (short) 3);
                 new ItemStack(Objects.requireNonNull(Material.matchMaterial("STAINED_GLASS_PANE")), 1, (short) 3);
                 new ItemStack(Material.LEGACY_STAINED_GLASS_PANE, 1, (short) 3);
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         });
     }
 }

@@ -23,7 +23,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -33,7 +33,7 @@ public interface LockLogin {
 
     Main plugin = (Main) JavaPlugin.getProvidingPlugin(Main.class);
 
-    Console console = APISource.getConsole();
+    Console console = APISource.loadProvider("LockLogin").console();
 
     String name = plugin.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()

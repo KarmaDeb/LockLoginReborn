@@ -34,8 +34,8 @@ public final class AccountCloseEvent extends Event {
      * Initialize the account creation event
      *
      * @param _modulePlayer the player who created the account
-     * @param _issuer the account close issuer
-     * @param _event  the event owner
+     * @param _issuer       the account close issuer
+     * @param _event        the event owner
      */
     public AccountCloseEvent(final ModulePlayer _modulePlayer, final String _issuer, final Object _event) {
         modulePlayer = _modulePlayer;

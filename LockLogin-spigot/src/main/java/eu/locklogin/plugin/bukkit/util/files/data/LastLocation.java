@@ -305,7 +305,8 @@ public final class LastLocation {
                     //Unset the last location
                     remove();
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 }

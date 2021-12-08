@@ -30,13 +30,10 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static eu.locklogin.plugin.bungee.LockLogin.getSocketIp;
 
 public final class QuitListener implements Listener {
 
@@ -77,8 +74,10 @@ public final class QuitListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onKick(ServerKickEvent e) {
         ProxiedPlayer player = e.getPlayer();
-        kicked.add(player.getUniqueId());
+
         if (!player.isConnected()) {
+            kicked.add(player.getUniqueId());
+
             User user = new User(player);
             if (user.getChecker().isUnderCheck()) {
                 user.getChecker().cancelCheck();

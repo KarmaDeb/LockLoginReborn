@@ -17,7 +17,10 @@ package eu.locklogin.api.common.session;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
 
 import java.time.Instant;
 
@@ -36,7 +39,8 @@ public final class Session extends ClientSession {
     private boolean gAuth_logged = false;
     private boolean bungee_verified = true;
 
-    private Session() {}
+    private Session() {
+    }
 
     /**
      * Initialize the session
@@ -47,14 +51,18 @@ public final class Session extends ClientSession {
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (captcha.isEmpty() || !captcha_logged) {
-            StringUtils.StringGen generation = StringUtils.StringGen.ONLY_NUMBERS;
-            StringUtils.StringType type = StringUtils.StringType.RANDOM_SIZE;
+            TextContent generation = TextContent.ONLY_NUMBERS;
+            TextType type = TextType.RANDOM_SIZE;
 
             if (config.captchaOptions().hasLetters()) {
-                generation = StringUtils.StringGen.NUMBERS_AND_LETTERS;
+                generation = TextContent.NUMBERS_AND_LETTERS;
             }
 
-            captcha = StringUtils.randomString(config.captchaOptions().getLength(), generation, type);
+            captcha = StringUtils.generateString(RandomString.
+                    createBuilder()
+                    .withContent(generation)
+                    .withType(type)
+                    .withSize(config.captchaOptions().getLength())).create();
         }
     }
 

@@ -120,6 +120,30 @@ Enabled2FA: "&d2FA activé, votre compte est à nouveau sécurisé"
   - "&78 - Type /2fa <code shown in app> ou <scratch code>"
 2FaLink: "&bCliquez ici pour obtenir votre code QR 2FA"
 
+#Session messages - Brute force
+PanicLogin: "&5&oVeuillez utiliser /panic <token>"
+PanicTitle: "&cMODE PANIQUE"
+PanicSubtitle: "&cSCORE &4/panic <token>"
+PanicMode: "&5&oLe compte a paniqué, vous avez 1 tentative d’accès par jeton avant d’être bloqué"
+PanicDisabled: "&5&oLe serveur n’est pas protégé contre les attaques par force brute"
+PanicAlready: "&dUne fois que vous avez généré un jeton de panique, votre compte est en sécurité"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&dNous avons généré un jeton de panique pour vous"
+  - "&ds’il vous plaît garder ce jeton dans un endroit sûr"
+  - "&det assurez-vous que personne ne le voit"
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&dLe serveur est protégé contre les attaques"
+  - "&dforce brute à l’aide du système de protection"
+  - "&dpar des jetons LockLogin. Pour commencer, vous devez exécuter"
+  - "&dla commande /account protect et enregistrez le jeton qui"
+  - "&dest généré. Vous saurez quand vous connecter avec ceci"
+  - "&dtoken puisque le même plugin vous dira quand le mettre"
+TokenLink: "&bCliquez ici pour révéler votre clé de jeton"
+
 #Session messages - Account management
 AccountArguments: "&5&oSous-arguments session valides: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
 Change: "&5&oS'il vous plaît, utilisez /{arg} <password> <new password>"

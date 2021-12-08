@@ -51,6 +51,8 @@ import eu.locklogin.plugin.velocity.listener.JoinListener;
 import eu.locklogin.plugin.velocity.listener.MessageListener;
 import eu.locklogin.plugin.velocity.listener.QuitListener;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
+import eu.locklogin.plugin.velocity.plugin.injector.Injector;
+import eu.locklogin.plugin.velocity.plugin.injector.VelocityInjector;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Message;
@@ -63,10 +65,10 @@ import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionCheckType;
 import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -82,7 +84,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static eu.locklogin.plugin.velocity.LockLogin.*;
-import static ml.karmaconfigs.api.common.Console.Colors.YELLOW_BRIGHT;
 
 public final class Manager {
 
@@ -101,7 +102,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(YELLOW_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[33m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
@@ -185,6 +186,9 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
+
+        Injector injector = new VelocityInjector();
+        injector.inject();
     }
 
     public static void terminate() {
@@ -212,7 +216,7 @@ public final class Manager {
         }
 
         System.out.println();
-        artGen.print(ml.karmaconfigs.api.common.Console.Colors.RED_BRIGHT, "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        artGen.print("\u001B[31m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         console.send("&eversion:&6 {0}", versionID.getVersionID());
         console.send(" ");
         console.send("&e-----------------------");
@@ -410,7 +414,7 @@ public final class Manager {
                         }
 
                         if (VersionDownloader.downloadUpdates()) {
-                            if (!VersionDownloader.isDownloading()) {
+                            if (VersionDownloader.canDownload()) {
                                 VersionDownloader downloader = new VersionDownloader(fetch);
                                 downloader.download().whenComplete((file, error) -> {
                                     if (error != null) {
@@ -420,7 +424,8 @@ public final class Manager {
 
                                         try {
                                             Files.deleteIfExists(file.toPath());
-                                        } catch (Throwable ignored) {}
+                                        } catch (Throwable ignored) {
+                                        }
                                     } else {
                                         console.send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
 
@@ -487,7 +492,7 @@ public final class Manager {
 
     /**
      * Initialize already connected players
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin load using third-party loaders
      */
@@ -581,7 +586,7 @@ public final class Manager {
 
     /**
      * Finalize connected players sessions
-     *
+     * <p>
      * This is util after plugin updates or
      * plugin unload using third-party loaders
      */

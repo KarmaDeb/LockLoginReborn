@@ -16,7 +16,7 @@ package eu.locklogin.api.common.security.client;
 
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -38,6 +38,46 @@ public final class Name {
      */
     public Name(final String clientName) {
         name = clientName;
+    }
+
+    /**
+     * Get if the character is ascii character
+     *
+     * @param c the character
+     * @return if the character is ascii
+     */
+    public static boolean notAscii(final Character c) {
+        int charId = (int) c;
+
+        if (charId > 127) {
+            return true;
+        } else {
+            if (charId <= 47) {
+                return true;
+            }
+            switch (charId) {
+                case 58:
+                case 59:
+                case 60:
+                case 61:
+                case 62:
+                case 63:
+                case 64:
+                case 91:
+                case 92:
+                case 93:
+                case 94:
+                case 96:
+                case 123:
+                case 124:
+                case 125:
+                case 126:
+                case 127:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 
     /**
@@ -96,45 +136,5 @@ public final class Name {
         }
 
         return StringUtils.replaceLast(builder.toString(), "&7, ", "");
-    }
-
-    /**
-     * Get if the character is ascii character
-     *
-     * @param c the character
-     * @return if the character is ascii
-     */
-    public static boolean notAscii(final Character c) {
-        int charId = (int) c;
-
-        if (charId > 127) {
-            return true;
-        } else {
-            if (charId <= 47) {
-                return true;
-            }
-            switch (charId) {
-                case 58:
-                case 59:
-                case 60:
-                case 61:
-                case 62:
-                case 63:
-                case 64:
-                case 91:
-                case 92:
-                case 93:
-                case 94:
-                case 96:
-                case 123:
-                case 124:
-                case 125:
-                case 126:
-                case 127:
-                    return true;
-                default:
-                    return false;
-            }
-        }
     }
 }

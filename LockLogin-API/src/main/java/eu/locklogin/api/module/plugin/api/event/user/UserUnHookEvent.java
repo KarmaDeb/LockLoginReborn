@@ -36,7 +36,7 @@ public final class UserUnHookEvent extends Event {
      * Initialize event
      *
      * @param modulePlayerObject the player
-     * @param event        the event in where this event is fired
+     * @param event              the event in where this event is fired
      */
     public UserUnHookEvent(final ModulePlayer modulePlayerObject, final Object event) {
         modulePlayer = modulePlayerObject;

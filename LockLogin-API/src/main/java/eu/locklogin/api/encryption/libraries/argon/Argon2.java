@@ -49,7 +49,6 @@ public class Argon2 {
     }
 
     private static Argon2 createFromEncoded(String encoded) {
-
         String[] parts = encoded.split("\\$");
         Argon2Type type = parts[1].endsWith("id") ? Argon2Type.Argon2id :
                 parts[1].endsWith("i") ? Argon2Type.Argon2i :

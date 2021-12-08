@@ -12,7 +12,7 @@ package eu.locklogin.plugin.bungee.plugin.sender;
  */
 
 import eu.locklogin.api.account.AccountManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.Set;
 

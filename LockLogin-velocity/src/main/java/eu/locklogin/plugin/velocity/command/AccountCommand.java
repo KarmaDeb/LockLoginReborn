@@ -40,8 +40,8 @@ import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
 
 import java.util.HashSet;
@@ -57,7 +57,7 @@ public class AccountCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public AccountCommand(final String name, final List<String> aliases) {
@@ -378,34 +378,38 @@ public class AccountCommand extends BungeeLikeCommand {
 
                 switch (args[0].toLowerCase()) {
                     case "unlock":
-                        tar_name = args[1];
+                        if (args.length == 2) {
+                            tar_name = args[1];
 
-                        AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
-                            if (nsr.singleResult()) {
-                                OfflineClient offline = new OfflineClient(tar_name);
+                            AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
+                                if (nsr.singleResult()) {
+                                    OfflineClient offline = new OfflineClient(tar_name);
 
-                                AccountManager manager = offline.getAccount();
-                                if (manager != null) {
-                                    LockedAccount account = new LockedAccount(manager.getUUID());
-                                    LockedData data = account.getData();
+                                    AccountManager manager = offline.getAccount();
+                                    if (manager != null) {
+                                        LockedAccount account = new LockedAccount(manager.getUUID());
+                                        LockedData data = account.getData();
 
-                                    if (data.isLocked()) {
-                                        if (account.unlock()) {
-                                            console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                        if (data.isLocked()) {
+                                            if (account.unlock()) {
+                                                console.send(messages.prefix() + messages.accountUnLocked(tar_name));
+                                            } else {
+                                                console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                                logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                            }
                                         } else {
                                             console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                            logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
                                         }
                                     } else {
-                                        console.send(messages.prefix() + messages.accountNotLocked(tar_name));
+                                        console.send(messages.prefix() + messages.neverPlayer(tar_name));
                                     }
                                 } else {
-                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                                    AccountNameDatabase.otherPossible(tar_name).whenComplete((possible) -> console.send(messages.multipleNames(tar_name, possible)));
                                 }
-                            } else {
-                                AccountNameDatabase.otherPossible(tar_name).whenComplete((possible) -> console.send(messages.multipleNames(tar_name, possible)));
-                            }
-                        });
+                            });
+                        } else {
+                            console.send(messages.prefix() + messages.accountUnLock());
+                        }
                         break;
                     case "close":
                         if (args.length == 2) {
@@ -436,47 +440,51 @@ public class AccountCommand extends BungeeLikeCommand {
                         break;
                     case "remove":
                     case "delete":
-                        tar_name = args[1];
+                        if (args.length == 2) {
+                            tar_name = args[1];
 
-                        AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
-                            if (nsr.singleResult()) {
-                                Optional<Player> online = server.getPlayer(tar_name);
-                                OfflineClient offline = new OfflineClient(tar_name);
+                            AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
+                                if (nsr.singleResult()) {
+                                    Optional<Player> online = server.getPlayer(tar_name);
+                                    OfflineClient offline = new OfflineClient(tar_name);
 
-                                AccountManager manager = offline.getAccount();
-                                if (manager != null) {
-                                    LockedAccount account = new LockedAccount(manager.getUUID());
-                                    if (account.getData().isLocked()) {
-                                        console.send(messages.prefix() + messages.neverPlayer(tar_name));
-                                    } else {
-                                        manager.setUnsafePassword("");
-                                        manager.setUnsafePin("");
-                                        manager.setUnsafeGAuth("");
-                                        manager.set2FA(false);
+                                    AccountManager manager = offline.getAccount();
+                                    if (manager != null) {
+                                        LockedAccount account = new LockedAccount(manager.getUUID());
+                                        if (account.getData().isLocked()) {
+                                            console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                                        } else {
+                                            manager.setUnsafePassword("");
+                                            manager.setUnsafePin("");
+                                            manager.setUnsafeGAuth("");
+                                            manager.set2FA(false);
 
-                                        console.send(messages.prefix() +
-                                                        properties.getProperty(
-                                                                "account_removed",
-                                                                "&dAccount of {0} removed by {1}"),
-                                                tar_name,
-                                                config.serverName());
+                                            console.send(messages.prefix() +
+                                                            properties.getProperty(
+                                                                    "account_removed",
+                                                                    "&dAccount of {0} removed by {1}"),
+                                                    tar_name,
+                                                    config.serverName());
 
-                                        if (online.isPresent()) {
-                                            DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
-                                            User onlineUser = new User(online.get());
+                                            if (online.isPresent()) {
+                                                DataSender.send(online.get(), DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online.get()).build());
+                                                User onlineUser = new User(online.get());
 
-                                            onlineUser.kick(messages.forcedAccountRemoval(config.serverName()));
+                                                onlineUser.kick(messages.forcedAccountRemoval(config.serverName()));
+                                            }
+
+                                            account.lock("{ServerName}");
                                         }
-
-                                        account.lock("{ServerName}");
+                                    } else {
+                                        console.send(messages.prefix() + messages.neverPlayer(tar_name));
                                     }
                                 } else {
-                                    console.send(messages.prefix() + messages.neverPlayer(tar_name));
+                                    AccountNameDatabase.otherPossible(tar_name).whenComplete((possible) -> console.send(messages.multipleNames(tar_name, possible)));
                                 }
-                            } else {
-                                AccountNameDatabase.otherPossible(tar_name).whenComplete((possible) -> console.send(messages.multipleNames(tar_name, possible)));
-                            }
-                        });
+                            });
+                        } else {
+                            console.send(messages.prefix() + messages.remove());
+                        }
                         break;
                     default:
                         console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));

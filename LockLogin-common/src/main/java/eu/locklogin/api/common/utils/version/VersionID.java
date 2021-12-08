@@ -14,8 +14,8 @@ package eu.locklogin.api.common.utils.version;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.version.VersionCheckType;
-import ml.karmaconfigs.api.common.version.VersionResolver;
+import ml.karmaconfigs.api.common.version.util.VersionCheckType;
+import ml.karmaconfigs.api.common.version.util.VersionResolver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +53,7 @@ public final class VersionID extends VersionResolver {
      * @return a new version id object which contains
      * the current version id string
      */
-    public final VersionID generate() {
+    public VersionID generate() {
         switch (getVersionType(rootVersion)) {
             case NUMBER:
                 if (!versionMap.containsKey(keyName)) {
@@ -88,7 +88,7 @@ public final class VersionID extends VersionResolver {
      *
      * @return the version iD
      */
-    public final String getVersionID() {
+    public String getVersionID() {
         if (versionMap.getOrDefault(keyName, null) == null || versionMap.getOrDefault(keyName, null).isEmpty())
             return generate().getVersionID();
         else
@@ -123,7 +123,7 @@ public final class VersionID extends VersionResolver {
      * @return the resolved version id
      */
     @Override
-    public final String resolve(String id) {
+    public String resolve(String id) {
         switch (getVersionType(id)) {
             case NUMBER:
                 return id;

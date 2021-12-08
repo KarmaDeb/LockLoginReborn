@@ -36,21 +36,22 @@ import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
+import eu.locklogin.plugin.velocity.util.scheduler.VelocitySyncScheduler;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karma.loader.JarAppender;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.timer.scheduler.Scheduler;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -58,44 +59,56 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Plugin(id = "locklogin", name = "LockLogin", version = "1.13.6", authors = {"KarmaDev"}, description = "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. It has a lot of customization options to not say almost everything is customizable. Regular updates and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; A community plugin for the plugin community.", url = "https://locklogin.eu/")
-public class Main implements KarmaBootstrap, KarmaSource {
+@Plugin(
+        id = "locklogin",
+        name = "LockLogin",
+        version = "1.13.9",
+        authors = {"KarmaDev"},
+        description =
+                "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +
+                "It has a lot of customization options to not say almost everything is customizable. Regular updates " +
+                "and one of the bests discord supports ( according to spigotmc reviews ). LockLogin is a plugin " +
+                "always open to new feature requests, and bug reports. More than a plugin, a plugin you can contribute indirectly; " +
+                "A community plugin for the plugin community.",
+        url = "https://locklogin.eu/",
+        dependencies = {
+                @com.velocitypowered.api.plugin.Dependency(id = "anotherbarelycodedkarmaplugin")
+        })
+public class Main implements KarmaSource {
 
     private static final File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " "));
-
-    private static Console console;
-
     static ProxyServer server;
     static PluginContainer container;
     static Metrics.Factory factory;
     static KarmaSource source;
-
+    private static Console console;
+    private static Scheduler async;
+    private static Scheduler sync;
     private static Main instance;
-    private final JarAppender appender;
+    private final BruteLoader appender;
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
-        console = new Console(this).messageRequest((message) -> server.getConsoleCommandSource().sendMessage(
+        console = new Console(this, (message) -> server.getConsoleCommandSource().sendMessage(
                 Component.text().content(StringUtils.toColor(message)).build()));
 
-        APISource.setProvider(this);
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
 
         Main.server = server;
         factory = fact;
-        appender = new VelocitySubJarAppender(this);
+        appender = new BruteLoader((URLClassLoader) Main.class.getClassLoader());
         source = this;
 
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
         try {
-            JarManager.changeField(CurrentPlatform.class, "current_appender", getAppender());
+            JarManager.changeField(CurrentPlatform.class, "current_appender", appender);
         } catch (Throwable ex) {
             ex.printStackTrace();
         }
@@ -105,7 +118,6 @@ public class Main implements KarmaBootstrap, KarmaSource {
         return instance;
     }
 
-    @Override
     public void enable() {
         new SourceSecondsTimer(this, 1, false).multiThreading(true).endAction(() -> {
             Main.instance = Main.this;
@@ -115,6 +127,11 @@ public class Main implements KarmaBootstrap, KarmaSource {
             Optional<PluginContainer> container = Main.server.getPluginManager().getPlugin("locklogin");
 
             if (container.isPresent()) {
+                Main.container = container.get();
+
+                async = new VelocitySyncScheduler();
+                sync = new VelocitySyncScheduler();
+
                 for (Dependency pluginDependency : Dependency.values()) {
                     PluginDependency dependency = pluginDependency.getAsDependency();
 
@@ -134,8 +151,6 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 }
                 JarManager.downloadAll();
 
-                Main.container = container.get();
-
                 STFetcher fetcher = new STFetcher();
                 fetcher.check();
 
@@ -149,7 +164,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
                 console.getData().setOkPrefix("&aOk &e>> &7");
                 console.getData().setInfoPrefix("&7Info &e>> &7");
                 console.getData().setWarnPrefix("&6Warning &e>> &7");
-                console.getData().setGravPrefix("&4Grave &e>> &7");
+                console.getData().setGravePrefix("&4Grave &e>> &7");
 
                 Consumer<MessageSender> onMessage = messageSender -> {
                     if (messageSender.getSender() instanceof ModulePlayer) {
@@ -243,9 +258,8 @@ public class Main implements KarmaBootstrap, KarmaSource {
                     JarManager.changeField(ModulePlayer.class, "onLogin", onLogin);
                     JarManager.changeField(ModulePlayer.class, "onClose", onClose);
                     JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
-                } catch (Throwable ignored) {}
-
-                Main.this.prepareManager();
+                } catch (Throwable ignored) {
+                }
 
                 LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");
 
@@ -280,7 +294,6 @@ public class Main implements KarmaBootstrap, KarmaSource {
         }).start();
     }
 
-    @Override
     public void disable() {
         Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UNLOAD, null);
         ModulePlugin.callEvent(event);
@@ -291,34 +304,6 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
         Manager.terminate();
         stopTasks();
-    }
-
-    @Override
-    public JarAppender getAppender() {
-        return appender;
-    }
-
-    @Override
-    public KarmaSource getSource() {
-        return this;
-    }
-
-    private void prepareManager() {
-        PluginDependency dependency = Dependency.MANAGER.getAsDependency();
-
-        if (FileInfo.showChecksums(lockloginFile)) {
-            System.out.println("Current checksum for " + dependency.getName());
-            System.out.println("Adler32: " + dependency.getAdlerCheck());
-            System.out.println("CRC32: " + dependency.getCRCCheck());
-            System.out.println("Fetched checksum for " + dependency.getName());
-            System.out.println("Adler32: " + ChecksumTables.getAdler(dependency));
-            System.out.println("CRC32: " + ChecksumTables.getCRC(dependency));
-        }
-
-        JarManager manager = new JarManager(dependency);
-        manager.process(true);
-
-        JarManager.downloadAll();
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -354,7 +339,7 @@ public class Main implements KarmaBootstrap, KarmaSource {
 
     @Override
     public String updateURL() {
-        String host = "https://locklogin.eu/version/";
+        String host = "https://karmarepo.000webhostapp.com/locklogin/version/";
         if (!URLUtils.exists(host)) {
             host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
         }
@@ -378,5 +363,15 @@ public class Main implements KarmaBootstrap, KarmaSource {
     @Override
     public Console console() {
         return console;
+    }
+
+    @Override
+    public Scheduler async() {
+        return async;
+    }
+
+    @Override
+    public Scheduler sync() {
+        return sync;
     }
 }

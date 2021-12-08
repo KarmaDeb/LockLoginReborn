@@ -27,7 +27,7 @@ import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.*;
 
@@ -39,7 +39,7 @@ public final class AliasCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public AliasCommand(final String name, final List<String> aliases) {

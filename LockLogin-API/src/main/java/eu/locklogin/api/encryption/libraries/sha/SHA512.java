@@ -14,6 +14,11 @@ package eu.locklogin.api.encryption.libraries.sha;
  * the version number 2.1.]
  */
 
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +27,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,28 +56,16 @@ public final class SHA512 {
     /**
      * Prefix for our hash, every user should change this
      */
-    private String ID = "$" + randomString(16).toUpperCase() + "$";
+    private final String ID = "$" + StringUtils.generateString(RandomString.createBuilder().withSize(16).withType(TextType.ALL_LOWER).withContent(TextContent.ONLY_LETTERS)).create() + "$";
 
     /**
      * Initialize codification class
      */
     public SHA512() {
         this.cost = DEFAULT_COST;
-        iterations(cost);
         byte[] seed = new byte[512];
         new SecureRandom().nextBytes(seed);
         this.random = new SecureRandom(seed);
-    }
-
-    private static String randomString(int Size) {
-        int leftLimit = 97;
-        int rightLimit = 122;
-        Random random = new Random();
-
-        return random.ints(leftLimit, rightLimit + 1)
-                .limit(Size)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
     }
 
     private static int iterations(int cost) {
@@ -146,8 +138,7 @@ public final class SHA512 {
         int iterations = iterations(Integer.parseInt(m.group(1)));
         byte[] hash = Base64.getUrlDecoder().decode(m.group(2));
         byte[] salt = Arrays.copyOfRange(hash, 0, SIZE / 4);
-        for (int i = 0; i < pepper.length; i++) {
-            char ppr = pepper[i];
+        for (char ppr : pepper) {
             String passw;
             passw = password + ppr;
             byte[] check = pbkdf2(passw.toCharArray(), salt, iterations);

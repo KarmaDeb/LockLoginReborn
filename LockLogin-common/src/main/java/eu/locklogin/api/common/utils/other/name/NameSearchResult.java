@@ -1,6 +1,6 @@
 package eu.locklogin.api.common.utils.other.name;
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,8 @@ public class NameSearchResult {
 
     /**
      * Get if the result contains multiple uuids
-     *z
+     * z
+     *
      * @return if the result contains multiple uuids
      */
     public final boolean singleResult() {

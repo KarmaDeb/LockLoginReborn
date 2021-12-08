@@ -120,6 +120,31 @@ Enabled2FA: "&d2FA enabled, your account is secure again"
   - "&78 - Type /2fa <code shown in app> or <scratch code>"
 2FaLink: "&bClick here to get your 2FA QR code"
 
+#Session messages - Brute force
+PanicLogin: "&5&oPlease, use /panic <token>"
+PanicTitle: "&cPANIC MODE"
+PanicSubtitle: "&cRUN &4/panic <token>"
+PanicMode: "&5&oThe account entered in panic mode, you have 1 token login try before being IP-blocked"
+PanicDisabled: "&5&oThe server is not protected against brute force attacks"
+PanicAlready: "&dYou already have a brute force token, your account is secure"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&dWe generated a panic token for you"
+  - "&dplease store that token in a safe"
+  - "&dplace and make sure no one knows about"
+  - "&dit"
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&dThe server is protected against"
+  - "&dbrute force using LockLogin token"
+  - "&dprotection. To start with that protection"
+  - "&dyou must run /account protect and store the"
+  - "&dgenerated token, and login with it when the"
+  - "&dserver asks you for it"
+TokenLink: "&bClick to reveal the token"
+
 #Session messages - Account management
 AccountArguments: "&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
 Change: "&5&oPlease, use /account change <password> <new password>"

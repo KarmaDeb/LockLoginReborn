@@ -39,7 +39,7 @@ public class PinCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public PinCommand(final String name, final List<String> aliases) {

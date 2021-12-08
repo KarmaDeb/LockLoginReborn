@@ -23,7 +23,7 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -118,7 +118,7 @@ public final class CryptoFactory {
     /**
      * Hash the password
      *
-     * @param type the password hashing type
+     * @param type    the password hashing type
      * @param encrypt encrypt the hash result to base 64
      * @return the hashed password
      */
@@ -298,7 +298,7 @@ public final class CryptoFactory {
                     return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
                 case NONE:
                 default:
-                    APISource.getConsole().send("&cError while getting current token hash type: " + current_type.name());
+                    APISource.loadProvider("LockLogin").console().send("&cError while getting current token hash type: " + current_type.name());
                     return false;
             }
         }
@@ -331,6 +331,21 @@ public final class CryptoFactory {
                 //our fail-true state
                 return true;
         }
+    }
+
+    /**
+     * Get if the string is base 64
+     *
+     * @param data the string
+     * @return if the string is a base64 string
+     */
+    private boolean isBase64(final String data) {
+        String regex =
+                "([A-Za-z0-9+/]{4})*" +
+                        "([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)";
+
+        Pattern patron = Pattern.compile(regex);
+        return patron.matcher(data).matches();
     }
 
     /**
@@ -388,20 +403,5 @@ public final class CryptoFactory {
         public CryptoFactory unsafe() {
             return new CryptoFactory(password, token);
         }
-    }
-
-    /**
-     * Get if the string is base 64
-     *
-     * @param data the string
-     * @return if the string is a base64 string
-     */
-    private boolean isBase64(final String data){
-        String regex =
-                "([A-Za-z0-9+/]{4})*"+
-                        "([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)";
-
-        Pattern patron = Pattern.compile(regex);
-        return patron.matcher(data).matches();
     }
 }

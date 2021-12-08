@@ -42,7 +42,7 @@ public final class ModuleConsole extends ModuleSender {
     /**
      * Send a message to the console
      *
-     * @param message the message
+     * @param message  the message
      * @param replaces the message replaces
      */
     public void sendMessage(final String message, final Object... replaces) {
@@ -50,11 +50,11 @@ public final class ModuleConsole extends ModuleSender {
             if (message.contains("\n")) {
                 String[] data = message.split("\n");
                 for (String str : data) {
-                    ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, str  + "&r", replaces);
+                    ModuleServerMessageEvent event = new ModuleServerMessageEvent(module, str + "&r", replaces);
                     ModulePlugin.callEvent(event);
 
                     if (!event.isHandled()) {
-                        APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+                        APISource.loadProvider("LockLogin").console().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
                     }
                 }
             } else {
@@ -62,7 +62,7 @@ public final class ModuleConsole extends ModuleSender {
                 ModulePlugin.callEvent(event);
 
                 if (!event.isHandled()) {
-                    APISource.getConsole().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
+                    APISource.loadProvider("LockLogin").console().send(getPrefixManager().getPrefix() + event.getMessage(), event.getReplaces());
                 }
             }
         }
@@ -71,8 +71,8 @@ public final class ModuleConsole extends ModuleSender {
     /**
      * Send a message to the console
      *
-     * @param level the message level
-     * @param message the message
+     * @param level    the message level
+     * @param message  the message
      * @param replaces the message replaces
      */
     public void sendMessage(final MessageLevel level, final String message, final Object... replaces) {
@@ -84,7 +84,7 @@ public final class ModuleConsole extends ModuleSender {
                     ModulePlugin.callEvent(event);
 
                     if (!event.isHandled()) {
-                        APISource.getConsole().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
+                        APISource.loadProvider("LockLogin").console().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
                     }
                 }
             } else {
@@ -92,7 +92,7 @@ public final class ModuleConsole extends ModuleSender {
                 ModulePlugin.callEvent(event);
 
                 if (!event.isHandled()) {
-                    APISource.getConsole().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
+                    APISource.loadProvider("LockLogin").console().send(getPrefixManager().forLevel(level) + event.getMessage(), event.getReplaces());
                 }
             }
         }

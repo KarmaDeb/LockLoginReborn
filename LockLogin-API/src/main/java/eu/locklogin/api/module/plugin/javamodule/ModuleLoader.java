@@ -16,13 +16,9 @@ package eu.locklogin.api.module.plugin.javamodule;
 
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.PluginModule;
-import eu.locklogin.api.module.plugin.api.event.plugin.ModuleStatusChangeEvent;
-import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.loader.JarAppender;
+import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,13 +26,12 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -45,10 +40,11 @@ import java.util.zip.ZipEntry;
  */
 public final class ModuleLoader {
 
+    //private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Set<PluginModule> loaded = new HashSet<>();
     private final static Map<Class<? extends PluginModule>, PluginModule> clazz_map = new ConcurrentHashMap<>();
 
-    private final static File modulesFolder = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin", "modules");
+    private final static File modulesFolder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin", "modules");
 
     /**
      * Check if the module is loaded
@@ -129,51 +125,6 @@ public final class ModuleLoader {
             }
         }
 
-        if (loadedModule == null) {
-            String extension = FileUtilities.getExtension(moduleFile);
-            String name = StringUtils.replaceLast(moduleFile.getName(), "." + extension, "");
-
-            try {
-                JarFile jar = new JarFile(moduleFile);
-                ZipEntry entry = jar.getEntry("module.yml");
-                if (entry != null) {
-                    InputStream module_yml = jar.getInputStream(entry);
-                    if (module_yml != null) {
-                        Yaml yaml = new Yaml();
-                        Map<String, Object> values = yaml.load(module_yml);
-
-                        String module_class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), "").toString();
-                        if (!StringUtils.isNullOrEmpty(module_class_name)) {
-                            JarAppender appender = CurrentPlatform.getPluginAppender();
-                            appender.addJarToClasspath(moduleFile);
-
-                            Class<? extends PluginModule> module_class;
-                            if (appender.getLoader() != null) {
-                                module_class = appender.getLoader().loadClass(module_class_name).asSubclass(PluginModule.class);
-                            } else {
-                                URLClassLoader loader = new URLClassLoader(
-                                        new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, CurrentPlatform.getMain().getClassLoader());
-
-                                module_class = loader.loadClass(module_class_name).asSubclass(PluginModule.class);
-                            }
-
-                            loadedModule = module_class.getDeclaredConstructor().newInstance();
-                        } else {
-                            APISource.getConsole().send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
-                        }
-
-                        module_yml.close();
-                    }
-
-                    jar.close();
-                } else {
-                    APISource.getConsole().send("&cModule {0} failed to load ( invalid or null module.yml )", name);
-                }
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
-        }
-
         return loadedModule;
     }
 
@@ -202,92 +153,44 @@ public final class ModuleLoader {
      * Load the specified module
      *
      * @param moduleFile the module file
-     * @param rule the rule the module must have
-     *             to be loaded
+     * @param rule       the rule the module must have
+     *                   to be loaded
      */
-    public final synchronized void loadModule(final File moduleFile, final LoadRule rule) {
-        if (moduleFile.isFile()) {
-            String extension = FileUtilities.getExtension(moduleFile);
+    public synchronized void loadModule(final File moduleFile, final LoadRule rule) {
+        try {
+            if (moduleFile.getName().endsWith(".jar")) {
+                JarFile jar = new JarFile(moduleFile);
+                JarEntry plugin = jar.getJarEntry("module.yml");
 
-            if (extension.equals("jar")) {
-                String name = StringUtils.replaceLast(moduleFile.getName(), "." + extension, "");
+                if (plugin != null) {
+                    Yaml yaml = new Yaml();
+                    Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
+                    String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
+                    String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
+                    LoadRule lr = LoadRule.PREPLUGIN;
+                    if (load_rule.equalsIgnoreCase("POSTPLUGIN"))
+                        lr = LoadRule.POSTPLUGIN;
 
-                PluginModule loadedModule = null;
-                for (PluginModule module : loaded) {
-                    if (module.getModule().equals(moduleFile)) {
-                        loadedModule = module;
-                        break;
-                    }
-                }
+                    if (lr.equals(rule)) {
+                        if (class_name != null) {
+                            BruteLoader appender = CurrentPlatform.getPluginAppender();
+                            appender.add(moduleFile);
 
-                if (loadedModule != null) {
-                    if (loadedModule.loadRule().equals(rule)) {
-                        APISource.getConsole().send("&cModule {0} failed to load ( already loaded )", name);
-                    }
-                } else {
-                    try {
-                        JarFile jar = new JarFile(moduleFile);
-                        ZipEntry entry = jar.getEntry("module.yml");
-                        if (entry != null) {
-                            InputStream module_yml = jar.getInputStream(entry);
-                            if (module_yml != null) {
-                                KarmaYamlManager manager = new KarmaYamlManager(module_yml);
+                            Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
 
-                                String module_class_name = manager.getString("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), "");
-                                if (!StringUtils.isNullOrEmpty(module_class_name)) {
-                                    JarAppender appender = CurrentPlatform.getPluginAppender();
-                                    appender.addJarToClasspath(moduleFile);
+                            PluginModule module = module_class.getDeclaredConstructor().newInstance();
+                            if (!isLoaded(module)) {
+                                module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 
-                                    Class<? extends PluginModule> module_class;
-                                    boolean pluginAppender = false;
-                                    if (appender.getLoader() != null) {
-                                        module_class = appender.getLoader().loadClass(module_class_name).asSubclass(PluginModule.class);
-                                    } else {
-                                        URLClassLoader loader = new URLClassLoader(
-                                                new URL[]{new URL("file:///" + moduleFile.getAbsolutePath().replaceAll("%20", " "))}, CurrentPlatform.getMain().getClassLoader());
-
-                                        module_class = loader.loadClass(module_class_name).asSubclass(PluginModule.class);
-                                        pluginAppender = true;
-                                    }
-
-                                    PluginModule module = module_class.getDeclaredConstructor().newInstance();
-                                    if (module.loadRule().equals(rule)) {
-                                        loaded.add(module);
-
-                                        if (pluginAppender) {
-                                            module.setAppender(CurrentPlatform.getPluginAppender());
-                                        } else {
-                                            module.setAppender(module.getAppender());
-                                        }
-
-                                        module.getAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
-
-                                        Event event = new ModuleStatusChangeEvent(ModuleStatusChangeEvent.Status.LOAD, module, this, null);
-                                        ModulePlugin.callEvent(event);
-
-                                        clazz_map.put(module_class, module);
-
-                                        module.enable();
-                                        module.getPlugin().getVersionManager().fetch();
-
-                                        CurrentPlatform.getPluginAppender().addJarToClasspath(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
-                                    }
-                                } else {
-                                    APISource.getConsole().send("&cModule {0} failed to load ( loader class not found for {1} )", name, CurrentPlatform.getPlatform().name().toLowerCase());
-                                }
-
-                                module_yml.close();
+                                loaded.add(module);
+                                module.enable();
                             }
-
-                            jar.close();
-                        } else {
-                            APISource.getConsole().send("&cModule {0} failed to load ( invalid or null module.yml )", name);
                         }
-                    } catch (Throwable ex) {
-                        ex.printStackTrace();
                     }
                 }
             }
+        } catch (Throwable ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -296,7 +199,7 @@ public final class ModuleLoader {
      *
      * @param moduleFile the module file
      */
-    public final void unloadModule(final File moduleFile) {
+    public void unloadModule(final File moduleFile) {
         PluginModule loadedModule = null;
         for (PluginModule module : loaded) {
             if (module.getModule().equals(moduleFile)) {
@@ -310,7 +213,6 @@ public final class ModuleLoader {
             loadedModule.getPlugin().unregisterCommands();
 
             loadedModule.disable();
-            loadedModule.getAppender().close();
             loaded.remove(loadedModule);
             clazz_map.remove(loadedModule.getClass());
         }
@@ -321,7 +223,7 @@ public final class ModuleLoader {
      *
      * @return the modules folder
      */
-    public final File getDataFolder() {
+    public File getDataFolder() {
         return modulesFolder;
     }
 }

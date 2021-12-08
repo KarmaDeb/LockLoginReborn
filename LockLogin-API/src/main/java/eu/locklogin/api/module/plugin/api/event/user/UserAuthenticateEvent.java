@@ -36,7 +36,7 @@ public final class UserAuthenticateEvent extends Event {
      *
      * @param _auth_type    the auth type
      * @param _auth_result  the auth result
-     * @param _modulePlayer       the player
+     * @param _modulePlayer the player
      * @param _auth_message the auth message
      * @param event         the event in where this event is fired
      */

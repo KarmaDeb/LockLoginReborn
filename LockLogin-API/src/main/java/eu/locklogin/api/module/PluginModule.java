@@ -23,20 +23,21 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karma.loader.JarAppender;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
+import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -51,15 +52,15 @@ import java.util.zip.ZipFile;
  * LockLogin plugin module
  */
 @SuppressWarnings("unused")
-public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
+public abstract class PluginModule implements KarmaSource {
 
-    private JarAppender appender;
+    private BruteLoader appender;
 
     /**
      * Initialize the plugin module
      *
      * @throws IllegalAccessError if the module
-     * is already initialized
+     *                            is already initialized
      */
     public PluginModule() throws IllegalAccessError {
         if (ModuleLoader.isLoaded(this)) {
@@ -85,25 +86,12 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
     /**
      * On module enable logic
      */
-    @Override
     public abstract void enable();
 
     /**
      * On module disable logic
      */
-    @Override
     public abstract void disable();
-
-    /**
-     * Set the module appender, very util for velocity
-     * module or if the developer has his own
-     * jar appender
-     *
-     * @param newAppender the new appender
-     */
-    public final void setAppender(final JarAppender newAppender) {
-        appender = newAppender;
-    }
 
     /**
      * Reload the module
@@ -117,7 +105,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      * Log something into the plugin's logger
      *
      * @param level the log level
-     * @param info the info to log
+     * @param info  the info to log
      */
     public final void log(final Level level, final Object info) {
         Logger logger = new Logger(getSource());
@@ -139,17 +127,31 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      *
      * @return the karma source
      */
-    @Override
     public final KarmaSource getSource() {
         return this;
     }
 
-    @Override
-    public final JarAppender getAppender() {
+    /**
+     * Get the module appender
+     *
+     * @return the module appender
+     */
+    public final BruteLoader getAppender() {
         if (appender == null)
-            return KarmaBootstrap.super.getAppender();
+            return new BruteLoader((URLClassLoader) getClass().getClassLoader());
         else
             return appender;
+    }
+
+    /**
+     * Set the module appender, very util for velocity
+     * module or if the developer has his own
+     * jar appender
+     *
+     * @param newAppender the new appender
+     */
+    public final void setAppender(final BruteLoader newAppender) {
+        appender = newAppender;
     }
 
     /**
@@ -168,7 +170,8 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     return true;
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         return false;
     }
@@ -188,7 +191,8 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
 
                 return true;
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         return false;
     }
@@ -201,7 +205,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     public final boolean export(final String resource, final Path destination) {
         try {
-            FileCopy copy = new FileCopy(this, resource);
+            FileCopy copy = new FileCopy(this.getClass(), resource);
             copy.copy(FileUtilities.getFixedFile(destination.toFile()));
 
             return true;
@@ -218,7 +222,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
      */
     public final boolean export(final String resource, final File destination) {
         try {
-            FileCopy copy = new FileCopy(this, resource);
+            FileCopy copy = new FileCopy(this.getClass(), resource);
             copy.copy(FileUtilities.getFixedFile(destination));
 
             return true;
@@ -242,7 +246,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -278,7 +282,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -315,7 +319,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -375,7 +379,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -415,7 +419,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -508,7 +512,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
                     .getLocation()
                     .getPath()).getName();
 
-            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
+            JarFile jar = new JarFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", flName));
             ZipEntry moduleEntry = jar.getEntry("module.yml");
 
             if (moduleEntry != null) {
@@ -523,7 +527,8 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
             }
 
             jar.close();
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         if (!url.endsWith(".txt")) {
             if (url.endsWith("/")) {
                 url = url + "latest.txt";
@@ -573,7 +578,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
         File parent = mainJar.getParentFile();
         File dataFolder;
         if (StringUtils.isNullOrEmpty(this.name())) {
-            dataFolder = new File(parent, StringUtils.randomString(5, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER));
+            dataFolder = new File(parent, StringUtils.generateString(RandomString.createBuilder().withSize(5)).create());
         } else {
             dataFolder = new File(parent, this.name());
         }
@@ -592,7 +597,7 @@ public abstract class PluginModule implements KarmaSource, KarmaBootstrap {
         File parent = mainJar.getParentFile();
         File dataFolder;
         if (StringUtils.isNullOrEmpty(this.name())) {
-            dataFolder = new File(parent, StringUtils.randomString(5, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_UPPER));
+            dataFolder = new File(parent, StringUtils.generateString(RandomString.createBuilder().withSize(5)).create());
         } else {
             dataFolder = new File(parent, this.name());
         }

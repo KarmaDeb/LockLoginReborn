@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.javamodule.console;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,9 +25,8 @@ import java.util.Map;
  */
 public final class ConsolePrefix {
 
-    private final PluginModule module;
-
     private final static Map<PluginModule, Map<MessageLevel, String>> prefixes = new HashMap<>();
+    private final PluginModule module;
 
     /**
      * Initialize the console prefix
@@ -41,10 +40,10 @@ public final class ConsolePrefix {
     /**
      * Set the module prefix
      *
-     * @param level the message level prefix
+     * @param level  the message level prefix
      * @param prefix the prefix
      * @throws IllegalArgumentException if the module tries
-     * to modify the default prefix or the prefix length is over 16 or is empty
+     *                                  to modify the default prefix or the prefix length is over 16 or is empty
      */
     public void setPrefix(final MessageLevel level, final String prefix) throws IllegalArgumentException {
         if (StringUtils.isNullOrEmpty(StringUtils.stripColor(prefix)) || StringUtils.stripColor(prefix).length() > 16) {

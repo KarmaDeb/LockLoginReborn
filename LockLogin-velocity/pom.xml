@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.6</version>
+        <version>1.13.9</version>
     </parent>
 
     <artifactId>LockLogin-velocity</artifactId>
@@ -84,26 +84,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.4</version>
-                <configuration>
-                    <relocations>
-                        <relocation>
-                            <pattern>eu.locklogin.api.common.security.TokenGen</pattern>
-                            <shadedPattern>eu.locklogin.plugin.velocity.util.security.TokenGen</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
-                            <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>eu.locklogin.api.common.utils.filter</pattern>
-                            <shadedPattern>eu.locklogin.plugin.velocity.util.filter</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>eu.locklogin.api.common.web.STFetcher</pattern>
-                            <shadedPattern>eu.locklogin.plugin.velocity.util.STFetcher</shadedPattern>
-                        </relocation>
-                    </relocations>
-                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -194,6 +174,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>ml.karmaconfigs</groupId>
+            <artifactId>KarmaAPI-Velocity</artifactId>
+            <version>${project.karmaapi}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
             <version>1.1.0</version>
@@ -226,7 +212,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>20.1.0</version>
+            <version>22.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -244,7 +230,7 @@
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
-            <version>3.27.0-GA</version>
+            <version>3.28.0-GA</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -34,8 +34,8 @@ public final class AccountRemovedEvent extends Event {
      * Initialize the account creation event
      *
      * @param _removedAccount the account that got removed
-     * @param _issuer the account removal issuer
-     * @param _event  the event owner
+     * @param _issuer         the account removal issuer
+     * @param _event          the event owner
      */
     public AccountRemovedEvent(final AccountManager _removedAccount, final String _issuer, final Object _event) {
         removedAccount = _removedAccount;

@@ -26,12 +26,17 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
 import eu.locklogin.plugin.bungee.plugin.Manager;
+import eu.locklogin.plugin.bungee.plugin.injector.BungeeInjector;
+import eu.locklogin.plugin.bungee.plugin.injector.Injector;
+import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -45,10 +50,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.version;
 import static eu.locklogin.plugin.bungee.permissibles.PluginPermission.*;
 
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand extends Command {
+
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
 
     /**
      * Construct a new command with no permissions or aliases.
@@ -74,7 +82,7 @@ public final class LockLoginCommand extends Command {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", "locklogin"))));
 
-        APISource.asyncScheduler().queue(() -> {
+        lockLogin.async().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof ProxiedPlayer) {
                 ProxiedPlayer player = (ProxiedPlayer) sender;
@@ -86,6 +94,16 @@ public final class LockLoginCommand extends Command {
                             case "reload":
                                 if (user.hasPermission(reload())) {
                                     FileReloader.reload(player);
+
+                                    Injector injector;
+                                    try {
+                                        Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
+                                        injector = new WaterfallInjector();
+                                    } catch (Throwable ex) {
+                                        injector = new BungeeInjector();
+                                    }
+
+                                    injector.inject();
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(reload()));
                                 }
@@ -149,8 +167,8 @@ public final class LockLoginCommand extends Command {
 
                                     updater.get().whenComplete((result, error) -> {
                                         if (error == null) {
-                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                            user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionType.CURRENT));
+                                            user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionType.LATEST));
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                         }
@@ -260,6 +278,17 @@ public final class LockLoginCommand extends Command {
                         switch (args[0].toLowerCase()) {
                             case "reload":
                                 FileReloader.reload(null);
+
+                                Injector injector;
+                                try {
+                                    Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
+                                    injector = new WaterfallInjector();
+                                } catch (Throwable ex) {
+                                    injector = new BungeeInjector();
+                                }
+
+                                injector.inject();
+
                                 break;
                             case "applyupdates":
                                 Event event = new UpdateRequestEvent(sender, true, null);
@@ -311,8 +340,8 @@ public final class LockLoginCommand extends Command {
 
                                 updater.get().whenComplete((result, error) -> {
                                     if (error == null) {
-                                        console.send(messages.prefix() + "&7Current version:&e {0}", result.resolve(VersionUpdater.VersionFetchResult.VersionType.CURRENT));
-                                        console.send(messages.prefix() + "&7Latest version:&e {0}", result.resolve(VersionUpdater.VersionFetchResult.VersionType.LATEST));
+                                        console.send(messages.prefix() + "&7Current version:&e {0}", result.resolve(VersionType.CURRENT));
+                                        console.send(messages.prefix() + "&7Latest version:&e {0}", result.resolve(VersionType.LATEST));
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                     }

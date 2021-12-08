@@ -22,8 +22,9 @@ import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import ml.karmaconfigs.api.common.version.LegacyVersionUpdater;
-import ml.karmaconfigs.api.common.version.VersionCheckType;
+import ml.karmaconfigs.api.common.version.VersionFetchResult;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
+import ml.karmaconfigs.api.common.version.util.VersionCheckType;
 
 import java.util.Collections;
 import java.util.Set;
@@ -36,10 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class JavaModuleVersion {
 
+    private final static Set<PluginModule> recently_cached = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final PluginModule module;
     private final VersionUpdater updater;
-
-    private final static Set<PluginModule> recently_cached = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * Initialize the java module version
@@ -61,11 +61,11 @@ public final class JavaModuleVersion {
      *
      * @return the latest module version info
      */
-    public LateScheduler<VersionUpdater.VersionFetchResult> fetch() {
-        LateScheduler<VersionUpdater.VersionFetchResult> result = new AsyncLateScheduler<>();
+    public LateScheduler<VersionFetchResult> fetch() {
+        LateScheduler<VersionFetchResult> result = new AsyncLateScheduler<>();
 
         OfflineResult backup = new OfflineResult(module);
-        APISource.asyncScheduler().queue(() -> {
+        APISource.loadProvider("LockLogin").async().queue(() -> {
             if (updater != null) {
                 if (recently_cached.contains(module)) {
                     updater.get().whenComplete((getResult, error) -> {
@@ -100,7 +100,7 @@ public final class JavaModuleVersion {
     /**
      * Offline fetch result for modules that doesn't have a working updater
      */
-    private static class OfflineResult extends VersionUpdater.VersionFetchResult {
+    private static class OfflineResult extends VersionFetchResult {
 
         /**
          * Initialize the offline fetch result

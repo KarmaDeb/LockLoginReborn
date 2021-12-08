@@ -43,9 +43,13 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
-import eu.locklogin.api.module.plugin.api.event.user.*;
+import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
+import eu.locklogin.api.module.plugin.api.event.user.VelocityGameProfileEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -58,8 +62,8 @@ import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
 
 import java.net.InetAddress;
@@ -98,6 +102,16 @@ public final class JoinListener {
         PlayerPool.whenValid((player) -> {
             InetSocketAddress ip = player.getRemoteAddress();
             User user = new User(player);
+
+            ModulePlayer sender = new ModulePlayer(
+                    player.getGameProfile().getName(),
+                    player.getUniqueId(),
+                    user.getSession(),
+                    user.getManager(),
+                    (player.getRemoteAddress() == null ? null : player.getRemoteAddress().getAddress())
+            );
+            //If velocity player objects changes module player also changes
+            CurrentPlatform.connectPlayer(sender, player);
 
             PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
             ProxyCheck proxyCheck = new ProxyCheck(ip);
@@ -355,7 +369,7 @@ public final class JoinListener {
                     e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(
                             StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
                                     ipEvent.getResult().getReason()))).build())
-                           );
+                    );
 
                     break;
             }

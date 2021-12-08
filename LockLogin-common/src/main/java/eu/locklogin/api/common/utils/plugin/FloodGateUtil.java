@@ -18,7 +18,7 @@ public final class FloodGateUtil {
 
     /**
      * Get if the player is a flood gate client
-     *
+     * <p>
      * This method uses reflection.
      * In case there's no FloodGate plugin/server I want to make
      * sure to catch {@link ClassNotFoundException} error by using reflection

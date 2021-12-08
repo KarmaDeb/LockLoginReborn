@@ -13,6 +13,7 @@ package eu.locklogin.api.common;
 
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -33,9 +34,9 @@ import java.util.Set;
  */
 public final class JarManager {
 
-    private final PluginDependency pluginDependency;
-
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Set<PluginDependency> downloadTable = new HashSet<>();
+    private final PluginDependency pluginDependency;
 
     /**
      * Initialize the injector
@@ -49,9 +50,9 @@ public final class JarManager {
     /**
      * Change the filed value of the specified class
      *
-     * @param clazz the class
+     * @param clazz     the class
      * @param fieldName the field name
-     * @param value the field value
+     * @param value     the field value
      * @throws Throwable to catch any possible error
      */
     public synchronized static void changeField(final Class<?> clazz, final String fieldName, final Object value) throws Throwable {
@@ -63,30 +64,16 @@ public final class JarManager {
     }
 
     /**
-     * Process the dependency status
-     *
-     * @param clearOld clear old download table
-     */
-    public final void process(final boolean clearOld) {
-        if (clearOld)
-            downloadTable.clear();
-
-        if (pluginDependency.isValid()) {
-            downloadTable.remove(pluginDependency);
-        } else {
-            APISource.getConsole().send("&cDependency " + pluginDependency.getName() + " is invalid or is not downloaded and will be downloaded");
-            downloadTable.add(pluginDependency);
-        }
-    }
-
-    /**
      * Try to download the dependencies from the download table
      */
     public static void downloadAll() {
+        KarmaSource lockLogin = APISource.loadProvider("LockLogin");
+
         Set<PluginDependency> success = new HashSet<>();
         Set<PluginDependency> error = new HashSet<>();
+
         for (PluginDependency download : downloadTable) {
-            APISource.getConsole().send("&aTrying to download dependency " + download.getName());
+            lockLogin.console().send("&aTrying to download dependency " + download.getName());
 
             String url = download.getDownloadURL();
             File jarFile = download.getLocation();
@@ -138,10 +125,27 @@ public final class JarManager {
         }
 
         for (PluginDependency valid : success)
-            APISource.getConsole().send("&aDownloaded plugin dependency " + valid.getName());
+            lockLogin.console().send("&aDownloaded plugin dependency " + valid.getName());
 
         for (PluginDependency failed : error)
-            APISource.getConsole().send("&cFailed to download plugin dependency " + failed.getName());
+            lockLogin.console().send("&cFailed to download plugin dependency " + failed.getName());
+    }
+
+    /**
+     * Process the dependency status
+     *
+     * @param clearOld clear old download table
+     */
+    public void process(final boolean clearOld) {
+        if (clearOld)
+            downloadTable.clear();
+
+        if (pluginDependency.isValid()) {
+            downloadTable.remove(pluginDependency);
+        } else {
+            lockLogin.console().send("&cDependency " + pluginDependency.getName() + " is invalid or is not downloaded and will be downloaded");
+            downloadTable.add(pluginDependency);
+        }
     }
 
     /**

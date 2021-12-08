@@ -3,3 +3,5 @@ version: ${project.version}
 main: eu.locklogin.plugin.bungee.Main
 author: ${project.author}
 description: ${project.description}
+depends:
+  - AnotherBarelyCodedKarmaPlugin

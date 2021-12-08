@@ -22,7 +22,6 @@ import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
@@ -34,6 +33,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
@@ -43,13 +43,13 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
-import ml.karmaconfigs.api.bukkit.reflections.BarMessage;
+import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -152,6 +152,8 @@ public final class JoinListener implements Listener {
                                 if (!gen_uuid.equals(tar_uuid)) {
                                     FloodGateUtil util = new FloodGateUtil(tar_uuid);
                                     if (!util.isFloodClient()) {
+                                        logger.scheduleLog(Level.GRAVE, "Denied connection from {0} because its UUID ( {1} ) doesn't match with generated one ( {2} )", conn_name, tar_uuid, gen_uuid);
+
                                         e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
                                         return;
                                     }
@@ -263,6 +265,16 @@ public final class JoinListener implements Listener {
             LateScheduler<Event> result = new AsyncLateScheduler<>();
             tryAsync(() -> {
                 User user = new User(player);
+                ModulePlayer sender = new ModulePlayer(
+                        player.getName(),
+                        player.getUniqueId(),
+                        user.getSession(),
+                        user.getManager(),
+                        (player.getAddress() == null ? null : player.getAddress().getAddress())
+                );
+                //If bukkit player objects changes module player also changes
+                CurrentPlatform.connectPlayer(sender, player);
+
                 if (!user.isLockLoginUser())
                     user.applyLockLoginUser();
 
@@ -276,10 +288,6 @@ public final class JoinListener implements Listener {
                     //Automatically mark players as captcha verified if captcha is disabled
                     if (!config.captchaOptions().isEnabled())
                         session.setCaptchaLogged(true);
-
-                    //Check if the player has a session keeper active, if yes, restore his
-                    //login status
-                    forceSessionLogin(player);
 
                     OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
@@ -352,7 +360,6 @@ public final class JoinListener implements Listener {
                                 bar.setMessage("");
                                 bar.stop();
                             });
-
                             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
 
                             if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
@@ -440,34 +447,5 @@ public final class JoinListener implements Listener {
         } catch (Throwable ex) {
             return PluginIpValidationEvent.ValidationResult.ERROR.withReason("Failed to check IP: " + ex.fillInStackTrace());
         }
-    }
-
-    /**
-     * Get if the player has a session and
-     * validate it
-     *
-     * @param player the player
-     */
-    private void forceSessionLogin(final Player player) {
-        User user = new User(player);
-
-        tryAsync(() -> {
-            SessionKeeper keeper = new SessionKeeper(user.getModule());
-            if (keeper.hasSession()) {
-                ClientSession session = user.getSession();
-
-                session.setCaptchaLogged(true);
-                session.setLogged(true);
-                session.setPinLogged(true);
-                session.set2FALogged(true);
-
-                keeper.destroy();
-
-                if (config.hideNonLogged()) {
-                    ClientVisor visor = new ClientVisor(player);
-                    visor.show();
-                }
-            }
-        });
     }
 }

@@ -43,7 +43,7 @@ public abstract class PluginDependency {
 
     /**
      * Initialize the dependency object
-     *
+     * <p>
      * Why private?
      * - It's easier to use {@link PluginDependency#of(String, String, boolean, String...)} to create a new instance
      * - It's a non-sense to have a public constructor of an abstract class which is not expected to be extended
@@ -64,6 +64,61 @@ public abstract class PluginDependency {
 
             location = new File(pluginsFolder + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "libraries" + locBuilder, name + ".jar");
         }
+    }
+
+    /**
+     * Get a temp plugin dependency from the provided info
+     *
+     * @param name         the dependency name
+     * @param downloadURL  the download url
+     * @param openChecksum if the dependency wants to enable
+     *                     checksum
+     * @param sub          the dependency custom sub directory
+     * @return the temporal plugin dependency
+     */
+    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final String... sub) {
+        PluginDependency temp = new PluginDependency(name, downloadURL, sub) {
+            @Override
+            public String toString() {
+                return "PluginDependency@" + this.hashCode() + "{" +
+                        "name:" + name +
+                        "url:" + downloadURL +
+                        "openChecksum:" + openChecksum + "}";
+            }
+        };
+        temp.openChecksum = openChecksum;
+
+        return temp;
+    }
+
+    /**
+     * Get a temp plugin dependency from the provided info
+     *
+     * @param name         the dependency name
+     * @param downloadURL  the download url
+     * @param openChecksum if checksum is enabled
+     * @param module       if the dependency is a module
+     * @return the temporal plugin dependency
+     */
+    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final boolean module) {
+        PluginDependency temp = new PluginDependency(name, downloadURL) {
+            @Override
+            public String toString() {
+                return "PluginDependency@" + this.hashCode() + "{" +
+                        "name:" + name +
+                        "url:" + downloadURL +
+                        "openChecksum:" + openChecksum + "}";
+            }
+        };
+
+        if (module) {
+            temp.location = new File(pluginsFolder + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", name + ".jar");
+            temp.module = true;
+        }
+
+        temp.openChecksum = openChecksum;
+
+        return temp;
     }
 
     /**
@@ -177,60 +232,5 @@ public abstract class PluginDependency {
         } catch (Throwable ex) {
             return 0L;
         }
-    }
-
-    /**
-     * Get a temp plugin dependency from the provided info
-     *
-     * @param name the dependency name
-     * @param downloadURL the download url
-     * @param openChecksum if the dependency wants to enable
-     *                     checksum
-     * @param sub the dependency custom sub directory
-     * @return the temporal plugin dependency
-     */
-    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final String... sub) {
-        PluginDependency temp = new PluginDependency(name, downloadURL, sub) {
-            @Override
-            public String toString() {
-                return "PluginDependency@" + this.hashCode() + "{" +
-                        "name:" + name +
-                        "url:" + downloadURL +
-                        "openChecksum:" + openChecksum + "}";
-            }
-        };
-        temp.openChecksum = openChecksum;
-
-        return temp;
-    }
-
-    /**
-     * Get a temp plugin dependency from the provided info
-     *
-     * @param name the dependency name
-     * @param downloadURL the download url
-     * @param openChecksum if checksum is enabled
-     * @param module if the dependency is a module
-     * @return the temporal plugin dependency
-     */
-    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final boolean module) {
-        PluginDependency temp = new PluginDependency(name, downloadURL) {
-            @Override
-            public String toString() {
-                return "PluginDependency@" + this.hashCode() + "{" +
-                        "name:" + name +
-                        "url:" + downloadURL +
-                        "openChecksum:" + openChecksum + "}";
-            }
-        };
-
-        if (module) {
-            temp.location = new File(pluginsFolder + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", name + ".jar");
-            temp.module = true;
-        }
-
-        temp.openChecksum = openChecksum;
-
-        return temp;
     }
 }

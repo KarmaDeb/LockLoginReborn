@@ -36,8 +36,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.time.Instant;
 import java.util.Base64;

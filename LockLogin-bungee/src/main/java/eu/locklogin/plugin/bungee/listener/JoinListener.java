@@ -37,6 +37,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -49,8 +50,8 @@ import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -96,6 +97,16 @@ public final class JoinListener implements Listener {
         PlayerPool.whenValid((player) -> {
             InetSocketAddress ip = getSocketIp(player.getSocketAddress());
             User user = new User(player);
+
+            ModulePlayer sender = new ModulePlayer(
+                    player.getName(),
+                    player.getUniqueId(),
+                    user.getSession(),
+                    user.getManager(),
+                    (player.getAddress() == null ? null : player.getAddress().getAddress())
+            );
+            //If bungee player objects changes module player also changes
+            CurrentPlatform.connectPlayer(sender, player);
 
             PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
             ProxyCheck proxyCheck = new ProxyCheck(ip);

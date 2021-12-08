@@ -47,23 +47,22 @@ public final class SessionKeeper {
     /**
      * Store the client session
      */
-    public final void store() {
-        AccountManager manager = player.getAccount();
-        ClientSession session = player.getSession();
+    public void store() {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
+        if (config.enableSessions()) {
+            AccountManager manager = player.getAccount();
+            ClientSession session = player.getSession();
 
-        if (session.isValid() && session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
+            PersistentSessionData persistent = new PersistentSessionData(manager.getUUID());
             if (persistent.isPersistent()) {
-                PluginConfiguration config = CurrentPlatform.getConfiguration();
-
-                if (config.enableSessions()) {
+                if (session.isValid() && session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
                     sessions.put(player.getUUID(), player.getAddress());
 
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
-                        int back = (int) TimeUnit.MINUTES.toSeconds(config.sessionTime());
                         final UUID id = player.getUUID();
+                        int back = (int) TimeUnit.MINUTES.toSeconds(config.sessionTime());
 
                         @Override
                         public void run() {
@@ -85,7 +84,7 @@ public final class SessionKeeper {
      *
      * @return if the player has old session
      */
-    public final boolean hasSession() {
+    public boolean hasSession() {
         return sessions.containsKey(player.getUUID());
     }
 
@@ -95,7 +94,7 @@ public final class SessionKeeper {
      * @param address the session address
      * @return if the player is owner of the session
      */
-    public final boolean isOwner(final @NotNull InetAddress address) {
+    public boolean isOwner(final @NotNull InetAddress address) {
         InetAddress ip = sessions.getOrDefault(player.getUUID(), null);
         return ip != null && Arrays.equals(ip.getAddress(), address.getAddress());
     }
@@ -103,7 +102,7 @@ public final class SessionKeeper {
     /**
      * Destroy the session keeper for the player
      */
-    public final void destroy() {
+    public void destroy() {
         sessions.remove(player.getUUID());
     }
 }

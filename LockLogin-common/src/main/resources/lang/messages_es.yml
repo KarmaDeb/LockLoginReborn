@@ -121,6 +121,30 @@ Enabled2FA: "&d2FA activado, tu cuenta es segura de nuevo"
   - "&78 - Escribe /2fa <código mostrado en la app> o <código de recuperación>"
 2FaLink: "&bHaz click aquí para obtener tu código QR"
 
+#Session messages - Brute force
+PanicLogin: "&5&oPorfavor, usa /panic <token>"
+PanicTitle: "&cMODO PÁNICO"
+PanicSubtitle: "&cEJECUTA &4/panic <token>"
+PanicMode: "&5&oLa cuenta ha entrado en pánico, tienes 1 intento de acceder por token antes de ser bloqueado"
+PanicDisabled: "&5&oEl servidor no está protegido contra ataques de fuerza bruta"
+PanicAlready: "&dYa as generado un token del pánico, tu cuenta está segura"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&dHemos generado un token del pánico para tí"
+  - "&dporfavor, guarda este token en un lugar seguro"
+  - "&dy asegúrate que nadie lo ve"
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&dEl servidor está protegido contra ataques"
+  - "&dde fuerza bruta usando el sistema de protección"
+  - "&dpor tokens de LockLogin. Para empezar debes ejecutar"
+  - "&del comando /account protect y guardar el token que"
+  - "&dse genere. Sabrás cuando iniciar sesión con este"
+  - "&dtoken ya que el mismo plugin te dirá cuando ponerlo"
+TokenLink: "&bHaz click aquí para revelar tu clave token"
+
 #Session messages - Account management
 AccountArguments: "&5&oArgumentos de cuenta válidos: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
 Change: "&5&oPor favor, usa /{arg} <contraseña> <nueva contraseña>"

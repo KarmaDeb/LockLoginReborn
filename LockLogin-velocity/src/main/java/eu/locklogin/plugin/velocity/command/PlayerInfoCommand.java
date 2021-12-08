@@ -24,7 +24,6 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
-import eu.locklogin.api.common.utils.other.name.NameSearchResult;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -37,7 +36,7 @@ import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
 
 import java.time.Instant;
@@ -51,7 +50,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
     /**
      * Initialize the bungee like command
      *
-     * @param name the command name
+     * @param name    the command name
      * @param aliases the command aliases
      */
     public PlayerInfoCommand(final String name, final List<String> aliases) {

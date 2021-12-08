@@ -11,7 +11,7 @@ import ml.karmaconfigs.api.common.boss.BossProvider;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,15 +20,13 @@ import java.util.UUID;
 
 public final class SessionCheck<T> implements Runnable {
 
+    private final static Set<UUID> under_check = new HashSet<>();
+    private final static Set<UUID> cancel_queue = new HashSet<>();
     private final ModulePlayer player;
     private final KarmaSource source;
     private final BossProvider<T> boss;
-
     private String BAR_COLOR = "&a";
     private Runnable onEnd;
-
-    private final static Set<UUID> under_check = new HashSet<>();
-    private final static Set<UUID> cancel_queue = new HashSet<>();
 
     public SessionCheck(final KarmaSource owner, final ModulePlayer client, final BossProvider<T> provider) {
         player = client;
@@ -60,37 +58,45 @@ public final class SessionCheck<T> implements Runnable {
 
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             PluginMessages messages = CurrentPlatform.getMessages();
-
-            int tmp_time = config.registerOptions().timeOut();
-            if (player.getAccount().isRegistered()) {
-                tmp_time = config.loginOptions().timeOut();
-                player.sendMessage(messages.prefix() + messages.login());
-
-                if (config.loginOptions().hasBossBar())
-                    boss.displayTime(tmp_time);
-            } else {
-                player.sendMessage(messages.prefix() + messages.register());
-
-                if (config.registerOptions().hasBossBar())
-                    boss.displayTime(tmp_time);
-            }
-
-            if (boss != null) {
-                boss.scheduleBar(Collections.singletonList(player.getPlayer()));
-            }
-
-            int time = tmp_time;
-            AccountManager manager = player.getAccount();
             SessionKeeper keeper = new SessionKeeper(player);
-            SimpleScheduler timer = new SourceSecondsTimer(source, time, false).multiThreading(false);
-            timer.secondChangeAction((timer_time) -> {
-                if (!cancel_queue.contains(player.getUUID())) {
-                    ClientSession session = player.getSession();
-                    if (!session.isLogged()) {
 
-                        if (keeper.hasSession() && keeper.isOwner(player.getAddress())) {
-                            player.requestLogin();
-                        } else {
+            if (keeper.hasSession() && keeper.isOwner(player.getAddress()) && config.enableSessions()) {
+                player.requestLogin();
+
+                if (onEnd != null)
+                    onEnd.run();
+
+                if (boss != null)
+                    boss.cancel();
+
+                under_check.remove(player.getUUID());
+                keeper.destroy();
+            } else {
+                int tmp_time = config.registerOptions().timeOut();
+                if (player.getAccount().isRegistered()) {
+                    tmp_time = config.loginOptions().timeOut();
+                    player.sendMessage(messages.prefix() + messages.login());
+
+                    if (config.loginOptions().hasBossBar())
+                        boss.displayTime(tmp_time);
+                } else {
+                    player.sendMessage(messages.prefix() + messages.register());
+
+                    if (config.registerOptions().hasBossBar())
+                        boss.displayTime(tmp_time);
+                }
+
+                if (boss != null) {
+                    boss.scheduleBar(Collections.singletonList(player.getPlayer()));
+                }
+
+                int time = tmp_time;
+                AccountManager manager = player.getAccount();
+                SimpleScheduler timer = new SourceSecondsTimer(source, time, false).multiThreading(false);
+                timer.secondChangeAction((timer_time) -> {
+                    if (!cancel_queue.contains(player.getUUID())) {
+                        ClientSession session = player.getSession();
+                        if (!session.isLogged()) {
                             if (boss != null) {
                                 if (timer_time == ((int) Math.round(((double) time / 2)))) {
                                     boss.color(BossColor.YELLOW);
@@ -116,48 +122,48 @@ public final class SessionCheck<T> implements Runnable {
                                 if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
                                     player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                             }
+                        } else {
+                            timer.cancel();
+                            keeper.destroy();
                         }
                     } else {
                         timer.cancel();
+                        cancel_queue.remove(player.getUUID());
                         keeper.destroy();
                     }
-                } else {
-                    timer.cancel();
-                    cancel_queue.remove(player.getUUID());
+                }).endAction(() -> {
+                    if (onEnd != null)
+                        onEnd.run();
+
+                    if (boss != null)
+                        boss.cancel();
+
+                    ClientSession session = player.getSession();
+
+                    if (!session.isLogged())
+                        player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+
+                    under_check.remove(player.getUUID());
                     keeper.destroy();
-                }
-            }).endAction(() -> {
-                if (onEnd != null)
-                    onEnd.run();
+                }).cancelAction((cancelTime) -> {
+                    if (onEnd != null)
+                        onEnd.run();
 
-                if (boss != null)
-                    boss.cancel();
+                    if (boss != null)
+                        boss.cancel();
 
-                ClientSession session = player.getSession();
+                    ClientSession session = player.getSession();
 
-                if (!session.isLogged())
-                    player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+                    if (!session.isLogged())
+                        player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
 
-                under_check.remove(player.getUUID());
-                keeper.destroy();
-            }).cancelAction((cancelTime) -> {
-                if (onEnd != null)
-                    onEnd.run();
+                    under_check.remove(player.getUUID());
+                    keeper.destroy();
+                });
 
-                if (boss != null)
-                    boss.cancel();
-
-                ClientSession session = player.getSession();
-
-                if (!session.isLogged())
-                    player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
-
-                under_check.remove(player.getUUID());
-                keeper.destroy();
-            });
-
-            timer.start();
-            startMessageTask();
+                timer.start();
+                startMessageTask();
+            }
         }
     }
 
@@ -165,7 +171,7 @@ public final class SessionCheck<T> implements Runnable {
      * Initialize the session message
      * task
      */
-    private void startMessageTask () {
+    private void startMessageTask() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
         AccountManager manager = player.getAccount();

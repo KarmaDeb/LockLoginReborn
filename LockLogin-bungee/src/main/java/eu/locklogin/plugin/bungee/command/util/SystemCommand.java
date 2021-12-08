@@ -26,6 +26,7 @@ import java.util.List;
 public @interface SystemCommand {
 
     String command() default "";
+
     String[] aliases() default {""};
 
     /**

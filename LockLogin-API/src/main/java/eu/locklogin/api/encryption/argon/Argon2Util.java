@@ -19,6 +19,7 @@ import eu.locklogin.api.encryption.libraries.argon.Argon2;
 import eu.locklogin.api.encryption.libraries.argon.model.Argon2Type;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 
 /**
  * LockLogin Argon2 utilities
@@ -43,13 +44,17 @@ public final class Argon2Util {
      * @return the hashed password if it's not argon
      */
     public String hashPassword(final HashType type) {
+        byte[] salt = new byte[32];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(salt);
+
         switch (type) {
             case ARGON2I:
                 Argon2 argon2i = Argon2.create().type(Argon2Type.Argon2i);
-                return argon2i.memory(1024).parallelism(22).iterations(2).password(password.getBytes(StandardCharsets.UTF_8)).hash().getEncoded();
+                return argon2i.memoryKB(1024).parallelism(22).iterations(2).salt(salt).password(password.getBytes(StandardCharsets.UTF_8)).hash().getEncoded();
             case ARGON2ID:
                 Argon2 argon2id = Argon2.create().type(Argon2Type.Argon2id);
-                return argon2id.memory(1024).parallelism(22).iterations(2).password(password.getBytes(StandardCharsets.UTF_8)).hash().getEncoded();
+                return argon2id.memoryKB(1024).parallelism(22).iterations(2).salt(salt).password(password.getBytes(StandardCharsets.UTF_8)).hash().getEncoded();
             default:
                 return password;
         }

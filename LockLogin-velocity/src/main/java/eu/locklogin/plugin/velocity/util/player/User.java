@@ -34,10 +34,12 @@ import eu.locklogin.plugin.velocity.permissibles.Permission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import ml.karmaconfigs.api.common.boss.BossColor;
+import ml.karmaconfigs.api.common.boss.BossProvider;
 import ml.karmaconfigs.api.common.boss.ProgressiveBar;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.velocity.makeiteasy.BossMessage;
 import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import net.kyori.adventure.text.Component;
@@ -58,11 +60,11 @@ import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.*;
  */
 public final class User {
 
-    @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
-    private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
-
+    @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
+    private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
     private final Player player;
 
     /**
@@ -85,7 +87,7 @@ public final class User {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
                     AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                    APISource.asyncScheduler().queue(() -> {
+                    lockLogin.async().queue(() -> {
                         database.assign(StringUtils.stripColor(player.getUsername()));
                         database.assign(StringUtils.stripColor(player.getGameProfile().getName()));
                     });
@@ -363,7 +365,28 @@ public final class User {
                 CurrentPlatform.connectPlayer(sender, player);
             }
 
-            checker = new SessionCheck<>(source, sender, new BossMessage(source, "&7Preparing session checker", 30).color(BossColor.GREEN).progress(ProgressiveBar.DOWN));
+            /*
+            So... there was a bug in where sometimes the boss bar would be visible
+            even while disabled, that's because I was literally creating the boss
+            bar ignoring that option, and then hiding it if disabled.
+
+            The best solution is to just not create it if specified
+             */
+            BossProvider<Player> message = null;
+            int time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
+            if (getManager().isRegistered()) {
+                time = CurrentPlatform.getConfiguration().registerOptions().timeOut();
+
+                if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
+                    message = new BossMessage(source, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                }
+            } else {
+                if (CurrentPlatform.getConfiguration().loginOptions().hasBossBar()) {
+                    message = new BossMessage(source, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                }
+            }
+
+            checker = new SessionCheck<>(source, sender, message);
             sessionChecks.put(player.getUniqueId(), checker);
         }
 

@@ -2,7 +2,7 @@ package eu.locklogin.api.common.utils.other;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -14,10 +14,10 @@ import java.util.Set;
  */
 public class GlobalAccount extends AccountManager {
 
+    private final Instant creation;
     private String name, password, pin, gauth;
     private AccountID uuid;
     private boolean enableFA;
-    private final Instant creation;
 
     /**
      * Initialize the LockLogin global account
@@ -143,16 +143,6 @@ public class GlobalAccount extends AccountManager {
     }
 
     /**
-     * Get if the account is registered
-     *
-     * @return if the account is registered
-     */
-    @Override
-    public boolean isRegistered() {
-        return !StringUtils.isNullOrEmpty(password);
-    }
-
-    /**
      * Save the account password
      *
      * @param password the account password
@@ -160,6 +150,16 @@ public class GlobalAccount extends AccountManager {
     @Override
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * Get if the account is registered
+     *
+     * @return if the account is registered
+     */
+    @Override
+    public boolean isRegistered() {
+        return !StringUtils.isNullOrEmpty(password);
     }
 
     /**
@@ -215,16 +215,6 @@ public class GlobalAccount extends AccountManager {
     }
 
     /**
-     * Get if the account has pin
-     *
-     * @return if the account has pin
-     */
-    @Override
-    public boolean hasPin() {
-        return !StringUtils.isNullOrEmpty(pin);
-    }
-
-    /**
      * Save the account pin
      *
      * @param pin the account pin
@@ -232,6 +222,16 @@ public class GlobalAccount extends AccountManager {
     @Override
     public void setPin(String pin) {
         this.pin = pin;
+    }
+
+    /**
+     * Get if the account has pin
+     *
+     * @return if the account has pin
+     */
+    @Override
+    public boolean hasPin() {
+        return !StringUtils.isNullOrEmpty(pin);
     }
 
     /**

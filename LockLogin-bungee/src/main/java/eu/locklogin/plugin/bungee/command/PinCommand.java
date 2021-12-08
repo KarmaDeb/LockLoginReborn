@@ -39,7 +39,7 @@ public class PinCommand extends Command {
     /**
      * Construct a new command with no permissions or aliases.
      *
-     * @param name the name of this command
+     * @param name    the name of this command
      * @param aliases the command aliases
      */
     public PinCommand(final String name, final List<String> aliases) {

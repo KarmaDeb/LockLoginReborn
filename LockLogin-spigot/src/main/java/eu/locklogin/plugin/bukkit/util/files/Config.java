@@ -22,7 +22,10 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,13 +62,14 @@ public final class Config extends PluginConfiguration {
      * @return if bungee mode is enabled
      */
     @Override
-   public boolean isBungeeCord() {
+    public boolean isBungeeCord() {
         File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
 
         boolean bungeecord = false;
         try {
             bungeecord = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         if (!bungeecord) {
             try {
@@ -83,12 +87,30 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public String serverName() {
-        return cfg.getString("ServerName", StringUtils.randomString(8, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER));
+    public String serverName() {
+        String server_name = cfg.getString("ServerName", "");
+        if (StringUtils.isNullOrEmpty(server_name)) {
+            server_name = StringUtils.generateString(
+                    RandomString.createBuilder()
+                            .withType(TextType.ALL_LOWER)
+                            .withContent(TextContent.ONLY_LETTERS)
+                            .withSize(8)
+            ).create();
+
+            cfg.set("ServerName", server_name);
+            cfg = cfg.save(cfg_file, plugin, "cfg/config.yml");
+
+            YamlReloader reloader = cfg.getReloader();
+            if (reloader != null) {
+                reloader.reload();
+            }
+        }
+
+        return server_name;
     }
 
     @Override
-   public RegisterConfig registerOptions() {
+    public RegisterConfig registerOptions() {
         boolean boss = cfg.getBoolean("Login.Boss", true);
         boolean blind = cfg.getBoolean("Register.Blind", false);
         boolean nausea = cfg.getBoolean("Register.Nausea", false);
@@ -100,7 +122,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public LoginConfig loginOptions() {
+    public LoginConfig loginOptions() {
         boolean boss = cfg.getBoolean("Login.Boss", true);
         boolean blind = cfg.getBoolean("Login.Blind", false);
         boolean nausea = cfg.getBoolean("Login.Nausea", false);
@@ -173,7 +195,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public CaptchaConfig captchaOptions() {
+    public CaptchaConfig captchaOptions() {
         boolean enabled = cfg.getBoolean("Captcha.Enabled", true);
         int length = cfg.getInt("Captcha.Difficulty.Length", 8);
         boolean letters = cfg.getBoolean("Captcha.Difficulty.Letters", true);
@@ -184,7 +206,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public HashType passwordEncryption() {
+    public HashType passwordEncryption() {
         String value = cfg.getString("Encryption.Passwords", "SHA512");
 
         switch (value.toLowerCase()) {
@@ -208,7 +230,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public HashType pinEncryption() {
+    public HashType pinEncryption() {
         String value = cfg.getString("Encryption.Pins", "SHA512");
         assert value != null;
 
@@ -257,7 +279,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public BruteForceConfig bruteForceOptions() {
+    public BruteForceConfig bruteForceOptions() {
         int tries = cfg.getInt("BruteForce", 3);
         int time = cfg.getInt("BruteForce.BlockTime", 30);
 
@@ -265,27 +287,22 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public boolean antiBot() {
-        return cfg.getBoolean("AntiBot", true);
-    }
-
-    @Override
-   public boolean allowSameIP() {
+    public boolean allowSameIP() {
         return cfg.getBoolean("AllowSameIp", true);
     }
 
     @Override
-   public boolean enablePin() {
+    public boolean enablePin() {
         return cfg.getBoolean("Pin", true);
     }
 
     @Override
-   public boolean enable2FA() {
+    public boolean enable2FA() {
         return cfg.getBoolean("2FA", true);
     }
 
     @Override
-   public UpdaterConfig getUpdaterOptions() {
+    public UpdaterConfig getUpdaterOptions() {
         String channel = cfg.getString("Updater.Channel", "RELEASE");
 
         boolean check = cfg.getBoolean("Updater.Check", true);
@@ -301,12 +318,12 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public boolean enableSpawn() {
+    public boolean enableSpawn() {
         return cfg.getBoolean("Spawn.Manage", false);
     }
 
     @Override
-   public boolean takeBack() {
+    public boolean takeBack() {
         return cfg.getBoolean("Spawn.TakeBack", false);
     }
 
@@ -323,17 +340,12 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public boolean clearChat() {
+    public boolean clearChat() {
         return cfg.getBoolean("ClearChat", false);
     }
 
     @Override
-   public int accountsPerIP() {
-        return cfg.getInt("AccountsPerIp", 2);
-    }
-
-    @Override
-   public boolean checkNames() {
+    public boolean checkNames() {
         return cfg.getBoolean("CheckNames", true);
     }
 
@@ -361,7 +373,7 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public Lang getLang() {
+    public Lang getLang() {
         String val = cfg.getString("Lang", "en_EN");
 
         switch (val.toLowerCase()) {
@@ -374,9 +386,6 @@ public final class Config extends PluginConfiguration {
             case "fr_fr":
             case "french":
                 return Lang.FRENCH;
-            case "de_de":
-            case "german":
-                return Lang.GERMAN;
             case "zh_cn":
             case "chinese simplified":
             case "simplified chinese":
@@ -387,12 +396,12 @@ public final class Config extends PluginConfiguration {
     }
 
     @Override
-   public String getLangName() {
+    public String getLangName() {
         return cfg.getString("Lang", "en_EN");
     }
 
     @Override
-   public String getModulePrefix() {
+    public String getModulePrefix() {
         String value = cfg.getString("ModulePrefix", "$");
 
         if (value.replaceAll("\\s", "").isEmpty())
@@ -417,7 +426,8 @@ public final class Config extends PluginConfiguration {
             boolean bungeecord = false;
             try {
                 bungeecord = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
 
             if (!bungeecord) {
                 try {
@@ -496,8 +506,13 @@ public final class Config extends PluginConfiguration {
 
             String module_prefix = cfg.getString("ModulePrefix", "$");
 
-            if (server_name.replaceAll("\\s", "").isEmpty()) {
-                server_name = StringUtils.randomString(8, StringUtils.StringGen.ONLY_LETTERS, StringUtils.StringType.ALL_LOWER);
+            if (StringUtils.isNullOrEmpty(server_name)) {
+                server_name = StringUtils.generateString(
+                        RandomString.createBuilder()
+                                .withType(TextType.ALL_LOWER)
+                                .withContent(TextContent.ONLY_LETTERS)
+                                .withSize(8)
+                ).create();
                 cfg.set("ServerName", server_name);
 
                 changes = true;
@@ -617,7 +632,12 @@ public final class Config extends PluginConfiguration {
             }
 
             if (changes) {
-                cfg.save(cfg_file, plugin, "cfg/config.yml");
+                cfg = cfg.save(cfg_file, plugin, "cfg/config.yml");
+
+                YamlReloader reloader = cfg.getReloader();
+                if (reloader != null) {
+                    reloader.reload();
+                }
             }
         }
     }

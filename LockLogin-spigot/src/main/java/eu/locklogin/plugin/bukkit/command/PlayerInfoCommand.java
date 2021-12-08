@@ -19,7 +19,6 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
-import eu.locklogin.api.common.utils.other.name.NameSearchResult;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -29,7 +28,7 @@ import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -98,7 +97,8 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             new PlayersInfoInventory(player, everyoneAccounts);
                                         case "persistent":
                                             Set<AccountID> accountIDs = new LinkedHashSet<>();
-                                            for (AccountManager account : PersistentSessionData.getPersistentAccounts()) accountIDs.add(account.getUUID());
+                                            for (AccountManager account : PersistentSessionData.getPersistentAccounts())
+                                                accountIDs.add(account.getUUID());
 
                                             new PlayersInfoInventory(player, accountIDs);
                                             break;
@@ -168,7 +168,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             user.send(messages.prefix() + messages.neverPlayer(target));
                                         }
                                     } else {
-                                        AccountNameDatabase.otherPossible(target).whenComplete((possible) ->  user.send(messages.multipleNames(target, possible)));
+                                        AccountNameDatabase.otherPossible(target).whenComplete((possible) -> user.send(messages.multipleNames(target, possible)));
                                     }
                                 });
                             }

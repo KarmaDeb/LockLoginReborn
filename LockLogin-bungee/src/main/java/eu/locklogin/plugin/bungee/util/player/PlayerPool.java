@@ -14,11 +14,9 @@ import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 public class PlayerPool {
 
-    private static Consumer<ProxiedPlayer> whenValidPlayer = null;
-
     private final static Set<UUID> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
-
+    private static Consumer<ProxiedPlayer> whenValidPlayer = null;
 
     /**
      * Add a player to the player pool

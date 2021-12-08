@@ -36,7 +36,7 @@ public interface LockLogin {
 
     Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
 
-    Console console = APISource.getConsole();
+    Console console = APISource.loadProvider("LockLogin").console();
 
     String name = plugin.name();
     String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()

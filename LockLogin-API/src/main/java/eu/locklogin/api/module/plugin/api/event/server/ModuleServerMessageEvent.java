@@ -26,12 +26,13 @@ public final class ModuleServerMessageEvent extends ServerSendMessageEvent {
      * Update a replace
      *
      * @param placeholder the placeholder
-     * @param newValue the new replacement value
+     * @param newValue    the new replacement value
      */
     public void setReplace(final int placeholder, final Object newValue) {
         try {
             replaces[placeholder] = newValue;
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     /**

@@ -42,7 +42,7 @@ public abstract class ProxyConfiguration {
     /**
      * Get all the lobby servers
      *
-     * @param <T> the server type
+     * @param <T>      the server type
      * @param instance the server class instance
      * @return all the available lobby servers
      */
@@ -51,7 +51,7 @@ public abstract class ProxyConfiguration {
     /**
      * Get all the auth servers
      *
-     * @param <T> the server type
+     * @param <T>      the server type
      * @param instance the server class instance
      * @return all the available auth servers
      */

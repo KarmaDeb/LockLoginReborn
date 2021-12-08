@@ -18,35 +18,16 @@ import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karma.loader.KarmaBootstrap;
-import ml.karmaconfigs.api.common.karma.loader.SubJarLoader;
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.bungee.KarmaPlugin;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.plugin.Plugin;
 
-import java.io.File;
+public final class Main extends KarmaPlugin {
 
-public final class Main extends Plugin implements KarmaSource {
-
-    private final KarmaBootstrap plugin;
-    private static Console console;
-
-    private final static File lockloginFile = new File(Main.class.getProtectionDomain()
-            .getCodeSource()
-            .getLocation()
-            .getPath().replaceAll("%20", " "));
+    private static boolean status = false;
+    private static MainBootstrap plugin;
 
     public Main() throws Throwable {
-        console = new Console(this).messageRequest((message) -> getProxy().getConsole().sendMessage(
-                TextComponent.fromLegacyText(StringUtils.toColor(message))));
-
-        APISource.setProvider(this);
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
@@ -54,29 +35,26 @@ public final class Main extends Plugin implements KarmaSource {
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
-        String downloadURL = URLUtils.getOrBackup(
-                "https://locklogin.eu/assets/" + getDescription().getVersion() + "/LockLoginC.jar",
-                "https://karmaconfigs.github.io/updates/LockLogin/assets/" + getDescription().getVersion() + "/LockLoginC.jar").toString();
-        ResourceDownloader downloader = ResourceDownloader.toCache(
-                this,
-                "locklogin.injar",
-                downloadURL,
-                "plugin", getDescription().getVersion());
-        downloader.download();
-
-        SubJarLoader loader = new SubJarLoader(getClass().getClassLoader(), downloader.getDestFile());
-        plugin = loader.instantiate("eu.locklogin.plugin.bungee.MainBootstrap", Plugin.class, this);
+        plugin = new MainBootstrap(this);
     }
 
     @Override
-    public void onEnable() {
+    public void enable() {
+        status = true;
+
         plugin.enable();
     }
 
     @Override
     public void onDisable() {
+        status = false;
+
         plugin.disable();
         stopTasks();
+    }
+
+    public boolean enabled() {
+        return status;
     }
 
     @Override
@@ -101,9 +79,9 @@ public final class Main extends Plugin implements KarmaSource {
 
     @Override
     public String updateURL() {
-        String host = "https://locklogin.eu/version/";
+        String host = "https://karmarepo.000webhostapp.com/locklogin/version/";
         if (!URLUtils.exists(host)) {
-            host = "https://karmaconfigs.github.io/updates/LockLogin/";
+            host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
         }
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -120,10 +98,5 @@ public final class Main extends Plugin implements KarmaSource {
         }
 
         return host + "release.kupdter";
-    }
-
-    @Override
-    public Console console() {
-        return console;
     }
 }

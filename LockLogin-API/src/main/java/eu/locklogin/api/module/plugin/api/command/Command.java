@@ -66,12 +66,12 @@ public abstract class Command {
      * @param arg        the used argument
      * @param sender     the command sender
      * @param parameters the command parameters
-     *
      * @deprecated It's better to use {@link Command#processCommand(String, ModuleSender, String...)}
      * instead as this contains directly the command issuers
      */
     @Deprecated
-    public void processCommand(final String arg, final Object sender, final String... parameters) {}
+    public void processCommand(final String arg, final Object sender, final String... parameters) {
+    }
 
     /**
      * Get the valid command arguments

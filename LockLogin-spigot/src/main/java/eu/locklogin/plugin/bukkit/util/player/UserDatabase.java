@@ -17,7 +17,7 @@ public final class UserDatabase {
      * Insert the user
      *
      * @param player the player
-     * @param user the player user
+     * @param user   the player user
      */
     static void insert(final Player player, final User user) {
         database.put(player.getUniqueId(), user);

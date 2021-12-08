@@ -28,6 +28,10 @@ public enum Dependency {
     /**
      * LockLogin dependency
      */
+    COMMONS_IO,
+    /**
+     * LockLogin dependency
+     */
     APACHE_COMMONS_CODEC,
     /**
      * LockLogin dependency
@@ -71,6 +75,8 @@ public enum Dependency {
     @NotNull
     public PluginDependency getAsDependency() {
         switch (this) {
+            case COMMONS_IO:
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/commons-io/commons-io/20030203.000550/commons-io-20030203.000550.jar", true);
             case APACHE_COMMONS_CODEC:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/commons-codec/commons-codec/1.15/commons-codec-1.15.jar", true);
             case JNA:
@@ -82,7 +88,7 @@ public enum Dependency {
             case LOG4J_WEB:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.14.1/log4j-web-2.14.1.jar", true);
             case JAVASSIST:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.27.0-GA/javassist-3.27.0-GA.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar", true);
             case GUAVA:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/google/guava/guava/30.1.1-jre/guava-30.1.1-jre.jar", true);
             case GSON:
@@ -93,7 +99,7 @@ public enum Dependency {
 
                 return PluginDependency.of(prettyName(),
                         URLUtils.getOrBackup(
-                                "https://locklogin.eu/modules/manager/" + version + "/LockLoginManager.jar",
+                                "https://karmarepo.000webhostapp.com/locklogin/modules/manager/" + version + "/LockLoginManager.jar",
                                 "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar").toString(),
                         true,
                         true);
@@ -102,6 +108,8 @@ public enum Dependency {
 
     public final String prettyName() {
         switch (this) {
+            case COMMONS_IO:
+                return "Apache Commons IO";
             case APACHE_COMMONS_CODEC:
                 return "Apache Commons Codec";
             case JNA:

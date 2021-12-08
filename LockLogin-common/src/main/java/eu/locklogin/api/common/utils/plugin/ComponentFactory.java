@@ -14,7 +14,7 @@ package eu.locklogin.api.common.utils.plugin;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -42,7 +42,7 @@ public final class ComponentFactory {
      * @param hoverText the hover text
      * @return this instance
      */
-    public final ComponentFactory hover(final String hoverText) {
+    public ComponentFactory hover(final String hoverText) {
         text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor(hoverText))));
         return this;
     }
@@ -54,7 +54,7 @@ public final class ComponentFactory {
      * @param string the action parameter
      * @return this instance
      */
-    public final ComponentFactory click(final ClickEvent.Action action, final String string) {
+    public ComponentFactory click(final ClickEvent.Action action, final String string) {
         text.setClickEvent(new ClickEvent(action, string));
         return this;
     }
@@ -65,7 +65,7 @@ public final class ComponentFactory {
      * @param factories the factories to add
      * @return this instance
      */
-    public final ComponentFactory addExtra(final ComponentFactory... factories) {
+    public ComponentFactory addExtra(final ComponentFactory... factories) {
         for (ComponentFactory factory : factories)
             text.addExtra(factory.get());
 
@@ -77,7 +77,7 @@ public final class ComponentFactory {
      *
      * @return the component
      */
-    public final TextComponent get() {
+    public TextComponent get() {
         return text;
     }
 }

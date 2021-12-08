@@ -10,7 +10,8 @@ public abstract class ModuleSender {
     /**
      * Make it non-buildable
      */
-    ModuleSender() {}
+    ModuleSender() {
+    }
 
     /**
      * Get the sender name
@@ -31,7 +32,7 @@ public abstract class ModuleSender {
         ModulePlugin.callEvent(event);
 
         if (!event.isHandled()) {
-            APISource.getConsole().send(event.getMessage());
+            APISource.loadProvider("LockLogin").console().send(event.getMessage());
         }
     }
 }

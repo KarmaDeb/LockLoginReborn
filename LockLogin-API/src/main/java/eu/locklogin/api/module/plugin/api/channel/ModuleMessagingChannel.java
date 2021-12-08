@@ -23,7 +23,7 @@ public abstract class ModuleMessagingChannel {
      * When a message is received
      *
      * @param channel the message channel
-     * @param data the message data
+     * @param data    the message data
      */
     public abstract void onMessageReceived(final String channel, final byte[] data);
 }

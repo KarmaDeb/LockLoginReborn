@@ -1,6 +1,7 @@
 package eu.locklogin.api.common.utils.other.name;
 
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.Key;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
@@ -13,7 +14,8 @@ import java.util.UUID;
 
 public final class AccountNameDatabase {
 
-    private final static KarmaFile nameDatabase = new KarmaFile(APISource.getSource(), "names.lldb", "data");
+    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
+    private final static KarmaFile nameDatabase = new KarmaFile(lockLogin, "names.lldb", "data");
     private final UUID uuid;
 
     /**
@@ -26,19 +28,6 @@ public final class AccountNameDatabase {
     }
 
     /**
-     * Assign a name to the user ID
-     *
-     * @param name the name
-     */
-    public void assign(final String name) {
-        List<String> names = nameDatabase.getStringList(uuid.toString());
-        if (!names.contains(name)) {
-            names.add(name);
-            nameDatabase.set(uuid.toString(), names);
-        }
-    }
-
-    /**
      * Find the uuid of that name
      *
      * @param name the username/nickname
@@ -47,7 +36,7 @@ public final class AccountNameDatabase {
     public static LateScheduler<NameSearchResult> find(final String name) {
         LateScheduler<NameSearchResult> result = new AsyncLateScheduler<>();
 
-        APISource.asyncScheduler().queue(() -> {
+        lockLogin.async().queue(() -> {
             Set<UUID> ids = new LinkedHashSet<>();
 
             for (Key key : nameDatabase.getKeys(false)) {
@@ -57,7 +46,8 @@ public final class AccountNameDatabase {
                 if (values.contains(name)) {
                     try {
                         ids.add(UUID.fromString(path));
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
 
@@ -77,7 +67,7 @@ public final class AccountNameDatabase {
     public static LateScheduler<String[]> otherPossible(final String name) {
         LateScheduler<String[]> result = new AsyncLateScheduler<>();
 
-        APISource.asyncScheduler().queue(() -> {
+        lockLogin.async().queue(() -> {
             Set<String> names = new LinkedHashSet<>();
 
             for (Key key : nameDatabase.getKeys(false)) {
@@ -87,7 +77,8 @@ public final class AccountNameDatabase {
                 if (values.contains(name)) {
                     try {
                         names.addAll(values);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
             names.remove(name);
@@ -97,5 +88,18 @@ public final class AccountNameDatabase {
         });
 
         return result;
+    }
+
+    /**
+     * Assign a name to the user ID
+     *
+     * @param name the name
+     */
+    public void assign(final String name) {
+        List<String> names = nameDatabase.getStringList(uuid.toString());
+        if (!names.contains(name)) {
+            names.add(name);
+            nameDatabase.set(uuid.toString(), names);
+        }
     }
 }

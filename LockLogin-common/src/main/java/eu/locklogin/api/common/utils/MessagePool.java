@@ -23,7 +23,7 @@ public class MessagePool {
      * Initialize the message pool
      *
      * @param target the message target server
-     * @param data the plugin message data
+     * @param data   the plugin message data
      */
     public MessagePool(final Object target, final Object data) {
         server = target;

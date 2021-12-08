@@ -15,8 +15,9 @@ package eu.locklogin.api.file.plugin;
  */
 
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.StringUtils;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.VersionComparator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,11 +38,11 @@ public final class PluginProperties {
      * Get a plugin message property
      *
      * @param name the property name
-     * @param def the default value
+     * @param def  the default value
      * @return the messages properties
      */
     public String getProperty(final String name, final String def) {
-        File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
+        File propFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "lang/plugin_messages.properties");
         propFile = FileUtilities.getFixedFile(propFile);
         try {
             if (propFile.exists()) {
@@ -92,7 +93,7 @@ public final class PluginProperties {
                     "#\n" +
                     "#   PLEASE DO NOT MODIFY properties_lang_version VALUE";
 
-            File propFile = new File(FileUtilities.getProjectFolder() + File.separator + "LockLogin", "lang/plugin_messages.properties");
+            File propFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "lang/plugin_messages.properties");
             propFile = FileUtilities.getFixedFile(propFile);
 
             Properties inProperties = new Properties();
@@ -110,7 +111,8 @@ public final class PluginProperties {
             String outVersion = outProperties.getProperty("properties_lang_version", "1.0.0");
             String inVersion = inProperties.getProperty("properties_lang_version", "1.0.1");
 
-            if (StringUtils.compareTo(inVersion, outVersion) > 0) {
+            VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder().currentVersion(inVersion).checkVersion(outVersion));
+            if (!comparator.isUpToDate()) {
                 for (Object inKey : inProperties.keySet()) {
                     if (props.getOrDefault(inKey, null) == null) {
                         props.put(inKey, inProperties.get(inKey));

@@ -34,9 +34,9 @@ public final class SessionInitializationEvent extends Event {
     /**
      * Initialize the session initialization event
      *
-     * @param _modulePlayer  the player who is being initialized
-     * @param _session the player session
-     * @param _event   the event owner
+     * @param _modulePlayer the player who is being initialized
+     * @param _session      the player session
+     * @param _event        the event owner
      */
     public SessionInitializationEvent(final ModulePlayer _modulePlayer, final ClientSession _session, final Object _event) {
         modulePlayer = _modulePlayer;
