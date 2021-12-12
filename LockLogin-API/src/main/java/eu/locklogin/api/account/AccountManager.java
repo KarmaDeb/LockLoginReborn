@@ -14,6 +14,9 @@ package eu.locklogin.api.account;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.param.AccountConstructor;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Set;
@@ -24,6 +27,22 @@ import java.util.Set;
  * MUST HAVE AN EMPTY CONSTRUCTOR
  */
 public abstract class AccountManager implements Serializable {
+
+    private final Class<?> instance;
+
+    /**
+     * Initialize the account manager
+     *
+     * @param constructor the account manager
+     *                    constructor
+     */
+    public AccountManager(final @Nullable AccountConstructor<?> constructor) {
+        if (constructor != null) {
+            instance = constructor.getType();
+        } else {
+            instance = AccountManager.class;
+        }
+    }
 
     /**
      * Check if the file exists
@@ -189,4 +208,13 @@ public abstract class AccountManager implements Serializable {
      * available accounts
      */
     public abstract Set<AccountManager> getAccounts();
+
+    /**
+     * Get the manager constructor instance
+     *
+     * @return the manager constructor instance
+     */
+    public final Class<?> getOwnerConstructor() {
+        return instance;
+    }
 }

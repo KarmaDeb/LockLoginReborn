@@ -13,6 +13,7 @@ package eu.locklogin.plugin.bungee.util.files.client;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +47,9 @@ public final class OfflineClient {
      * @return the offline client account
      */
     @Nullable
-    public final AccountManager getAccount() throws IllegalStateException {
+    public AccountManager getAccount() throws IllegalStateException {
         if (CurrentPlatform.isValidAccountManager()) {
-            AccountManager current = CurrentPlatform.getAccountManager(null);
+            AccountManager current = CurrentPlatform.getAccountManager(Manager.CUSTOM, null);
             if (current != null) {
                 Set<AccountManager> managers = current.getAccounts();
 

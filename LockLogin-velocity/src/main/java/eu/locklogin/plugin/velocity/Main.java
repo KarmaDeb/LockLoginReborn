@@ -38,6 +38,7 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import eu.locklogin.plugin.velocity.util.scheduler.VelocitySyncScheduler;
 import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
@@ -92,6 +93,8 @@ public class Main implements KarmaSource {
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
+        APISource.addProvider(this);
+
         console = new Console(this, (message) -> server.getConsoleCommandSource().sendMessage(
                 Component.text().content(StringUtils.toColor(message)).build()));
 

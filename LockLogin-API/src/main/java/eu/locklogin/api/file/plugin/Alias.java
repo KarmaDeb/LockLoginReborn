@@ -126,7 +126,7 @@ public final class Alias {
         Set<AccountID> ids = new LinkedHashSet<>();
 
         for (String str : set)
-            ids.add(AccountID.fromTrimmed(str));
+            ids.add(AccountID.fromString(str));
 
         return ids;
     }

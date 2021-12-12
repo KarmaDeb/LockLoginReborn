@@ -23,7 +23,6 @@ import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -321,7 +320,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                                     manager = offline.getAccount();
 
                                                     if (manager != null)
-                                                        accounts.add(new GlobalAccount(manager));
+                                                        accounts.add(manager);
                                                 }
 
                                                 int sent = 0;

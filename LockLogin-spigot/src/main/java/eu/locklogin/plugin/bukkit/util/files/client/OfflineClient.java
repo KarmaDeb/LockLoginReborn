@@ -13,6 +13,7 @@ package eu.locklogin.plugin.bukkit.util.files.client;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public final class OfflineClient {
         AccountManager result = null;
 
         if (CurrentPlatform.isValidAccountManager()) {
-            AccountManager current = CurrentPlatform.getAccountManager(null);
+            AccountManager current = CurrentPlatform.getAccountManager(Manager.CUSTOM, null);
             if (current != null) {
                 Set<AccountManager> managers = current.getAccounts();
 

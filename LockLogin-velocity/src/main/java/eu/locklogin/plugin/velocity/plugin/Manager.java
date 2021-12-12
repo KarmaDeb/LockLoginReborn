@@ -31,6 +31,7 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.common.web.AlertSystem;
 import eu.locklogin.api.common.web.STFetcher;
@@ -57,7 +58,6 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
-import eu.locklogin.plugin.velocity.util.files.client.PlayerFile;
 import eu.locklogin.plugin.velocity.util.files.data.RestartCache;
 import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.PlayerPool;
@@ -108,9 +108,9 @@ public final class Manager {
 
         ProxyCheck.scan();
 
-        PlayerFile.migrateV1();
-        PlayerFile.migrateV2();
-        PlayerFile.migrateV3();
+        PlayerAccount.migrateV1();
+        PlayerAccount.migrateV2();
+        PlayerAccount.migrateV3();
         PlayerPool.startCheckTask();
 
         setupFiles();
@@ -122,7 +122,7 @@ public final class Manager {
         console.send("&e-----------------------");
 
         if (!CurrentPlatform.isValidAccountManager()) {
-            CurrentPlatform.setAccountsManager(PlayerFile.class);
+            CurrentPlatform.setAccountsManager(PlayerAccount.class);
             console.send("Loaded native player account manager", Level.INFO);
         } else {
             console.send("Loaded custom player account manager", Level.INFO);
@@ -140,7 +140,7 @@ public final class Manager {
         server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.PLUGIN_CHANNEL));
         server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.ACCESS_CHANNEL));
 
-        AccountManager manager = CurrentPlatform.getAccountManager(null);
+        AccountManager manager = CurrentPlatform.getAccountManager(eu.locklogin.api.util.enums.Manager.CUSTOM, null);
         if (manager != null) {
             Set<AccountManager> accounts = manager.getAccounts();
             Set<AccountManager> nonLocked = new HashSet<>();

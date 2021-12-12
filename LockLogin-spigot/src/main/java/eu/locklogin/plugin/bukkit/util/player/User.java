@@ -25,6 +25,7 @@ import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BossMessage;
@@ -38,7 +39,6 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
@@ -81,7 +81,7 @@ public final class User {
         User loaded = UserDatabase.loadUser(player);
         if (loaded == null) {
             if (CurrentPlatform.isValidAccountManager()) {
-                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{OfflinePlayer.class}, plugin.getServer().getOfflinePlayer(player.getUniqueId()));
+                AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
 
                 if (manager == null) {
                     plugin.getPluginLoader().disablePlugin(plugin);
@@ -103,8 +103,7 @@ public final class User {
                         if (StringUtils.isNullOrEmpty(name))
                             manager.setName(StringUtils.stripColor(player.getDisplayName()));
 
-                        if (StringUtils.isNullOrEmpty(id.getId()))
-                            manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
+                        manager.saveUUID(AccountID.fromUUID(player.getUniqueId()));
                     }
 
                     managers.put(player.getUniqueId(), manager);
@@ -386,16 +385,16 @@ public final class User {
             The best solution is to just not create it if specified
              */
             BossProvider<Player> message = null;
-            int time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
+            int time = CurrentPlatform.getConfiguration().registerOptions().timeOut();
             if (getManager().isRegistered()) {
-                time = CurrentPlatform.getConfiguration().registerOptions().timeOut();
+                time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
 
-                if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
-                    message = new BossMessage(plugin, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
-                }
-            } else {
                 if (CurrentPlatform.getConfiguration().loginOptions().hasBossBar()) {
                     message = new BossMessage(plugin, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                }
+            } else {
+                if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
+                    message = new BossMessage(plugin, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             }
 

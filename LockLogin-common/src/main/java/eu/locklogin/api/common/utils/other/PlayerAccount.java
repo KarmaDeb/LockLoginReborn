@@ -1,22 +1,27 @@
-package eu.locklogin.plugin.bungee.util.files.client;
+package eu.locklogin.api.common.utils.other;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.AzuriomId;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
+import eu.locklogin.api.account.ClientRanID;
+import eu.locklogin.api.account.param.AccountConstructor;
+import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.encryption.CryptTarget;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.Main;
+import ml.karmaconfigs.api.common.Console;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -27,9 +32,6 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import static eu.locklogin.plugin.bungee.LockLogin.console;
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -45,46 +47,58 @@ import static eu.locklogin.plugin.bungee.LockLogin.plugin;
  * the version number 2.1.]
  */
 @SuppressWarnings("unused")
-public final class PlayerFile extends AccountManager {
+public final class PlayerAccount extends AccountManager {
+
+    private final static KarmaSource source = APISource.loadProvider("LockLogin");
+    private final static Console console = source.console();
 
     private final KarmaFile manager;
 
-    private final ProxiedPlayer player;
+    /**
+     * Initialize the player file
+     *
+     * @param constructor the player file constructor
+     *
+     * @throws IllegalArgumentException if the constructor local name is not
+     * 'accountid' or 'player' or if the parameter is null
+     */
+    public PlayerAccount(final @Nullable AccountConstructor<?> constructor) throws IllegalArgumentException {
+        super(constructor);
 
-    public PlayerFile() {
-        manager = null;
-        player = null;
-    }
+        if (constructor != null) {
+            Parameter<?> parameter = constructor.getParameter();
+            if (parameter != null) {
+                ClientRanID randomId;
 
-    public PlayerFile(final File managed) {
-        player = null;
+                switch (parameter.getLocalName()) {
+                    case "accountid":
+                        AccountID id = (AccountID) parameter.getValue();
+                        randomId = new ClientRanID(id);
 
-        manager = new KarmaFile(managed);
-    }
+                        break;
+                    case "player":
+                        ModulePlayer player = (ModulePlayer) parameter.getValue();
+                        randomId = new ClientRanID(AccountID.fromUUID(player.getUUID()));
 
-    public PlayerFile(final ProxiedPlayer managed) {
-        player = managed;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Cannot initialize player file instance for unknown account constructor type: " + parameter.getLocalName());
+                }
 
-        AzuriomId id = new AzuriomId(AccountID.fromUUID(managed.getUniqueId()));
-        File file = id.getAccountFile();
-        if (file.exists())
-            manager = new KarmaFile(file);
-        else
-            manager = new KarmaFile(plugin, player.getUniqueId().toString().replace("-", "") + ".lldb", "data", "accounts");
-    }
-
-    public PlayerFile(final AccountID id) {
-        player = null;
-
-        File file = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", id.getId().replace("-", "") + ".lldb");
-        manager = new KarmaFile(file);
+                manager = new KarmaFile(randomId.getAccountFile());
+            } else {
+                throw new IllegalArgumentException("Cannot initialize player file instance for invalid account constructor parameter");
+            }
+        } else {
+            manager = null;
+        }
     }
 
     /**
      * Migrate from LockLogin v1 player database
      */
     public static void migrateV1() {
-        File v1DataFolder = new File(plugin.getDataFolder() + File.separator + "Users");
+        File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "Users");
         File[] files = v1DataFolder.listFiles();
 
         if (files != null) {
@@ -93,9 +107,9 @@ public final class PlayerFile extends AccountManager {
             for (File file : files) {
                 if (file.getName().endsWith(".yml")) {
                     console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
-                    KarmaYamlManager oldManager = new KarmaYamlManager(plugin, file.getName(), "Users");
+                    KarmaYamlManager oldManager = new KarmaYamlManager(source, file.getName(), "Users");
 
-                    File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
+                    File newFile = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
                     KarmaFile user = new KarmaFile(newFile);
 
                     String name = oldManager.getString("Player");
@@ -167,7 +181,7 @@ public final class PlayerFile extends AccountManager {
      * Migrate from LockLogin v2 player database
      */
     public static void migrateV2() {
-        File v1DataFolder = new File(plugin.getDataFolder() + File.separator + "playerdata");
+        File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "playerdata");
         File[] files = v1DataFolder.listFiles();
 
         if (files != null) {
@@ -176,9 +190,9 @@ public final class PlayerFile extends AccountManager {
             for (File file : files) {
                 if (file.getName().endsWith(".yml")) {
                     console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
-                    KarmaYamlManager oldManager = new KarmaYamlManager(plugin, file.getName(), "playerdata");
+                    KarmaYamlManager oldManager = new KarmaYamlManager(source, file.getName(), "playerdata");
 
-                    File newFile = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
+                    File newFile = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
                     KarmaFile user = new KarmaFile(newFile);
 
                     String name = oldManager.getString("Player");
@@ -252,7 +266,7 @@ public final class PlayerFile extends AccountManager {
      * Migrate from LockLogin v3 player database
      */
     public static void migrateV3() {
-        File v2DataFolder = new File(plugin.getDataFolder() + File.separator + "playerdata");
+        File v2DataFolder = new File(source.getDataPath().toFile() + File.separator + "playerdata");
         File[] files = v2DataFolder.listFiles();
 
         if (files != null) {
@@ -262,7 +276,7 @@ public final class PlayerFile extends AccountManager {
                 if (file.getName().endsWith(".lldb")) {
                     console.send("Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
 
-                    Path accountsFolder = new File(plugin.getDataFolder() + File.separator + "data", "accounts").toPath();
+                    Path accountsFolder = new File(source.getDataPath().toFile() + File.separator + "data", "accounts").toPath();
                     Path newFile = accountsFolder.resolve(file.getName());
 
                     try {
@@ -294,7 +308,7 @@ public final class PlayerFile extends AccountManager {
     @Override
     public boolean create() {
         if (!manager.exists()) {
-            manager.exportFromFile(Main.class.getResourceAsStream("/templates/user.lldb"));
+            manager.exportFromFile(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
 
             manager.applyKarmaAttribute();
             return true;
@@ -306,7 +320,7 @@ public final class PlayerFile extends AccountManager {
     @Override
     public boolean remove(final String issuer) {
         try {
-            Event event = new AccountRemovedEvent(new GlobalAccount(this), issuer, null);
+            Event event = new AccountRemovedEvent(this, issuer, null);
             ModulePlugin.callEvent(event);
 
             return Files.deleteIfExists(manager.getFile().toPath());
@@ -374,11 +388,8 @@ public final class PlayerFile extends AccountManager {
      */
     @Override
     public AccountID getUUID() {
-        try {
-            return AccountID.fromUUID(UUID.fromString(manager.getString("UUID", UUID.randomUUID().toString()).replace("UUID:", "")));
-        } catch (Throwable ex) {
-            return AccountID.fromTrimmed(manager.getString("UUID", UUID.randomUUID().toString().replace("-", "")).replace("UUID:", ""));
-        }
+        String id = manager.getString("UUID", UUID.randomUUID().toString());
+        return AccountID.fromString(id);
     }
 
     /**
@@ -545,10 +556,13 @@ public final class PlayerFile extends AccountManager {
     public Set<AccountManager> getAccounts() {
         Set<AccountManager> managers = new LinkedHashSet<>();
 
-        File[] files = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "accounts").listFiles();
+        File[] files = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts").listFiles();
         if (files != null) {
             for (File file : files) {
-                PlayerFile manager = new PlayerFile(file);
+                String extension = FileUtilities.getExtension(file);
+                String trimmedId = file.getName().replace("." + extension, "");
+
+                AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
                 AccountID uuid = manager.getUUID();
                 String name = manager.getName();
                 if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())

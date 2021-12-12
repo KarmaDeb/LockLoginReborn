@@ -19,6 +19,7 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -72,7 +73,7 @@ public final class AccountData {
     /**
      * Save the player data
      */
-    public final void save() {
+    public void save() {
         if (!lib.exists()) {
             lib.create();
 
@@ -112,7 +113,7 @@ public final class AccountData {
      * @param max the maximum amount of accounts
      * @return if the player can join
      */
-    public final boolean allow(final int max) {
+    public boolean allow(final int max) {
         if (rev_lib.exists()) {
             return true;
         }
@@ -133,12 +134,15 @@ public final class AccountData {
      *
      * @return all the alt accounts the IP has
      */
-    public final Set<AccountID> getAlts() {
+    public Set<AccountID> getAlts() {
         Set<AccountID> accounts = new HashSet<>();
 
         if (lib.exists()) {
-            for (String str : lib.getStringList("ASSIGNED"))
-                accounts.add(AccountID.fromTrimmed(str));
+            for (String str : lib.getStringList("ASSIGNED")) {
+                if (!StringUtils.isNullOrEmpty(str)) {
+                    accounts.add(AccountID.fromString(str));
+                }
+            }
         }
 
         return accounts;
@@ -149,7 +153,7 @@ public final class AccountData {
      *
      * @return all the alt accounts the IP has
      */
-    public final Set<AccountID> getReverseAlts() {
+    public Set<AccountID> getReverseAlts() {
         Set<AccountID> accounts = new HashSet<>();
 
         if (rev_lib.exists()) {
@@ -161,7 +165,7 @@ public final class AccountData {
 
                 KarmaFile file = new KarmaFile(libFile);
                 for (String str : file.getStringList("ASSIGNED"))
-                    accounts.add(AccountID.fromTrimmed(str));
+                    accounts.add(AccountID.fromString(str));
             }
         }
 

@@ -16,6 +16,7 @@ package eu.locklogin.api.common.session;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
@@ -53,7 +54,7 @@ public final class PersistentSessionData {
      */
     public static Set<AccountManager> getPersistentAccounts() {
         Set<AccountManager> accounts = new LinkedHashSet<>();
-        AccountManager tmp_manager = CurrentPlatform.getAccountManager(null);
+        AccountManager tmp_manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, null);
 
         if (tmp_manager != null) {
             Set<AccountManager> tmp_accounts = tmp_manager.getAccounts();
@@ -76,7 +77,7 @@ public final class PersistentSessionData {
      * @return the user persistent session
      * status
      */
-    public final boolean toggleSession() {
+    public boolean toggleSession() {
         List<String> ids = sessions.getStringList("PERSISTENT");
 
         boolean result;
@@ -97,7 +98,7 @@ public final class PersistentSessionData {
      *
      * @return if the user account is persistent
      */
-    public final boolean isPersistent() {
+    public boolean isPersistent() {
         List<String> ids = sessions.getStringList("PERSISTENT");
         return ids.contains(id.getId());
     }

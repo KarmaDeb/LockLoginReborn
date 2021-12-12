@@ -16,10 +16,12 @@ package eu.locklogin.api.common.utils.dependencies;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.net.URL;
 
 /**
  * LockLogin dependencies
@@ -84,9 +86,9 @@ public enum Dependency {
             case GOOGLE_AUTHENTICATOR:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/warrenstrange/googleauth/1.5.0/googleauth-1.5.0.jar", true);
             case LOG4J:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.14.1/log4j-core-2.14.1.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.15.0/log4j-core-2.15.0.jar", true);
             case LOG4J_WEB:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.14.1/log4j-web-2.14.1.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.15.0/log4j-web-2.15.0.jar", true);
             case JAVASSIST:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar", true);
             case GUAVA:
@@ -97,12 +99,16 @@ public enum Dependency {
             default:
                 String version = FileInfo.getManagerVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
-                return PluginDependency.of(prettyName(),
-                        URLUtils.getOrBackup(
-                                "https://karmarepo.000webhostapp.com/locklogin/modules/manager/" + version + "/LockLoginManager.jar",
-                                "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar").toString(),
-                        true,
-                        true);
+                URL url = URLUtils.getOrBackup(
+                        "https://karmarepo.000webhostapp.com/locklogin/modules/manager/" + version + "/LockLoginManager.jar",
+                        "https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar");
+
+                if (url != null) {
+                    return PluginDependency.of(prettyName(), url.toString(), true, true);
+                } else {
+                    //I just don't know what to do in that case
+                    return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.7/gson-2.8.7.jar", false);
+                }
         }
     }
 

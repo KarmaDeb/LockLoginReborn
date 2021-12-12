@@ -1,11 +1,14 @@
 package eu.locklogin.module.manager;
 
+import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.user.*;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 public class UsersListener implements EventListener {
 
@@ -19,6 +22,16 @@ public class UsersListener implements EventListener {
     @ModuleEventHandler(priority = ModuleEventHandler.Priority.FIRST)
     public final void onRegister(AccountCreatedEvent e) {
         SessionDataContainer.setRegistered(SessionDataContainer.getRegistered() + 1);
+
+        ModulePlayer player = e.getPlayer();
+        AccountManager created = player.getAccount();
+
+        String name = created.getName();
+
+        if (StringUtils.isNullOrEmpty(name))
+            created.setName(StringUtils.stripColor(player.getName()));
+
+        created.saveUUID(AccountID.fromUUID(player.getUUID()));
     }
 
     @ModuleEventHandler(priority = ModuleEventHandler.Priority.LAST)

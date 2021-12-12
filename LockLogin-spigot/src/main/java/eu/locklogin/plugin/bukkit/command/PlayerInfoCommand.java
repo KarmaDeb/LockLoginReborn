@@ -21,6 +21,7 @@ import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -89,7 +90,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             Set<AccountID> everyoneAccounts = new LinkedHashSet<>();
 
                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
-                                                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                 if (manager != null)
                                                     everyoneAccounts.add(manager.getUUID());
                                             }
@@ -110,7 +111,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
                                                 if (online.hasPermission(permission)) {
 
-                                                    AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                    AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                     if (manager != null)
                                                         permissionAccounts.add(manager.getUUID());
                                                 }

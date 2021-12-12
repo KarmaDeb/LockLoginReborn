@@ -15,11 +15,13 @@ package eu.locklogin.api.util.platform;
  */
 
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.util.enums.Manager;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
@@ -42,7 +44,6 @@ public final class CurrentPlatform {
     private static Platform platform;
     private static Class<?> main;
     private static String prefix = "$";
-    private static String karma_api = "1.3.1-SNAPSHOT";
     private static Class<? extends AccountManager> manager;
     private static Class<? extends AccountManager> default_manager;
     private static Class<? extends AccountManager> last_manager;
@@ -218,11 +219,67 @@ public final class CurrentPlatform {
     /**
      * Get the current account manager
      *
+     * @param type the account manager type
+     * @param parameter the account manager player parameter
+     * @return the current account manager
+     *
+     * @throws IllegalStateException if the manager type is unknown
+     */
+    @Nullable
+    public static AccountManager getAccountManager(final Manager type, final @Nullable AccountConstructor<?> parameter) throws IllegalStateException {
+        Class<? extends AccountManager> clazz;
+        switch (type) {
+            case DEFAULT:
+                clazz = default_manager;
+                break;
+            case CUSTOM:
+                if (manager != null) {
+                    clazz = manager;
+                } else {
+                    clazz = default_manager;
+                }
+                break;
+            case PREVIOUS:
+                if (last_manager != null) {
+                    clazz = last_manager;
+                } else {
+                    if (manager != null) {
+                        clazz = manager;
+                    } else {
+                        clazz = default_manager;
+                    }
+                }
+                break;
+            default:
+                throw new IllegalStateException("Unexpected account manager type: " + type.name());
+        }
+
+        try {
+            Constructor<? extends AccountManager> constructor = clazz.getDeclaredConstructor(AccountConstructor.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(parameter);
+        } catch (Throwable ex) {
+            try {
+                Constructor<? extends AccountManager> constructor = clazz.getConstructor(AccountConstructor.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(parameter);
+            } catch (Throwable exc) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get the current account manager
+     *
      * @param constructorParams the constructor parameters types
      * @param parameters        the constructor parameter objects
      * @return the current account manager
+     *
+     * @deprecated Deprecated as of 1.13.9, use {@link CurrentPlatform#getAccountManager(Manager, AccountConstructor)}
      */
     @Nullable
+    @Deprecated
     public static AccountManager getAccountManager(final Class<?>[] constructorParams, final Object... parameters) {
         try {
             Constructor<? extends AccountManager> constructor = manager.getDeclaredConstructor(constructorParams);
@@ -245,8 +302,11 @@ public final class CurrentPlatform {
      * @param constructorParams the constructor parameters types
      * @param parameters        the constructor parameter objects
      * @return the current account manager
+     *
+     * @deprecated Deprecated as of 1.13.9, use {@link CurrentPlatform#getAccountManager(Manager, AccountConstructor)}
      */
     @Nullable
+    @Deprecated
     public static AccountManager getDefaultAccountManager(final Class<?>[] constructorParams, final Object... parameters) {
         try {
             Constructor<? extends AccountManager> constructor = default_manager.getDeclaredConstructor(constructorParams);
@@ -269,8 +329,11 @@ public final class CurrentPlatform {
      * @param constructorParams the constructor parameters types
      * @param parameters        the constructor parameter objects
      * @return the current account manager
+     *
+     * @deprecated Deprecated as of 1.13.9, use {@link CurrentPlatform#getAccountManager(Manager, AccountConstructor)}
      */
     @Nullable
+    @Deprecated
     public static AccountManager getLastAccountManager(final Class<?>[] constructorParams, final Object... parameters) {
         if (last_manager != null) {
             try {
@@ -378,27 +441,6 @@ public final class CurrentPlatform {
      */
     public static void setPrefix(final String modulePrefix) {
         prefix = modulePrefix;
-    }
-
-    /**
-     * Get the current KarmaAPI version
-     *
-     * @return the current KarmaAPI version
-     */
-    public static String getKarmaAPI() {
-        return karma_api;
-    }
-
-    /**
-     * Set the current KarmaAPI version
-     *
-     * @param version the current KarmaAPI version
-     * @deprecated This is no longer needed as KarmaAPI
-     * is included inside the plugin
-     */
-    @Deprecated
-    public static void setKarmaAPI(final String version) {
-        karma_api = version;
     }
 
     /**

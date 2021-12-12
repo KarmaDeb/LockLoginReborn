@@ -20,6 +20,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginMessages;
@@ -30,7 +31,6 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.client.PlayerFile;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -51,7 +51,7 @@ import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER
 public final class MessageListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onMessageReceive(PluginMessageEvent e) {
+    public void onMessageReceive(PluginMessageEvent e) {
         if (!e.isCancelled()) {
             try {
                 if (e.getTag().equalsIgnoreCase("ll:access") || e.getTag().equalsIgnoreCase("ll:plugin") || e.getTag().equalsIgnoreCase("ll:account")) {
@@ -142,7 +142,7 @@ public final class MessageListener implements Listener {
                                                 AccountManager manager = modulePlayer.getAccount();
 
                                                 if (manager != null) {
-                                                    AccountManager newManager = new PlayerFile(manager.getUUID());
+                                                    AccountManager newManager = new PlayerAccount(manager.getUUID());
 
                                                     if (!newManager.exists())
                                                         newManager.create();

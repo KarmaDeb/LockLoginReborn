@@ -22,10 +22,10 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
@@ -98,7 +98,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                     AccountManager manager = offline.getAccount();
 
                                                     if (manager != null)
-                                                        accounts.add(new GlobalAccount(manager));
+                                                        accounts.add(manager);
                                                 }
 
                                                 for (AccountManager account : accounts) {
@@ -119,9 +119,9 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                             switch (name) {
                                                 case "everyone":
                                                     for (Player online : server.getAllPlayers()) {
-                                                        AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                        AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                         if (manager != null)
-                                                            accounts.add(new GlobalAccount(manager));
+                                                            accounts.add(manager);
                                                     }
 
                                                     for (AccountManager account : accounts) {
@@ -139,7 +139,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                     for (AccountManager account : accounts) {
                                                         player.sendActionBar(Component.text().content(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")).build());
 
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(new GlobalAccount(account))).build());
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
                                                         sent++;
                                                     }
 
@@ -152,9 +152,9 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                     for (Player online : server.getAllPlayers()) {
                                                         if (online.hasPermission(permission)) {
 
-                                                            AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, online);
+                                                            AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                             if (manager != null)
-                                                                accounts.add(new GlobalAccount(manager));
+                                                                accounts.add(manager);
                                                         }
                                                     }
 
@@ -178,7 +178,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                         if (info.isPresent()) {
                                             for (Player connection : info.get().getPlayersConnected()) {
                                                 User conUser = new User(connection);
-                                                accounts.add(new GlobalAccount(conUser.getManager()));
+                                                accounts.add(conUser.getManager());
                                             }
 
                                             for (AccountManager account : accounts) {
@@ -253,7 +253,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                 AccountManager manager = offline.getAccount();
 
                                 if (manager != null) {
-                                    accounts.add(new GlobalAccount(manager));
+                                    accounts.add(manager);
                                 }
                             }
 

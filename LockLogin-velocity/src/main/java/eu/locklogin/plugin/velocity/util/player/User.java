@@ -29,6 +29,7 @@ import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.Permission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -81,7 +82,7 @@ public final class User {
         User loaded = UserDatabase.loadUser(player);
         if (loaded == null) {
             if (CurrentPlatform.isValidAccountManager()) {
-                AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{Player.class}, player);
+                AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
 
                 if (manager == null) {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
@@ -189,7 +190,7 @@ public final class User {
      *
      * @param message the message to send
      */
-    public final void send(final String message) {
+    public void send(final String message) {
         String[] parsed = parseMessage(message);
 
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -213,7 +214,7 @@ public final class User {
      *
      * @param message the message to send
      */
-    public final void send(final Component message) {
+    public void send(final Component message) {
         player.sendMessage(message);
     }
 
@@ -223,7 +224,7 @@ public final class User {
      * @param title    the title to send
      * @param subtitle the subtitle to send
      */
-    public final void send(final String title, final String subtitle) {
+    public void send(final String title, final String subtitle) {
         TitleMessage titleMessage = new TitleMessage(player, title, subtitle);
         titleMessage.send(0, 5, 0);
     }
@@ -233,7 +234,7 @@ public final class User {
      *
      * @param index the server try index
      */
-    public final void checkServer(final int index) {
+    public void checkServer(final int index) {
         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
         List<RegisteredServer> lobbies = proxy.lobbyServers(RegisteredServer.class);
         List<RegisteredServer> auths = proxy.authServer(RegisteredServer.class);
@@ -284,7 +285,7 @@ public final class User {
      *
      * @param command the command to perform
      */
-    public final void performCommand(final String command) {
+    public void performCommand(final String command) {
         server.getCommandManager().executeAsync(player, command);
     }
 
@@ -293,7 +294,7 @@ public final class User {
      *
      * @param reason the reason of the kick
      */
-    public synchronized final void kick(final String reason) {
+    public synchronized void kick(final String reason) {
         server.getScheduler().buildTask(plugin, () -> {
             String[] parsed = parseMessage(reason);
 
@@ -313,7 +314,7 @@ public final class User {
      * Apply the session potion effect
      * types
      */
-    public synchronized final void applySessionEffects() {
+    public synchronized void applySessionEffects() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         MessageDataBuilder builder = getBuilder(DataType.EFFECTS, CHANNEL_PLAYER, player);
         if (isRegistered()) {
@@ -373,16 +374,16 @@ public final class User {
             The best solution is to just not create it if specified
              */
             BossProvider<Player> message = null;
-            int time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
+            int time = CurrentPlatform.getConfiguration().registerOptions().timeOut();
             if (getManager().isRegistered()) {
-                time = CurrentPlatform.getConfiguration().registerOptions().timeOut();
+                time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
 
-                if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
-                    message = new BossMessage(source, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
-                }
-            } else {
                 if (CurrentPlatform.getConfiguration().loginOptions().hasBossBar()) {
                     message = new BossMessage(source, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                }
+            } else {
+                if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
+                    message = new BossMessage(source, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             }
 
@@ -408,7 +409,7 @@ public final class User {
      * @return the player account manager
      */
     @NotNull
-    public final AccountManager getManager() {
+    public AccountManager getManager() {
         return managers.get(player.getUniqueId());
     }
 
@@ -418,7 +419,7 @@ public final class User {
      * @return the player session
      */
     @NotNull
-    public final ClientSession getSession() {
+    public ClientSession getSession() {
         return sessions.get(player.getUniqueId());
     }
 
@@ -428,7 +429,7 @@ public final class User {
      * @return the user google auth token
      * factory
      */
-    public final GoogleAuthFactory getTokenFactory() {
+    public GoogleAuthFactory getTokenFactory() {
         return new GoogleAuthFactory(player.getUniqueId(), StringUtils.toColor(player.getGameProfile().getName()));
     }
 
@@ -437,7 +438,7 @@ public final class User {
      *
      * @return if the user is registered
      */
-    public final boolean isRegistered() {
+    public boolean isRegistered() {
         AccountManager manager = getManager();
         String password = manager.getPassword();
 
@@ -450,7 +451,7 @@ public final class User {
      * @param permission the permission
      * @return if the player has the permission
      */
-    public final boolean hasPermission(final Permission permission) {
+    public boolean hasPermission(final Permission permission) {
         return permission.isPermissible(player, permission);
     }
 

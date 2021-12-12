@@ -16,6 +16,8 @@ package eu.locklogin.api.module.plugin.javamodule.sender;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.account.param.Parameter;
+import eu.locklogin.api.account.param.SimpleParameter;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.TitleSender;
@@ -289,5 +291,26 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
         if (onClose != null && isPlaying()) {
             onClose.accept(this);
         }
+    }
+
+    /**
+     * Get the parameter of the account parameter
+     *
+     * @return the account constructor parameter
+     */
+    @Override
+    public Parameter<ModuleSender> getParameter() {
+        return new SimpleParameter<>("player", this);
+    }
+
+    /**
+     * Get a class instance of the account constructor
+     * type
+     *
+     * @return the account constructor type
+     */
+    @Override
+    public Class<? extends ModuleSender> getType() {
+        return ModulePlayer.class;
     }
 }

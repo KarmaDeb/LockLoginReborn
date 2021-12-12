@@ -19,10 +19,10 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.GlobalAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
@@ -98,7 +98,7 @@ public final class PlayerInfoCommand extends Command {
                                                     AccountManager manager = offline.getAccount();
 
                                                     if (manager != null)
-                                                        accounts.add(new GlobalAccount(manager));
+                                                        accounts.add(manager);
                                                 }
 
                                                 for (AccountManager account : accounts) {
@@ -119,9 +119,9 @@ public final class PlayerInfoCommand extends Command {
                                             switch (name) {
                                                 case "everyone":
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
-                                                        AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
+                                                        AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                         if (manager != null)
-                                                            accounts.add(new GlobalAccount(manager));
+                                                            accounts.add(manager);
                                                     }
 
                                                     for (AccountManager account : accounts) {
@@ -138,7 +138,7 @@ public final class PlayerInfoCommand extends Command {
                                                     for (AccountManager account : accounts) {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(new GlobalAccount(account))).build());
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
                                                         sent++;
                                                     }
 
@@ -151,9 +151,9 @@ public final class PlayerInfoCommand extends Command {
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                                         if (online.hasPermission(permission)) {
 
-                                                            AccountManager manager = CurrentPlatform.getAccountManager(new Class[]{ProxiedPlayer.class}, online);
+                                                            AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                             if (manager != null)
-                                                                accounts.add(new GlobalAccount(manager));
+                                                                accounts.add(manager);
                                                         }
                                                     }
 
@@ -177,7 +177,7 @@ public final class PlayerInfoCommand extends Command {
                                         if (info != null) {
                                             for (ProxiedPlayer connection : info.getPlayers()) {
                                                 User conUser = new User(connection);
-                                                accounts.add(new GlobalAccount(conUser.getManager()));
+                                                accounts.add(conUser.getManager());
                                             }
 
                                             for (AccountManager account : accounts) {
@@ -253,7 +253,7 @@ public final class PlayerInfoCommand extends Command {
                                 AccountManager manager = offline.getAccount();
 
                                 if (manager != null) {
-                                    accounts.add(new GlobalAccount(manager));
+                                    accounts.add(manager);
                                 }
                             }
 

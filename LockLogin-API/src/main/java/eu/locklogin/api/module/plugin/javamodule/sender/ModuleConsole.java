@@ -14,6 +14,7 @@ package eu.locklogin.api.module.plugin.javamodule.sender;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.server.ModuleServerMessageEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
@@ -21,6 +22,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.console.ConsolePrefix;
 import eu.locklogin.api.module.plugin.javamodule.console.MessageLevel;
 import ml.karmaconfigs.api.common.karma.APISource;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * LockLogin module console manager
@@ -105,5 +107,26 @@ public final class ModuleConsole extends ModuleSender {
      */
     public ConsolePrefix getPrefixManager() {
         return new ConsolePrefix(module);
+    }
+
+    /**
+     * Get the parameter of the account parameter
+     *
+     * @return the account constructor parameter
+     */
+    @Override
+    public @Nullable Parameter<ModuleSender> getParameter() {
+        return null;
+    }
+
+    /**
+     * Get a class instance of the account constructor
+     * type
+     *
+     * @return the account constructor type
+     */
+    @Override
+    public Class<? extends ModuleSender> getType() {
+        return ModuleConsole.class;
     }
 }
