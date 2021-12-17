@@ -12,6 +12,9 @@ package eu.locklogin.api.common.utils;
  */
 
 import eu.locklogin.api.file.plugin.PluginProperties;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.KarmaUnit;
+import ml.karmaconfigs.api.common.utils.string.util.time.TimeName;
 
 import java.time.Instant;
 import java.time.Period;
@@ -123,39 +126,77 @@ public final class InstantParser {
     }
 
     /**
-     * Get the time ago from the specified instant
+     * Get the time ago from today
      *
-     * @param difference the instant
      * @return the time ago
      */
-    public String getDifference(final Instant difference) {
+    public String getDifference() {
         PluginProperties properties = new PluginProperties();
+        Instant today = Instant.now();
 
-        ZonedDateTime instZT = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-        ZonedDateTime diffZT = ZonedDateTime.ofInstant(difference, ZoneId.systemDefault());
+        long diff = (today.toEpochMilli() - instant.toEpochMilli());
 
-        Period period = Period.between(instZT.toLocalDate(), diffZT.toLocalDate());
+        String year = properties.getProperty("diff_year", "year");
+        String years = properties.getProperty("diff_years", "years");
 
-        long diffInMillis = GregorianCalendar.from(diffZT).getTime().getTime() - GregorianCalendar.from(instZT).getTime().getTime();
+        String month = properties.getProperty("diff_month", "month");
+        String months = properties.getProperty("diff_months", "months");
 
-        List<TimeUnit> units = new ArrayList<>(EnumSet.allOf(TimeUnit.class));
-        Collections.reverse(units);
+        String week = properties.getProperty("diff_week", "week");
+        String weeks = properties.getProperty("diff_weeks", "weeks");
 
-        Map<TimeUnit, Long> result = new LinkedHashMap<>();
-        long millisRest = diffInMillis;
-        for (TimeUnit unit : units) {
+        String day = properties.getProperty("diff_day", "day");
+        String days = properties.getProperty("diff_days", "days");
 
-            long diff = unit.convert(millisRest, TimeUnit.MILLISECONDS);
-            long diffInMillisForUnit = unit.toMillis(diff);
-            millisRest = millisRest - diffInMillisForUnit;
+        String hour = properties.getProperty("diff_hour", "hour");
+        String hours = properties.getProperty("diff_hours", "hours");
 
-            result.put(unit, diff);
-        }
+        String minute = properties.getProperty("diff_minute", "minute");
+        String minutes = properties.getProperty("diff_minutes", "minutes");
 
-        return Math.abs(period.getYears()) + " " + properties.getProperty("year", "year(s)") + ", " +
-                Math.abs(period.getMonths()) + " " + properties.getProperty("month", "month(s)") + ", " +
-                Math.abs(result.get(TimeUnit.DAYS).intValue()) + " " + properties.getProperty("day", "day(s)") + ", " +
-                Math.abs(result.get(TimeUnit.HOURS).intValue()) + ":" + Math.abs(result.get(TimeUnit.MINUTES).intValue()) +
-                " " + Math.abs(result.get(TimeUnit.SECONDS).intValue());
+        String second = properties.getProperty("diff_second", "second");
+        String seconds = properties.getProperty("diff_seconds", "seconds");
+
+        String milli = properties.getProperty("diff_milli", "ms");
+        String millis = properties.getProperty("diff_millis", "ms");
+
+        return StringUtils.timeToString(diff, TimeName.create()
+                .add(KarmaUnit.YEAR, year)
+                .add(KarmaUnit.YEARS, years)
+
+                .add(KarmaUnit.MONTH, month)
+                .add(KarmaUnit.MONTHS, months)
+
+                .add(KarmaUnit.WEEK, week)
+                .add(KarmaUnit.WEEKS, weeks)
+
+                .add(KarmaUnit.DAY, day)
+                .add(KarmaUnit.DAYS, days)
+
+                .add(KarmaUnit.HOUR, hour)
+                .add(KarmaUnit.HOURS, hours)
+
+                .add(KarmaUnit.MINUTE, minute)
+                .add(KarmaUnit.MINUTES, minutes)
+
+                .add(KarmaUnit.SECOND, second)
+                .add(KarmaUnit.SECONDS, seconds)
+
+                .add(KarmaUnit.MILLISECOND, milli)
+                .add(KarmaUnit.MILLISECONDS, millis))
+                .replace(", ", properties.getProperty("diff_spacer", ", ").replace("\"", ""))
+                .replace(" and ", properties.getProperty("diff_final", " and "));
+    }
+
+    /**
+     * Get the time ago from the specified instant
+     *
+     * @param difference the time to use as check
+     * @return the time ago
+     * @deprecated As argument was never being used, use {@link InstantParser#getDifference()} instead
+     */
+    @Deprecated
+    public String getDifference(final Instant difference) {
+        return getDifference();
     }
 }

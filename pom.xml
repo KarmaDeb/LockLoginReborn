@@ -41,7 +41,7 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLoginReborn.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLoginReborn.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLoginReborn/tree/master</url>
-        <tag>1.13.9</tag>
+        <tag>1.13.9-SNAPSHOT</tag>
     </scm>
 
     <properties>
@@ -50,7 +50,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.manager>v6</project.manager>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.properties.version>1.0.2</project.properties.version>
+        <project.properties.version>1.0.3</project.properties.version>
         <project.name>LockLogin</project.name>
         <project.author>KarmaDev</project.author>
         <project.buildType>RELEASE</project.buildType>
@@ -159,8 +159,8 @@
         </pluginManagement>
     </build>
 
-    <!--
     <distributionManagement>
+        <!--
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
@@ -169,10 +169,7 @@
             <id>ossrh</id>
             <url>https://s01.oss.sonatype.org/content/repositories/releases/</url>
         </repository>
-    </distributionManagement>
-    -->
-
-    <distributionManagement>
+        -->
         <repository>
             <id>internal.repo</id>
             <name>Internal repo</name>

@@ -28,7 +28,10 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
+import eu.locklogin.api.module.plugin.client.OpContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
+import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -53,10 +56,7 @@ import org.bstats.velocity.Metrics;
 
 import java.io.File;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -251,6 +251,28 @@ public class Main implements KarmaSource {
                         user.performCommand("account close");
                     }
                 };
+                Consumer<PermissionContainer> hasPermission = permContainer -> {
+                    UUID id = permContainer.getAttachment().getUUID();
+
+                    server.getPlayer(id).ifPresent((player -> {
+                        PermissionObject permission = permContainer.getPermission();
+
+                        switch (permission.getCriteria()) {
+                            case TRUE:
+                                permContainer.setResult(!player.hasPermission("!" + permission.getPermission()));
+                                break;
+                            case FALSE:
+                            case OP:
+                            default:
+                                permContainer.setResult(player.hasPermission(permission.getPermission()));
+                        }
+                    }));
+                };
+                Consumer<OpContainer> opContainer = pContainer -> {
+                    UUID id = pContainer.getAttachment().getUUID();
+
+                    server.getPlayer(id).ifPresent((player) -> pContainer.setResult(player.hasPermission("*") || player.hasPermission("'*'")));
+                };
                 BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
 
                 try {
@@ -260,6 +282,9 @@ public class Main implements KarmaSource {
                     JarManager.changeField(ModulePlayer.class, "onKick", onKick);
                     JarManager.changeField(ModulePlayer.class, "onLogin", onLogin);
                     JarManager.changeField(ModulePlayer.class, "onClose", onClose);
+                    JarManager.changeField(ModulePlayer.class, "hasPermission", hasPermission);
+                    JarManager.changeField(ModulePlayer.class, "opContainer", opContainer);
+
                     JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
                 } catch (Throwable ignored) {
                 }

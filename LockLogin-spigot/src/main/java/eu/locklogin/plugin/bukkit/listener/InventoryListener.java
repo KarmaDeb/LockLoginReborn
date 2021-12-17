@@ -105,7 +105,7 @@ public final class InventoryListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onInventoryOpen(InventoryOpenEvent e) {
+    public void onInventoryOpen(InventoryOpenEvent e) {
         Inventory inventory = e.getInventory();
         HumanEntity entity = e.getPlayer();
 
@@ -114,16 +114,18 @@ public final class InventoryListener implements Listener {
             User user = new User(player);
             ClientSession session = user.getSession();
 
-            if (!session.isPinLogged()) {
-                if (!(inventory.getHolder() instanceof PinInventory)) {
-                    e.setCancelled(true);
-                }
+            if (!session.isLogged() || !session.isTempLogged()) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue(() -> {
+                    if (!(inventory.getHolder() instanceof PinInventory)) {
+                        player.closeInventory();
+                    }
+                }), 10);
             }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onInventoryClose(InventoryCloseEvent e) {
+    public void onInventoryClose(InventoryCloseEvent e) {
         HumanEntity entity = e.getPlayer();
 
         if (entity instanceof Player) {
@@ -132,20 +134,20 @@ public final class InventoryListener implements Listener {
             ClientSession session = user.getSession();
 
             if (!session.isPinLogged()) {
-                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                    BungeeDataStorager storager = new BungeeDataStorager();
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue(() -> {
+                    BungeeDataStorager storage = new BungeeDataStorager();
 
-                    if (user.getManager().hasPin() || storager.needsPinConfirmation(player)) {
+                    if (user.getManager().hasPin() || storage.needsPinConfirmation(player)) {
                         PinInventory pin = new PinInventory(player);
                         pin.open();
                     }
-                }, 10);
+                }), 10);
             }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void menuInteract(InventoryInteractEvent e) {
+    public void menuInteract(InventoryInteractEvent e) {
         Player player = (Player) e.getWhoClicked();
         User user = new User(player);
         ClientSession session = user.getSession();
@@ -158,7 +160,7 @@ public final class InventoryListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void menuClick(InventoryClickEvent e) {
+    public void menuClick(InventoryClickEvent e) {
         Player player = (Player) e.getWhoClicked();
         User user = new User(player);
         ClientSession session = user.getSession();
@@ -272,6 +274,13 @@ public final class InventoryListener implements Listener {
         }
     }
 
+    /**
+     * I may re implement this in the future
+     *
+     * @param number the clicked number
+     * @return the number note
+     */
+    @Deprecated
     private double getNote(final String number) {
         try {
             int num = Integer.parseInt(number);

@@ -74,7 +74,7 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Initialize the inventory items
      */
-    protected void makeInventory() {
+    void makeInventory() {
         inventory.setItem(12, Button.seven());
         inventory.setItem(13, Button.eight());
         inventory.setItem(14, Button.nine());
@@ -103,14 +103,14 @@ public final class PinInventory implements InventoryHolder {
      */
     @NotNull
     @Override
-    public final Inventory getInventory() {
+    public Inventory getInventory() {
         return inventory;
     }
 
     /**
      * Open the inventory to the player
      */
-    public final synchronized void open() {
+    public synchronized void open() {
         trySync(() -> {
             makeInventory();
             player.openInventory(inventory);

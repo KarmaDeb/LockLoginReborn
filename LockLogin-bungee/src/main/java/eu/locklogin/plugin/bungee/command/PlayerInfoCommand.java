@@ -237,7 +237,7 @@ public final class PlayerInfoCommand extends Command {
                                             user.send(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                                             user.send(StringUtils.formatString(parsed.get(++msg), (manager.has2FA())));
                                             user.send(StringUtils.formatString(parsed.get(++msg), (manager.hasPin())));
-                                            user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
+                                            user.send(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference()));
                                         } else {
                                             user.send(messages.prefix() + messages.neverPlayer(target));
                                         }

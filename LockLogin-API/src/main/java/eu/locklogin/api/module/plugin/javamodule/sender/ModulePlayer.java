@@ -20,7 +20,10 @@ import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
+import eu.locklogin.api.module.plugin.client.OpContainer;
+import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -50,6 +53,11 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     private static Consumer<ModulePlayer> onLogin = null;
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<ModulePlayer> onClose = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<PermissionContainer> hasPermission = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static Consumer<OpContainer> opContainer = null;
+
     private final String name;
     private final UUID uniqueId;
     private final ClientSession session;
@@ -213,6 +221,36 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
         return false;
     }
 
+    /**
+     * Get if the player has the specified permission
+     *
+     * @param permission the permission
+     * @return if the player has the specified permission
+     */
+    public boolean hasPermission(final PermissionObject permission) {
+        PermissionContainer container = new PermissionContainer(this, permission);
+
+        if (hasPermission != null) {
+            hasPermission.accept(container);
+        }
+
+        return container.getResult();
+    }
+
+    /**
+     * Get if the player is an operator in the server
+     *
+     * @return if the player is an operator
+     */
+    public boolean isOp() {
+        OpContainer container = new OpContainer(this);
+        if (opContainer != null) {
+            opContainer.accept(container);
+        }
+
+        return container.getResult();
+    }
+    
     /**
      * Send a message to the player
      *

@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.Password;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -26,6 +27,8 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
+import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
@@ -49,6 +52,7 @@ import java.util.List;
 import java.util.Set;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
+import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent.ChangeResult;
 
 @SystemCommand(command = "account")
 public class AccountCommand extends Command {
@@ -92,11 +96,41 @@ public class AccountCommand extends Command {
 
                                 CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (util.validate()) {
+                                    ChangeResult result;
                                     if (!password.equals(new_pass)) {
-                                        manager.setPassword(new_pass);
-                                        user.send(messages.prefix() + messages.changeDone());
+                                        Password secure = new Password(new_pass);
+                                        if (secure.isSecure()) {
+                                            result = ChangeResult.ALLOWED;
+                                        } else {
+                                            result = (config.blockUnsafePasswords() ? ChangeResult.DENIED_UNSAFE : ChangeResult.ALLOWED_UNSAFE);
+                                        }
                                     } else {
-                                        user.send(messages.prefix() + messages.changeSame());
+                                        result = ChangeResult.DENIED_SAME;
+                                    }
+
+                                    Event event = new UserChangePasswordEvent(user.getModule(), result);
+                                    ModulePlugin.callEvent(event);
+
+                                    if (event.isHandled()) {
+                                        user.send(messages.prefix() + event.getHandleReason());
+                                    } else {
+                                        switch (result) {
+                                            case ALLOWED:
+                                                manager.setPassword(new_pass);
+                                                user.send(messages.prefix() + messages.changeDone());
+                                                break;
+                                            case ALLOWED_UNSAFE:
+                                                manager.setPassword(new_pass);
+                                                user.send(messages.prefix() + messages.loginInsecure());
+                                                break;
+                                            case DENIED_SAME:
+                                                user.send(messages.prefix() + messages.changeSame());
+                                                break;
+                                            case DENIED_UNSAFE:
+                                            default:
+                                                user.send(messages.prefix() + messages.passwordInsecure());
+                                                break;
+                                        }
                                     }
                                 } else {
                                     user.send(messages.prefix() + messages.incorrectPassword());

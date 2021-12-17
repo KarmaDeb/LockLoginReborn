@@ -123,7 +123,7 @@ public final class LockLoginPlaceholder extends PlaceholderExpansion {
                 if (manager != null && manager.exists())
                     parser = new InstantParser(manager.getCreationTime());
 
-                return parser.getDifference(Instant.now());
+                return parser.getDifference();
             default:
                 return "404 ( " + identifier + " )";
         }

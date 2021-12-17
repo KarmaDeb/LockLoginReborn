@@ -17,7 +17,10 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
+import eu.locklogin.api.module.plugin.client.OpContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
+import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -32,6 +35,8 @@ import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -180,6 +185,37 @@ public class MainBootstrap {
                 player.performCommand("account close");
             }
         };
+        Consumer<PermissionContainer> hasPermission = container -> {
+            UUID id = container.getAttachment().getUUID();
+
+            Player player = loader.getServer().getPlayer(id);
+            if (player != null) {
+                PermissionObject permission = container.getPermission();
+                Permission tmp;
+
+                switch (permission.getCriteria()) {
+                    case TRUE:
+                        tmp = new Permission(permission.getPermission(), PermissionDefault.TRUE);
+                        break;
+                    case FALSE:
+                        tmp = new Permission(permission.getPermission(), PermissionDefault.FALSE);
+                        break;
+                    case OP:
+                    default:
+                        tmp = new Permission(permission.getPermission(), PermissionDefault.OP);
+                }
+
+                container.setResult(player.hasPermission(tmp));
+            }
+        };
+        Consumer<OpContainer> opContainer = container -> {
+            UUID id = container.getAttachment().getUUID();
+
+            Player player = loader.getServer().getPlayer(id);
+            if (player != null) {
+                container.setResult(player.isOp() || player.hasPermission("*") || player.hasPermission("'*'"));
+            }
+        };
         BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule;
 
         try {
@@ -189,6 +225,9 @@ public class MainBootstrap {
             JarManager.changeField(ModulePlayer.class, "onKick", onKick);
             JarManager.changeField(ModulePlayer.class, "onLogin", onLogin);
             JarManager.changeField(ModulePlayer.class, "onClose", onClose);
+            JarManager.changeField(ModulePlayer.class, "hasPermission", hasPermission);
+            JarManager.changeField(ModulePlayer.class, "opContainer", opContainer);
+
             JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
         } catch (Throwable ignored) {
         }

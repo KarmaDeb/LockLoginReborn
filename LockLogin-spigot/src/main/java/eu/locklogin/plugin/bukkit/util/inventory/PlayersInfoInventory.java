@@ -114,7 +114,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
                         lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                         lore.add(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
                         lore.add(StringUtils.formatString(parsed.get(++msg), (!manager.getPin().replaceAll("\\s", "").isEmpty())));
-                        lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
+                        lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference()));
 
                         meta.setLore(StringUtils.toColor(lore));
 
@@ -190,7 +190,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
                     lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                     lore.add(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
                     lore.add(StringUtils.formatString(parsed.get(++msg), (!manager.getPin().replaceAll("\\s", "").isEmpty())));
-                    lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference(Instant.now())));
+                    lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference()));
 
                     meta.setLore(StringUtils.toColor(lore));
 
