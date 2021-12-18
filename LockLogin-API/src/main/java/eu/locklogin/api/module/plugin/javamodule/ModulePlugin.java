@@ -285,6 +285,9 @@ public final class ModulePlugin {
         if (command.startsWith(CurrentPlatform.getPrefix()))
             command = command.substring(1);
 
+        if (command.contains(" "))
+            command = command.split(" ")[0];
+
         for (PluginModule module : module_commands.keySet()) {
             Set<Command> handlers = module_commands.getOrDefault(module, new LinkedHashSet<>());
 
@@ -306,6 +309,9 @@ public final class ModulePlugin {
     private static boolean isValid(String command) {
         if (command.startsWith(CurrentPlatform.getPrefix()))
             command = command.substring(1);
+
+        if (command.contains(" "))
+            command = command.split(" ")[0];
 
         return availableCommands().stream().anyMatch(command::equalsIgnoreCase);
     }

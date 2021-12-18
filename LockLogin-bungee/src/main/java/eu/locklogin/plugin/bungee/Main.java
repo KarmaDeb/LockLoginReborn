@@ -22,6 +22,8 @@ import ml.karmaconfigs.api.bungee.KarmaPlugin;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import net.md_5.bungee.api.ProxyServer;
 
+import java.net.URL;
+
 public final class Main extends KarmaPlugin {
 
     private static boolean status = false;
@@ -79,24 +81,29 @@ public final class Main extends KarmaPlugin {
 
     @Override
     public String updateURL() {
-        String host = "https://karmarepo.000webhostapp.com/locklogin/version/";
-        if (!URLUtils.exists(host)) {
-            host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
-        }
+        URL host = URLUtils.getOrBackup(
+                "https://karmadev.es/locklogin/version",
+                "https://karmarepo.000webhostapp.com/locklogin/version/",
+                "https://karmaconfigs.github.io/updates/LockLogin/version/"
+        );
 
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-        if (config != null) {
-            switch (config.getUpdaterOptions().getChannel()) {
-                case SNAPSHOT:
-                    return host + "snapshot.kupdter";
-                case RC:
-                    return host + "candidate.kupdter";
-                case RELEASE:
-                default:
-                    return host + "release.kupdter";
+        if (host != null) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            if (config != null) {
+                switch (config.getUpdaterOptions().getChannel()) {
+                    case SNAPSHOT:
+                        return host + "snapshot.kupdter";
+                    case RC:
+                        return host + "candidate.kupdter";
+                    case RELEASE:
+                    default:
+                        return host + "release.kupdter";
+                }
             }
+
+            return host + "release.kupdter";
         }
 
-        return host + "release.kupdter";
+        return null;
     }
 }

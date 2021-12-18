@@ -75,6 +75,7 @@ public final class ChecksumTables {
                 String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 URL check_url = URLUtils.getOrBackup(
+                        "https://karmadev.es/locklogin/checksum/" + version + "/checksum.lldb",
                         "https://karmarepo.000webhostapp.com/locklogin/checksum/" + version + "/checksum.lldb",
                         "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb");
                 if (check_url != null) {

@@ -60,7 +60,9 @@ public final class STFetcher {
                     }
                 }, wait);
 
-                URL check_url = URLUtils.getOrBackup("https://karmarepo.000webhostapp.com/locklogin/stf/",
+                URL check_url = URLUtils.getOrBackup(
+                        "https://karmadev.es/locklogin/stf/",
+                        "https://karmarepo.000webhostapp.com/locklogin/stf/",
                         "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json");
                 HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
                 connection.setRequestMethod("GET");

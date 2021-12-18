@@ -55,6 +55,7 @@ import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -367,25 +368,30 @@ public class Main implements KarmaSource {
 
     @Override
     public String updateURL() {
-        String host = "https://karmarepo.000webhostapp.com/locklogin/version/";
-        if (!URLUtils.exists(host)) {
-            host = "https://karmaconfigs.github.io/updates/LockLogin/version/";
-        }
+        URL host = URLUtils.getOrBackup(
+                "https://karmadev.es/locklogin/version",
+                "https://karmarepo.000webhostapp.com/locklogin/version/",
+                "https://karmaconfigs.github.io/updates/LockLogin/version/"
+        );
 
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-        if (config != null) {
-            switch (config.getUpdaterOptions().getChannel()) {
-                case SNAPSHOT:
-                    return host + "snapshot.kupdter";
-                case RC:
-                    return host + "candidate.kupdter";
-                case RELEASE:
-                default:
-                    return host + "release.kupdter";
+        if (host != null) {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            if (config != null) {
+                switch (config.getUpdaterOptions().getChannel()) {
+                    case SNAPSHOT:
+                        return host + "snapshot.kupdter";
+                    case RC:
+                        return host + "candidate.kupdter";
+                    case RELEASE:
+                    default:
+                        return host + "release.kupdter";
+                }
             }
+
+            return host + "release.kupdter";
         }
 
-        return host + "release.kupdter";
+        return null;
     }
 
     @Override

@@ -2,6 +2,7 @@ package eu.locklogin.api.file;
 
 import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
@@ -122,6 +123,16 @@ public abstract class PluginMessages {
         } else {
             return parse(msg.getString("PermissionError", "&5&oYou do not have the permission {permission}").replace("{permission}", "\"permission object doesn't has getName method\""));
         }
+    }
+
+    /**
+     * Get a plugin message for modules
+     *
+     * @param permission message replace
+     * @return plugin module message
+     */
+    public String permissionError(final PermissionObject permission) {
+        return parse(msg.getString("PermissionError", "&5&oYou do not have the permission {permission}").replace("{permission}", permission.getPermission()));
     }
 
     /**
