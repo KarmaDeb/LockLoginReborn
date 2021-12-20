@@ -18,8 +18,10 @@ import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +88,60 @@ public final class PlayerAccount extends AccountManager {
                 }
 
                 manager = new KarmaFile(randomId.getAccountFile());
+
+                String name = manager.getString("PLAYER", "");
+                String uuid = manager.getString("UUID", "");
+                String password = manager.getString("PASSWORD", "");
+                String token = manager.getString("TOKEN", "");
+                String pin = manager.getString("PIN", "");
+                String gAuth = manager.getString("2FA", "");
+                if (name.startsWith("PLAYER:")) {
+                    manager.set("PLAYER", name.replaceFirst("PLAYER:", ""));
+                } else {
+                    if (name.startsWith("PLAYER: ")) {
+                        manager.set("PLAYER", name.replaceFirst("PLAYER: ", ""));
+                    }
+                }
+
+                if (uuid.startsWith("UUID:")) {
+                    manager.set("UUID", uuid.replaceFirst("UUID:", ""));
+                } else {
+                    if (uuid.startsWith("UUID: ")) {
+                        manager.set("UUID", uuid.replaceFirst("UUID: ", ""));
+                    }
+                }
+
+                if (password.startsWith("PASSWORD:")) {
+                    manager.set("PASSWORD", password.replaceFirst("PASSWORD:", ""));
+                } else {
+                    if (password.startsWith("PASSWORD: ")) {
+                        manager.set("PASSWORD", password.replaceFirst("PASSWORD: ", ""));
+                    }
+                }
+
+                if (token.startsWith("TOKEN:")) {
+                    manager.set("TOKEN", token.replaceFirst("TOKEN:", ""));
+                } else {
+                    if (token.startsWith("TOKEN: ")) {
+                        manager.set("TOKEN", token.replaceFirst("TOKEN: ", ""));
+                    }
+                }
+
+                if (pin.startsWith("PIN:")) {
+                    manager.set("PIN", pin.replaceFirst("PIN:", ""));
+                } else {
+                    if (pin.startsWith("PIN: ")) {
+                        manager.set("PIN", pin.replaceFirst("PIN: ", ""));
+                    }
+                }
+
+                if (gAuth.startsWith("2FA:")) {
+                    manager.set("2FA", gAuth.replaceFirst("2FA:", ""));
+                } else {
+                    if (gAuth.startsWith("2FA: ")) {
+                        manager.set("2FA", gAuth.replaceFirst("2FA: ", ""));
+                    }
+                }
             } else {
                 throw new IllegalArgumentException("Cannot initialize player file instance for invalid account constructor parameter");
             }
@@ -386,9 +442,33 @@ public final class PlayerAccount extends AccountManager {
      *
      * @return the player UUID
      */
-    @Override
+    @Override @Nullable
     public AccountID getUUID() {
         String id = manager.getString("UUID", UUID.randomUUID().toString());
+        if (StringUtils.isNullOrEmpty(id)) {
+            String name = manager.getFile().getName();
+            String extension = FileUtilities.getExtension(name);
+            UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
+
+            String nick = UUIDUtil.fetchNick(fixed);
+            if (nick != null) {
+                setName(nick);
+
+                if (CurrentPlatform.isOnline()) {
+                    id = UUIDUtil.fetchMinecraftUUID(nick).toString();
+                } else {
+                    id = UUIDUtil.forceMinecraftOffline(nick).toString();
+                }
+
+                manager.set("UUID", id);
+            } else {
+                if (fixed != null) {
+                    manager.set("UUID", fixed.toString());
+                    id = fixed.toString();
+                }
+            }
+        }
+
         return AccountID.fromString(id);
     }
 
@@ -556,17 +636,23 @@ public final class PlayerAccount extends AccountManager {
     public Set<AccountManager> getAccounts() {
         Set<AccountManager> managers = new LinkedHashSet<>();
 
-        File[] files = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts").listFiles();
-        if (files != null) {
-            for (File file : files) {
-                String extension = FileUtilities.getExtension(file);
-                String trimmedId = file.getName().replace("." + extension, "");
+        Path accounts = source.getDataPath().resolve("data").resolve("accounts");
+        if (Files.exists(accounts)) {
+            try {
+                Files.list(accounts).forEach((sub) -> {
+                    String extension = PathUtilities.getExtension(sub);
+                    String trimmedId = sub.getFileName().toString().replace("." + extension, "");
 
-                AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
-                AccountID uuid = manager.getUUID();
-                String name = manager.getName();
-                if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())
-                    managers.add(manager);
+                    AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
+                    AccountID uuid = manager.getUUID();
+                    if (uuid != null) {
+                        String name = manager.getName();
+                        if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())
+                            managers.add(manager);
+                    }
+                });
+            } catch (Throwable ex) {
+                ex.printStackTrace();
             }
         }
 

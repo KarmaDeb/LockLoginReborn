@@ -64,7 +64,7 @@ import java.util.function.Consumer;
 @Plugin(
         id = "locklogin",
         name = "LockLogin",
-        version = "1.13.10",
+        version = "1.13.11",
         authors = {"KarmaDev"},
         description =
                 "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +

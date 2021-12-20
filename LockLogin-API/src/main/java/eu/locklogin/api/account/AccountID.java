@@ -53,17 +53,14 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      *
      * @param stringUUID the string UUID
      * @return a new account id object
-     *
-     * @throws IllegalArgumentException if the trimmed UUID is not a
-     * valid trimmed UUID
      */
-    public static AccountID fromString(final String stringUUID) throws IllegalArgumentException {
+    public static AccountID fromString(final String stringUUID) {
         UUID result = UUIDUtil.fromTrimmed(stringUUID);
 
         if (result != null) {
             return new AccountID(result);
         } else {
-            throw new IllegalArgumentException("Cannot create account id of trimmed UUID for invalid string UUID ( " + stringUUID + " )");
+            return null;
         }
     }
 
