@@ -55,6 +55,7 @@ import net.kyori.adventure.text.Component;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -64,7 +65,7 @@ import java.util.function.Consumer;
 @Plugin(
         id = "locklogin",
         name = "LockLogin",
-        version = "1.13.11",
+        version = "1.13.13",
         authors = {"KarmaDev"},
         description =
                 "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +
@@ -90,10 +91,10 @@ public class Main implements KarmaSource {
     private static Scheduler async;
     private static Scheduler sync;
     private static Main instance;
-    private final BruteLoader appender;
 
     @Inject
     public Main(ProxyServer server, Metrics.Factory fact) {
+        KarmaAPI.install();
         APISource.addProvider(this);
 
         console = new Console(this, (message) -> server.getConsoleCommandSource().sendMessage(
@@ -105,7 +106,7 @@ public class Main implements KarmaSource {
 
         Main.server = server;
         factory = fact;
-        appender = new BruteLoader((URLClassLoader) Main.class.getClassLoader());
+        BruteLoader appender = new BruteLoader((URLClassLoader) Main.class.getClassLoader());
         source = this;
 
         ChecksumTables tables = new ChecksumTables();
@@ -368,11 +369,32 @@ public class Main implements KarmaSource {
 
     @Override
     public String updateURL() {
-        URL host = URLUtils.getOrBackup(
-                "https://karmadev.es/locklogin/version",
+        String[] hosts = new String[]{
+                "https://karmadev.es/locklogin/version/",
                 "https://karmarepo.000webhostapp.com/locklogin/version/",
                 "https://karmaconfigs.github.io/updates/LockLogin/version/"
-        );
+        };
+
+        URL host = null;
+        for (String url : hosts) {
+            String check;
+            if (url.startsWith("https://karmadev.es")) {
+                check = "https://karmadev.es/";
+            } else {
+                if (url.startsWith("https://karmarepo.000webhostapp.com")) {
+                    check = "https://karmarepo.000webhostapp.com/";
+                } else {
+                    check = "https://karmaconfigs.github.io";
+                }
+            }
+
+            int response = URLUtils.getResponseCode(check);
+            if (response == HttpURLConnection.HTTP_OK) {
+                host = URLUtils.getOrNull(url);
+                if (host != null)
+                    break;
+            }
+        }
 
         if (host != null) {
             PluginConfiguration config = CurrentPlatform.getConfiguration();

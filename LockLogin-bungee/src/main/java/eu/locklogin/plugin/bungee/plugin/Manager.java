@@ -14,7 +14,6 @@ package eu.locklogin.plugin.bungee.plugin;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.TokenGen;

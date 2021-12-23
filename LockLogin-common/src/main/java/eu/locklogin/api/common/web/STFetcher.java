@@ -60,25 +60,39 @@ public final class STFetcher {
                     }
                 }, wait);
 
-                URL check_url = URLUtils.getOrBackup(
+                String[] urls = new String[]{
                         "https://karmadev.es/locklogin/stf/",
                         "https://karmarepo.000webhostapp.com/locklogin/stf/",
-                        "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json");
-                HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
-                connection.setRequestMethod("GET");
+                        "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json"
+                };
 
-                int response = connection.getResponseCode();
-                if (response == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                URL check_url = null;
+                for (String url : urls) {
+                    int response = URLUtils.getResponseCode(url);
+                    if (response == HttpURLConnection.HTTP_OK) {
+                        check_url = URLUtils.getOrNull(url);
+                        if (check_url != null)
+                            break;
+                    }
+                }
 
-                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                    JsonObject value = gson.fromJson(reader, JsonObject.class);
-                    JsonArray array = value.get("donors").getAsJsonArray();
+                if (check_url != null) {
+                    HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
+                    connection.setRequestMethod("GET");
 
-                    for (JsonElement element : array) special_thanks.add(element.getAsString());
-                } else {
-                    can_check = true;
-                    lockLogin.console().send("&cFailed to retrieve adler checksum from karma repository site, response code: ({0} - {1})", response, connection.getResponseMessage());
+                    int response = connection.getResponseCode();
+                    if (response == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+                        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                        JsonObject value = gson.fromJson(reader, JsonObject.class);
+                        JsonArray array = value.get("donors").getAsJsonArray();
+
+                        for (JsonElement element : array) special_thanks.add(element.getAsString());
+                    } else {
+                        can_check = true;
+                        lockLogin.console().send("&cFailed to retrieve adler checksum from karma repository site, response code: ({0} - {1})", response, connection.getResponseMessage());
+                    }
                 }
             } catch (Throwable ex) {
                 can_check = true;

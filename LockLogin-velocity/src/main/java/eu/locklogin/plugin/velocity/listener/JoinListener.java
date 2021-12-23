@@ -36,7 +36,6 @@ import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -62,6 +61,7 @@ import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
@@ -261,8 +261,11 @@ public final class JoinListener {
         ModulePlugin.callEvent(ipEvent);
 
         String conn_name = e.getUsername();
-        UUID gen_uuid = UUIDGen.getUUID(e.getUsername());
-        UUID tar_uuid = ids.getOrDefault(conn_name, UUIDGen.getUUID(conn_name));
+        UUID gen_uuid = UUIDUtil.forceMinecraftOffline(conn_name);
+        if (CurrentPlatform.isOnline() || e.getResult().isOnlineModeAllowed()) {
+            gen_uuid = UUIDUtil.fetchMinecraftUUID(conn_name);
+        }
+        UUID tar_uuid = ids.getOrDefault(conn_name, gen_uuid);
 
         if (!ipEvent.isHandled()) {
             switch (ipEvent.getResult()) {

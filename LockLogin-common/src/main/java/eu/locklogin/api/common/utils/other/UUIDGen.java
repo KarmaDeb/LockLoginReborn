@@ -14,11 +14,12 @@ package eu.locklogin.api.common.utils.other;
  * the version number 2.1.]
  */
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.URLUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import org.apache.commons.io.IOUtil;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +27,10 @@ import java.util.UUID;
 
 /**
  * LockLogin UUID fetcher/resolver
+ *
+ * @deprecated {@link ml.karmaconfigs.api.common.utils.UUIDUtil} should be used now
  */
+@Deprecated
 public final class UUIDGen {
 
     /**
@@ -51,14 +55,15 @@ public final class UUIDGen {
      */
     private static UUID retrieveUUID(String name) {
         try {
-            String url = "https://api.mojang.com/users/profiles/minecraft/" + name;
-            String UUIDJson = IOUtil.toString(new URL(url).openStream());
+            URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
+            String response = URLUtils.getResponse(url);
 
-            JSONObject UUIDObject = (JSONObject) JSONValue.parseWithException(UUIDJson);
+            Gson gson = new GsonBuilder().setLenient().setPrettyPrinting().create();
+            JsonObject uuid = gson.fromJson(response, JsonObject.class);
             try {
-                return UUID.fromString(UUIDObject.get("id").toString());
+                return UUID.fromString(uuid.get("id").toString());
             } catch (Throwable ex) {
-                return fixUUID(UUIDObject.get("id").toString());
+                return fixUUID(uuid.get("id").toString());
             }
         } catch (Throwable ex) {
             CurrentPlatform.getLogger().scheduleLog(Level.GRAVE, ex);

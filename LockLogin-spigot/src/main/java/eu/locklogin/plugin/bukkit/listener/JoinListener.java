@@ -23,7 +23,6 @@ import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -48,6 +47,7 @@ import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
+import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.OfflinePlayer;
@@ -108,7 +108,10 @@ public final class JoinListener implements Listener {
         ModulePlugin.callEvent(ipEvent);
 
         String conn_name = e.getName();
-        UUID gen_uuid = UUIDGen.getUUID(e.getName());
+        UUID gen_uuid = UUIDUtil.forceMinecraftOffline(conn_name);
+        if (CurrentPlatform.isOnline()) {
+            gen_uuid = UUIDUtil.fetchMinecraftUUID(conn_name);
+        }
         UUID tar_uuid = e.getUniqueId();
 
         if (!ipEvent.isHandled()) {

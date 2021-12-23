@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.11</version>
+        <version>1.13.13</version>
     </parent>
 
     <artifactId>LockLogin-spigot</artifactId>
@@ -59,12 +59,14 @@
             <version>${project.karmaapi}</version>
             <scope>provided</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>3.28.0-GA</version>
             <scope>provided</scope>
         </dependency>
+        -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>

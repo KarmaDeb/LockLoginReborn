@@ -25,7 +25,6 @@ import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
-import eu.locklogin.api.common.utils.other.UUIDGen;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -50,6 +49,7 @@ import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
@@ -247,7 +247,10 @@ public final class JoinListener implements Listener {
         ModulePlugin.callEvent(ipEvent);
 
         String conn_name = e.getConnection().getName();
-        UUID gen_uuid = UUIDGen.getUUID(conn_name);
+        UUID gen_uuid = UUIDUtil.forceMinecraftOffline(conn_name);
+        if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
+            gen_uuid = UUIDUtil.fetchMinecraftUUID(conn_name);
+        }
 
         if (!ipEvent.isHandled()) {
             switch (ipEvent.getResult()) {
@@ -365,7 +368,10 @@ public final class JoinListener implements Listener {
         if (!e.isCancelled()) {
             PendingConnection connection = e.getConnection();
 
-            UUID gen_uuid = UUIDGen.getUUID(connection.getName());
+            UUID gen_uuid = UUIDUtil.forceMinecraftOffline(connection.getName());
+            if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
+                gen_uuid = UUIDUtil.fetchMinecraftUUID(connection.getName());
+            }
             UUID tar_uuid = connection.getUniqueId();
 
             if (config.uuidValidator()) {

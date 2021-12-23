@@ -29,15 +29,15 @@ public enum Dependency {
     /**
      * LockLogin dependency
      */
-    COMMONS_IO,
+    //COMMONS_IO,
     /**
      * LockLogin dependency
      */
-    APACHE_COMMONS_CODEC,
+    //APACHE_COMMONS_CODEC,
     /**
      * LockLogin dependency
      */
-    JNA,
+    //JNA,
     /**
      * LockLogin dependency
      */
@@ -53,7 +53,7 @@ public enum Dependency {
     /**
      * LockLogin dependency
      */
-    JAVASSIST,
+    //JAVASSIST,
     /**
      * LockLogin dependency
      */
@@ -76,20 +76,20 @@ public enum Dependency {
     @NotNull
     public PluginDependency getAsDependency() {
         switch (this) {
-            case COMMONS_IO:
+            /*case COMMONS_IO:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/commons-io/commons-io/20030203.000550/commons-io-20030203.000550.jar", true);
             case APACHE_COMMONS_CODEC:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/commons-codec/commons-codec/1.15/commons-codec-1.15.jar", true);
             case JNA:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.8.0/jna-5.8.0.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.8.0/jna-5.8.0.jar", true);*/
             case GOOGLE_AUTHENTICATOR:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/warrenstrange/googleauth/1.5.0/googleauth-1.5.0.jar", true);
             case LOG4J:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar", true);
             case LOG4J_WEB:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.17.0/log4j-web-2.17.0.jar", true);
-            case JAVASSIST:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar", true);
+            /*case JAVASSIST:
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar", true);*/
             case GUAVA:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/google/guava/guava/30.1.1-jre/guava-30.1.1-jre.jar", true);
             case GSON:
@@ -113,20 +113,20 @@ public enum Dependency {
 
     public final String prettyName() {
         switch (this) {
-            case COMMONS_IO:
+            /*case COMMONS_IO:
                 return "Apache Commons IO";
             case APACHE_COMMONS_CODEC:
                 return "Apache Commons Codec";
             case JNA:
-                return "Java Native Access";
+                return "Java Native Access";*/
             case GOOGLE_AUTHENTICATOR:
                 return "Google Authenticator";
             case LOG4J:
                 return "Log4j";
             case LOG4J_WEB:
                 return "Log4j Web";
-            case JAVASSIST:
-                return "Java Assist";
+            /*case JAVASSIST:
+                return "Java Assist";*/
             case GUAVA:
                 return "Google Guava";
             case GSON:

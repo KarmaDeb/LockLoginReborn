@@ -22,6 +22,7 @@ import ml.karmaconfigs.api.bungee.KarmaPlugin;
 import ml.karmaconfigs.api.common.utils.URLUtils;
 import net.md_5.bungee.api.ProxyServer;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class Main extends KarmaPlugin {
@@ -30,9 +31,10 @@ public final class Main extends KarmaPlugin {
     private static MainBootstrap plugin;
 
     public Main() throws Throwable {
+        super(false);
+
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
-        CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
 
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
@@ -45,6 +47,8 @@ public final class Main extends KarmaPlugin {
         status = true;
 
         plugin.enable();
+
+        CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
     }
 
     @Override
@@ -81,11 +85,32 @@ public final class Main extends KarmaPlugin {
 
     @Override
     public String updateURL() {
-        URL host = URLUtils.getOrBackup(
-                "https://karmadev.es/locklogin/version",
+        String[] hosts = new String[]{
+                "https://karmadev.es/locklogin/version/",
                 "https://karmarepo.000webhostapp.com/locklogin/version/",
                 "https://karmaconfigs.github.io/updates/LockLogin/version/"
-        );
+        };
+
+        URL host = null;
+        for (String url : hosts) {
+            String check;
+            if (url.startsWith("https://karmadev.es")) {
+                check = "https://karmadev.es/";
+            } else {
+                if (url.startsWith("https://karmarepo.000webhostapp.com")) {
+                    check = "https://karmarepo.000webhostapp.com/";
+                } else {
+                    check = "https://karmaconfigs.github.io";
+                }
+            }
+
+            int response = URLUtils.getResponseCode(check);
+            if (response == HttpURLConnection.HTTP_OK) {
+                host = URLUtils.getOrNull(url);
+                if (host != null)
+                    break;
+            }
+        }
 
         if (host != null) {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
