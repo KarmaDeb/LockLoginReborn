@@ -12,6 +12,7 @@ package eu.locklogin.plugin.bukkit.util.files.data;
  */
 
 import eu.locklogin.api.account.AccountID;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.bukkit.Location;
@@ -297,7 +298,7 @@ public final class LastLocation {
 
                     //Store the player fall distance so when he joins back
                     //it gets restored and fall damage won't be prevented
-                    trySync(() -> {
+                    trySync(TaskTarget.TELEPORT, () -> {
                         player.setFallDistance(fall_distance);
                         player.teleport(last_location);
                     });

@@ -55,8 +55,7 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
@@ -157,7 +156,7 @@ public final class JoinListener {
 
                         if (config.clearChat()) {
                             for (int i = 0; i < 150; i++)
-                                server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                                plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> player.sendMessage(Component.text().content("").build()));
                         }
 
                         ClientSession session = user.getSession();
@@ -168,7 +167,7 @@ public final class JoinListener {
 
                         SimpleScheduler tmp_timer = null;
                         if (!session.isCaptchaLogged()) {
-                            tmp_timer = new SourceSecondsTimer(main, 1, true);
+                            tmp_timer = new SourceSecondsTimer(plugin, 1, true);
                             tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                         }
 
@@ -187,7 +186,7 @@ public final class JoinListener {
                             if (timer != null)
                                 timer.cancel();
                         });
-                        server.getScheduler().buildTask(plugin, check).schedule();
+                        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), check).schedule();
 
                         DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, CHANNEL_PLAYER, player).build());
 
@@ -279,7 +278,7 @@ public final class JoinListener {
 
                                 int amount = data.getAlts().size();
                                 if (amount > 2) {
-                                    for (Player online : server.getAllPlayers()) {
+                                    for (Player online : plugin.getServer().getAllPlayers()) {
                                         User user = new User(online);
 
                                         if (user.hasPermission(PluginPermission.altInfo())) {
@@ -335,11 +334,10 @@ public final class JoinListener {
                             }
 
                             LockedAccount account = new LockedAccount(manager.getUUID());
-                            LockedData data = account.getData();
 
-                            if (data.isLocked()) {
-                                String administrator = data.getAdministrator();
-                                Instant date = data.getLockDate();
+                            if (account.isLocked()) {
+                                String administrator = account.getIssuer();
+                                Instant date = account.getLockDate();
                                 InstantParser parser = new InstantParser(date);
                                 String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
 
@@ -398,7 +396,7 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.FIRST)
     public void onSwitch(ServerConnectedEvent e) {
-        server.getScheduler().buildTask(plugin, () -> {
+        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
             Player player = e.getPlayer();
             User user = new User(player);
 

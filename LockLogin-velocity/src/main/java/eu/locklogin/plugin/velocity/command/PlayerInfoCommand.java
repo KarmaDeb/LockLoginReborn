@@ -33,8 +33,7 @@ import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.kyori.adventure.text.Component;
@@ -118,7 +117,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
 
                                             switch (name) {
                                                 case "everyone":
-                                                    for (Player online : server.getAllPlayers()) {
+                                                    for (Player online : plugin.getServer().getAllPlayers()) {
                                                         AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                         if (manager != null)
                                                             accounts.add(manager);
@@ -149,7 +148,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                                 default:
                                                     String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
 
-                                                    for (Player online : server.getAllPlayers()) {
+                                                    for (Player online : plugin.getServer().getAllPlayers()) {
                                                         if (online.hasPermission(permission)) {
 
                                                             AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
@@ -173,7 +172,7 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                         break;
                                     case "#":
                                         name = target.replaceFirst("#", "");
-                                        Optional<RegisteredServer> info = server.getServer(name);
+                                        Optional<RegisteredServer> info = plugin.getServer().getServer(name);
 
                                         if (info.isPresent()) {
                                             for (Player connection : info.get().getPlayersConnected()) {
@@ -204,10 +203,9 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                         if (manager != null) {
                                             AccountID id = manager.getUUID();
                                             LockedAccount account = new LockedAccount(id);
-                                            LockedData data = account.getData();
                                             User tarUser = null;
 
-                                            Optional<Player> tar = server.getPlayer(UUID.fromString(id.getId()));
+                                            Optional<Player> tar = plugin.getServer().getPlayer(UUID.fromString(id.getId()));
 
                                             if (tar.isPresent())
                                                 tarUser = new User(tar.get());
@@ -215,19 +213,19 @@ public final class PlayerInfoCommand extends BungeeLikeCommand {
                                             user.send(properties.getProperty("player_information_header", "&5&m--------------&r&e LockLogin player info &5&m--------------"));
                                             user.send("&r");
 
-                                            List<String> parsed = parseMessages(data.isLocked());
+                                            List<String> parsed = parseMessages(account.isLocked());
 
                                             InstantParser creation_parser = new InstantParser(manager.getCreationTime());
                                             String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
 
                                             int msg = -1;
-                                            user.send(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
-                                            if (data.isLocked()) {
-                                                Instant date = data.getLockDate();
+                                            user.send(StringUtils.formatString(parsed.get(++msg), account.isLocked()));
+                                            if (account.isLocked()) {
+                                                Instant date = account.getLockDate();
                                                 InstantParser parser = new InstantParser(date);
                                                 String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
 
-                                                user.send(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
+                                                user.send(StringUtils.formatString(parsed.get(++msg), account.getIssuer()));
                                                 user.send(StringUtils.formatString(parsed.get(++msg), dateString));
                                             }
                                             user.send(StringUtils.formatString(parsed.get(++msg), manager.getName()));

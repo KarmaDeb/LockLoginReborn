@@ -135,7 +135,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                         });
                                     }
 
-                                    SimpleScheduler timer = new SourceSecondsTimer(source, 1, true).multiThreading(true);
+                                    SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
                                     timer.restartAction(() -> {
                                         if (canPost.get()) {
                                             timer.cancel();
@@ -300,7 +300,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                     });
                                 }
 
-                                SimpleScheduler timer = new SourceSecondsTimer(source, 1, true).multiThreading(true);
+                                SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
                                 timer.restartAction(() -> {
                                     if (canPost.get()) {
                                         timer.cancel();

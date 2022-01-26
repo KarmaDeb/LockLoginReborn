@@ -32,12 +32,12 @@ import static eu.locklogin.plugin.velocity.LockLogin.*;
 
 public final class RestartCache {
 
-    private final KarmaFile cache = new KarmaFile(source, "plugin.cache", "plugin", "updater", "cache");
+    private final KarmaFile cache = new KarmaFile(plugin, "plugin.cache", "plugin", "updater", "cache");
 
     /**
      * Store the sessions into the cache file
      */
-    public final void storeUserData() {
+    public void storeUserData() {
         if (!cache.exists())
             cache.create();
 
@@ -88,7 +88,7 @@ public final class RestartCache {
                     for (UUID id : sessions.keySet()) {
                         ClientSession session = sessions.getOrDefault(id, null);
                         if (session != null) {
-                            Optional<Player> player = server.getPlayer(id);
+                            Optional<Player> player = plugin.getServer().getPlayer(id);
                             if (player.isPresent() && player.get().isActive()) {
                                 fixedSessions.put(id, session);
                             }

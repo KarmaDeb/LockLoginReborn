@@ -12,7 +12,6 @@ import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.LoadRule;
-import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
@@ -24,6 +23,7 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -43,10 +43,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -229,7 +226,16 @@ public class MainBootstrap {
                     container.setResult(player.hasPermission("*") || player.hasPermission("'*'"));
                 }
             };
-            BiConsumer<String, byte[]> onDataSend = DataSender::sendModule;
+
+            BiConsumer<String, Set<ModulePlayer>> onPlayers = (name, players) -> {
+                ServerInfo info = plugin.getProxy().getServerInfo(name);
+                if (info != null) {
+                    info.getPlayers().forEach((player) -> {
+                        User user = new User(player);
+                        players.add(user.getModule());
+                    });
+                }
+            };
 
             try {
                 JarManager.changeField(ModulePlayer.class, "onChat", onMessage);
@@ -241,7 +247,7 @@ public class MainBootstrap {
                 JarManager.changeField(ModulePlayer.class, "hasPermission", hasPermission);
                 JarManager.changeField(ModulePlayer.class, "opContainer", opContainer);
 
-                JarManager.changeField(ModuleMessageService.class, "onDataSent", onDataSend);
+                JarManager.changeField(TargetServer.class, "onPlayers", onPlayers);
             } catch (Throwable ignored) {}
 
             LockLogin.logger.scheduleLog(Level.OK, "LockLogin initialized and all its dependencies has been loaded");

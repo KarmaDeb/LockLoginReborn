@@ -39,8 +39,7 @@ import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.AccountParser;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedData;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -150,14 +149,13 @@ public class AccountCommand extends BungeeLikeCommand {
                                             AccountManager manager = offline.getAccount();
                                             if (manager != null) {
                                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                                LockedData data = account.getData();
 
-                                                if (data.isLocked()) {
-                                                    if (account.unlock()) {
+                                                if (account.isLocked()) {
+                                                    if (account.release()) {
                                                         user.send(messages.prefix() + messages.accountUnLocked(target));
                                                     } else {
                                                         user.send(messages.prefix() + messages.accountNotLocked(target));
-                                                        logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
+                                                        logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", StringUtils.stripColor(player.getGameProfile().getName()), target);
                                                     }
                                                 } else {
                                                     user.send(messages.prefix() + messages.accountNotLocked(target));
@@ -190,7 +188,7 @@ public class AccountCommand extends BungeeLikeCommand {
 
                                     if (config.clearChat()) {
                                         for (int i = 0; i < 150; i++)
-                                            server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                                            plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> player.sendMessage(Component.text().content("").build()));
                                     }
 
                                     session.validate();
@@ -200,7 +198,7 @@ public class AccountCommand extends BungeeLikeCommand {
 
 
                                     SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                    server.getScheduler().buildTask(plugin, check);
+                                    plugin.getServer().getScheduler().buildTask(plugin.getContainer(), check);
 
                                     user.send(messages.prefix() + messages.closed());
 
@@ -210,7 +208,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                 case 2:
                                     if (user.hasPermission(PluginPermission.account())) {
                                         String tar_name = args[1];
-                                        Optional<Player> tar_p = server.getPlayer(tar_name);
+                                        Optional<Player> tar_p = plugin.getServer().getPlayer(tar_name);
 
                                         if (tar_p.isPresent() && tar_p.get().isActive()) {
                                             User target = new User(tar_p.get());
@@ -246,13 +244,13 @@ public class AccountCommand extends BungeeLikeCommand {
                                         String target = args[1];
                                         AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                             if (nsr.singleResult()) {
-                                                Optional<Player> online = server.getPlayer(target);
+                                                Optional<Player> online = plugin.getServer().getPlayer(target);
                                                 OfflineClient offline = new OfflineClient(target);
 
                                                 AccountManager manager = offline.getAccount();
                                                 if (manager != null) {
                                                     LockedAccount account = new LockedAccount(manager.getUUID());
-                                                    if (account.getData().isLocked()) {
+                                                    if (account.isLocked()) {
                                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                                     } else {
                                                         manager.setUnsafePassword("");
@@ -312,7 +310,7 @@ public class AccountCommand extends BungeeLikeCommand {
 
                                             if (config.clearChat()) {
                                                 for (int i = 0; i < 150; i++)
-                                                    server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                                                    plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> player.sendMessage(Component.text().content("").build()));
                                             }
 
                                             session.validate();
@@ -321,7 +319,7 @@ public class AccountCommand extends BungeeLikeCommand {
                                                 session.setCaptchaLogged(true);
 
                                             SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                            server.getScheduler().buildTask(plugin, check);
+                                            plugin.getServer().getScheduler().buildTask(plugin.getContainer(), check);
                                         } else {
                                             user.send(messages.prefix() + messages.incorrectPassword());
                                         }
@@ -420,14 +418,13 @@ public class AccountCommand extends BungeeLikeCommand {
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        LockedData data = account.getData();
 
-                                        if (data.isLocked()) {
-                                            if (account.unlock()) {
+                                        if (account.isLocked()) {
+                                            if (account.release()) {
                                                 console.send(messages.prefix() + messages.accountUnLocked(tar_name));
                                             } else {
                                                 console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                                logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                                logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", config.serverName(), tar_name);
                                             }
                                         } else {
                                             console.send(messages.prefix() + messages.accountNotLocked(tar_name));
@@ -446,7 +443,7 @@ public class AccountCommand extends BungeeLikeCommand {
                     case "close":
                         if (args.length == 2) {
                             tar_name = args[1];
-                            Optional<Player> tar_p = server.getPlayer(tar_name);
+                            Optional<Player> tar_p = plugin.getServer().getPlayer(tar_name);
 
                             if (tar_p.isPresent() && tar_p.get().isActive()) {
                                 User target = new User(tar_p.get());
@@ -477,13 +474,13 @@ public class AccountCommand extends BungeeLikeCommand {
 
                             AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
-                                    Optional<Player> online = server.getPlayer(tar_name);
+                                    Optional<Player> online = plugin.getServer().getPlayer(tar_name);
                                     OfflineClient offline = new OfflineClient(tar_name);
 
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        if (account.getData().isLocked()) {
+                                        if (account.isLocked()) {
                                             console.send(messages.prefix() + messages.neverPlayer(tar_name));
                                         } else {
                                             manager.setUnsafePassword("");

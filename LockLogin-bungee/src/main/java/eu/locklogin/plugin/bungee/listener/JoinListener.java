@@ -25,6 +25,7 @@ import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -43,8 +44,6 @@ import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
@@ -315,11 +314,10 @@ public final class JoinListener implements Listener {
                             }
 
                             LockedAccount account = new LockedAccount(manager.getUUID());
-                            LockedData data = account.getData();
 
-                            if (data.isLocked()) {
-                                String administrator = data.getAdministrator();
-                                Instant date = data.getLockDate();
+                            if (account.isLocked()) {
+                                String administrator = account.getIssuer();
+                                Instant date = account.getLockDate();
                                 InstantParser parser = new InstantParser(date);
                                 String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
 

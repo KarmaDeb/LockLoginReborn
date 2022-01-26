@@ -23,6 +23,7 @@ import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -57,7 +58,7 @@ public final class RegisterCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (sender instanceof Player) {
-            tryAsync(() -> {
+            tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
                 Player player = (Player) sender;
                 User user = new User(player);
 
@@ -104,7 +105,7 @@ public final class RegisterCommand implements CommandExecutor {
                                             session.setLogged(true);
 
                                             if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
-                                                trySync(() -> player.performCommand("2fa setup " + password));
+                                                trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
                                             } else {
                                                 session.set2FALogged(true);
                                             }
@@ -133,7 +134,7 @@ public final class RegisterCommand implements CommandExecutor {
                                         if (session.getCaptcha().equals(captcha)) {
                                             session.setCaptchaLogged(true);
 
-                                            trySync(() -> player.performCommand("register " + password + " " + confirmation));
+                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("register " + password + " " + confirmation));
                                         } else {
                                             user.send(messages.prefix() + messages.invalidCaptcha());
                                         }

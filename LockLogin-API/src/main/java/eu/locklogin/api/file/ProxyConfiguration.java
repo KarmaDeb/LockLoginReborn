@@ -40,6 +40,20 @@ public abstract class ProxyConfiguration {
     public abstract UUID getProxyID();
 
     /**
+     * Get the proxy channel address
+     *
+     * @return the proxy channel address
+     */
+    public abstract String messageAddress();
+
+    /**
+     * Get the proxy channel port
+     *
+     * @return the proxy channel port
+     */
+    public abstract int messagePort();
+
+    /**
      * Get all the lobby servers
      *
      * @param <T>      the server type

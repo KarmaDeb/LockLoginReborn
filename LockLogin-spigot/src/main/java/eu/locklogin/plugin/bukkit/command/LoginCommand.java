@@ -27,6 +27,7 @@ import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
@@ -64,7 +65,7 @@ public final class LoginCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (sender instanceof Player) {
-            tryAsync(() -> {
+            tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
                 Player player = (Player) sender;
                 User user = new User(player);
 
@@ -163,7 +164,7 @@ public final class LoginCommand implements CommandExecutor {
                                                 protection.success();
 
                                             if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
-                                                trySync(() -> player.performCommand("2fa setup " + password));
+                                                trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
                                             }
                                         } else {
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
@@ -206,7 +207,7 @@ public final class LoginCommand implements CommandExecutor {
                                         if (session.getCaptcha().equals(captcha)) {
                                             session.setCaptchaLogged(true);
 
-                                            trySync(() -> player.performCommand("login " + password));
+                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("login " + password));
                                         } else {
                                             user.send(messages.prefix() + messages.invalidCaptcha());
                                         }

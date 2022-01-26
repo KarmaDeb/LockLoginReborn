@@ -210,6 +210,26 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
+     * Get the proxy channel address
+     *
+     * @return the proxy channel address
+     */
+    @Override
+    public String messageAddress() {
+        return null;
+    }
+
+    /**
+     * Get the proxy channel port
+     *
+     * @return the proxy channel port
+     */
+    @Override
+    public int messagePort() {
+        return 0;
+    }
+
+    /**
      * Get all the lobby servers
      *
      * @param <T>      the server type

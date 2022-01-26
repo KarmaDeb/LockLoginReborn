@@ -23,6 +23,7 @@ import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -34,11 +35,10 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -197,11 +197,9 @@ public final class JoinListener implements Listener {
                                 }
 
                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                LockedData data = account.getData();
-
-                                if (data.isLocked()) {
-                                    String administrator = data.getAdministrator();
-                                    Instant date = data.getLockDate();
+                                if (account.isLocked()) {
+                                    String administrator = account.getIssuer();
+                                    Instant date = account.getLockDate();
                                     InstantParser parser = new InstantParser(date);
                                     String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
 
@@ -218,13 +216,20 @@ public final class JoinListener implements Listener {
 
                             e.allow();
                         } else {
-                            SimpleScheduler timer = new SourceSecondsTimer(plugin, 5, false);
+                            SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true);
                             timer.endAction(() -> {
                                 Player online = plugin.getServer().getPlayer(tar_uuid);
                                 if (online != null && online.isOnline()) {
                                     User user = new User(online);
-                                    if (!user.getSession().isValid())
+                                    if (!user.getSession().isValid()) {
                                         user.kick(messages.bungeeProxy());
+                                    }
+
+                                    /*
+                                    As of LockLogin 1.13.15, this check will be done until the player is fully connected,
+                                    when the player is connected, the correspondent check will be done and the timer cancelled
+                                     */
+                                    timer.cancel();
                                 }
                             }).start();
                         }
@@ -266,7 +271,7 @@ public final class JoinListener implements Listener {
             Player player = e.getPlayer();
 
             LateScheduler<Event> result = new AsyncLateScheduler<>();
-            tryAsync(() -> {
+            tryAsync(TaskTarget.EVENT, () -> {
                 User user = new User(player);
                 ModulePlayer sender = new ModulePlayer(
                         player.getName(),
@@ -334,7 +339,7 @@ public final class JoinListener implements Listener {
                 case SUCCESS:
                     LateScheduler<Event> result = new AsyncLateScheduler<>();
 
-                    tryAsync(() -> {
+                    tryAsync(TaskTarget.EVENT, () -> {
                         ClientSession session = user.getSession();
 
                         if (!config.isBungeeCord()) {
@@ -376,7 +381,7 @@ public final class JoinListener implements Listener {
                             }
 
                             if (config.enableSpawn()) {
-                                trySync(() -> player.teleport(player.getWorld().getSpawnLocation()));
+                                trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
 
                                 Spawn spawn = new Spawn(player.getWorld());
                                 spawn.load().whenComplete(() -> spawn.teleport(player));

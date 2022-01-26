@@ -29,8 +29,9 @@ import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
+//import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -75,46 +76,24 @@ public final class MessageListener {
                         String id = input.readUTF();
                         switch (e.getIdentifier().getId().toLowerCase()) {
                             case "ll:account":
-                                if (sub == DataType.PIN) {
+                                UUID uuid = UUID.fromString(id);
+                                Optional<Player> tmp_player = plugin.getServer().getPlayer(uuid);
 
-                                    UUID uuid = UUID.fromString(id);
-                                    String pin = input.readUTF();
+                                switch (sub) {
+                                    case PIN:
+                                        String pin = input.readUTF();
+                                        if (tmp_player.isPresent() && tmp_player.get().isActive()) {
+                                            Player player = tmp_player.get();
+                                            User user = new User(player);
+                                            ClientSession session = user.getSession();
+                                            AccountManager manager = user.getManager();
 
-                                    Optional<Player> tmp_player = server.getPlayer(uuid);
-                                    if (tmp_player.isPresent() && tmp_player.get().isActive()) {
-                                        Player player = tmp_player.get();
-                                        User user = new User(player);
-                                        ClientSession session = user.getSession();
-                                        AccountManager manager = user.getManager();
-
-                                        if (session.isValid()) {
-                                            if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() && !pin.equalsIgnoreCase("error")) {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
-
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
-                                                        user.getModule(),
-                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                                ModulePlugin.callEvent(event);
-
-                                                user.send(messages.prefix() + event.getAuthMessage());
-                                                session.setPinLogged(true);
-                                                if (manager.has2FA()) {
-                                                    session.set2FALogged(false);
-                                                } else {
-                                                    session.set2FALogged(true);
-
-                                                    DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-                                                    DataSender.send(player, gauth);
-
-                                                    user.checkServer(0);
-                                                }
-                                            } else {
-                                                if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                            if (session.isValid()) {
+                                                if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() && !pin.equalsIgnoreCase("error")) {
                                                     DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
 
                                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                            UserAuthenticateEvent.Result.ERROR,
+                                                            (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
                                                             user.getModule(),
                                                             (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                                     ModulePlugin.callEvent(event);
@@ -131,10 +110,41 @@ public final class MessageListener {
 
                                                         user.checkServer(0);
                                                     }
+                                                } else {
+                                                    if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build());
+
+                                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                                UserAuthenticateEvent.Result.ERROR,
+                                                                user.getModule(),
+                                                                (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
+                                                        ModulePlugin.callEvent(event);
+
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                        session.setPinLogged(true);
+                                                        if (manager.has2FA()) {
+                                                            session.set2FALogged(false);
+                                                        } else {
+                                                            session.set2FALogged(true);
+
+                                                            DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                                                            DataSender.send(player, gauth);
+
+                                                            user.checkServer(0);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
+                                    case JOIN:
+                                        tmp_player.ifPresent((player) -> {
+                                            User user = new User(player);
+                                            UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
+                                            ModulePlugin.callEvent(event);
+                                        });
+                                        break;
+                                    default:
+                                        break;
                                 }
                                 break;
                             case "ll:plugin":
@@ -160,7 +170,7 @@ public final class MessageListener {
                                             }
                                         }
                                         break;
-                                    case MODULE:
+                                    case LISTENER:
                                         int byteLength = input.readInt();
                                         byte[] bytes = new byte[byteLength];
 
@@ -170,7 +180,7 @@ public final class MessageListener {
                                             i++;
                                         }
 
-                                        ModuleMessageService.listenMessage(id, bytes);
+                                        //ModuleMessageService.listenMessage(id, bytes);
                                         break;
                                 }
                             case "ll:access":

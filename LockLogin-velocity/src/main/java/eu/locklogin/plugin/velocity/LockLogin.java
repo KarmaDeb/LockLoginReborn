@@ -14,8 +14,6 @@ package eu.locklogin.plugin.velocity;
  * the version number 2.1.]
  */
 
-import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.proxy.ProxyServer;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.version.VersionID;
@@ -25,7 +23,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.velocity.KarmaPlugin;
 import org.bstats.velocity.Metrics;
 
 import java.io.File;
@@ -33,20 +31,17 @@ import java.nio.file.Files;
 
 public interface LockLogin {
 
-    PluginContainer plugin = Main.container;
-    ProxyServer server = Main.server;
-    Metrics.Factory factory = Main.factory;
-    KarmaSource source = Main.source;
-    Main main = Main.get();
+    KarmaPlugin plugin = VelocityPlugin.plugin;
+    Metrics.Factory factory = VelocityPlugin.factory;
 
     Console console = APISource.loadProvider("LockLogin").console();
 
-    String name = main.name();
-    String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
+    String name = plugin.name();
+    String update = FileInfo.getUpdateName(new File(VelocityPlugin.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " ")));
-    String version = main.version();
+    String version = plugin.version();
 
     VersionID versionID = new VersionID(version, update).generate();
 
@@ -57,7 +52,7 @@ public interface LockLogin {
     ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
     static ModuleLoader getLoader() {
-        File modulesFolder = new File(source.getDataPath().toFile() + File.separator + "plugin", "modules");
+        File modulesFolder = new File(plugin.getDataPath().toFile() + File.separator + "plugin", "modules");
 
         if (!modulesFolder.exists())
             try {

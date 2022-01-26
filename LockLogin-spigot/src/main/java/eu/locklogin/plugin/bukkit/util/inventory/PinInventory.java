@@ -9,6 +9,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
@@ -111,7 +112,7 @@ public final class PinInventory implements InventoryHolder {
      * Open the inventory to the player
      */
     public synchronized void open() {
-        trySync(() -> {
+        trySync(TaskTarget.INVENTORY, () -> {
             makeInventory();
             player.openInventory(inventory);
         });

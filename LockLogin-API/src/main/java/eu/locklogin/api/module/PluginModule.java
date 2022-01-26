@@ -18,6 +18,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;

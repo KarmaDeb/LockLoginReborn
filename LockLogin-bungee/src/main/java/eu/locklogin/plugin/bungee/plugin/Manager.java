@@ -26,6 +26,7 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.common.web.AlertSystem;
@@ -54,7 +55,6 @@ import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
@@ -64,6 +64,13 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import ml.karmaconfigs.api.common.version.util.VersionCheckType;
+/*
+Temporally disabled, non safe channels are used in this dependency
+
+import ml.karmaconfigs.remote.messaging.Client;
+import ml.karmaconfigs.remote.messaging.Factory;
+import ml.karmaconfigs.remote.messaging.util.WorkLevel;
+ */
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -82,6 +89,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
@@ -89,6 +97,7 @@ import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 public final class Manager {
 
+    //private static Client client = null;
     private static VersionUpdater updater = null;
     private static int changelog_requests = 0;
     private static int updater_id = 0;
@@ -148,7 +157,7 @@ public final class Manager {
             Set<AccountManager> nonLocked = new HashSet<>();
             for (AccountManager account : accounts) {
                 LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.getData().isLocked())
+                if (!locked.isLocked())
                     nonLocked.add(account);
             }
 
@@ -637,6 +646,22 @@ public final class Manager {
             timer.restart();
         } catch (Throwable ignored) {
         }
+    }
+
+    /**
+     * Connect to the remote locklogin messaging server
+     *
+     * @param address the remote server address
+     * @param port the remote server port
+     */
+    public static CompletableFuture<Boolean> connect(final String address, final int port) {
+        /*
+        Factory factory = new Factory(WorkLevel.TCP);
+        client = factory.createClient(address, port);
+
+        return client.connect();*/
+
+        return null;
     }
 
     /**

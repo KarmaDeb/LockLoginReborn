@@ -25,6 +25,7 @@ import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.web.AlertSystem;
 import eu.locklogin.api.common.web.STFetcher;
@@ -37,6 +38,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.*;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
@@ -46,7 +48,6 @@ import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.Message;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.RestartCache;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -154,14 +155,14 @@ public final class Manager {
             Set<AccountManager> nonLocked = new HashSet<>();
             for (AccountManager account : accounts) {
                 LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.getData().isLocked() && account.isRegistered())
+                if (!locked.isLocked() && account.isRegistered())
                     nonLocked.add(account);
             }
 
             SessionDataContainer.setRegistered(nonLocked.size());
         }
 
-        trySync(() -> {
+        trySync(TaskTarget.PLUGIN_HOOK, () -> {
             if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
                 LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
                 if (placeholder.register()) {

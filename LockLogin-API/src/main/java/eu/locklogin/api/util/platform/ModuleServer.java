@@ -1,6 +1,7 @@
 package eu.locklogin.api.util.platform;
 
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 public final class ModuleServer {
 
     private final static Set<ModulePlayer> connected = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<TargetServer> servers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     ModuleServer() {
     }
@@ -38,6 +40,15 @@ public final class ModuleServer {
     }
 
     /**
+     * Connect a server
+     *
+     * @param server the server to add
+     */
+    void addServer(final TargetServer server) {
+        servers.add(server);
+    }
+
+    /**
      * Get the online players
      *
      * @return the online players
@@ -45,6 +56,18 @@ public final class ModuleServer {
     public Collection<ModulePlayer> getOnlinePlayers() {
         Set<ModulePlayer> unmodifiableSafe = new LinkedHashSet<>(connected);
         Stream<ModulePlayer> stream = unmodifiableSafe.stream().sorted(Comparator.comparing(ModulePlayer::getName));
+
+        return Collections.unmodifiableList(stream.collect(Collectors.toList()));
+    }
+
+    /**
+     * Get the servers
+     *
+     * @return the servers
+     */
+    public Collection<TargetServer> getServers() {
+        Set<TargetServer> unmodifiableSet = new LinkedHashSet<>(servers);
+        Stream<TargetServer> stream = unmodifiableSet.stream().sorted(Comparator.comparing(TargetServer::getName));
 
         return Collections.unmodifiableList(stream.collect(Collectors.toList()));
     }
@@ -104,5 +127,25 @@ public final class ModuleServer {
         }
 
         return matches.toArray(new ModulePlayer[0]);
+    }
+
+    /**
+     * Get a server
+     *
+     * @param name the target server
+     * @return the server
+     */
+    @Nullable
+    public TargetServer getServer(final String name) {
+        TargetServer server = null;
+
+        for (TargetServer registered : servers) {
+            if (registered.getName().equalsIgnoreCase(name)) {
+                server = registered;
+                break;
+            }
+        }
+
+        return server;
     }
 }

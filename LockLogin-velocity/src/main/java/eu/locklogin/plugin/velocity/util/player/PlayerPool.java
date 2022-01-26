@@ -11,13 +11,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.velocity.LockLogin.server;
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public class PlayerPool {
 
     private final static Set<UUID> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(source, 1, true).multiThreading(true);
+    private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
     private static Consumer<Player> whenValidPlayer = null;
 
     /**
@@ -26,7 +25,7 @@ public class PlayerPool {
      * @param id the player uuid
      */
     public static void addPlayer(final UUID id) {
-        Optional<Player> player = server.getPlayer(id);
+        Optional<Player> player = plugin.getServer().getPlayer(id);
 
         if (!player.isPresent() || !player.get().getCurrentServer().isPresent() || player.get().getCurrentServer().get().getServer() == null) {
             players.add(id);
@@ -63,7 +62,7 @@ public class PlayerPool {
     public static void startCheckTask() {
         checkScheduler.restartAction(() -> {
             for (UUID id : players) {
-                Optional<Player> optPlayer = server.getPlayer(id);
+                Optional<Player> optPlayer = plugin.getServer().getPlayer(id);
 
                 optPlayer.ifPresent(player -> player.getCurrentServer().ifPresent(connection -> {
                     if (connection.getServer() != null) {

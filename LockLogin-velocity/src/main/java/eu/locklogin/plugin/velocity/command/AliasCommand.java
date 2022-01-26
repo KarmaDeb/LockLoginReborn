@@ -88,7 +88,7 @@ public final class AliasCommand extends BungeeLikeCommand {
                             case "add":
                                 if (alias.exists()) {
                                     if (args.length >= 3) {
-                                        server.getScheduler().buildTask(plugin, () -> {
+                                        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
                                             String[] names;
                                             if (args.length == 3) {
                                                 names = new String[]{args[2]};
@@ -127,7 +127,7 @@ public final class AliasCommand extends BungeeLikeCommand {
                             case "remove":
                                 if (alias.exists()) {
                                     if (args.length >= 3) {
-                                        server.getScheduler().buildTask(plugin, () -> {
+                                        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
                                             String[] names;
                                             if (args.length == 3) {
                                                 names = new String[]{args[2]};
@@ -202,7 +202,7 @@ public final class AliasCommand extends BungeeLikeCommand {
                     case "add":
                         if (alias.exists()) {
                             if (args.length >= 3) {
-                                server.getScheduler().buildTask(plugin, () -> {
+                                plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
                                     String[] names;
                                     if (args.length == 3) {
                                         names = new String[]{args[2]};
@@ -241,7 +241,7 @@ public final class AliasCommand extends BungeeLikeCommand {
                     case "remove":
                         if (alias.exists()) {
                             if (args.length >= 3) {
-                                server.getScheduler().buildTask(plugin, () -> {
+                                plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
                                     String[] names;
                                     if (args.length == 3) {
                                         names = new String[]{args[2]};

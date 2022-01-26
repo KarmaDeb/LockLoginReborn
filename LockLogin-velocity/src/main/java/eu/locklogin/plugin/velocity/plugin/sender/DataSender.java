@@ -44,7 +44,7 @@ public final class DataSender {
 
     private final static Set<MessagePool> auto_data_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final static SimpleScheduler scheduler = new SourceSecondsTimer(source, 1, true).multiThreading(true);
+    private final static SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
 
     /**
      * Initialize the data sender
@@ -133,7 +133,7 @@ public final class DataSender {
         try {
             Set<String> server_sents = new HashSet<>();
 
-            for (Player player : server.getAllPlayers()) {
+            for (Player player : plugin.getServer().getAllPlayers()) {
                 Optional<ServerConnection> tmp_server = player.getCurrentServer();
                 if (tmp_server.isPresent()) {
                     ServerConnection server = tmp_server.get();
@@ -156,7 +156,7 @@ public final class DataSender {
 
                             output.writeUTF(token);
                             output.writeUTF(proxy.getProxyID().toString());
-                            output.writeUTF(DataType.MODULE.name().toLowerCase());
+                            output.writeUTF(DataType.LISTENER.name().toLowerCase());
                             output.writeUTF(channel);
                             output.writeInt(data.length);
                             output.write(data);

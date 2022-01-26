@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.velocity.LockLogin.server;
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public class VelocityInjector extends Injector {
 
@@ -50,7 +49,7 @@ public class VelocityInjector extends Injector {
             }
         }
         for (String del : remove) {
-            server.getCommandManager().unregister(del);
+            plugin.getServer().getCommandManager().unregister(del);
         }
 
         for (CommandData data : ModulePlugin.getCommandsData()) {
@@ -80,9 +79,9 @@ public class VelocityInjector extends Injector {
                 }
             };
             registered.put(cmd.substring(1), command);
-            server.getCommandManager().register(cmd, command, fixedAliases);
+            plugin.getServer().getCommandManager().register(cmd, command, fixedAliases);
         }
 
-        source.console().send("Injected LockLogin's commands for Velocity", Level.WARNING);
+        plugin.console().send("Injected LockLogin's commands for Velocity", Level.WARNING);
     }
 }

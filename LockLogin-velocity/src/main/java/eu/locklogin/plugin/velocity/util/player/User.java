@@ -286,7 +286,7 @@ public final class User {
      * @param command the command to perform
      */
     public void performCommand(final String command) {
-        server.getCommandManager().executeAsync(player, command);
+        plugin.getServer().getCommandManager().executeAsync(player, command);
     }
 
     /**
@@ -295,7 +295,7 @@ public final class User {
      * @param reason the reason of the kick
      */
     public synchronized void kick(final String reason) {
-        server.getScheduler().buildTask(plugin, () -> {
+        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
             String[] parsed = parseMessage(reason);
 
             if (parsed.length > 1) {
@@ -379,15 +379,15 @@ public final class User {
                 time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
 
                 if (CurrentPlatform.getConfiguration().loginOptions().hasBossBar()) {
-                    message = new BossMessage(source, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    message = new BossMessage(plugin, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             } else {
                 if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
-                    message = new BossMessage(source, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    message = new BossMessage(plugin, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             }
 
-            checker = new SessionCheck<>(source, sender, message);
+            checker = new SessionCheck<>(plugin, sender, message);
             sessionChecks.put(player.getUniqueId(), checker);
         }
 

@@ -22,6 +22,7 @@ import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -36,8 +37,7 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bungee.util.files.data.lock.LockedData;
+
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -150,14 +150,13 @@ public class AccountCommand extends Command {
                                             AccountManager manager = offline.getAccount();
                                             if (manager != null) {
                                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                                LockedData data = account.getData();
 
-                                                if (data.isLocked()) {
-                                                    if (account.unlock()) {
+                                                if (account.isLocked()) {
+                                                    if (account.release()) {
                                                         user.send(messages.prefix() + messages.accountUnLocked(target));
                                                     } else {
                                                         user.send(messages.prefix() + messages.accountNotLocked(target));
-                                                        logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
+                                                        logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", StringUtils.stripColor(player.getDisplayName()), target);
                                                     }
                                                 } else {
                                                     user.send(messages.prefix() + messages.accountNotLocked(target));
@@ -247,7 +246,7 @@ public class AccountCommand extends Command {
                                                 AccountManager manager = offline.getAccount();
                                                 if (manager != null) {
                                                     LockedAccount account = new LockedAccount(manager.getUUID());
-                                                    if (account.getData().isLocked()) {
+                                                    if (account.isLocked()) {
                                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                                     } else {
                                                         manager.setUnsafePassword("");
@@ -418,14 +417,13 @@ public class AccountCommand extends Command {
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        LockedData data = account.getData();
 
-                                        if (data.isLocked()) {
-                                            if (account.unlock()) {
+                                        if (account.isLocked()) {
+                                            if (account.release()) {
                                                 console.send(messages.prefix() + messages.accountUnLocked(tar_name));
                                             } else {
                                                 console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                                logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                                logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", config.serverName(), tar_name);
                                             }
                                         } else {
                                             console.send(messages.prefix() + messages.accountNotLocked(tar_name));
@@ -481,7 +479,7 @@ public class AccountCommand extends Command {
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        if (account.getData().isLocked()) {
+                                        if (account.isLocked()) {
                                             console.send(messages.prefix() + messages.neverPlayer(target));
                                         } else {
                                             manager.setUnsafePassword("");

@@ -27,6 +27,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BossMessage;
 import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
@@ -184,7 +185,7 @@ public final class User {
      * value
      */
     public synchronized void applyLockLoginUser() {
-        trySync(() -> player.setMetadata("LockLoginUser", new FixedMetadataValue(plugin, player.getUniqueId().toString())));
+        trySync(TaskTarget.METADATA, () -> player.setMetadata("LockLoginUser", new FixedMetadataValue(plugin, player.getUniqueId().toString())));
     }
 
     /**
@@ -193,7 +194,7 @@ public final class User {
      * @param status the temp spectator status
      */
     public synchronized void setTempSpectator(final boolean status) {
-        trySync(() -> {
+        trySync(TaskTarget.MODE_SWITCH, () -> {
             if (status) {
                 temp_spectator.put(player.getUniqueId(), player.getGameMode());
                 player.setGameMode(GameMode.SPECTATOR);
@@ -208,7 +209,7 @@ public final class User {
      * Save the current player potion effects
      */
     public synchronized void savePotionEffects() {
-        trySync(() -> {
+        trySync(TaskTarget.POTION_EFFECT, () -> {
             if (!effects.containsKey(player.getUniqueId()))
                 effects.put(player.getUniqueId(), player.getActivePotionEffects());
         });
@@ -219,7 +220,7 @@ public final class User {
      * types
      */
     public synchronized void applySessionEffects() {
-        trySync(() -> {
+        trySync(TaskTarget.POTION_EFFECT, () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             List<PotionEffect> apply = new ArrayList<>();
             if (getManager().isRegistered()) {
@@ -255,7 +256,7 @@ public final class User {
      * Restore the player potion effects
      */
     public synchronized void restorePotionEffects() {
-        trySync(() -> {
+        trySync(TaskTarget.POTION_EFFECT, () -> {
             player.getActivePotionEffects().forEach(effect -> {
                 try {
                     player.removePotionEffect(effect.getType());
@@ -280,7 +281,7 @@ public final class User {
      * value
      */
     public void removeLockLoginUser() {
-        trySync(() -> player.removeMetadata("LockLoginUser", plugin));
+        trySync(TaskTarget.METADATA, () -> player.removeMetadata("LockLoginUser", plugin));
     }
 
     /**
@@ -332,7 +333,7 @@ public final class User {
      * @param reason the reason of the kick
      */
     public synchronized void kick(final String reason) {
-        trySync(() -> {
+        trySync(TaskTarget.KICK, () -> {
             String[] parsed = parseMessage(reason);
 
             if (parsed.length > 1) {

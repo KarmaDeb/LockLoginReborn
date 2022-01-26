@@ -18,8 +18,11 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
+import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 
@@ -60,6 +63,39 @@ public final class BungeeSender {
         } catch (Throwable ex) {
             LockLogin.logger.scheduleLog(Level.GRAVE, ex);
             LockLogin.logger.scheduleLog(Level.INFO, "Error while sending proxy status to bungee");
+        }
+    }
+
+    /**
+     * Send the player validation to BungeeCord
+     *
+     * @param player the player that has been validated
+     */
+    public static void validatePlayer(final Player player) {
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        try {
+            BungeeDataStorager storager = new BungeeDataStorager();
+
+            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            if (token == null) {
+                TokenGen.generate(plugin.getServer().getName());
+                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                assert token != null;
+            }
+
+            output.writeUTF(token);
+            output.writeUTF(storager.getServerName());
+            output.writeUTF("join");
+            output.writeUTF(player.getUniqueId().toString());
+
+            player.sendPluginMessage(LockLogin.plugin, "ll:account", output.toByteArray());
+
+            User user = new User(player);
+            UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), storager.getServerName(), null);
+            ModulePlugin.callEvent(event);
+        } catch (Throwable ex) {
+            LockLogin.logger.scheduleLog(Level.GRAVE, ex);
+            LockLogin.logger.scheduleLog(Level.INFO, "Error while sending player pin GUI input to bungee");
         }
     }
 
@@ -147,7 +183,7 @@ public final class BungeeSender {
 
             output.writeUTF(token);
             output.writeUTF(storager.getServerName());
-            output.writeUTF(DataType.MODULE.name().toLowerCase());
+            output.writeUTF(DataType.LISTENER.name().toLowerCase());
             output.writeUTF(channel);
             output.writeInt(data.length);
             output.write(data);

@@ -19,7 +19,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
-import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -33,7 +33,6 @@ public final class Main extends KarmaPlugin {
 
         CurrentPlatform.setMain(Main.class);
         CurrentPlatform.setPlatform(Platform.BUKKIT);
-        CurrentPlatform.setOnline(getServer().getOnlineMode());
 
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
@@ -44,6 +43,7 @@ public final class Main extends KarmaPlugin {
     @Override
     public void enable() {
         plugin.enable();
+        CurrentPlatform.setOnline(getServer().getOnlineMode());
     }
 
     @Override
@@ -74,22 +74,28 @@ public final class Main extends KarmaPlugin {
 
     @Override
     public String updateURL() {
-        String[] hosts = new String[]{
-                "https://karmadev.es/locklogin/version/",
-                "https://karmarepo.000webhostapp.com/locklogin/version/",
-                "https://karmaconfigs.github.io/updates/LockLogin/version/"
-        };
+        String[] hosts = new String[]
+                {
+                        "https://objectstorage.eu-milan-1.oraclecloud.com/p/GcsYBtoNewSYCNxMQUGfkGTTwsl2cMy3DUftNzXsn33oumzBymb67x0J62OBVIDS/n/axjp0qvvqyvs/b/bucket-20211229-0049/o/locklogin/",
+                        "https://karmadev.es/locklogin/version/",
+                        "https://karmarepo.000webhostapp.com/locklogin/version/",
+                        "https://karmaconfigs.github.io/updates/LockLogin/version/"
+                };
 
         URL host = null;
         for (String url : hosts) {
             String check;
-            if (url.startsWith("https://karmadev.es")) {
-                check = "https://karmadev.es/";
+            if (url.startsWith("https://objectstorage.eu-milan-1.oraclecloud.com")) {
+                check = url;
             } else {
-                if (url.startsWith("https://karmarepo.000webhostapp.com")) {
-                    check = "https://karmarepo.000webhostapp.com/";
+                if (url.startsWith("https://karmadev.es")) {
+                    check = "https://karmadev.es/";
                 } else {
-                    check = "https://karmaconfigs.github.io";
+                    if (url.startsWith("https://karmarepo.000webhostapp.com")) {
+                        check = "https://karmarepo.000webhostapp.com/";
+                    } else {
+                        check = "https://karmaconfigs.github.io";
+                    }
                 }
             }
 

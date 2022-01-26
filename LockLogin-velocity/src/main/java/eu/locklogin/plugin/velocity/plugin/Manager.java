@@ -44,7 +44,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.velocity.Main;
+import eu.locklogin.plugin.velocity.VelocityPlugin;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
 import eu.locklogin.plugin.velocity.listener.ChatListener;
@@ -59,7 +59,7 @@ import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Message;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.data.RestartCache;
-import eu.locklogin.plugin.velocity.util.files.data.lock.LockedAccount;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
@@ -136,9 +136,9 @@ public final class Manager {
 
         loadCache();
 
-        server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.CHANNEL_PLAYER));
-        server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.PLUGIN_CHANNEL));
-        server.getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.ACCESS_CHANNEL));
+        plugin.getServer().getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.CHANNEL_PLAYER));
+        plugin.getServer().getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.PLUGIN_CHANNEL));
+        plugin.getServer().getChannelRegistrar().register(new LegacyChannelIdentifier(DataSender.ACCESS_CHANNEL));
 
         AccountManager manager = CurrentPlatform.getAccountManager(eu.locklogin.api.util.enums.Manager.CUSTOM, null);
         if (manager != null) {
@@ -146,7 +146,7 @@ public final class Manager {
             Set<AccountManager> nonLocked = new HashSet<>();
             for (AccountManager account : accounts) {
                 LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.getData().isLocked())
+                if (!locked.isLocked())
                     nonLocked.add(account);
             }
 
@@ -154,7 +154,7 @@ public final class Manager {
 
             SessionDataContainer.onDataChange(data -> {
                 try {
-                    Collection<RegisteredServer> servers = server.getAllServers();
+                    Collection<RegisteredServer> servers = plugin.getServer().getAllServers();
 
                     switch (data.getDataType()) {
                         case LOGIN:
@@ -242,7 +242,7 @@ public final class Manager {
 
                         if (instance instanceof BungeeLikeCommand) {
                             BungeeLikeCommand executor = (BungeeLikeCommand) instance;
-                            server.getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()), executor.getAliasses());
+                            plugin.getServer().getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()), executor.getAliasses());
                             registered.add("/" + command);
                         } else {
                             unregistered.add(command);
@@ -281,11 +281,11 @@ public final class Manager {
     static void setupFiles() {
         Set<String> failed = new LinkedHashSet<>();
 
-        File cfg = new File(source.getDataPath().toFile(), "config.yml");
-        File proxy = new File(source.getDataPath().toFile(), "proxy.yml");
+        File cfg = new File(plugin.getDataPath().toFile(), "config.yml");
+        File proxy = new File(plugin.getDataPath().toFile(), "proxy.yml");
 
-        FileCopy config_copy = new FileCopy(source, "cfg/config.yml");
-        FileCopy proxy_copy = new FileCopy(source, "cfg/proxy.yml");
+        FileCopy config_copy = new FileCopy(plugin, "cfg/config.yml");
+        FileCopy proxy_copy = new FileCopy(plugin, "cfg/proxy.yml");
         try {
             config_copy.copy(cfg);
         } catch (Throwable ex) {
@@ -303,12 +303,12 @@ public final class Manager {
         CurrentPlatform.setProxyManager(proxy_cfg);
 
         String country = config.getLang().country(config.getLangName());
-        File msg_file = new File(source.getDataPath().toFile() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
+        File msg_file = new File(plugin.getDataPath().toFile() + File.separator + "lang" + File.separator + "v2", "messages_" + country + ".yml");
 
-        InputStream internal = Main.class.getResourceAsStream("/lang/messages_" + country + ".yml");
+        InputStream internal = VelocityPlugin.class.getResourceAsStream("/lang/messages_" + country + ".yml");
         //Check if the file exists inside the plugin as an official language
         if (internal != null) {
-            FileCopy copy = new FileCopy(source, "lang/messages_" + country + ".yml");
+            FileCopy copy = new FileCopy(plugin, "lang/messages_" + country + ".yml");
 
             try {
                 copy.copy(msg_file);
@@ -320,10 +320,10 @@ public final class Manager {
                 failed.add(msg_file.getName());
                 console.send("Could not find community message pack named {0} in lang_v2 folder, using messages english as default", Level.GRAVE, msg_file.getName());
 
-                msg_file = new File(source.getDataPath().toFile() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
+                msg_file = new File(plugin.getDataPath().toFile() + File.separator + "lang" + File.separator + "v2", "messages_en.yml");
 
                 if (!msg_file.exists()) {
-                    FileCopy copy = new FileCopy(source, "lang/messages_en.yml");
+                    FileCopy copy = new FileCopy(plugin, "lang/messages_en.yml");
 
                     try {
                         copy.copy(msg_file);
@@ -351,7 +351,7 @@ public final class Manager {
      */
     static void registerMetrics() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Metrics metrics = factory.make(main, 11291);
+        Metrics metrics = factory.make(plugin.getContainer(), 11291);
 
         metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
         metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
@@ -371,10 +371,10 @@ public final class Manager {
         ChatListener onChat = new ChatListener();
         MessageListener onMessage = new MessageListener();
 
-        server.getEventManager().register(plugin, onJoin);
-        server.getEventManager().register(plugin, onQuit);
-        server.getEventManager().register(plugin, onChat);
-        server.getEventManager().register(plugin, onMessage);
+        plugin.getServer().getEventManager().register(plugin.getContainer(), onJoin);
+        plugin.getServer().getEventManager().register(plugin.getContainer(), onQuit);
+        plugin.getServer().getEventManager().register(plugin.getContainer(), onChat);
+        plugin.getServer().getEventManager().register(plugin.getContainer(), onMessage);
     }
 
     /**
@@ -392,7 +392,7 @@ public final class Manager {
      */
     static void performVersionCheck() {
         if (updater == null)
-            updater = VersionUpdater.createNewBuilder(source).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+            updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
 
         updater.fetch(true).whenComplete((fetch, trouble) -> {
             if (trouble == null) {
@@ -405,7 +405,7 @@ public final class Manager {
                             console.send(line);
 
                         PluginMessages messages = CurrentPlatform.getMessages();
-                        for (Player player : server.getAllPlayers()) {
+                        for (Player player : plugin.getServer().getAllPlayers()) {
                             User user = new User(player);
                             if (user.hasPermission(PluginPermission.applyUpdates())) {
                                 user.send(messages.prefix() + "&dNew LockLogin version available, current is " + versionID.getVersionID() + ", but latest is " + fetch.getLatest());
@@ -429,7 +429,7 @@ public final class Manager {
                                     } else {
                                         console.send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
 
-                                        for (Player player : server.getAllPlayers()) {
+                                        for (Player player : plugin.getServer().getAllPlayers()) {
                                             User user = new User(player);
                                             if (user.hasPermission(PluginPermission.applyUpdates())) {
                                                 user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
@@ -441,7 +441,7 @@ public final class Manager {
                         } else {
                             console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
 
-                            for (Player player : server.getAllPlayers()) {
+                            for (Player player : plugin.getServer().getAllPlayers()) {
                                 User user = new User(player);
                                 if (user.hasPermission(PluginPermission.applyUpdates())) {
                                     user.send(messages.prefix() + "&dFollow console instructions to update");
@@ -465,7 +465,7 @@ public final class Manager {
     static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        SimpleScheduler timer = new SourceSecondsTimer(main, config.getUpdaterOptions().getInterval(), true).multiThreading(true).endAction(Manager::performVersionCheck);
+        SimpleScheduler timer = new SourceSecondsTimer(plugin, config.getUpdaterOptions().getInterval(), true).multiThreading(true).endAction(Manager::performVersionCheck);
         if (config.getUpdaterOptions().isEnabled())
             timer.start();
 
@@ -477,7 +477,7 @@ public final class Manager {
      * Schedule the alert system
      */
     static void scheduleAlertSystem() {
-        SimpleScheduler timer = new SourceSecondsTimer(main, 30, true).multiThreading(true).endAction(() -> {
+        SimpleScheduler timer = new SourceSecondsTimer(plugin, 30, true).multiThreading(true).endAction(() -> {
             AlertSystem system = new AlertSystem();
             system.checkAlerts();
 
@@ -497,12 +497,12 @@ public final class Manager {
      * plugin load using third-party loaders
      */
     static void initPlayers() {
-        server.getScheduler().buildTask(plugin, () -> {
+        plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             PluginMessages messages = CurrentPlatform.getMessages();
 
-            for (Player player : server.getAllPlayers()) {
-                server.getScheduler().buildTask(plugin, () -> {
+            for (Player player : plugin.getServer().getAllPlayers()) {
+                plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> {
                     InetSocketAddress ip = player.getRemoteAddress();
                     User user = new User(player);
 
@@ -543,7 +543,7 @@ public final class Manager {
 
                     if (config.clearChat()) {
                         for (int i = 0; i < 150; i++)
-                            server.getScheduler().buildTask(plugin, () -> player.sendMessage(Component.text().content("").build()));
+                            plugin.getServer().getScheduler().buildTask(plugin.getContainer(), () -> player.sendMessage(Component.text().content("").build()));
                     }
 
                     ClientSession session = user.getSession();
@@ -554,7 +554,7 @@ public final class Manager {
 
                     SimpleScheduler tmp_timer = null;
                     if (!session.isCaptchaLogged()) {
-                        tmp_timer = new SourceSecondsTimer(main, 1, true);
+                        tmp_timer = new SourceSecondsTimer(plugin, 1, true);
                         tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                     }
 
@@ -573,7 +573,7 @@ public final class Manager {
                             timer.cancel();
                     });
 
-                    server.getScheduler().buildTask(plugin, check).schedule();
+                    plugin.getServer().getScheduler().buildTask(plugin.getContainer(), check).schedule();
 
                     user.checkServer(0);
 
@@ -591,7 +591,7 @@ public final class Manager {
      * plugin unload using third-party loaders
      */
     static void endPlayers() {
-        for (Player player : server.getAllPlayers()) {
+        for (Player player : plugin.getServer().getAllPlayers()) {
             User user = new User(player);
 
             SessionKeeper keeper = new SessionKeeper(user.getModule());
@@ -615,7 +615,7 @@ public final class Manager {
      */
     public static void restartVersionChecker() {
         try {
-            SimpleScheduler timer = new SourceSecondsTimer(source, updater_id);
+            SimpleScheduler timer = new SourceSecondsTimer(plugin, updater_id);
             timer.restart();
         } catch (Throwable ignored) {
         }
@@ -626,7 +626,7 @@ public final class Manager {
      */
     public static void restartAlertSystem() {
         try {
-            SimpleScheduler timer = new SourceSecondsTimer(source, alert_id);
+            SimpleScheduler timer = new SourceSecondsTimer(plugin, alert_id);
             timer.restart();
         } catch (Throwable ignored) {
         }

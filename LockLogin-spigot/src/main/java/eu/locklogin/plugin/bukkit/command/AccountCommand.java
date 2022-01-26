@@ -21,6 +21,7 @@ import eu.locklogin.api.common.security.Password;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -31,11 +32,10 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.LockLogin;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -144,14 +144,13 @@ public class AccountCommand implements CommandExecutor {
                                             AccountManager manager = offline.getAccount();
                                             if (manager != null) {
                                                 LockedAccount account = new LockedAccount(manager.getUUID());
-                                                LockedData data = account.getData();
 
-                                                if (data.isLocked()) {
-                                                    if (account.unlock()) {
+                                                if (account.isLocked()) {
+                                                    if (account.release()) {
                                                         user.send(messages.prefix() + messages.accountUnLocked(target));
                                                     } else {
                                                         user.send(messages.prefix() + messages.accountNotLocked(target));
-                                                        LockLogin.logger.scheduleLog(Level.GRAVE, "Tried to unlock account of " + target + " but failed");
+                                                        LockLogin.logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", StringUtils.stripColor(player.getDisplayName()), target);
                                                     }
                                                 } else {
                                                     user.send(messages.prefix() + messages.accountNotLocked(target));
@@ -212,7 +211,7 @@ public class AccountCommand implements CommandExecutor {
 
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
-                                                trySync(() -> tar_p.performCommand("account close"));
+                                                trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand("account close"));
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
@@ -246,7 +245,7 @@ public class AccountCommand implements CommandExecutor {
                                                 AccountManager manager = offline.getAccount();
                                                 if (manager != null) {
                                                     LockedAccount account = new LockedAccount(manager.getUUID());
-                                                    if (account.getData().isLocked()) {
+                                                    if (account.isLocked()) {
                                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                                     } else {
                                                         manager.setUnsafePassword("");
@@ -380,14 +379,13 @@ public class AccountCommand implements CommandExecutor {
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        LockedData data = account.getData();
 
-                                        if (data.isLocked()) {
-                                            if (account.unlock()) {
+                                        if (account.isLocked()) {
+                                            if (account.release()) {
                                                 console.send(messages.prefix() + messages.accountUnLocked(tar_name));
                                             } else {
                                                 console.send(messages.prefix() + messages.accountNotLocked(tar_name));
-                                                LockLogin.logger.scheduleLog(Level.GRAVE, "Tried to unlock account of {0} but failed", tar_name);
+                                                LockLogin.logger.scheduleLog(Level.GRAVE, "{0} tried to unlock account of {1} but failed", config.serverName(), tar_name);
                                             }
                                         } else {
                                             console.send(messages.prefix() + messages.accountNotLocked(tar_name));
@@ -414,7 +412,7 @@ public class AccountCommand implements CommandExecutor {
 
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
-                                    trySync(() -> tar_p.performCommand("account close"));
+                                    trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand("account close"));
                                     console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
@@ -442,7 +440,7 @@ public class AccountCommand implements CommandExecutor {
                                     AccountManager manager = offline.getAccount();
                                     if (manager != null) {
                                         LockedAccount account = new LockedAccount(manager.getUUID());
-                                        if (account.getData().isLocked()) {
+                                        if (account.isLocked()) {
                                             console.send(messages.prefix() + messages.neverPlayer(target));
                                         } else {
                                             manager.setUnsafePassword("");

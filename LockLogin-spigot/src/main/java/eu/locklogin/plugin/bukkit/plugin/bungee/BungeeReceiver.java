@@ -8,8 +8,8 @@ import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
 import eu.locklogin.plugin.bukkit.util.files.Config;
@@ -68,10 +68,16 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     if (!user.isLockLoginUser()) {
                                         user.applyLockLoginUser();
                                     }
-                                    session.validate();
+
+                                    if (!session.isValid()) {
+                                        //Validate BungeeCord/Velocity session
+
+                                        BungeeSender.validatePlayer(player);
+                                        session.validate();
+                                    }
 
                                     if (config.enableSpawn()) {
-                                        trySync(() -> player.teleport(player.getWorld().getSpawnLocation()));
+                                        trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
 
                                         Spawn spawn = new Spawn(player.getWorld());
                                         spawn.load().whenComplete(() -> spawn.teleport(player));
@@ -81,6 +87,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     session.set2FALogged(input.readBoolean());
                                     session.setPinLogged(input.readBoolean());
                                     user.setRegistered(input.readBoolean());
+
 
                                     break;
                                 case QUIT:
@@ -240,7 +247,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     String configString = input.readUTF();
                                     Config.manager.loadBungee(configString);
                                     break;
-                                case MODULE:
+                                case LISTENER:
                                     String name = input.readUTF();
                                     int byteLength = input.readInt();
                                     byte[] message = new byte[byteLength];
@@ -251,7 +258,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                         i++;
                                     }
 
-                                    ModuleMessageService.listenMessage(name, message);
+                                    //ModuleMessageService.listenMessage(name, message);
                                     break;
                                 default:
                                     logger.scheduleLog(Level.GRAVE, "Unknown plugin sub channel message: " + sub);

@@ -31,11 +31,11 @@ import ml.karmaconfigs.api.common.utils.string.util.TextType;
 import java.io.File;
 import java.util.*;
 
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public final class Proxy extends ProxyConfiguration {
 
-    private final static File cfg_file = new File(source.getDataPath().toFile(), "proxy.yml");
+    private final static File cfg_file = new File(plugin.getDataPath().toFile(), "proxy.yml");
     private static KarmaYamlManager cfg;
 
     /**
@@ -44,7 +44,7 @@ public final class Proxy extends ProxyConfiguration {
     public Proxy() {
         if (cfg == null) {
             if (!cfg_file.exists()) {
-                FileCopy copy = new FileCopy(source, "cfg/proxy.yml");
+                FileCopy copy = new FileCopy(plugin, "cfg/proxy.yml");
                 try {
                     copy.copy(cfg_file);
                 } catch (Throwable ex) {
@@ -186,7 +186,7 @@ public final class Proxy extends ProxyConfiguration {
                     .withType(TextType.RANDOM_SIZE)).create();
 
             cfg.set("ProxyKey", key);
-            cfg = cfg.save(cfg_file, source, "cfg/proxy.yml");
+            cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
 
             YamlReloader reloader = cfg.getReloader();
             if (reloader != null) {
@@ -209,7 +209,7 @@ public final class Proxy extends ProxyConfiguration {
 
         if (StringUtils.isNullOrEmpty(id)) {
             cfg.set("ID", uuid.toString());
-            cfg = cfg.save(cfg_file, source, "cfg/proxy.yml");
+            cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
 
             YamlReloader reloader = cfg.getReloader();
             if (reloader != null) {
@@ -220,7 +220,7 @@ public final class Proxy extends ProxyConfiguration {
                 uuid = UUID.fromString(id);
             } catch (Throwable ex) {
                 cfg.set("ID", uuid.toString());
-                cfg = cfg.save(cfg_file, source, "cfg/proxy.yml");
+                cfg = cfg.save(cfg_file, plugin, "cfg/proxy.yml");
 
                 YamlReloader reloader = cfg.getReloader();
                 if (reloader != null) {
@@ -233,6 +233,26 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
+     * Get the proxy channel address
+     *
+     * @return the proxy channel address
+     */
+    @Override
+    public String messageAddress() {
+        return null;
+    }
+
+    /**
+     * Get the proxy channel port
+     *
+     * @return the proxy channel port
+     */
+    @Override
+    public int messagePort() {
+        return 0;
+    }
+
+    /**
      * Get all the lobby servers
      *
      * @return all the available lobby servers
@@ -242,7 +262,7 @@ public final class Proxy extends ProxyConfiguration {
         List<String> lobbies = cfg.getStringList("Servers.Lobby");
         List<T> servers = Collections.synchronizedList(new ArrayList<>());
         if (lobbies.contains("*")) {
-            Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+            Collection<RegisteredServer> registered = plugin.getServer().getAllServers();
             for (RegisteredServer server : registered) {
                 if (isAssignable(server.getClass(), instance)) {
                     servers.add(instance.cast(server));
@@ -250,7 +270,7 @@ public final class Proxy extends ProxyConfiguration {
             }
         } else {
             if (!lobbies.isEmpty() && arrayValid(lobbies)) {
-                Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+                Collection<RegisteredServer> registered = plugin.getServer().getAllServers();
                 for (RegisteredServer server : registered) {
                     if (lobbies.contains(server.getServerInfo().getName())) {
                         if (isAssignable(server.getClass(), instance)) {
@@ -274,7 +294,7 @@ public final class Proxy extends ProxyConfiguration {
         List<String> auths = cfg.getStringList("Servers.Auth");
         List<T> servers = Collections.synchronizedList(new ArrayList<>());
         if (auths.contains("*")) {
-            Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+            Collection<RegisteredServer> registered = plugin.getServer().getAllServers();
             for (RegisteredServer server : registered) {
                 if (isAssignable(server.getClass(), instance)) {
                     servers.add(instance.cast(server));
@@ -282,7 +302,7 @@ public final class Proxy extends ProxyConfiguration {
             }
         } else {
             if (!auths.isEmpty() && arrayValid(auths)) {
-                Collection<RegisteredServer> registered = LockLogin.server.getAllServers();
+                Collection<RegisteredServer> registered = plugin.getServer().getAllServers();
                 for (RegisteredServer server : registered) {
                     if (auths.contains(server.getServerInfo().getName())) {
                         if (isAssignable(server.getClass(), instance)) {

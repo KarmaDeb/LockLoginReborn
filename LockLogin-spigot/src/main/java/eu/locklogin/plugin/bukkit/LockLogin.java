@@ -23,6 +23,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -80,18 +81,24 @@ public interface LockLogin {
         return any;
     }
 
-    static void trySync(final Runnable action) {
+    static void trySync(final TaskTarget target, final Runnable action) {
         try {
             plugin.getServer().getScheduler().runTask(plugin, action);
         } catch (Throwable ex) {
+            logger.scheduleLog(Level.GRAVE, ex);
+            logger.scheduleLog(Level.INFO, "Failed to schedule async task with identifier {0}. It will run without any special thread configuration!", target.getTaskId());
+
+            console.send("Failed to perform task {0}");
             action.run();
         }
     }
 
-    static void tryAsync(final Runnable action) {
+    static void tryAsync(final TaskTarget target, final Runnable action) {
         try {
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, action);
         } catch (Throwable ex) {
+            logger.scheduleLog(Level.GRAVE, ex);
+            logger.scheduleLog(Level.INFO, "Failed to schedule async task with identifier {0}. It will run sync!", target.getTaskId());
             action.run();
         }
     }

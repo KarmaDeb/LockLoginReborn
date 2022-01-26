@@ -18,9 +18,12 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -54,14 +57,94 @@ public final class QuitListener implements Listener {
         if (!kicked.contains(player.getUniqueId())) {
             LateScheduler<Event> result = new AsyncLateScheduler<>();
 
-            tryAsync(() -> {
+            tryAsync(TaskTarget.EVENT, () -> {
+                PluginConfiguration config = CurrentPlatform.getConfiguration();
                 User user = new User(player);
+
+                if (!config.isBungeeCord()) {
+                    if (user.getChecker().isUnderCheck()) {
+                        user.getChecker().cancelCheck();
+                    }
+
+                    if (user.isLockLoginUser()) {
+                        if (!config.isBungeeCord()) {
+                            SessionKeeper keeper = new SessionKeeper(user.getModule());
+                            keeper.store();
+                        }
+
+                        //Last location will always be saved since if the server
+                        //owner wants to enable it, it would be good to see
+                        //the player last location has been stored to avoid
+                        //location problems
+                        if (Spawn.isAway(player)) {
+                            LastLocation last_loc = new LastLocation(player);
+                            last_loc.save();
+                        }
+
+                        ClientSession session = user.getSession();
+                        session.invalidate();
+                        session.setLogged(false);
+                        session.setPinLogged(false);
+                        session.set2FALogged(false);
+
+                        user.removeLockLoginUser();
+                    }
+
+                    user.removeSessionCheck();
+                    user.setTempSpectator(false);
+
+                    ClientVisor visor = new ClientVisor(player);
+                    visor.show();
+
+                    UserDatabase.removeUser(player);
+                    Event event = new UserQuitEvent(user.getModule(), e);
+                    result.complete(event);
+                } else {
+                    //This is exactly the same as done with "DataType.QUIT" in BungeeListener but in a "safe" mode
+                    if (user.isLockLoginUser()) {
+                        ClientSession session = user.getSession();
+
+                        //Last location will be always saved since if the server
+                        //owner wants to enable it, it would be good to see
+                        //the player last location has been stored to avoid
+                        //location problems
+                        LastLocation last_loc = new LastLocation(player);
+                        last_loc.save();
+
+                        session.invalidate();
+                        session.setLogged(false);
+                        session.setPinLogged(false);
+                        session.set2FALogged(false);
+
+                        user.removeLockLoginUser();
+                    }
+
+                    user.setTempSpectator(false);
+                }
+            });
+
+            result.whenComplete(ModulePlugin::callEvent);
+        } else {
+            kicked.remove(player.getUniqueId());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onKick(PlayerKickEvent e) {
+        Player player = e.getPlayer();
+        kicked.add(player.getUniqueId());
+
+        LateScheduler<Event> result = new AsyncLateScheduler<>();
+        tryAsync(TaskTarget.EVENT, () -> {
+            PluginConfiguration config = CurrentPlatform.getConfiguration();
+            User user = new User(player);
+
+            if (!config.isBungeeCord()) {
                 if (user.getChecker().isUnderCheck()) {
                     user.getChecker().cancelCheck();
                 }
 
                 if (user.isLockLoginUser()) {
-                    Config config = new Config();
                     if (!config.isBungeeCord()) {
                         SessionKeeper keeper = new SessionKeeper(user.getModule());
                         keeper.store();
@@ -94,60 +177,27 @@ public final class QuitListener implements Listener {
                 UserDatabase.removeUser(player);
                 Event event = new UserQuitEvent(user.getModule(), e);
                 result.complete(event);
-            });
+            } else {
+                if (user.isLockLoginUser()) {
+                    ClientSession session = user.getSession();
 
-            result.whenComplete(ModulePlugin::callEvent);
-        } else {
-            kicked.remove(player.getUniqueId());
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onKick(PlayerKickEvent e) {
-        Player player = e.getPlayer();
-        kicked.add(player.getUniqueId());
-
-        LateScheduler<Event> result = new AsyncLateScheduler<>();
-        tryAsync(() -> {
-            User user = new User(player);
-            if (user.getChecker().isUnderCheck()) {
-                user.getChecker().cancelCheck();
-            }
-
-            if (user.isLockLoginUser()) {
-                Config config = new Config();
-                if (!config.isBungeeCord()) {
-                    SessionKeeper keeper = new SessionKeeper(user.getModule());
-                    keeper.store();
-                }
-
-                //Last location will always be saved since if the server
-                //owner wants to enable it, it would be good to see
-                //the player last location has been stored to avoid
-                //location problems
-                if (Spawn.isAway(player)) {
+                    //Last location will be always saved since if the server
+                    //owner wants to enable it, it would be good to see
+                    //the player last location has been stored to avoid
+                    //location problems
                     LastLocation last_loc = new LastLocation(player);
                     last_loc.save();
+
+                    session.invalidate();
+                    session.setLogged(false);
+                    session.setPinLogged(false);
+                    session.set2FALogged(false);
+
+                    user.removeLockLoginUser();
                 }
 
-                ClientSession session = user.getSession();
-                session.invalidate();
-                session.setLogged(false);
-                session.setPinLogged(false);
-                session.set2FALogged(false);
-
-                user.removeLockLoginUser();
+                user.setTempSpectator(false);
             }
-
-            user.removeSessionCheck();
-            user.setTempSpectator(false);
-
-            ClientVisor visor = new ClientVisor(player);
-            visor.show();
-
-            UserDatabase.removeUser(player);
-            Event event = new UserQuitEvent(user.getModule(), e);
-            result.complete(event);
         });
 
         result.whenComplete(ModulePlugin::callEvent);

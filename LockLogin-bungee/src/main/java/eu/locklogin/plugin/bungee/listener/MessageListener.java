@@ -25,11 +25,12 @@ import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -73,63 +74,75 @@ public final class MessageListener implements Listener {
                         String id = input.readUTF();
                         switch (e.getTag().toLowerCase()) {
                             case "ll:account":
-                                if (sub == DataType.PIN) {
-                                    UUID uuid = UUID.fromString(id);
-                                    String pin = input.readUTF();
+                                UUID uuid = UUID.fromString(id);
+                                ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
 
-                                    ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
-                                    if (player != null && player.isConnected()) {
-                                        User user = new User(player);
-                                        ClientSession session = user.getSession();
-                                        AccountManager manager = user.getManager();
+                                if (player != null) {
+                                    switch (sub) {
+                                        case PIN:
+                                            String pin = input.readUTF();
+                                            if (player.isConnected()) {
+                                                User user = new User(player);
+                                                ClientSession session = user.getSession();
+                                                AccountManager manager = user.getManager();
 
-                                        if (session.isValid()) {
-                                            if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() && !pin.equalsIgnoreCase("error")) {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
+                                                if (session.isValid()) {
+                                                    if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate() && !pin.equalsIgnoreCase("error")) {
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
 
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                        (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
-                                                        user.getModule(),
-                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                                ModulePlugin.callEvent(event);
+                                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                                (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
+                                                                user.getModule(),
+                                                                (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
+                                                        ModulePlugin.callEvent(event);
 
-                                                user.send(messages.prefix() + event.getAuthMessage());
-                                                session.setPinLogged(true);
-                                                if (manager.has2FA()) {
-                                                    session.set2FALogged(false);
-                                                } else {
-                                                    session.set2FALogged(true);
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                        session.setPinLogged(true);
+                                                        if (manager.has2FA()) {
+                                                            session.set2FALogged(false);
+                                                        } else {
+                                                            session.set2FALogged(true);
 
-                                                    DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-                                                    DataSender.send(player, gauth);
+                                                            DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                                                            DataSender.send(player, gauth);
 
-                                                    user.checkServer(0);
-                                                }
-                                            } else {
-                                                if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
-
-                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                            UserAuthenticateEvent.Result.ERROR,
-                                                            user.getModule(),
-                                                            (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                                    ModulePlugin.callEvent(event);
-
-                                                    user.send(messages.prefix() + event.getAuthMessage());
-                                                    session.setPinLogged(true);
-                                                    if (manager.has2FA()) {
-                                                        session.set2FALogged(false);
+                                                            user.checkServer(0);
+                                                        }
                                                     } else {
-                                                        session.set2FALogged(true);
+                                                        if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                                            DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
 
-                                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-                                                        DataSender.send(player, gauth);
+                                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                                    UserAuthenticateEvent.Result.ERROR,
+                                                                    user.getModule(),
+                                                                    (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
+                                                            ModulePlugin.callEvent(event);
 
-                                                        user.checkServer(0);
+                                                            user.send(messages.prefix() + event.getAuthMessage());
+                                                            session.setPinLogged(true);
+                                                            if (manager.has2FA()) {
+                                                                session.set2FALogged(false);
+                                                            } else {
+                                                                session.set2FALogged(true);
+
+                                                                DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+                                                                DataSender.send(player, gauth);
+
+                                                                user.checkServer(0);
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
+                                            break;
+                                        case JOIN:
+                                            //In BungeeCord, this means that player has been validated
+                                            User user = new User(player);
+                                            UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
+                                            ModulePlugin.callEvent(event);
+                                            break;
+                                        default:
+                                            break;
                                     }
                                 }
                                 break;
@@ -156,17 +169,25 @@ public final class MessageListener implements Listener {
                                             }
                                         }
                                         break;
-                                    case MODULE:
-                                        int byteLength = input.readInt();
-                                        byte[] bytes = new byte[byteLength];
+                                    case LISTENER:
+                                        String address = input.readUTF();
+                                        int port = input.readInt();
 
-                                        int i = 0;
-                                        while (i < byteLength) {
-                                            bytes[i] = input.readByte();
-                                            i++;
-                                        }
+                                        /*
+                                        Manager.connect(address, port).whenComplete((rsl, error) -> {
+                                            if (error == null) {
+                                                if (rsl) {
+                                                    console.send("Connected to remote messaging server for modules!", Level.INFO);
 
-                                        ModuleMessageService.listenMessage(id, bytes);
+                                                    Manager.getClient().rename(CurrentPlatform.getConfiguration().serverName());
+                                                } else {
+                                                    console.send("Failed to connect to remote messaging server for modules", Level.GRAVE);
+                                                }
+                                            } else {
+                                                logger.scheduleLog(Level.GRAVE, error);
+                                                logger.scheduleLog(Level.INFO, "Failed to connect client to remote messaging server");
+                                            }
+                                        });*/
                                         break;
                                 }
                                 break;

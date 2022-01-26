@@ -20,7 +20,7 @@ import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public class ScratchCodes {
 
@@ -32,7 +32,7 @@ public class ScratchCodes {
      * @param _player the player to manage scratch codes who
      */
     public ScratchCodes(final Player _player) {
-        codesFile = new KarmaFile(source, _player.getUniqueId().toString().replace("-", "") + ".lldb", "data", ".codes");
+        codesFile = new KarmaFile(plugin, _player.getUniqueId().toString().replace("-", "") + ".lldb", "data", ".codes");
 
         if (!codesFile.exists())
             codesFile.create();

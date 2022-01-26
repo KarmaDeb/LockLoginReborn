@@ -1,0 +1,60 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under GSA GPL license    #
+#             https://locklogin.eu/license                #
+#                                                         #
+#                                                         #
+#                   For more help                         #
+#             go to: https://rb.gy/simfd2                 #
+#                                                         #
+###########################################################
+
+#As of LockLogin 1.13.15, LockLogin opens server owners
+#the ability to send data between servers using RemoteMessaging
+#API also made by LockLogin owner. This option is not really recommended
+#unless you think you really need it. IT MAY BE ALSO NEEDED BY SOME MODULES
+#TO ENABLE MODULE COMMUNICATION
+#
+# Please note, this option is only needed if you really want to make this server also be a RemoteMessaging server.
+# When is this recommended? Actually, never, but if some module requires it, there's the option
+#
+# Enabled -> Enables/Disabled this server RemoteMessaging server
+# Address -> Should be 127.0.0.1 for only local network, or your IPv4 address for public access network
+# Port -> The port where the server will be listening ( must be open for public access network )
+# Key -> Can't be empty, is the key needed to access the RemoteMessaging channel, this way only clients
+#        with the password can access the channel
+Server:
+  Enabled: false
+  Address: '127.0.0.1'
+  Port: 49305
+  Key: ""
+
+#As of LockLogin 1.13.15, LockLogin opens server owners
+#the ability to send data between servers using RemoteMessaging
+#API also made by LockLogin owner. This option is not really recommended
+#unless you think you really need it. IT MAY BE ALSO NEEDED BY SOME MODULES
+#TO ENABLE MODULE COMMUNICATION
+#
+# Please note, this option requires you to open ports if your bungeecord or velocity server is not on the same
+# network as this server. Also, please note that RemoteMessaging uses TCP to transfer messages, which sometimes can be slow
+#
+# '<ip>' -> Must be the BungeeCord/Velocity server address, leave default if it's on the same machine
+# Port -> Must be the BungeeCord/Velocity RemoteMessaging channel port, THIS IS NOT THE SAME AS BungeeCord or Velocity
+#         game port. By default, RemoteMessaging uses port 49305
+# Local -> Is the port which the client will use to connect to the remote messaging, by default RemoteMessaging uses 49300,
+#          but in case this port is used by other process, you can change it to any free port.
+# Password -> It's the server password
+Connection:
+  Servers:
+    '127.0.0.1':
+      Port: 49305
+      Local: 49300
+      Password: ""
+
+
+#The channel mode
+#
+# DISABLED -> Do not use RemoteMessaging channel
+# MODULE_ONLY -> Use it only for modules
+# EVERYTHING -> Use it for the plugin and modules
+Mode: DISABLED

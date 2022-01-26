@@ -21,10 +21,12 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.enums.Manager;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
+//import ml.karmaconfigs.remote.messaging.Server;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
@@ -41,6 +43,8 @@ public final class CurrentPlatform {
     private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
     private final static ModuleServer server = new ModuleServer();
     private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
+
+    //private static Server remoteServer;
     private static Platform platform;
     private static Class<?> main;
     private static String prefix = "$";
@@ -142,6 +146,26 @@ public final class CurrentPlatform {
     public static void disconnectPlayer(final ModulePlayer mp) {
         players.remove(mp.getUUID());
         server.disconnectPlayer(mp);
+    }
+
+    /**
+     * Add a server to the module server servers
+     *
+     * @param sv the server to add
+     */
+    public static void detectServer(final TargetServer sv) {
+        server.addServer(sv);
+    }
+
+    /**
+     * Set the current remote server
+     *
+     * @param remote the current remote server
+     */
+    public static void setRemoteServer(final Object remote) {
+        /*if (remoteServer == null) {
+            remoteServer = remote;
+        }*/
     }
 
     /**
@@ -459,5 +483,15 @@ public final class CurrentPlatform {
      */
     public static Map<UUID, Object> getConnectedPlayers() {
         return new HashMap<>(players);
+    }
+
+    /**
+     * Get the remote messaging server
+     *
+     * @return the remote messaging server
+     */
+    @Nullable
+    public static Object getRemoteServer() {
+        return null;
     }
 }

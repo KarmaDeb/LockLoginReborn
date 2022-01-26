@@ -117,7 +117,7 @@ public final class LoginCommand extends BungeeLikeCommand {
                                                 manager.setPassword(null);
 
                                                 SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                                server.getScheduler().buildTask(plugin, check).schedule();
+                                                plugin.getServer().getScheduler().buildTask(plugin.getContainer(), check).schedule();
                                                 return;
                                             }
                                         }

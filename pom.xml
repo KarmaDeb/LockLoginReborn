@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.13</version>
+    <version>1.13.15</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -41,11 +41,11 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLoginReborn.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLoginReborn.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLoginReborn/tree/master</url>
-        <tag>1.13.10</tag>
+        <tag>1.13.15</tag>
     </scm>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.manager>v6</project.manager>
@@ -54,7 +54,7 @@
         <project.name>LockLogin</project.name>
         <project.author>KarmaDev</project.author>
         <project.buildType>RELEASE</project.buildType>
-        <project.karmaapi>1.3.2</project.karmaapi>
+        <project.karmaapi>1.3.2-SNAPSHOT</project.karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>
             LockLogin is an advanced login plugin, one of the most secure available,

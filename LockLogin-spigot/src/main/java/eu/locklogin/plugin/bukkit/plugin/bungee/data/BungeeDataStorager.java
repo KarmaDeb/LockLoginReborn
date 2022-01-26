@@ -42,7 +42,7 @@ public final class BungeeDataStorager {
      * @param key the provided key
      * @return if the key is proxy owner key
      */
-    public final boolean isProxyKey(final String key) {
+    public boolean isProxyKey(final String key) {
         try {
             if (proxyKey.replaceAll("\\s", "").isEmpty()) {
                 return true;
@@ -61,7 +61,7 @@ public final class BungeeDataStorager {
      * @param player the player
      * @return if the player needs pin confirmation
      */
-    public final boolean needsPinConfirmation(final Player player) {
+    public boolean needsPinConfirmation(final Player player) {
         return pin_confirmation.contains(player.getUniqueId());
     }
 
@@ -70,7 +70,7 @@ public final class BungeeDataStorager {
      *
      * @return the server name
      */
-    public final String getServerName() {
+    public String getServerName() {
         if (!StringUtils.isNullOrEmpty(serverName)) {
             return serverName;
         } else {
@@ -83,7 +83,7 @@ public final class BungeeDataStorager {
      *
      * @param name the name
      */
-    public final void setServerName(final String name) {
+    public void setServerName(final String name) {
         serverName = name;
     }
 
@@ -93,7 +93,7 @@ public final class BungeeDataStorager {
      * @param player the player
      * @param status the pin status
      */
-    public final void setPinConfirmation(final Player player, final boolean status) {
+    public void setPinConfirmation(final Player player, final boolean status) {
         if (status) {
             pin_confirmation.add(player.getUniqueId());
         } else {
@@ -106,9 +106,9 @@ public final class BungeeDataStorager {
      *
      * @param key the proxy owner id
      */
-    public final void setProxyKey(final String key) {
+    public void setProxyKey(final String key) {
         if (StringUtils.isNullOrEmpty(proxyKey)) {
-            proxyKey = CryptoFactory.getBuilder().withPassword(key).build().hash(HashType.SHA256, true);
+            proxyKey = CryptoFactory.getBuilder().withPassword(key).unsafe().hash(HashType.SHA256, true);
             logger.scheduleLog(Level.INFO, "Registered proxy access key to register new proxy IDs");
         }
     }
@@ -118,7 +118,7 @@ public final class BungeeDataStorager {
      *
      * @param amount the registered accounts amount
      */
-    public final void setRegisteredAccounts(final int amount) {
+    public void setRegisteredAccounts(final int amount) {
         SessionDataContainer.setRegistered(amount);
     }
 
@@ -127,7 +127,7 @@ public final class BungeeDataStorager {
      *
      * @param amount the logged accounts amount
      */
-    public final void setLoggedAccounts(final int amount) {
+    public void setLoggedAccounts(final int amount) {
         SessionDataContainer.setLogged(amount);
     }
 }

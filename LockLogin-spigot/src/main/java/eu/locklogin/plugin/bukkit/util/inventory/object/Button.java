@@ -2,6 +2,7 @@ package eu.locklogin.plugin.bukkit.util.inventory.object;
 
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -389,7 +390,7 @@ public class Button {
      */
     @SuppressWarnings("deprecation")
     public static void preCache() {
-        tryAsync(() -> {
+        tryAsync(TaskTarget.CACHE, () -> {
             one();
             two();
             three();

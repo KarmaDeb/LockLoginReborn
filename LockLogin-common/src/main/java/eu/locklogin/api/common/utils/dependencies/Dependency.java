@@ -16,7 +16,7 @@ package eu.locklogin.api.common.utils.dependencies;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -85,9 +85,9 @@ public enum Dependency {
             case GOOGLE_AUTHENTICATOR:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/com/warrenstrange/googleauth/1.5.0/googleauth-1.5.0.jar", true);
             case LOG4J:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar", true);
             case LOG4J_WEB:
-                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.17.0/log4j-web-2.17.0.jar", true);
+                return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/2.17.1/log4j-web-2.17.1.jar", true);
             /*case JAVASSIST:
                 return PluginDependency.of(prettyName(), "https://repo1.maven.org/maven2/org/javassist/javassist/3.28.0-GA/javassist-3.28.0-GA.jar", true);*/
             case GUAVA:

@@ -19,7 +19,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.rgb.RGBTextComponent;
 
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public final class Message extends PluginMessages {
 
@@ -27,7 +27,7 @@ public final class Message extends PluginMessages {
      * Initialize messages file
      */
     public Message() {
-        super(source);
+        super(plugin);
     }
 
     /**

@@ -58,7 +58,14 @@ public final class QuitListener implements Listener {
                 session.setPinLogged(false);
                 session.set2FALogged(false);
 
+                /*
+                This was causing errors, as the player was not longer in the server, this was kind stupid to do, there was literally no
+                way the message could arrive the target server as the player is not longer on it...
+
+                As of LockLogin 1.13.15, the actions performed by this message are automatically run from spigot when the player leaves
+
                 DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
+                 */
 
                 user.removeSessionCheck();
                 UserDatabase.removeUser(player);

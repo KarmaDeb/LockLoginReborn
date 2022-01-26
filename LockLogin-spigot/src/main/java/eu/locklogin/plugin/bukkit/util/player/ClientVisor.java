@@ -15,6 +15,7 @@ package eu.locklogin.plugin.bukkit.util.player;
  */
 
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -85,7 +86,7 @@ public final class ClientVisor {
      * Check everyone can see everyone
      */
     private void check() {
-        tryAsync(() -> {
+        tryAsync(TaskTarget.VISION_CHECK, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 User user = new User(player);
                 ClientSession session = user.getSession();
@@ -102,7 +103,7 @@ public final class ClientVisor {
 
                             if (session.isLogged() && session.isTempLogged()) {
                                 if (tarSession.isLogged() && tarSession.isTempLogged()) {
-                                    trySync(() -> {
+                                    trySync(TaskTarget.VISION_TOGGLE, () -> {
                                         connected.showPlayer(player);
                                         player.showPlayer(connected);
                                     });
@@ -110,7 +111,7 @@ public final class ClientVisor {
                                     affected.remove(sub);
                                 }
                             } else {
-                                trySync(() -> {
+                                trySync(TaskTarget.VISION_TOGGLE, () -> {
                                     connected.hidePlayer(player);
                                     player.hidePlayer(connected);
                                 });

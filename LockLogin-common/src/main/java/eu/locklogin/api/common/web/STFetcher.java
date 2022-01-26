@@ -3,7 +3,7 @@ package eu.locklogin.api.common.web;
 import com.google.gson.*;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.utils.URLUtils;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.BufferedReader;

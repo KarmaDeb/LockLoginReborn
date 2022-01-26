@@ -106,7 +106,7 @@ public enum DataType {
     /**
      * LockLogin module message
      */
-    MODULE,
+    LISTENER,
 
     /**
      * Send proxy id as owner

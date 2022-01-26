@@ -19,11 +19,10 @@ import com.google.gson.JsonObject;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedAccount;
-import eu.locklogin.plugin.bukkit.util.files.data.lock.LockedData;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.inventory.object.SkullCache;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -81,7 +80,6 @@ public final class PlayersInfoInventory implements InventoryHolder {
                         meta.setDisplayName(StringUtils.toColor("&f" + manager.getName()));
 
                         LockedAccount locked = new LockedAccount(manager.getUUID());
-                        LockedData data = locked.getData();
 
                         User tarUser;
 
@@ -91,20 +89,20 @@ public final class PlayersInfoInventory implements InventoryHolder {
                             tarUser = null;
                         }
 
-                        List<String> parsed = parseMessages(data.isLocked());
+                        List<String> parsed = parseMessages(locked.isLocked());
                         List<String> lore = new ArrayList<>();
 
                         InstantParser creation_parser = new InstantParser(manager.getCreationTime());
                         String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
 
                         int msg = -1;
-                        lore.add(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
-                        if (data.isLocked()) {
-                            Instant date = data.getLockDate();
+                        lore.add(StringUtils.formatString(parsed.get(++msg), locked.isLocked()));
+                        if (locked.isLocked()) {
+                            Instant date = locked.getLockDate();
                             InstantParser parser = new InstantParser(date);
                             String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
 
-                            lore.add(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
+                            lore.add(StringUtils.formatString(parsed.get(++msg), locked.getIssuer()));
                             lore.add(StringUtils.formatString(parsed.get(++msg), dateString));
                         }
                         lore.add(StringUtils.formatString(parsed.get(++msg), manager.getName()));
@@ -113,7 +111,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
                         lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
                         lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                         lore.add(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
-                        lore.add(StringUtils.formatString(parsed.get(++msg), (!manager.getPin().replaceAll("\\s", "").isEmpty())));
+                        lore.add(StringUtils.formatString(parsed.get(++msg), manager.hasPin()));
                         lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference()));
 
                         meta.setLore(StringUtils.toColor(lore));
@@ -157,7 +155,6 @@ public final class PlayersInfoInventory implements InventoryHolder {
                     meta.setDisplayName(StringUtils.toColor("&f" + manager.getName()));
 
                     LockedAccount locked = new LockedAccount(manager.getUUID());
-                    LockedData data = locked.getData();
 
                     User tarUser;
 
@@ -167,20 +164,20 @@ public final class PlayersInfoInventory implements InventoryHolder {
                         tarUser = null;
                     }
 
-                    List<String> parsed = parseMessages(data.isLocked());
+                    List<String> parsed = parseMessages(locked.isLocked());
                     List<String> lore = new ArrayList<>();
 
                     InstantParser creation_parser = new InstantParser(manager.getCreationTime());
                     String creation_date = StringUtils.formatString("{0}/{1}/{2}", creation_parser.getDay(), creation_parser.getMonth(), creation_parser.getYear());
 
                     int msg = -1;
-                    lore.add(StringUtils.formatString(parsed.get(++msg), data.isLocked()));
-                    if (data.isLocked()) {
-                        Instant date = data.getLockDate();
+                    lore.add(StringUtils.formatString(parsed.get(++msg), locked.isLocked()));
+                    if (locked.isLocked()) {
+                        Instant date = locked.getLockDate();
                         InstantParser parser = new InstantParser(date);
                         String dateString = parser.getYear() + " " + parser.getMonth() + " " + parser.getDay();
 
-                        lore.add(StringUtils.formatString(parsed.get(++msg), data.getAdministrator()));
+                        lore.add(StringUtils.formatString(parsed.get(++msg), locked.getIssuer()));
                         lore.add(StringUtils.formatString(parsed.get(++msg), dateString));
                     }
                     lore.add(StringUtils.formatString(parsed.get(++msg), manager.getName()));
@@ -189,7 +186,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
                     lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isLogged() : "false")));
                     lore.add(StringUtils.formatString(parsed.get(++msg), (tarUser != null ? tarUser.getSession().isTempLogged() : "false")));
                     lore.add(StringUtils.formatString(parsed.get(++msg), (manager.has2FA() && !manager.getGAuth().replaceAll("\\s", "").isEmpty())));
-                    lore.add(StringUtils.formatString(parsed.get(++msg), (!manager.getPin().replaceAll("\\s", "").isEmpty())));
+                    lore.add(StringUtils.formatString(parsed.get(++msg), manager.hasPin()));
                     lore.add(StringUtils.formatString(parsed.get(++msg), creation_date, creation_parser.getDifference()));
 
                     meta.setLore(StringUtils.toColor(lore));

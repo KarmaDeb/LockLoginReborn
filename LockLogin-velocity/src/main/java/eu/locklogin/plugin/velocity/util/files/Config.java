@@ -28,11 +28,11 @@ import ml.karmaconfigs.api.common.utils.string.util.TextType;
 
 import java.io.File;
 
-import static eu.locklogin.plugin.velocity.LockLogin.source;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 public final class Config extends PluginConfiguration {
 
-    private final static File cfg_file = new File(source.getDataPath().toFile(), "config.yml");
+    private final static File cfg_file = new File(plugin.getDataPath().toFile(), "config.yml");
     private static KarmaYamlManager cfg = null;
 
     /**
@@ -41,7 +41,7 @@ public final class Config extends PluginConfiguration {
     public Config() {
         if (cfg == null) {
             if (!cfg_file.exists()) {
-                FileCopy copy = new FileCopy(source, "cfg/config.yml");
+                FileCopy copy = new FileCopy(plugin, "cfg/config.yml");
                 try {
                     copy.copy(cfg_file);
                 } catch (Throwable ex) {
@@ -74,7 +74,7 @@ public final class Config extends PluginConfiguration {
                             .withSize(8)).create();
 
             cfg.set("ServerName", server_name);
-            cfg = cfg.save(cfg_file, source, "cfg/config.yml");
+            cfg = cfg.save(cfg_file, plugin, "cfg/config.yml");
 
             YamlReloader reloader = cfg.getReloader();
             if (reloader != null) {
@@ -577,7 +577,7 @@ public final class Config extends PluginConfiguration {
             }
 
             if (changes) {
-                cfg = cfg.save(cfg_file, source, "cfg/config.yml");
+                cfg = cfg.save(cfg_file, plugin, "cfg/config.yml");
 
                 YamlReloader reloader = cfg.getReloader();
                 if (reloader != null) {

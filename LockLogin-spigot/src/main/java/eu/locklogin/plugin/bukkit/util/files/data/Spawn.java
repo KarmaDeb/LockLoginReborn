@@ -13,6 +13,7 @@ package eu.locklogin.plugin.bukkit.util.files.data;
 
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
@@ -103,7 +104,7 @@ public final class Spawn {
      * location
      */
     public void teleport(final Player player) {
-        tryAsync(() -> {
+        tryAsync(TaskTarget.TELEPORT, () -> {
             assert spawn_location.getWorld() != null;
 
             Block middle_down = spawn_location.getBlock().getRelative(BlockFace.UP);
@@ -114,7 +115,7 @@ public final class Spawn {
                 spawn_location = highest.getLocation().add(0D, 1D, 0D);
             }
 
-            trySync(() -> player.teleport(spawn_location));
+            trySync(TaskTarget.TELEPORT, () -> player.teleport(spawn_location));
         });
     }
 
@@ -122,7 +123,7 @@ public final class Spawn {
      * Save the spawn location
      */
     public void save(final @NotNull Location location) {
-        tryAsync(() -> {
+        tryAsync(TaskTarget.DATA_SAVE, () -> {
             if (location.getWorld() != null) {
                 spawnFile.set("X", location.getX());
                 spawnFile.set("Y", location.getY());
@@ -142,7 +143,7 @@ public final class Spawn {
     public LateScheduler<Void> load() {
         LateScheduler<Void> result = new AsyncLateScheduler<>();
 
-        tryAsync(() -> {
+        tryAsync(TaskTarget.DATA_LOAD, () -> {
             String x_string = spawnFile.getString("X", "");
             String y_string = spawnFile.getString("Y", "");
             String z_string = spawnFile.getString("Z", "");

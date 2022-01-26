@@ -149,7 +149,7 @@ public final class DataSender {
 
                             output.writeUTF(token);
                             output.writeUTF(proxy.getProxyID().toString());
-                            output.writeUTF(DataType.MODULE.name().toLowerCase());
+                            output.writeUTF(DataType.LISTENER.name().toLowerCase());
                             output.writeUTF(channel);
                             output.writeInt(data.length);
                             output.write(data);
