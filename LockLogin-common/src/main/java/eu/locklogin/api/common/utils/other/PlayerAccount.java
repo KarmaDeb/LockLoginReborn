@@ -23,6 +23,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -374,7 +375,7 @@ public final class PlayerAccount extends AccountManager {
     }
 
     @Override
-    public boolean remove(final String issuer) {
+    public boolean remove(final @NotNull String issuer) {
         try {
             Event event = new AccountRemovedEvent(this, issuer, null);
             ModulePlugin.callEvent(event);
@@ -386,7 +387,7 @@ public final class PlayerAccount extends AccountManager {
     }
 
     @Override
-    public void saveUUID(final AccountID id) {
+    public void saveUUID(final @NotNull AccountID id) {
         manager.set("UUID", id.getId());
     }
 
@@ -406,7 +407,7 @@ public final class PlayerAccount extends AccountManager {
      * @param account the account
      */
     @Override
-    protected void importFrom(final AccountManager account) {
+    protected void importFrom(final @NotNull AccountManager account) {
         if (exists()) {
             manager.set("PLAYER", account.getName());
             manager.set("UUID", account.getUUID().getId());
@@ -423,7 +424,7 @@ public final class PlayerAccount extends AccountManager {
      * @return the player name
      */
     @Override
-    public String getName() {
+    public @NotNull String getName() {
         return manager.getString("PLAYER", "").replace("PLAYER:", "");
     }
 
@@ -433,7 +434,7 @@ public final class PlayerAccount extends AccountManager {
      * @param name the new player name
      */
     @Override
-    public void setName(final String name) {
+    public void setName(final @NotNull String name) {
         manager.set("PLAYER", name);
     }
 
@@ -442,8 +443,8 @@ public final class PlayerAccount extends AccountManager {
      *
      * @return the player UUID
      */
-    @Override @Nullable
-    public AccountID getUUID() {
+    @Override
+    public @NotNull AccountID getUUID() {
         String id = manager.getString("UUID", UUID.randomUUID().toString());
         if (StringUtils.isNullOrEmpty(id)) {
             String name = manager.getFile().getName();
@@ -478,7 +479,7 @@ public final class PlayerAccount extends AccountManager {
      * @return the player password
      */
     @Override
-    public String getPassword() {
+    public @NotNull String getPassword() {
         return manager.getString("PASSWORD", "").replace("PASSWORD:", "");
     }
 
@@ -511,7 +512,7 @@ public final class PlayerAccount extends AccountManager {
      * @param newPassword the account password
      */
     @Override
-    public void setUnsafePassword(final String newPassword) {
+    public void setUnsafePassword(final @NotNull String newPassword) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -524,7 +525,7 @@ public final class PlayerAccount extends AccountManager {
      * @return the player google auth token
      */
     @Override
-    public String getGAuth() {
+    public @NotNull String getGAuth() {
         return manager.getString("TOKEN", "").replace("TOKEN:", "");
     }
 
@@ -545,7 +546,7 @@ public final class PlayerAccount extends AccountManager {
      * @param token the account google auth token
      */
     @Override
-    public void setUnsafeGAuth(final String token) {
+    public void setUnsafeGAuth(final @NotNull String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
     }
@@ -556,7 +557,7 @@ public final class PlayerAccount extends AccountManager {
      * @return the player pin
      */
     @Override
-    public String getPin() {
+    public @NotNull String getPin() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             return manager.getString("PIN", "").replace("PIN:", "");
@@ -594,7 +595,7 @@ public final class PlayerAccount extends AccountManager {
      * @param pin the account pin
      */
     @Override
-    public void setUnsafePin(String pin) {
+    public void setUnsafePin(@NotNull String pin) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -622,7 +623,7 @@ public final class PlayerAccount extends AccountManager {
      * @return the account created time
      */
     @Override
-    public Instant getCreationTime() {
+    public @NotNull Instant getCreationTime() {
         try {
             BasicFileAttributes attr = Files.readAttributes(manager.getFile().toPath(), BasicFileAttributes.class);
             return attr.creationTime().toInstant();
@@ -633,7 +634,7 @@ public final class PlayerAccount extends AccountManager {
     }
 
     @Override
-    public Set<AccountManager> getAccounts() {
+    public @NotNull Set<AccountManager> getAccounts() {
         Set<AccountManager> managers = new LinkedHashSet<>();
 
         Path accounts = source.getDataPath().resolve("data").resolve("accounts");

@@ -15,6 +15,7 @@ package eu.locklogin.api.account;
  */
 
 import eu.locklogin.api.account.param.AccountConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -64,14 +65,14 @@ public abstract class AccountManager implements Serializable {
      * @param issuer the account removal issuer
      * @return if the account could be removed
      */
-    public abstract boolean remove(final String issuer);
+    public abstract boolean remove(final @NotNull String issuer);
 
     /**
      * Save the account id
      *
      * @param id the account id
      */
-    public abstract void saveUUID(final AccountID id);
+    public abstract void saveUUID(final @NotNull AccountID id);
 
     /**
      * Save the account 2FA status
@@ -85,49 +86,49 @@ public abstract class AccountManager implements Serializable {
      *
      * @param account the account
      */
-    protected abstract void importFrom(final AccountManager account);
+    protected abstract void importFrom(final @NotNull AccountManager account);
 
     /**
      * Get the account id
      *
      * @return the account id
      */
-    public abstract AccountID getUUID();
+    public abstract @NotNull AccountID getUUID();
 
     /**
      * Get the account name
      *
      * @return the account name
      */
-    public abstract String getName();
+    public abstract @NotNull String getName();
 
     /**
      * Save the account name
      *
      * @param name the account name
      */
-    public abstract void setName(final String name);
+    public abstract void setName(final @NotNull String name);
 
     /**
      * Save the account password unsafely
      *
      * @param password the account password
      */
-    public abstract void setUnsafePassword(final String password);
+    public abstract void setUnsafePassword(final @NotNull String password);
 
     /**
      * Get the account password
      *
      * @return the account password
      */
-    public abstract String getPassword();
+    public abstract @NotNull String getPassword();
 
     /**
      * Save the account password
      *
      * @param password the account password
      */
-    public abstract void setPassword(final String password);
+    public abstract void setPassword(final @Nullable String password);
 
     /**
      * Get if the account is registered
@@ -141,7 +142,7 @@ public abstract class AccountManager implements Serializable {
      *
      * @param token the account google auth token
      */
-    public abstract void setUnsafeGAuth(final String token);
+    public abstract void setUnsafeGAuth(final @NotNull String token);
 
     /**
      * Get the account google auth token
@@ -149,7 +150,7 @@ public abstract class AccountManager implements Serializable {
      * @return the account google auth
      * token
      */
-    public abstract String getGAuth();
+    public abstract @NotNull String getGAuth();
 
     /**
      * Save the account google auth token
@@ -157,28 +158,28 @@ public abstract class AccountManager implements Serializable {
      * @param token the account google auth
      *              token
      */
-    public abstract void setGAuth(final String token);
+    public abstract void setGAuth(final @Nullable String token);
 
     /**
      * Save the account unsafe pin
      *
      * @param pin the account pin
      */
-    public abstract void setUnsafePin(final String pin);
+    public abstract void setUnsafePin(final @NotNull String pin);
 
     /**
      * Get the account pin
      *
      * @return the account pin
      */
-    public abstract String getPin();
+    public abstract @NotNull String getPin();
 
     /**
      * Save the account pin
      *
      * @param pin the account pin
      */
-    public abstract void setPin(final String pin);
+    public abstract void setPin(final @Nullable String pin);
 
     /**
      * Get if the account has pin
@@ -199,7 +200,7 @@ public abstract class AccountManager implements Serializable {
      *
      * @return the account created time
      */
-    public abstract Instant getCreationTime();
+    public abstract @NotNull Instant getCreationTime();
 
     /**
      * Get a list of accounts
@@ -207,14 +208,15 @@ public abstract class AccountManager implements Serializable {
      * @return a list of all the
      * available accounts
      */
-    public abstract Set<AccountManager> getAccounts();
+    public abstract @NotNull Set<AccountManager> getAccounts();
 
     /**
      * Get the manager constructor instance
      *
      * @return the manager constructor instance
      */
-    public final Class<?> getOwnerConstructor() {
+    @SuppressWarnings("unused")
+    public final @NotNull Class<?> getOwnerConstructor() {
         return instance;
     }
 }
