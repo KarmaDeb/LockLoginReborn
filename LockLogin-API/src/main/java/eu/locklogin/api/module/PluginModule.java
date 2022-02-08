@@ -17,8 +17,12 @@ package eu.locklogin.api.module;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
+import eu.locklogin.api.module.plugin.javamodule.card.APICard;
+import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardConsumedEvent;
+import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardPostQueueEvent;
+import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardPreConsumeEvent;
+import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardQueueEvent;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
-import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
@@ -28,6 +32,7 @@ import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.ConcurrentList;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.RandomString;
@@ -41,10 +46,8 @@ import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -56,6 +59,8 @@ import java.util.zip.ZipFile;
 public abstract class PluginModule implements KarmaSource {
 
     private BruteLoader appender;
+    private final Map<String, List<APICard<?>>> cards = new ConcurrentHashMap<>();
+    private final Map<String, APICard<?>> card = new ConcurrentHashMap<>();
 
     /**
      * Initialize the plugin module
@@ -109,7 +114,7 @@ public abstract class PluginModule implements KarmaSource {
      * @param info  the info to log
      */
     public final void log(final Level level, final Object info) {
-        Logger logger = new Logger(getSource());
+        Logger logger = new Logger(this);
 
         if (info instanceof Throwable) {
             Throwable error = (Throwable) info;
@@ -121,6 +126,114 @@ public abstract class PluginModule implements KarmaSource {
                 logger.scheduleLog(level, String.valueOf(info));
             }
         }
+    }
+
+    /**
+     * Queue an API card
+     *
+     * @param card the API card
+     */
+    public final void queueCard(final APICard<?> card) {
+        List<APICard<?>> loaded = cards.getOrDefault(card.identifier(), new ConcurrentList<>());
+        CardQueueEvent event = new CardQueueEvent(card.module(), this, card.identifier());
+        APICard.invoke(event);
+
+        if (!event.isCancelled()) {
+            loaded.add(card);
+            cards.put(card.identifier(), loaded);
+
+            CardPostQueueEvent post = new CardPostQueueEvent(card.module(), this, card.identifier());
+            APICard.invoke(post);
+        }
+    }
+
+    /**
+     * Consume a card identifier
+     *
+     * @param identifier the identifier
+     * @return if the identifier has more items in the queue
+     */
+    public final boolean consumeCard(final String identifier) {
+        List<APICard<?>> loaded = cards.getOrDefault(name() + ":" + identifier, new ConcurrentList<>());
+        if (loaded.size() > 0) {
+            try {
+                APICard<?> tmp = loaded.get(0);
+
+                if (tmp != null) {
+                    CardPreConsumeEvent event = new CardPreConsumeEvent(tmp.module(), this, identifier);
+                    APICard.invoke(event);
+
+                    if (!event.isCancelled()) {
+                        loaded.remove(0);
+                        card.put(identifier, tmp);
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        return loaded.size() - 1 > 0;
+    }
+
+    /**
+     * Get the current card
+     *
+     * @param identifier the card identifier
+     * @param <A> the card type
+     * @return the card
+     */
+    @SuppressWarnings("unchecked")
+    public final <A> APICard<A> getCard(final String identifier) {
+        APICard<A> tmp = (APICard<A>) card.getOrDefault(name() + ":" + identifier, null);
+
+        CardConsumedEvent event = new CardConsumedEvent(tmp.module(), this, identifier);
+        APICard.invoke(event);
+
+        return tmp;
+    }
+
+    /**
+     * Consume a card identifier
+     *
+     * @param owner the card owner
+     * @param identifier the identifier
+     * @return if the identifier has more items in the queue
+     */
+    public final boolean consumeCard(final PluginModule owner, final String identifier) {
+        List<APICard<?>> loaded = cards.getOrDefault(owner.name() + ":" + identifier, new ConcurrentList<>());
+        try {
+            APICard<?> tmp = loaded.get(0);
+
+            if (tmp != null) {
+                CardPreConsumeEvent event = new CardPreConsumeEvent(tmp.module(), this, identifier);
+                APICard.invoke(event);
+
+                if (!event.isCancelled()) {
+                    loaded.remove(0);
+                    card.put(identifier, tmp);
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        return loaded.size() - 1 > 0;
+    }
+
+    /**
+     * Get the current card
+     *
+     * @param owner the card owner
+     * @param identifier the card identifier
+     * @param <A> the card type
+     * @return the card
+     */
+    @SuppressWarnings("unchecked")
+    public final <A> APICard<A> getCard(final PluginModule owner, final String identifier) {
+        APICard<A> tmp = (APICard<A>) card.getOrDefault(owner.name() + ":" + identifier, null);
+
+        CardConsumedEvent event = new CardConsumedEvent(tmp.module(), this, identifier);
+        APICard.invoke(event);
+
+        return tmp;
     }
 
     /**

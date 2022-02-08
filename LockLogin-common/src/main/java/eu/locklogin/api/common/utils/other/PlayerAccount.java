@@ -441,6 +441,9 @@ public final class PlayerAccount extends AccountManager {
     /**
      * Get the player UUID
      *
+     * TODO: Make the method use {@link ml.karmaconfigs.api.common.utils.uuid.UUIDUtil} instead of using the deprecated one
+     * TODO: Make the method to not return a 'nullable' object as LockLogin's AccountManager standard requires it
+     *
      * @return the player UUID
      */
     @Override
@@ -633,6 +636,13 @@ public final class PlayerAccount extends AccountManager {
         return Instant.now();
     }
 
+    /**
+     * Get all the player accounts
+     *
+     * TODO: Remove null check ( it shouldn't be null anyway since 1.13.16 )
+     *
+     * @return the player accounts
+     */
     @Override
     public @NotNull Set<AccountManager> getAccounts() {
         Set<AccountManager> managers = new LinkedHashSet<>();

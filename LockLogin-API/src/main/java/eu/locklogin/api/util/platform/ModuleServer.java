@@ -130,6 +130,16 @@ public final class ModuleServer {
     }
 
     /**
+     * Get if the player is online
+     *
+     * @param player the player
+     * @return if the player is online
+     */
+    public boolean isValid(final ModulePlayer player) {
+        return getOnlinePlayers().contains(player);
+    }
+
+    /**
      * Get a server
      *
      * @param name the target server

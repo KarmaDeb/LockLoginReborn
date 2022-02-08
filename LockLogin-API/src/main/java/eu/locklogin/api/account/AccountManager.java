@@ -114,7 +114,7 @@ public abstract class AccountManager implements Serializable {
      *
      * @param password the account password
      */
-    public abstract void setUnsafePassword(final @NotNull String password);
+    public abstract void setUnsafePassword(final @Nullable String password);
 
     /**
      * Get the account password
@@ -142,7 +142,7 @@ public abstract class AccountManager implements Serializable {
      *
      * @param token the account google auth token
      */
-    public abstract void setUnsafeGAuth(final @NotNull String token);
+    public abstract void setUnsafeGAuth(final @Nullable String token);
 
     /**
      * Get the account google auth token
@@ -165,7 +165,7 @@ public abstract class AccountManager implements Serializable {
      *
      * @param pin the account pin
      */
-    public abstract void setUnsafePin(final @NotNull String pin);
+    public abstract void setUnsafePin(final @Nullable String pin);
 
     /**
      * Get the account pin

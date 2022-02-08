@@ -28,6 +28,8 @@ import java.util.UUID;
 /**
  * LockLogin UUID fetcher/resolver
  *
+ * TODO: Will be removed in version 1.13.17
+ *
  * @deprecated {@link ml.karmaconfigs.api.common.utils.UUIDUtil} should be used now
  */
 @Deprecated
