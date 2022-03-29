@@ -17,8 +17,11 @@ package eu.locklogin.api.module.plugin.javamodule;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +43,8 @@ import java.util.zip.ZipEntry;
  */
 public final class ModuleLoader {
 
-    //private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
+    private final static KarmaSource source = APISource.loadProvider("LockLogin");
+
     private final static Set<PluginModule> loaded = new HashSet<>();
     private final static Map<Class<? extends PluginModule>, PluginModule> clazz_map = new ConcurrentHashMap<>();
 
@@ -157,6 +161,8 @@ public final class ModuleLoader {
      *                   to be loaded
      */
     public synchronized void loadModule(final File moduleFile, final LoadRule rule) {
+        String name = FileUtilities.getName(moduleFile, false);
+
         try {
             if (moduleFile.getName().endsWith(".jar")) {
                 JarFile jar = new JarFile(moduleFile);
@@ -165,6 +171,7 @@ public final class ModuleLoader {
                 if (plugin != null) {
                     Yaml yaml = new Yaml();
                     Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
+                    name = values.getOrDefault("name", FileUtilities.getName(moduleFile, false)).toString();
                     String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
                     String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
                     LoadRule lr = LoadRule.PREPLUGIN;
@@ -190,7 +197,10 @@ public final class ModuleLoader {
                 }
             }
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            source.logger().scheduleLog(Level.GRAVE, ex);
+            source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
+
+            source.console().send("Failed to load module {0}. More info has been stored in plugins/LockLogin/logs/", Level.GRAVE, name);
         }
     }
 

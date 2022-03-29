@@ -17,11 +17,11 @@ import ml.karmaconfigs.api.common.utils.string.util.KarmaUnit;
 import ml.karmaconfigs.api.common.utils.string.util.time.TimeName;
 
 import java.time.Instant;
-import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 
 /**
  * LockLogin instant parser

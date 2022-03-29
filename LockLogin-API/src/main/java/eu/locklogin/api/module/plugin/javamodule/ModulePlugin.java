@@ -15,7 +15,6 @@ package eu.locklogin.api.module.plugin.javamodule;
  */
 
 import eu.locklogin.api.module.PluginModule;
-//import eu.locklogin.api.module.plugin.api.channel.ModuleMessageService;
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.CommandData;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;

@@ -27,8 +27,6 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -53,8 +51,6 @@ import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 @SystemCommand(command = "locklogin")
 public final class LockLoginCommand implements CommandExecutor {
 
-    private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
-
     /**
      * Executes the given command, returning its success.
      * <br>
@@ -76,7 +72,7 @@ public final class LockLoginCommand implements CommandExecutor {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", label)));
 
-        lockLogin.async().queue(() -> {
+        plugin.async().queue(() -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -262,10 +258,12 @@ public final class LockLoginCommand implements CommandExecutor {
                         switch (args[0].toLowerCase()) {
                             case "reload":
                                 FileReloader.reload(null);
+
                                 break;
                             case "applyupdates":
                                 Event event = new UpdateRequestEvent(sender, true, null);
                                 ModulePlugin.callEvent(event);
+
                                 break;
                             case "modules":
                                 console.send(messages.prefix() + "&dFetching modules info, please stand by");
@@ -319,7 +317,6 @@ public final class LockLoginCommand implements CommandExecutor {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest version");
                                     }
                                 });
-
                                 break;
                             case "changelog":
                                 console.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
@@ -344,6 +341,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                         console.send(messages.prefix() + "&5&oFailed to check for updates");
                                     }
                                 });
+
                                 break;
                             default:
                                 console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
@@ -366,6 +364,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                             } else {
                                                 console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
                                             }
+
                                             break;
                                         case "unload":
                                             if (module.unload()) {
@@ -373,12 +372,15 @@ public final class LockLoginCommand implements CommandExecutor {
                                             } else {
                                                 console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
                                             }
+
                                             break;
                                         case "reload":
                                             module.reload();
+
                                             break;
                                         default:
                                             console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
+
                                             break;
                                     }
                                 } else {
@@ -397,6 +399,7 @@ public final class LockLoginCommand implements CommandExecutor {
                 }
             }
         });
+
         return false;
     }
 }

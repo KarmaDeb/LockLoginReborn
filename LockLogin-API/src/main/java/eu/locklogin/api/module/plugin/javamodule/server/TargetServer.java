@@ -1,9 +1,6 @@
 package eu.locklogin.api.module.plugin.javamodule.server;
 
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.util.platform.CurrentPlatform;
-/*import ml.karmaconfigs.remote.messaging.Server;
-import ml.karmaconfigs.remote.messaging.worker.tcp.TCPServer;*/
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
@@ -108,10 +105,7 @@ public final class TargetServer implements Iterable<ModulePlayer> {
      * @param data the data
      */
     public void sendMessage(final byte[] data) {
-        /*Server remote = CurrentPlatform.getRemoteServer();
-        if (remote != null) {
-            CurrentPlatform.getRemoteServer().redirect(name, data);
-        }*/
+
     }
 
     /**
@@ -144,11 +138,6 @@ public final class TargetServer implements Iterable<ModulePlayer> {
      *
      * @param action The action to be performed for each element
      * @throws NullPointerException if the specified action is null
-     * @implSpec <p>The default implementation behaves as if:
-     * <pre>{@code
-     *     for (T t : this)
-     *         action.accept(t);
-     * }</pre>
      * @since 1.8
      */
     @Override

@@ -21,6 +21,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +122,7 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Close the inventory to the player
      */
-    public final void close() {
+    public void close() {
         if (player != null && player.isOnline()) {
             player.getInventory();
             player.closeInventory();
@@ -133,7 +134,7 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Confirm the pin input
      */
-    public final void confirm() {
+    public void confirm() {
         User user = new User(player);
         ClientSession session = user.getSession();
         AccountManager manager = user.getManager();
@@ -224,7 +225,7 @@ public final class PinInventory implements InventoryHolder {
      * Erase the last digit from
      * the input
      */
-    public final void eraseInput() {
+    public void eraseInput() {
         String finalNew = "/-/-/-/";
 
         String[] current = input.getOrDefault(player, "/-/-/-/").split("-");
@@ -257,8 +258,14 @@ public final class PinInventory implements InventoryHolder {
     /**
      * Update the player inventory input
      */
-    public final void updateInput() {
-        player.getOpenInventory().setItem(25, getInput());
+    public void updateInput() {
+        InventoryView open = player.getOpenInventory();
+        Inventory target = open.getTopInventory();
+
+        if (!(target.getHolder() instanceof PinInventory)) target = open.getBottomInventory();
+        if (target.getHolder() instanceof PinInventory) {
+            target.setItem(25, getInput());
+        }
     }
 
     /**
@@ -267,7 +274,7 @@ public final class PinInventory implements InventoryHolder {
      *
      * @return the input item stack
      */
-    public final ItemStack getInput() {
+    public ItemStack getInput() {
         ItemStack paper = new ItemStack(Material.PAPER, 1);
         ItemMeta paperMeta = paper.getItemMeta();
         assert paperMeta != null;
@@ -284,7 +291,7 @@ public final class PinInventory implements InventoryHolder {
      *
      * @param newInput the input
      */
-    public final void addInput(String newInput) {
+    public void addInput(final String newInput) {
         String finalNew;
 
         if (input.getOrDefault(player, "/-/-/-/").contains("/")) {
@@ -318,7 +325,7 @@ public final class PinInventory implements InventoryHolder {
      *
      * @param item the item
      */
-    private void fillEmptySlots(ItemStack item) {
+    private void fillEmptySlots(final ItemStack item) {
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack != null) {

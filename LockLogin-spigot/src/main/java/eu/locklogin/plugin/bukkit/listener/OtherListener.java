@@ -34,7 +34,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 public final class OtherListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onDamage(EntityDamageEvent e) {
+    public void onDamage(EntityDamageEvent e) {
         if (!e.isCancelled()) {
             if (!e.getCause().equals(EntityDamageEvent.DamageCause.FALL)) {
                 Entity entity = e.getEntity();
@@ -132,7 +132,7 @@ public final class OtherListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onBlockPace(BlockPlaceEvent e) {
+    public void onBlockPace(BlockPlaceEvent e) {
         if (!e.isCancelled()) {
             Player player = e.getPlayer();
             User user = new User(player);
@@ -149,7 +149,7 @@ public final class OtherListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onBlockBreak(BlockBreakEvent e) {
+    public void onBlockBreak(BlockBreakEvent e) {
         if (!e.isCancelled()) {
             Player player = e.getPlayer();
             User user = new User(player);
@@ -167,7 +167,7 @@ public final class OtherListener implements Listener {
 
     //Prevent player hunger level going down if not logged
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onHunger(FoodLevelChangeEvent e) {
+    public void onHunger(FoodLevelChangeEvent e) {
         Entity entity = e.getEntity();
         if (entity instanceof Player) {
             Player player = (Player) entity;

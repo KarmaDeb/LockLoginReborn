@@ -21,16 +21,19 @@ import eu.locklogin.api.account.param.SimpleParameter;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
 import eu.locklogin.api.module.plugin.client.OpContainer;
-import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
+import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -171,7 +174,9 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
                     return getPlayer.invoke(bungeeServer, uniqueId);
                 case VELOCITY:
                     Class<?> locklogin = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
-                    Object velocityServer = locklogin.getField("server").get(null);
+                    Object karmaPlugin = locklogin.getField("plugin").get(null);
+                    Method getServer = karmaPlugin.getClass().getMethod("getServer");
+                    Object velocityServer = getServer.invoke(karmaPlugin);
 
                     getPlayer = velocityServer.getClass().getMethod("getPlayer", UUID.class);
                     Object result = getPlayer.invoke(velocityServer, uniqueId);
@@ -249,6 +254,25 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
         }
 
         return container.getResult();
+    }
+
+    /**
+     * Get the player server
+     *
+     * @return the player server
+     */
+    public @Nullable TargetServer getServer() {
+        TargetServer current = null;
+        Collection<TargetServer> servers = CurrentPlatform.getServer().getServers();
+
+        for (TargetServer server : servers) {
+            if (server.getOnlinePlayers().contains(this)) {
+                current = server;
+                break;
+            }
+        }
+
+        return current;
     }
     
     /**

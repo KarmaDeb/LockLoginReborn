@@ -7,8 +7,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -75,9 +75,12 @@ public final class ChecksumTables {
                 String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
 
                 String[] urls = new String[]{
-                        "https://karmadev.es/locklogin/checksum/" + version + "/checksum.lldb",
-                        "https://karmarepo.000webhostapp.com/locklogin/checksum/" + version + "/checksum.lldb",
-                        "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb"
+                        /*"https://karmadev.es/locklogin/checksum/" + version + "/checksum.lldb",
+                        "https://karmarepo.000webhostapp.com/locklogin/checksum/" + version + "/checksum.lldb",*/
+                        "https://karmaconfigs.ml/locklogin/checksum/" + version + "/checksum.lldb",
+                        "https://karmarepo.ml/locklogin/checksum/" + version + "/checksum.lldb",
+                        "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb",
+                        "https://objectstorage.eu-milan-1.oraclecloud.com/p/GcsYBtoNewSYCNxMQUGfkGTTwsl2cMy3DUftNzXsn33oumzBymb67x0J62OBVIDS/n/axjp0qvvqyvs/b/bucket-20211229-0049/o/locklogin/" + version + "/checksum.lldb"
                 };
 
                 URL check_url = null;

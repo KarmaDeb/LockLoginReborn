@@ -18,11 +18,12 @@ import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -459,9 +460,9 @@ public final class PlayerAccount extends AccountManager {
                 setName(nick);
 
                 if (CurrentPlatform.isOnline()) {
-                    id = UUIDUtil.fetchMinecraftUUID(nick).toString();
+                    id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
                 } else {
-                    id = UUIDUtil.forceMinecraftOffline(nick).toString();
+                    id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
                 }
 
                 manager.set("UUID", id);

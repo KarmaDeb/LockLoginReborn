@@ -87,8 +87,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     session.set2FALogged(input.readBoolean());
                                     session.setPinLogged(input.readBoolean());
                                     user.setRegistered(input.readBoolean());
-
-
                                     break;
                                 case QUIT:
                                     if (user.isLockLoginUser()) {
@@ -248,6 +246,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     Config.manager.loadBungee(configString);
                                     break;
                                 case LISTENER:
+                                    /*
                                     String name = input.readUTF();
                                     int byteLength = input.readInt();
                                     byte[] message = new byte[byteLength];
@@ -258,7 +257,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                         i++;
                                     }
 
-                                    //ModuleMessageService.listenMessage(name, message);
+                                    //ModuleMessageService.listenMessage(name, message);*/
                                     break;
                                 default:
                                     logger.scheduleLog(Level.GRAVE, "Unknown plugin sub channel message: " + sub);

@@ -31,7 +31,8 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.LockLogin.logger;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class DataSender {

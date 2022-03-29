@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.16</version>
+        <version>1.13.19</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -87,13 +87,11 @@
             <version>1.29</version>
             <scope>provided</scope>
         </dependency>
-        <!--
         <dependency>
             <groupId>ml.karmaconfigs</groupId>
             <artifactId>RemoteMessaging</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.8</version>
             <scope>provided</scope>
         </dependency>
-        -->
     </dependencies>
 </project>

@@ -17,7 +17,7 @@ package eu.locklogin.api.account;
 import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
-import ml.karmaconfigs.api.common.utils.UUIDUtil;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -56,12 +56,9 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      */
     public static AccountID fromString(final String stringUUID) {
         UUID result = UUIDUtil.fromTrimmed(stringUUID);
+        assert result != null;
 
-        if (result != null) {
-            return new AccountID(result);
-        } else {
-            return null;
-        }
+        return new AccountID(result);
     }
 
     /**

@@ -48,9 +48,10 @@ import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -246,9 +247,9 @@ public final class JoinListener implements Listener {
         ModulePlugin.callEvent(ipEvent);
 
         String conn_name = e.getConnection().getName();
-        UUID gen_uuid = UUIDUtil.forceMinecraftOffline(conn_name);
+        UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
         if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
-            gen_uuid = UUIDUtil.fetchMinecraftUUID(conn_name);
+            gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
         }
 
         if (!ipEvent.isHandled()) {
@@ -366,19 +367,22 @@ public final class JoinListener implements Listener {
         if (!e.isCancelled()) {
             PendingConnection connection = e.getConnection();
 
-            UUID gen_uuid = UUIDUtil.forceMinecraftOffline(connection.getName());
-            if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
-                gen_uuid = UUIDUtil.fetchMinecraftUUID(connection.getName());
-            }
+            boolean check = CurrentPlatform.isOnline() || !connection.isOnlineMode();
             UUID tar_uuid = connection.getUniqueId();
+            if (check) {
+                UUID gen_uuid = UUIDUtil.fetch(connection.getName(), UUIDType.OFFLINE);
+                if (CurrentPlatform.isOnline() && e.getConnection().isOnlineMode()) {
+                    gen_uuid = UUIDUtil.fetch(connection.getName(), UUIDType.ONLINE);
+                }
 
-            if (config.uuidValidator()) {
-                if (!gen_uuid.equals(tar_uuid)) {
-                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                    if (!util.isFloodClient()) {
-                        e.setCancelled(true);
-                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.uuidFetchError())));
-                        return;
+                if (config.uuidValidator()) {
+                    if (!gen_uuid.equals(tar_uuid)) {
+                        FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                        if (!util.isFloodClient()) {
+                            e.setCancelled(true);
+                            e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.uuidFetchError())));
+                            return;
+                        }
                     }
                 }
             }

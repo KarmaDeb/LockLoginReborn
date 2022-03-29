@@ -22,6 +22,7 @@ import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import org.bukkit.Sound;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,6 +37,9 @@ import java.util.Collections;
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class InventoryListener implements Listener {
+
+    private static Sound NOTE_PLING = null;
+    private static Sound NOTE_HAT = null;
 
     /**
      * Check if the clicked item is similar
@@ -154,7 +158,6 @@ public final class InventoryListener implements Listener {
 
         if (!session.isPinLogged()) {
             Inventory inventory = e.getInventory();
-
             e.setCancelled(!(inventory.getHolder() instanceof PinInventory));
         }
     }
@@ -188,6 +191,19 @@ public final class InventoryListener implements Listener {
                             case NINE:
                                 pin.addInput(action.friendly());
                                 pin.updateInput();
+
+                                if (NOTE_PLING == null) {
+                                    Sound[] sounds = Sound.values();
+                                    for (Sound snd : sounds) {
+                                        if (snd.name().endsWith("NOTE_PLING") || snd.name().endsWith("NOTE_BLOCK_PLING")) {
+                                            NOTE_PLING = snd;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (NOTE_PLING != null) player.playSound(player.getLocation(), NOTE_PLING, 2f, getNote(action.friendly()));
+
                                 break;
                             case CONFIRM:
                                 pin.confirm();
@@ -195,6 +211,19 @@ public final class InventoryListener implements Listener {
                             case ERASE:
                                 pin.eraseInput();
                                 pin.updateInput();
+
+                                if (NOTE_HAT == null) {
+                                    Sound[] sounds = Sound.values();
+                                    for (Sound snd : sounds) {
+                                        if (snd.name().endsWith("NOTE_HAT") || snd.name().endsWith("NOTE_BLOCK_HAT")) {
+                                            NOTE_HAT = snd;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (NOTE_HAT != null) player.playSound(player.getLocation(), NOTE_HAT, 2f, 2f);
+
                                 break;
                             case NONE:
                             default:
@@ -275,42 +304,41 @@ public final class InventoryListener implements Listener {
     }
 
     /**
-     * I may re implement this in the future
+     * Get the play note of the number
      *
      * @param number the clicked number
      * @return the number note
      */
-    @Deprecated
-    private double getNote(final String number) {
+    private float getNote(final String number) {
         try {
             int num = Integer.parseInt(number);
             switch (num) {
                 case 0:
-                    return 0.5;
+                    return 0.5f;
                 case 1:
-                    return 0.6;
+                    return 0.6f;
                 case 2:
-                    return 0.7;
+                    return 0.7f;
                 case 3:
-                    return 1.1;
+                    return 1.1f;
                 case 4:
-                    return 1.2;
+                    return 1.2f;
                 case 5:
-                    return 1.3;
+                    return 1.3f;
                 case 6:
-                    return 1.7;
+                    return 1.7f;
                 case 7:
-                    return 1.8;
+                    return 1.8f;
                 case 8:
-                    return 1.9;
+                    return 1.9f;
                 case 9:
                 default:
-                    return 2.0;
+                    return 2.0f;
             }
         } catch (Throwable ignored) {
         }
 
-        return 1D;
+        return 1f;
     }
 
     /**

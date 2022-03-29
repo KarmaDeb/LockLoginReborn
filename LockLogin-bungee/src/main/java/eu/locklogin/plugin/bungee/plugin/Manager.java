@@ -64,13 +64,6 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import ml.karmaconfigs.api.common.version.util.VersionCheckType;
-/*
-Temporally disabled, non safe channels are used in this dependency
-
-import ml.karmaconfigs.remote.messaging.Client;
-import ml.karmaconfigs.remote.messaging.Factory;
-import ml.karmaconfigs.remote.messaging.util.WorkLevel;
- */
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;

@@ -14,8 +14,6 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.SessionKeeper;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -24,7 +22,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
-import eu.locklogin.plugin.bukkit.util.files.Config;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
@@ -32,7 +30,6 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.plugin.bukkit.util.player.UserDatabase;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -127,6 +124,8 @@ public final class QuitListener implements Listener {
         } else {
             kicked.remove(player.getUniqueId());
         }
+
+        MessagePool.delPlayer(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

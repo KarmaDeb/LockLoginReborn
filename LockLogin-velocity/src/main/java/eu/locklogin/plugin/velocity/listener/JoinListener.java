@@ -36,6 +36,7 @@ import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -55,14 +56,14 @@ import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
-import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.UUIDUtil;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.kyori.adventure.text.Component;
 
 import java.net.InetAddress;
@@ -260,9 +261,9 @@ public final class JoinListener {
         ModulePlugin.callEvent(ipEvent);
 
         String conn_name = e.getUsername();
-        UUID gen_uuid = UUIDUtil.forceMinecraftOffline(conn_name);
+        UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
         if (CurrentPlatform.isOnline() || e.getResult().isOnlineModeAllowed()) {
-            gen_uuid = UUIDUtil.fetchMinecraftUUID(conn_name);
+            gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
         }
         UUID tar_uuid = ids.getOrDefault(conn_name, gen_uuid);
 
@@ -303,12 +304,15 @@ public final class JoinListener {
                             }
                         }
 
-                        if (config.uuidValidator()) {
-                            if (!gen_uuid.equals(tar_uuid)) {
-                                FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                                if (!util.isFloodClient()) {
-                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
-                                    return;
+                        boolean check = CurrentPlatform.isOnline() || !e.getResult().isOnlineModeAllowed();
+                        if (check) {
+                            if (config.uuidValidator()) {
+                                if (!gen_uuid.equals(tar_uuid)) {
+                                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                    if (!util.isFloodClient()) {
+                                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
+                                        return;
+                                    }
                                 }
                             }
                         }

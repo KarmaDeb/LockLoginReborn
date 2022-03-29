@@ -29,6 +29,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent.ChangeResult;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -37,7 +38,6 @@ import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
-
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Set;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent.ChangeResult;
 
 @SystemCommand(command = "account")
 public class AccountCommand extends Command {
@@ -487,12 +486,12 @@ public class AccountCommand extends Command {
                                             manager.setUnsafeGAuth("");
                                             manager.set2FA(false);
 
-                                            console.send(messages.prefix() +
-                                                            properties.getProperty(
-                                                                    "account_removed",
-                                                                    "&dAccount of {0} removed by {1}"),
-                                                    target,
-                                                    config.serverName());
+                                           console.send(messages.prefix() +
+                                                           properties.getProperty(
+                                                                   "account_removed",
+                                                                   "&dAccount of {0} removed by {1}"),
+                                                   target,
+                                                   config.serverName());
 
                                             if (online != null) {
                                                 DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());

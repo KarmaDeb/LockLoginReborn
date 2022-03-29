@@ -3,8 +3,8 @@ package eu.locklogin.api.common.web;
 import com.google.gson.*;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -61,9 +61,12 @@ public final class STFetcher {
                 }, wait);
 
                 String[] urls = new String[]{
-                        "https://karmadev.es/locklogin/stf/",
-                        "https://karmarepo.000webhostapp.com/locklogin/stf/",
-                        "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json"
+                        /*"https://karmadev.es/locklogin/stf/",
+                        "https://karmarepo.000webhostapp.com/locklogin/stf/",*/
+                        "https://karmaconfigs.ml/locklogin/stf/",
+                        "https://karmarepo.ml/locklogin/stf/",
+                        "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json",
+                        "https://objectstorage.eu-milan-1.oraclecloud.com/p/GcsYBtoNewSYCNxMQUGfkGTTwsl2cMy3DUftNzXsn33oumzBymb67x0J62OBVIDS/n/axjp0qvvqyvs/b/bucket-20211229-0049/o/locklogin/stf.json"
                 };
 
                 URL check_url = null;

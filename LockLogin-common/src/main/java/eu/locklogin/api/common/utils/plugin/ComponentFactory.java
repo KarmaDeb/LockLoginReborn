@@ -18,6 +18,7 @@ import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 
 /**
  * BungeeCord component factory
@@ -43,7 +44,12 @@ public final class ComponentFactory {
      * @return this instance
      */
     public ComponentFactory hover(final String hoverText) {
-        text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor(hoverText))));
+        try {
+            text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor(hoverText))));
+        } catch (Throwable ex) {
+            text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor(hoverText))));
+        }
+
         return this;
     }
 
@@ -63,13 +69,10 @@ public final class ComponentFactory {
      * Add extra component factories to this factory
      *
      * @param factories the factories to add
-     * @return this instance
      */
-    public ComponentFactory addExtra(final ComponentFactory... factories) {
+    public void addExtra(final ComponentFactory... factories) {
         for (ComponentFactory factory : factories)
             text.addExtra(factory.get());
-
-        return this;
     }
 
     /**

@@ -53,7 +53,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static eu.locklogin.plugin.velocity.LockLogin.*;
+import static eu.locklogin.plugin.velocity.LockLogin.logger;
+import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 import static eu.locklogin.plugin.velocity.plugin.sender.DataSender.*;
 
 /**
