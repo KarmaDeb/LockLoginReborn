@@ -15,9 +15,12 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.console;
 
 public final class OfflineClient {
 
@@ -61,6 +64,8 @@ public final class OfflineClient {
                         break;
                     }
                 }
+            } else {
+                console.send("Couldn't retrieve account of {0} because the current account manager is null", Level.GRAVE, searching);
             }
         }
 

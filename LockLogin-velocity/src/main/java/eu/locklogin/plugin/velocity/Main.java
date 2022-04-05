@@ -122,8 +122,14 @@ public class Main extends KarmaPlugin {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
+                User user = new User(player);
+
                 if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
-                    player.sendActionBar(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                    Component component = Component.text(messageSender.getMessage());
+                    user.send(component);
+                } else {
+                    Component component = Component.text("");
+                    user.send(component);
                 }
             }
         };
@@ -131,11 +137,12 @@ public class Main extends KarmaPlugin {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
-                if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
-                    return;
+                User user = new User(player);
 
-                TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
-                title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
+                if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                    user.send("", "", 0, 0, 0);
+
+                user.send(messageSender.getTitle(), messageSender.getSubtitle(), messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
             }
         };
         Consumer<MessageSender> onKick = messageSender -> {

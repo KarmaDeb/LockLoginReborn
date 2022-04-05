@@ -185,7 +185,7 @@ public final class InstantParser {
                 .add(KarmaUnit.MILLISECOND, milli)
                 .add(KarmaUnit.MILLISECONDS, millis))
                 .replace(", ", properties.getProperty("diff_spacer", ", ").replace("\"", ""))
-                .replace(" and ", properties.getProperty("diff_final", " and "));
+                .replace(" and ", properties.getProperty("diff_final", " and ").replace("\"", ""));
     }
 
     /**

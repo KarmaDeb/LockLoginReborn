@@ -33,6 +33,7 @@ import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
@@ -119,9 +120,14 @@ public class MainBootstrap {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
+                User user = new User(player);
+
                 if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
-                    BarMessage bar = new BarMessage(player, messageSender.getMessage());
-                    bar.send(false);
+                    TextComponent component = new TextComponent(messageSender.getMessage());
+                    user.send(component);
+                } else {
+                    TextComponent component = new TextComponent("");
+                    user.send(component);
                 }
             }
         };
@@ -129,11 +135,12 @@ public class MainBootstrap {
             Player player = messageSender.getPlayer().getPlayer();
 
             if (player != null) {
-                if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
-                    return;
+                User user = new User(player);
 
-                TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
-                title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
+                if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                    user.send("", "", 0, 0, 0);
+
+                user.send(messageSender.getTitle(), messageSender.getSubtitle(), messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
             }
         };
         Consumer<MessageSender> onKick = messageSender -> {

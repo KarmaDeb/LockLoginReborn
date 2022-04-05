@@ -129,8 +129,14 @@ public class MainBootstrap {
                 ProxiedPlayer player = messageSender.getPlayer().getPlayer();
 
                 if (player != null) {
+                    User user = new User(player);
+
                     if (!StringUtils.isNullOrEmpty(messageSender.getMessage())) {
-                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                        TextComponent component = new TextComponent(messageSender.getMessage());
+                        user.send(component);
+                    } else {
+                        TextComponent component = new TextComponent("");
+                        user.send(component);
                     }
                 }
             };
@@ -138,11 +144,12 @@ public class MainBootstrap {
                 ProxiedPlayer player = messageSender.getPlayer().getPlayer();
 
                 if (player != null) {
-                    if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
-                        return;
+                    User user = new User(player);
 
-                    TitleMessage title = new TitleMessage(player, messageSender.getTitle(), messageSender.getSubtitle());
-                    title.send(messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
+                    if (StringUtils.isNullOrEmpty(messageSender.getTitle()) && StringUtils.isNullOrEmpty(messageSender.getSubtitle()))
+                        user.send("", "", 0, 0, 0);
+
+                    user.send(messageSender.getTitle(), messageSender.getSubtitle(), messageSender.getFadeOut(), messageSender.getKeepIn(), messageSender.getHideIn());
                 }
             };
             Consumer<MessageSender> onKick = messageSender -> {

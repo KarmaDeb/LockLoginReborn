@@ -456,7 +456,7 @@ public final class PlayerAccount extends AccountManager {
             UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
 
             String nick = UUIDUtil.fetchNick(fixed);
-            if (nick != null) {
+            if (nick != null && !nick.startsWith("Ratelimited")) {
                 setName(nick);
 
                 if (CurrentPlatform.isOnline()) {

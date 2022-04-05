@@ -216,6 +216,12 @@ public final class User {
      * @param message the message to send
      */
     public void send(final TextComponent message) {
+        String[] text = parseMessage(message.getText());
+        StringBuilder builder = new StringBuilder();
+        for (String str : text) builder.append(str);
+
+        message.setText(builder.toString());
+
         player.sendMessage(message);
     }
 
@@ -224,10 +230,24 @@ public final class User {
      *
      * @param title    the title to send
      * @param subtitle the subtitle to send
+     * @param si the time to show in
+     * @param ki the time keep in
+     * @param hi the time to hide in
      */
-    public void send(final String title, final String subtitle) {
-        TitleMessage titleMessage = new TitleMessage(player, title, subtitle);
-        titleMessage.send(0, 5, 0);
+    public void send(final String title, final String subtitle, final int si, final int ki, final int hi) {
+        String[] tmpTitle = parseMessage(title);
+        String[] tmpSub = parseMessage(subtitle);
+
+        StringBuilder titleBuilder = new StringBuilder();
+        StringBuilder subtitleBuilder = new StringBuilder();
+
+        for (String str : tmpTitle) titleBuilder.append(str).append(" ");
+        for (String str : tmpSub) subtitleBuilder.append(str).append(" ");
+
+        TitleMessage titleMessage = new TitleMessage(player,
+                StringUtils.replaceLast(titleBuilder.toString(), " ", ""),
+                StringUtils.replaceLast(subtitleBuilder.toString(), " ", ""));
+        titleMessage.send(si, ki, hi);
     }
 
     /**
@@ -467,9 +487,11 @@ public final class User {
 
         if (official.contains("{newline}")) {
             String messageData = official.replace("{newline}", "\n");
-            String[] messages = messageData.split("\n");
+            String[] messages = messageData.split("\\n");
 
             for (int i = 0; i < messages.length; i++) {
+                String previous = (i - 1 >= 0 ? messages[i - 1] : "");
+                String lastColor = StringUtils.getLastColor(previous);
                 String message = messages[i];
 
                 ClientSession session = getSession();
@@ -483,7 +505,7 @@ public final class User {
                         .replace("{player}", StringUtils.stripColor(player.getDisplayName()))
                         .replace("{ServerName}", config.serverName());
 
-                messages[i] = message;
+                messages[i] = lastColor + message;
             }
 
             return messages;
