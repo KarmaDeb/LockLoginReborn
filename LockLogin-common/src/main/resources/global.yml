@@ -1,9 +1,46 @@
-project_name: ${project.name}
-project_version: ${project.version}
-project_manager: ${project.manager}
-project_developers: ${project.author}
-project_description: ${project.description}
-project_build: ${project.buildType}
-project_karmaapi: ${project.karmaapi}
-project_update: ${project.update}
+project_name: '${project.name}'
+project_version: '${project.version}'
+project_manager: '${project.manager}'
+project_checksum: '${project.checksum}'
+project_repository: '${project.repository}'
+project_developers: '${project.author}'
+project_description: '${project.description}'
+project_build: '${project.buildType}'
+project_karmaapi: '${project.karmaapi}'
+project_update: '${project.update}'
 project_checksums: ${project.showchecksums}
+project_urls:
+  ml:
+    karmaconfigs:
+      safe: true
+      target: "/locklogin/"
+      checksum: "checksum/{0}/checksum.lldb"
+      version: "version/"
+      dependency: "repository/{0}/"
+      alternative:
+        - "backup"
+    karmarepo:
+      safe: true
+      target: "/locklogin/"
+      checksum: "checksum/{0}/checksum.lldb"
+      version: "version/"
+      dependency: "repository/{0}/"
+      alternative:
+        - "backup"
+  es:
+    karmadev:
+      safe: true
+      target: "/locklogin/"
+      checksum: "checksum/{0}/checksum.lldb"
+      version: "version/"
+      dependency: "repository/{0}/"
+      alternative:
+        - "backup"
+  io:
+    github:
+      safe: true
+      target: "/karmaconfigs/updates/LockLogin/"
+      checksum: "data/{0}/checksum.lldb"
+      version: "version/"
+      dependency: "repository/{0}/"
+      alternative: []

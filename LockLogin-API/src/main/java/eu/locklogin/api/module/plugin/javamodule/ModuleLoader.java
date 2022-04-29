@@ -29,8 +29,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +45,7 @@ public final class ModuleLoader {
 
     private final static KarmaSource source = APISource.loadProvider("LockLogin");
 
-    private final static Set<PluginModule> loaded = new HashSet<>();
+    private final static Map<String, PluginModule> loaded = new ConcurrentHashMap<>();
     private final static Map<Class<? extends PluginModule>, PluginModule> clazz_map = new ConcurrentHashMap<>();
 
     private final static File modulesFolder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin", "modules");
@@ -58,7 +58,7 @@ public final class ModuleLoader {
      */
     public static boolean isLoaded(final @Nullable PluginModule module) {
         if (module != null) {
-            for (PluginModule mod : loaded) {
+            for (PluginModule mod : loaded.values()) {
                 if (mod.name().equalsIgnoreCase(module.name()))
                     return true;
             }
@@ -122,7 +122,7 @@ public final class ModuleLoader {
     public static PluginModule getByFile(final @NotNull File moduleFile) {
         PluginModule loadedModule = null;
 
-        for (PluginModule module : loaded) {
+        for (PluginModule module : loaded.values()) {
             if (module.getModule().equals(moduleFile)) {
                 loadedModule = module;
                 break;
@@ -150,7 +150,7 @@ public final class ModuleLoader {
      * @return a list of the loaded modules
      */
     public static Set<PluginModule> getModules() {
-        return new LinkedHashSet<>(loaded);
+        return new HashSet<>(loaded.values());
     }
 
     /**
@@ -161,46 +161,51 @@ public final class ModuleLoader {
      *                   to be loaded
      */
     public synchronized void loadModule(final File moduleFile, final LoadRule rule) {
-        String name = FileUtilities.getName(moduleFile, false);
+        if (!loaded.containsKey(FileUtilities.getPrettyFile(moduleFile)) || loaded.getOrDefault(FileUtilities.getPrettyFile(moduleFile), null) == null) {
+            String name = FileUtilities.getName(moduleFile, false);
 
-        try {
-            if (moduleFile.getName().endsWith(".jar")) {
-                JarFile jar = new JarFile(moduleFile);
-                JarEntry plugin = jar.getJarEntry("module.yml");
+            try {
+                if (moduleFile.getName().endsWith(".jar")) {
+                    JarFile jar = new JarFile(moduleFile);
+                    JarEntry plugin = jar.getJarEntry("module.yml");
 
-                if (plugin != null) {
-                    Yaml yaml = new Yaml();
-                    Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
-                    name = values.getOrDefault("name", FileUtilities.getName(moduleFile, false)).toString();
-                    String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
-                    String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
-                    LoadRule lr = LoadRule.PREPLUGIN;
-                    if (load_rule.equalsIgnoreCase("POSTPLUGIN"))
-                        lr = LoadRule.POSTPLUGIN;
+                    if (plugin != null) {
+                        Yaml yaml = new Yaml();
+                        Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
+                        name = values.getOrDefault("name", FileUtilities.getName(moduleFile, false)).toString();
+                        String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
+                        String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
+                        LoadRule lr = LoadRule.PREPLUGIN;
+                        if (load_rule.equalsIgnoreCase("POSTPLUGIN"))
+                            lr = LoadRule.POSTPLUGIN;
 
-                    if (lr.equals(rule)) {
-                        if (class_name != null) {
-                            BruteLoader appender = CurrentPlatform.getPluginAppender();
-                            appender.add(moduleFile);
+                        if (lr.equals(rule)) {
+                            if (class_name != null) {
+                                BruteLoader appender = CurrentPlatform.getPluginAppender();
+                                appender.add(moduleFile);
 
-                            Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+                                Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
 
-                            PluginModule module = module_class.getDeclaredConstructor().newInstance();
-                            if (!isLoaded(module)) {
-                                module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
+                                PluginModule module = null;
+                                try {
+                                    module = module_class.getDeclaredConstructor().newInstance();
+                                } catch (InvocationTargetException ignored) {}
+                                if (module != null && !isLoaded(module)) {
+                                    module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
 
-                                loaded.add(module);
-                                module.enable();
+                                    loaded.put(FileUtilities.getPrettyFile(moduleFile), module);
+                                    module.enable();
+                                }
                             }
                         }
                     }
                 }
-            }
-        } catch (Throwable ex) {
-            source.logger().scheduleLog(Level.GRAVE, ex);
-            source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
+            } catch (Throwable ex) {
+                source.logger().scheduleLog(Level.GRAVE, ex);
+                source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
 
-            source.console().send("Failed to load module {0}. More info has been stored in plugins/LockLogin/logs/", Level.GRAVE, name);
+                source.console().send("Failed to load module {0}. More info has been stored in plugins/LockLogin/logs/", Level.GRAVE, name);
+            }
         }
     }
 
@@ -210,20 +215,14 @@ public final class ModuleLoader {
      * @param moduleFile the module file
      */
     public void unloadModule(final File moduleFile) {
-        PluginModule loadedModule = null;
-        for (PluginModule module : loaded) {
-            if (module.getModule().equals(moduleFile)) {
-                loadedModule = module;
-                break;
-            }
-        }
+        PluginModule loadedModule = loaded.getOrDefault(FileUtilities.getPrettyFile(moduleFile), null);
 
         if (loadedModule != null) {
             loadedModule.getPlugin().unregisterListeners();
             loadedModule.getPlugin().unregisterCommands();
 
             loadedModule.disable();
-            loaded.remove(loadedModule);
+            loaded.remove(FileUtilities.getPrettyFile(moduleFile));
             clazz_map.remove(loadedModule.getClass());
         }
     }

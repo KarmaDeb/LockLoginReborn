@@ -3,12 +3,10 @@ package eu.locklogin.api.common.web;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
-import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -72,27 +70,7 @@ public final class ChecksumTables {
                     }
                 }, wait);
 
-                String version = FileInfo.getJarVersion(new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")));
-
-                String[] urls = new String[]{
-                        /*"https://karmadev.es/locklogin/checksum/" + version + "/checksum.lldb",
-                        "https://karmarepo.000webhostapp.com/locklogin/checksum/" + version + "/checksum.lldb",*/
-                        "https://karmaconfigs.ml/locklogin/checksum/" + version + "/checksum.lldb",
-                        "https://karmarepo.ml/locklogin/checksum/" + version + "/checksum.lldb",
-                        "https://karmaconfigs.github.io/updates/LockLogin/data/" + version + "/checksum.lldb",
-                        "https://objectstorage.eu-milan-1.oraclecloud.com/p/GcsYBtoNewSYCNxMQUGfkGTTwsl2cMy3DUftNzXsn33oumzBymb67x0J62OBVIDS/n/axjp0qvvqyvs/b/bucket-20211229-0049/o/locklogin/" + version + "/checksum.lldb"
-                };
-
-                URL check_url = null;
-                for (String url : urls) {
-                    int response = URLUtils.getResponseCode(url);
-                    if (response == HttpURLConnection.HTTP_OK) {
-                        check_url = URLUtils.getOrNull(url);
-                        if (check_url != null)
-                            break;
-                    }
-                }
-
+                URL check_url = FileInfo.checksumHost(null);
                 if (check_url != null) {
                     HttpURLConnection connection = (HttpURLConnection) check_url.openConnection();
                     connection.setRequestMethod("GET");
@@ -136,6 +114,9 @@ public final class ChecksumTables {
                         can_check = true;
                         lockLogin.console().send("&cFailed to retrieve adler checksum from karma repository site, response code: ({0} - {1})", response, connection.getResponseMessage());
                     }
+                } else {
+                    can_check = true;
+                    lockLogin.console().send("&cFailed to retrieve checksums for LockLogin, please make sure you have internet connection (null address)");
                 }
             } catch (Throwable ex) {
                 ex.printStackTrace();

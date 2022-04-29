@@ -52,11 +52,6 @@ import static eu.locklogin.plugin.bukkit.LockLogin.console;
 
 public class MainBootstrap {
 
-    private final static File lockloginFile = new File(Main.class.getProtectionDomain()
-            .getCodeSource()
-            .getLocation()
-            .getPath().replaceAll("%20", " "));
-
     private final Main loader;
 
     public MainBootstrap(final JavaPlugin main) {
@@ -74,7 +69,7 @@ public class MainBootstrap {
         for (Dependency pluginDependency : Dependency.values()) {
             PluginDependency dependency = pluginDependency.getAsDependency();
 
-            if (FileInfo.showChecksums(lockloginFile)) {
+            if (FileInfo.showChecksums(null)) {
                 console.send("&7----------------------");
                 console.send("");
                 console.send("&bDependency: &3{0}", dependency.getName());

@@ -23,6 +23,10 @@ import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 
 public final class Main extends PluginModule {
 
+    public Main() {
+        System.out.println("Beep!");
+    }
+
     @Override
     public void enable() {
         getConsole().sendMessage("&aEnabling LockLogin manager module, to dynamically update LockLogin and enable helpme command");

@@ -31,6 +31,8 @@ import java.util.Set;
 
 /**
  * LockLogin jar manager, from KarmaAPI
+ *
+ * THIS IS TOO OLD, THIS DOES NOT EVEN EXIST IN KARMAPI NOW DAYS
  */
 public final class JarManager {
 
@@ -75,52 +77,56 @@ public final class JarManager {
         for (PluginDependency download : downloadTable) {
             lockLogin.console().send("&aTrying to download dependency " + download.getName());
 
-            String url = download.getDownloadURL();
-            File jarFile = download.getLocation();
+            URL download_url = download.getDownloadURL();
+            if (download_url != null) {
+                File jarFile = download.getLocation();
 
-            InputStream is = null;
-            ReadableByteChannel rbc = null;
-            FileOutputStream fos = null;
-            try {
-                URL download_url = new URL(url);
-                URLConnection connection = download_url.openConnection();
-                connection.connect();
-
-                if (!jarFile.getParentFile().exists())
-                    Files.createDirectories(jarFile.getParentFile().toPath());
-
-                if (!jarFile.exists())
-                    Files.createFile(jarFile.toPath());
-
-                TrustManager[] trustManagers = new TrustManager[]{new NvbTrustManager()};
-                final SSLContext context = SSLContext.getInstance("TLSv1.2");
-                context.init(null, trustManagers, null);
-
-                // Set connections to use lenient TrustManager and HostnameVerifier
-                HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
-                HttpsURLConnection.setDefaultHostnameVerifier(new NvbHostnameVerifier());
-
-                is = download_url.openStream();
-                rbc = Channels.newChannel(is);
-                fos = new FileOutputStream(jarFile);
-
-                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-            } catch (Throwable ex) {
-                error.add(download);
-            } finally {
+                InputStream is = null;
+                ReadableByteChannel rbc = null;
+                FileOutputStream fos = null;
                 try {
-                    if (rbc != null) {
-                        rbc.close();
-                    }
-                    if (fos != null) {
-                        fos.close();
-                    }
-                    if (is != null) {
-                        is.close();
-                    }
-                } catch (Throwable ignored) {}
+                    URLConnection connection = download_url.openConnection();
+                    connection.connect();
 
-                success.add(download);
+                    if (!jarFile.getParentFile().exists())
+                        Files.createDirectories(jarFile.getParentFile().toPath());
+
+                    if (!jarFile.exists())
+                        Files.createFile(jarFile.toPath());
+
+                    TrustManager[] trustManagers = new TrustManager[]{new NvbTrustManager()};
+                    final SSLContext context = SSLContext.getInstance("TLSv1.2");
+                    context.init(null, trustManagers, null);
+
+                    // Set connections to use lenient TrustManager and HostnameVerifier
+                    HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+                    HttpsURLConnection.setDefaultHostnameVerifier(new NvbHostnameVerifier());
+
+                    is = download_url.openStream();
+                    rbc = Channels.newChannel(is);
+                    fos = new FileOutputStream(jarFile);
+
+                    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                } catch (Throwable ex) {
+                    error.add(download);
+                } finally {
+                    try {
+                        if (rbc != null) {
+                            rbc.close();
+                        }
+                        if (fos != null) {
+                            fos.close();
+                        }
+                        if (is != null) {
+                            is.close();
+                        }
+                    } catch (Throwable ignored) {
+                    }
+
+                    success.add(download);
+                }
+            } else {
+                error.add(download);
             }
         }
 

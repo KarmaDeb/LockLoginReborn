@@ -97,7 +97,7 @@ public class PinCommand extends BungeeLikeCommand {
 
                                             CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
                                             if (util.validate()) {
-                                                manager.setPin(null);
+                                                manager.setUnsafePin("");
                                                 user.send(messages.prefix() + messages.pinReseted());
                                             } else {
                                                 user.send(messages.prefix() + messages.incorrectPin());

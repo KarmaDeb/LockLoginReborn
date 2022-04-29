@@ -76,7 +76,7 @@ public class Main extends KarmaPlugin {
         for (Dependency pluginDependency : Dependency.values()) {
             PluginDependency dependency = pluginDependency.getAsDependency();
 
-            if (FileInfo.showChecksums(getSourceFile())) {
+            if (FileInfo.showChecksums(null)) {
                 console().send("&7----------------------");
                 console().send("");
                 console().send("&bDependency: &3{0}", dependency.getName());
@@ -278,17 +278,17 @@ public class Main extends KarmaPlugin {
 
     public String name() {
         Optional<String> name = getContainer().getDescription().getName();
-        return name.orElseGet(() -> FileInfo.getJarName(getSourceFile()));
+        return name.orElseGet(() -> FileInfo.getJarName(null));
     }
 
     public String version() {
         Optional<String> version = getContainer().getDescription().getVersion();
-        return version.orElseGet(() -> FileInfo.getJarVersion(getSourceFile()));
+        return version.orElseGet(() -> FileInfo.getJarVersion(null));
     }
 
     public String description() {
         Optional<String> description = getContainer().getDescription().getDescription();
-        return description.orElseGet(() -> FileInfo.getJarDescription(getSourceFile()));
+        return description.orElseGet(() -> FileInfo.getJarDescription(null));
     }
 
     public String[] authors() {
@@ -298,57 +298,9 @@ public class Main extends KarmaPlugin {
 
     @Override
     public String updateURL() {
-        String[] hosts = new String[]
-                {
-                        "https://karmaconfigs.ml/locklogin/version/",
-                        "https://karmarepo.ml/locklogin/version/",
-                        "https://objectstorage.eu-milan-1.oraclecloud.com/p/GcsYBtoNewSYCNxMQUGfkGTTwsl2cMy3DUftNzXsn33oumzBymb67x0J62OBVIDS/n/axjp0qvvqyvs/b/bucket-20211229-0049/o/locklogin/",
-                        /*"https://karmadev.es/locklogin/version/",
-                        "https://karmarepo.000webhostapp.com/locklogin/version/",*/
-                        "https://karmaconfigs.github.io/updates/LockLogin/version/"
-                };
-
-        URL host = null;
-        for (String url : hosts) {
-            String check;
-            if (url.startsWith("https://objectstorage.eu-milan-1.oraclecloud.com")) {
-                check = url;
-            } else {
-                if (url.startsWith("https://karmaconfigs.ml") || url.startsWith("https://karmarepo.ml")) {
-                    check = (url.contains("karmaconfigs") ? "https://karmaconfigs.ml/" : "https://karmarepo.ml/");
-                } else {
-                    if (url.startsWith("https://karmarepo.000webhostapp.com")) {
-                        check = "https://karmarepo.000webhostapp.com/";
-                    } else {
-                        check = "https://karmaconfigs.github.io";
-                    }
-                }
-            }
-
-            int response = URLUtils.getResponseCode(check);
-            if (response == HttpURLConnection.HTTP_OK) {
-                host = URLUtils.getOrNull(url);
-                if (host != null)
-                    break;
-            }
-        }
-
-        if (host != null) {
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
-            if (config != null) {
-                switch (config.getUpdaterOptions().getChannel()) {
-                    case SNAPSHOT:
-                        return host + "snapshot.kupdter";
-                    case RC:
-                        return host + "candidate.kupdter";
-                    case RELEASE:
-                    default:
-                        return host + "release.kupdter";
-                }
-            }
-
-            return host + "release.kupdter";
-        }
+        URL url = FileInfo.versionHost(null);
+        if (url != null)
+            return url.toString();
 
         return null;
     }

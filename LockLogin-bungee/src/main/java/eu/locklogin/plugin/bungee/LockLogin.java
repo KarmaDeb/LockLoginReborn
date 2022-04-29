@@ -39,10 +39,7 @@ public interface LockLogin {
     Console console = APISource.loadProvider("LockLogin").console();
 
     String name = plugin.name();
-    String update = FileInfo.getUpdateName(new File(Main.class.getProtectionDomain()
-            .getCodeSource()
-            .getLocation()
-            .getPath().replaceAll("%20", " ")));
+    String update = FileInfo.getUpdateName(null);
     String version = plugin.version();
 
     VersionID versionID = new VersionID(version, update).generate();

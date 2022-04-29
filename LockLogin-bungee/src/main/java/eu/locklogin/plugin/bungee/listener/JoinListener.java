@@ -395,6 +395,11 @@ public final class JoinListener implements Listener {
                 e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(event.getHandleReason())));
                 PlayerPool.delPlayer(e.getConnection().getUniqueId());
             } else {
+                if (tar_uuid != connection.getUniqueId()) {
+                    //Making sure we update UUID for premium plugins which change UUIDs
+                    tar_uuid = connection.getUniqueId();
+                }
+
                 PlayerPool.addPlayer(tar_uuid);
             }
         }

@@ -19,6 +19,7 @@ import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.zip.Adler32;
@@ -35,7 +36,7 @@ public abstract class PluginDependency {
     private final static File pluginsFolder = new File(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation().getPath().replaceAll("%20", " ")).getParentFile();
 
     private final String dependencyName;
-    private final String dependencyDownload;
+    private final URL dependencyDownload;
     private File location;
 
     private boolean openChecksum = true;
@@ -45,13 +46,13 @@ public abstract class PluginDependency {
      * Initialize the dependency object
      * <p>
      * Why private?
-     * - It's easier to use {@link PluginDependency#of(String, String, boolean, String...)} to create a new instance
+     * - It's easier to use {@link PluginDependency#of(String, URL, boolean, String...)} to create a new instance
      * - It's a non-sense to have a public constructor of an abstract class which is not expected to be extended
      *
      * @param name        the dependency name
      * @param downloadURL the dependency download url
      */
-    private PluginDependency(final String name, final String downloadURL, final String... sub) {
+    private PluginDependency(final String name, final URL downloadURL, final String... sub) {
         dependencyName = name;
         dependencyDownload = downloadURL;
 
@@ -76,7 +77,7 @@ public abstract class PluginDependency {
      * @param sub          the dependency custom sub directory
      * @return the temporal plugin dependency
      */
-    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final String... sub) {
+    public static PluginDependency of(final String name, final URL downloadURL, final boolean openChecksum, final String... sub) {
         PluginDependency temp = new PluginDependency(name, downloadURL, sub) {
             @Override
             public String toString() {
@@ -100,7 +101,7 @@ public abstract class PluginDependency {
      * @param module       if the dependency is a module
      * @return the temporal plugin dependency
      */
-    public static PluginDependency of(final String name, final String downloadURL, final boolean openChecksum, final boolean module) {
+    public static PluginDependency of(final String name, final URL downloadURL, final boolean openChecksum, final boolean module) {
         PluginDependency temp = new PluginDependency(name, downloadURL) {
             @Override
             public String toString() {
@@ -144,7 +145,7 @@ public abstract class PluginDependency {
      *
      * @return the dependency download url
      */
-    public final String getDownloadURL() {
+    public final URL getDownloadURL() {
         return dependencyDownload;
     }
 
