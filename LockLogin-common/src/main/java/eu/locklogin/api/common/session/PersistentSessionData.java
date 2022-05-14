@@ -94,12 +94,43 @@ public final class PersistentSessionData {
     }
 
     /**
+     * Toggle the account panic mode
+     *
+     * @return the account panic mode
+     */
+    public boolean togglePanic() {
+        List<String> ids = sessions.getStringList("PANIC");
+
+        boolean result;
+        if (ids.contains(id.getId())) {
+            ids.remove(id.getId());
+            result = false;
+        } else {
+            ids.add(id.getId());
+            result = true;
+        }
+
+        sessions.set("PANIC", ids);
+        return result;
+    }
+
+    /**
      * Get if the user account is persistent or not
      *
      * @return if the user account is persistent
      */
     public boolean isPersistent() {
         List<String> ids = sessions.getStringList("PERSISTENT");
+        return ids.contains(id.getId());
+    }
+
+    /**
+     * Get if the user account is panicking
+     *
+     * @return if the user account is panicking
+     */
+    public boolean isPanicking() {
+        List<String> ids = sessions.getStringList("PANIC");
         return ids.contains(id.getId());
     }
 }

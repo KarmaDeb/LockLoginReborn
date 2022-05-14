@@ -71,8 +71,8 @@ public final class JarManager {
     public static void downloadAll() {
         KarmaSource lockLogin = APISource.loadProvider("LockLogin");
 
-        Set<PluginDependency> success = new HashSet<>();
-        Set<PluginDependency> error = new HashSet<>();
+        Set<String> success = new HashSet<>();
+        Set<String> error = new HashSet<>();
 
         for (PluginDependency download : downloadTable) {
             lockLogin.console().send("&aTrying to download dependency " + download.getName());
@@ -108,7 +108,8 @@ public final class JarManager {
 
                     fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
                 } catch (Throwable ex) {
-                    error.add(download);
+                    if (!success.contains(download.getName()))
+                        error.add(download.getName());
                 } finally {
                     try {
                         if (rbc != null) {
@@ -123,18 +124,20 @@ public final class JarManager {
                     } catch (Throwable ignored) {
                     }
 
-                    success.add(download);
+                    if (!error.contains(download.getName()))
+                        success.add(download.getName());
                 }
             } else {
-                error.add(download);
+                if (!success.contains(download.getName()))
+                    error.add(download.getName());
             }
         }
 
-        for (PluginDependency valid : success)
-            lockLogin.console().send("&aDownloaded plugin dependency " + valid.getName());
+        for (String valid : success)
+            lockLogin.console().send("&aDownloaded plugin dependency " + valid);
 
-        for (PluginDependency failed : error)
-            lockLogin.console().send("&cFailed to download plugin dependency " + failed.getName());
+        for (String failed : error)
+            lockLogin.console().send("&cFailed to download plugin dependency " + failed);
     }
 
     /**

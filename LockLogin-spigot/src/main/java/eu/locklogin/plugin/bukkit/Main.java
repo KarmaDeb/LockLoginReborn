@@ -16,13 +16,10 @@ package eu.locklogin.plugin.bukkit;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
-import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class Main extends KarmaPlugin {

@@ -20,6 +20,7 @@ import eu.locklogin.api.encryption.libraries.sha.LSSHA256;
 import eu.locklogin.api.encryption.libraries.sha.SHA256;
 import eu.locklogin.api.encryption.libraries.sha.SHA512;
 import eu.locklogin.api.encryption.libraries.sha.SHA512X;
+import eu.locklogin.api.encryption.libraries.wordpress.WordPressCrypt;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
 import ml.karmaconfigs.api.common.karma.APISource;
@@ -167,6 +168,13 @@ public final class CryptoFactory {
                     } else {
                         return AuthMeAuth.hashSha256(password);
                     }
+                case WORDPRESS:
+                    WordPressCrypt crypt = new WordPressCrypt(password);
+                    if (encrypt) {
+                        return Base64.getEncoder().encodeToString(crypt.hash().getBytes(StandardCharsets.UTF_8));
+                    } else {
+                        return crypt.hash();
+                    }
                 case NONE:
                 case UNKNOWN:
                 default:
@@ -207,6 +215,9 @@ public final class CryptoFactory {
                         return HashType.ARGON2ID;
                     case "sha":
                         return HashType.AUTHME_SHA;
+                    case "p":
+                    case "h":
+                        return HashType.WORDPRESS;
                     default:
                         type = data[2];
                         switch (type.toLowerCase()) {
@@ -226,6 +237,9 @@ public final class CryptoFactory {
                                 return HashType.ARGON2ID;
                             case "sha":
                                 return HashType.AUTHME_SHA;
+                            case "p":
+                            case "h":
+                                return HashType.WORDPRESS;
                             default:
                                 return HashType.UNKNOWN;
                         }
@@ -274,6 +288,7 @@ public final class CryptoFactory {
             SHA512 sha512 = new SHA512();
             SHA512X sha512X = new SHA512X(password);
             Argon2Util argon2id = new Argon2Util(password);
+            WordPressCrypt wordPress = new WordPressCrypt(password);
 
             SaltData data = new SaltData(key);
             switch (current_type) {
@@ -294,6 +309,8 @@ public final class CryptoFactory {
                     return argon2id.checkPassword(key, HashType.ARGON2ID);
                 case AUTHME_SHA:
                     return AuthMeAuth.check(password, key);
+                case WORDPRESS:
+                    return wordPress.validate(key);
                 case UNKNOWN:
                     return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
                 case NONE:

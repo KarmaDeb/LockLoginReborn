@@ -13,7 +13,6 @@ import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
-import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -182,9 +181,6 @@ public final class PinInventory implements InventoryHolder {
                                 LastLocation location = new LastLocation(player);
                                 location.teleport();
                             }
-
-                            ClientVisor visor = new ClientVisor(player);
-                            visor.show();
 
                             user.send(messages.prefix() + event.getAuthMessage());
                             session.setPinLogged(true);

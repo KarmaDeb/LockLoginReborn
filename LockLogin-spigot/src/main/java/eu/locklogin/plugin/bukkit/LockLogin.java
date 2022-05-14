@@ -38,9 +38,10 @@ public interface LockLogin {
 
     String name = plugin.name();
     String update = FileInfo.getUpdateName(null);
-    String version = plugin.version();
 
-    VersionID versionID = new VersionID(version, update).generate();
+    VersionID versionID = new VersionID(plugin.version(), update).generate();
+
+    String version = versionID.getVersionID();
 
     File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()

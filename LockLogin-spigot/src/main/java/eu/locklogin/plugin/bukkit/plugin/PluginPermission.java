@@ -27,6 +27,39 @@ public final class PluginPermission {
         return new Permission("locklogin.reload", "The permission required to reload configuration/messages files", PermissionDefault.FALSE, children);
     }
 
+    public static Permission web() {
+        Map<String, Boolean> children = new HashMap<>();
+        children.put("locklogin.web.sync", true);
+        children.put("locklogin.web.remove", true);
+        children.put("locklogin.web.execute", true);
+
+        return new Permission("locklogin.web", "The permission required to manage LockLogin web interface connection", PermissionDefault.FALSE, children);
+    }
+
+    public static Permission sync() {
+        Permission permission = new Permission("locklogin.web.sync", "The permission required to synchronize this server with the web panel", PermissionDefault.FALSE);
+        permission.addParent(web(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission unSync() {
+        Permission permission = new Permission("locklogin.web.remove", "The permission required to remove this server with the web panel", PermissionDefault.FALSE);
+        permission.addParent(web(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
+    public static Permission execute() {
+        Permission permission = new Permission("locklogin.web.execute", "The permission required to force a web action on this server", PermissionDefault.FALSE);
+        permission.addParent(web(), true);
+
+        permission.recalculatePermissibles();
+        return permission;
+    }
+
     public static Permission reload_config() {
         Permission permission = new Permission("locklogin.reload.config", "The permission required to reload only configuration file", PermissionDefault.FALSE);
         permission.addParent(reload(), true);

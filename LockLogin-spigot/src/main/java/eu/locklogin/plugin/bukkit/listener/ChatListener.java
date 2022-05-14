@@ -144,6 +144,11 @@ public final class ChatListener implements Listener {
                     }
                 }
             }
+        } else {
+            String command = getCommand(e.getCommand());
+            if (command.equalsIgnoreCase("locklogin")) {
+                e.setCommand(e.getCommand().replaceFirst("locklogin", "slocklogin"));
+            }
         }
     }
 

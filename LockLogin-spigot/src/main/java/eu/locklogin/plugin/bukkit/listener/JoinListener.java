@@ -43,7 +43,8 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
@@ -216,7 +217,7 @@ public final class JoinListener implements Listener {
 
                             e.allow();
                         } else {
-                            SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true);
+                            SimpleScheduler timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
                             timer.endAction(() -> {
                                 Player online = plugin.getServer().getPlayer(tar_uuid);
                                 if (online != null && online.isOnline()) {
@@ -376,7 +377,7 @@ public final class JoinListener implements Listener {
                             if (config.hideNonLogged()) {
                                 ClientVisor visor = new ClientVisor(player);
                                 if (!session.isLogged()) {
-                                    visor.hide();
+                                    visor.toggleView();
                                 }
                             }
 

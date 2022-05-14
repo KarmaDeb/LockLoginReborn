@@ -1,5 +1,7 @@
 package eu.locklogin.api.encryption;
 
+import java.util.Random;
+
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE
  * Version 2.1, February 1999
@@ -47,11 +49,33 @@ public enum HashType {
      */
     AUTHME_SHA,
     /**
+     * LockLogin compatible hash type
+     */
+    WORDPRESS,
+    /**
      * LockLogin unknown hash type
      */
     UNKNOWN,
     /**
      * No encryption type
      */
-    NONE
+    NONE;
+
+    /**
+     * Pick a random hash type
+     *
+     * @return the hash type
+     */
+    public static HashType pickRandom() {
+        HashType[] valid = new HashType[]{
+                SHA256,
+                SHA512,
+                BCrypt,
+                ARGON2I,
+                ARGON2ID,
+                WORDPRESS /*Should I really implement this?*/
+        };
+
+        return valid[new Random().nextInt(valid.length)];
+    }
 }

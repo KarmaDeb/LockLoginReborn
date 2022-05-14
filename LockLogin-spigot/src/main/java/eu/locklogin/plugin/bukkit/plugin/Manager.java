@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bukkit.plugin;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
@@ -27,9 +28,10 @@ import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.PlayerAccount;
-import eu.locklogin.api.common.web.AlertSystem;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
+import eu.locklogin.api.common.web.alert.Notification;
+import eu.locklogin.api.common.web.alert.RemoteNotification;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
@@ -39,7 +41,6 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.TaskTarget;
-import eu.locklogin.plugin.bukkit.command.LockLoginCommand;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.*;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
@@ -55,7 +56,8 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -76,12 +78,14 @@ import org.bukkit.plugin.messaging.PluginMessageListenerRegistration;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class Manager {
+
+    private static String last_notification_text = "";
+    private static int last_notification_level = 0;
 
     private static VersionUpdater updater = null;
     private static int changelog_requests = 0;
@@ -99,7 +103,7 @@ public final class Manager {
 
         System.out.println();
         artGen.print("\u001B[33m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send("&eversion:&6 {0}", version);
         console.send("&eSpecial thanks: &7" + STFetcher.getDonors());
 
         ProxyCheck.scan();
@@ -186,6 +190,11 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
+
+        plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+            RemoteNotification notification = new RemoteNotification();
+            notification.checkAlerts().whenComplete(() -> console.send(notification.getStartup()));
+        }, 20 * 10);
     }
 
     public static void terminate() {
@@ -227,7 +236,7 @@ public final class Manager {
 
         System.out.println();
         artGen.print("\u001B[31m", "LockLogin", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
-        console.send("&eversion:&6 {0}", versionID.getVersionID());
+        console.send("&eversion:&6 {0}", version);
         console.send(" ");
         console.send("&e-----------------------");
     }
@@ -427,7 +436,7 @@ public final class Manager {
                     if (changelog_requests <= 0) {
                         changelog_requests = 3;
 
-                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, versionID.getVersionID(), fetch.getLatest());
+                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, version, fetch.getLatest());
                         for (String line : fetch.getChangelog())
                             console.send(line);
 
@@ -435,35 +444,14 @@ public final class Manager {
                         for (Player player : plugin.getServer().getOnlinePlayers()) {
                             User user = new User(player);
                             if (player.hasPermission(PluginPermission.applyUpdates())) {
-                                user.send(messages.prefix() + "&dNew LockLogin version available, current is " + versionID.getVersionID() + ", but latest is " + fetch.getLatest());
+                                user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
                                 user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                             }
                         }
 
                         if (VersionDownloader.downloadUpdates()) {
                             if (VersionDownloader.canDownload()) {
-                                VersionDownloader downloader = new VersionDownloader(fetch);
-                                downloader.download().whenComplete((file, error) -> {
-                                    if (error != null) {
-                                        logger.scheduleLog(Level.GRAVE, error);
-                                        logger.scheduleLog(Level.INFO, "Failed to download latest LockLogin instance");
-                                        console.send(properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.INFO, error.fillInStackTrace());
-
-                                        try {
-                                            Files.deleteIfExists(file.toPath());
-                                        } catch (Throwable ignored) {
-                                        }
-                                    } else {
-                                        console.send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.INFO);
-
-                                        for (Player player : plugin.getServer().getOnlinePlayers()) {
-                                            User user = new User(player);
-                                            if (player.hasPermission(PluginPermission.applyUpdates())) {
-                                                user.send(messages.prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
-                                            }
-                                        }
-                                    }
-                                });
+                                VersionDownloader.download();
                             }
                         } else {
                             console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
@@ -492,7 +480,7 @@ public final class Manager {
     static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        SimpleScheduler timer = new SourceSecondsTimer(plugin, config.getUpdaterOptions().getInterval(), true).multiThreading(true).endAction(Manager::performVersionCheck);
+        SimpleScheduler timer = new SourceScheduler(plugin, config.getUpdaterOptions().getInterval(), SchedulerUnit.SECOND, true).multiThreading(true).endAction(Manager::performVersionCheck);
         if (config.getUpdaterOptions().isEnabled())
             timer.start();
 
@@ -504,12 +492,47 @@ public final class Manager {
      * Schedule the alert system
      */
     static void scheduleAlertSystem() {
-        SimpleScheduler timer = new SourceSecondsTimer(plugin, 30, true).multiThreading(true).endAction(() -> {
-            AlertSystem system = new AlertSystem();
+        SimpleScheduler timer = new SourceScheduler(plugin, 30, SchedulerUnit.SECOND, true).multiThreading(true).endAction(() -> {
+            RemoteNotification system = new RemoteNotification();
             system.checkAlerts();
 
-            if (system.available())
-                console.send(system.getMessage());
+            Notification notification = system.getNotification();
+            String text = notification.getNotification();
+            int level = notification.getLevel();
+
+            if (!last_notification_text.equals(text) && last_notification_level != level) {
+                last_notification_text = text;
+                last_notification_level = level;
+
+                if (level == 0) {
+                    console.send("( {0} ) " + text, Level.OK, level);
+                } else {
+                    if (level <= 4) {
+                        console.send("( {0} ) " + text, Level.INFO, level);
+                    } else {
+                        if (level <= 7) {
+                            console.send("( {0} ) " + text, Level.WARNING, level);
+                        } else {
+                            console.send("( {0} ) " + text, Level.GRAVE, level);
+                        }
+                    }
+                }
+
+                if (notification.forceConfig()) {
+                    try {
+                        JarManager.changeField(CurrentPlatform.class, "fake_config", system.getRemoteConfig());
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                    console.send("The current alert system requires some configuration options to be in a specified value. Custom config will be ignored for some variables", Level.WARNING);
+                }
+                /*
+                Spigot. Just ignore proxy configuration
+
+                if (notification.forceProxy()) {
+
+                }*/
+            }
         });
         timer.start();
 
@@ -572,7 +595,7 @@ public final class Manager {
 
                 if (config.hideNonLogged()) {
                     ClientVisor visor = new ClientVisor(player);
-                    visor.hide();
+                    visor.toggleView();
                 }
 
                 Event event = new UserHookEvent(user.getModule(), null);
@@ -617,7 +640,7 @@ public final class Manager {
             user.setTempSpectator(false);
 
             ClientVisor visor = new ClientVisor(player);
-            visor.show();
+            visor.forceView();
 
             Event event = new UserUnHookEvent(user.getModule(), null);
             ModulePlugin.callEvent(event);
@@ -629,7 +652,7 @@ public final class Manager {
      */
     public static void restartVersionChecker() {
         try {
-            SimpleScheduler timer = new SourceSecondsTimer(plugin, updater_id);
+            SimpleScheduler timer = new SourceScheduler(plugin, updater_id);
             timer.restart();
         } catch (Throwable ignored) {
         }
@@ -640,7 +663,7 @@ public final class Manager {
      */
     public static void restartAlertSystem() {
         try {
-            SimpleScheduler timer = new SourceSecondsTimer(plugin, alert_id);
+            SimpleScheduler timer = new SourceScheduler(plugin, alert_id);
             timer.restart();
         } catch (Throwable ignored) {
         }

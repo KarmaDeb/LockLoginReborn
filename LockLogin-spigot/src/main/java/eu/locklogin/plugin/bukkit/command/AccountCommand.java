@@ -193,7 +193,7 @@ public class AccountCommand implements CommandExecutor {
 
                                     if (config.hideNonLogged()) {
                                         ClientVisor visor = new ClientVisor(player);
-                                        visor.hide();
+                                        visor.toggleView();
                                     }
 
                                     user.send(messages.prefix() + messages.closed());
@@ -354,6 +354,19 @@ public class AccountCommand implements CommandExecutor {
                                 user.send(messages.prefix() + messages.sessionServerDisabled());
                             }
                             break;
+                        case "protect":
+                            /*
+                            TODO: I must implement LockLogin web panel into this. ( I MUST ALSO END THE PANEL TOO. I HAVE TO DO MANY THINGS NOW )
+
+                            AccountManager manager = user.getManager();
+                            if (StringUtils.isNullOrEmpty(manager.getPanic())) {
+                                String token = TokenGenerator.generateLiteral(32);
+
+                                user.send(messages.panicRequested());
+
+                            } else {
+                                user.send(messages.prefix() + messages.panicAlready());
+                            }*/
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;

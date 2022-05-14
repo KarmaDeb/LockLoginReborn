@@ -11,19 +11,24 @@ package eu.locklogin.api.common.web;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.module.plugin.client.permission.PermissionDefault;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
+import eu.locklogin.api.module.plugin.client.permission.SimplePermission;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.ModuleServer;
+import ml.karmaconfigs.api.common.ResourceDownloader;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.worker.FixedLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.version.VersionFetchResult;
-import ml.karmaconfigs.api.common.version.util.VersionType;
+import ml.karmaconfigs.api.common.utils.file.PathUtilities;
+import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 
-import java.io.*;
+import java.io.File;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.concurrent.CompletableFuture;
+import java.nio.file.Path;
 
 /**
  * LockLogin version downloader
@@ -32,16 +37,6 @@ public final class VersionDownloader {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private static boolean downloading = false;
-    private final VersionFetchResult result;
-
-    /**
-     * Initialize the version downloader
-     *
-     * @param res the version check fetch result
-     */
-    public VersionDownloader(final VersionFetchResult res) {
-        result = res;
-    }
 
     /**
      * Get if the downloader is already downloading
@@ -68,51 +63,44 @@ public final class VersionDownloader {
 
     /**
      * Download the latest version
-     *
-     * @return the download result
      */
-    public LateScheduler<File> download() {
-        LateScheduler<File> future = new FixedLateScheduler<>();
+    public static void download() {
+        String random = TokenGenerator.generateLiteral(16);
+        Path dest_file = lockLogin.getDataPath().resolve("plugin").resolve("updater").resolve(random + ".jar");
 
-        CompletableFuture.runAsync(() -> {
-            File dest_file = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "updater" + File.separator + result.resolve(VersionType.LATEST), "LockLogin.jar");
-            dest_file = FileUtilities.getFixedFile(dest_file);
+        dest_file = PathUtilities.getFixedPath(dest_file);
 
-            downloading = true;
+        downloading = true;
 
-            Throwable error = null;
-            try {
-                URL url = new URL(result.getUpdateURL());
-                URLConnection connection = url.openConnection();
-                connection.connect();
+        PluginProperties properties = new PluginProperties();
 
-                if (!dest_file.getParentFile().exists()) {
-                    if (dest_file.getParentFile().mkdirs()) {
-                        lockLogin.console().send("Created update folder for LockLogin new update", Level.INFO);
-                    } else {
-                        lockLogin.console().send("An unknown error occurred while creating update folder", Level.GRAVE);
-                    }
+        URL update_url = FileInfo.updateHost(null);
+        if (update_url != null) {
+            lockLogin.console().send("Downloading latest LockLogin version from {0}", Level.INFO, update_url);
+            ResourceDownloader downloader = new ResourceDownloader(dest_file, update_url.toString());
+
+            downloader.downloadAsync().whenComplete((downloaded, error) -> {
+                if (downloaded) {
+                    lockLogin.console().send(properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"), Level.OK);
+                } else {
+                    lockLogin.logger().scheduleLog(Level.GRAVE, error);
+                    lockLogin.logger().scheduleLog(Level.INFO, "Failed to download latest version of LockLogin");
+
+                    lockLogin.console().send(properties.getProperty("updater_download_fail", "Failed to download latest LockLogin update ( {0} )"), Level.GRAVE, error.getMessage());
                 }
 
-                InputStream input = new BufferedInputStream(url.openStream(), 1024);
-                OutputStream output = new FileOutputStream(dest_file);
-
-                byte[] dataBuffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = input.read(dataBuffer, 0, 1024)) != -1) output.write(dataBuffer, 0, bytesRead);
-
-                output.flush();
-
-                output.close();
-                input.close();
-            } catch (Throwable ex) {
-                error = ex;
-            } finally {
-                future.complete(dest_file, error);
                 downloading = false;
-            }
-        });
+                ModuleServer server = CurrentPlatform.getServer();
+                PermissionObject applyUpdates = new SimplePermission("locklogin.applyupdates", PermissionDefault.FALSE);
 
-        return future;
+                server.getOnlinePlayers().forEach((player) -> {
+                    if (player.hasPermission(applyUpdates)) {
+                        player.sendMessage(CurrentPlatform.getMessages().prefix() + properties.getProperty("updater_downloaded", "Downloaded latest version plugin instance, to apply the updates run /locklogin applyUpdates"));
+                    }
+                });
+            });
+        } else {
+            lockLogin.console().send("Failed to download latest version of LockLogin", Level.GRAVE);
+        }
     }
 }

@@ -17,6 +17,7 @@ package eu.locklogin.module.manager.bungee;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.module.manager.LockLoginManager;
 import eu.locklogin.module.manager.ModuleHelpCommand;
+import eu.locklogin.module.manager.ModuleInfoCommand;
 import eu.locklogin.module.manager.UsersListener;
 import eu.locklogin.module.manager.bungee.listener.UpdateRequestListener;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
@@ -41,6 +42,7 @@ public final class Main extends PluginModule {
         getPlugin().registerListener(new UpdateRequestListener());
         getPlugin().registerListener(new UsersListener());
         getPlugin().registerCommand(new ModuleHelpCommand());
+        getPlugin().registerCommand(new ModuleInfoCommand());
     }
 
     @Override

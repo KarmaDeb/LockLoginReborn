@@ -12,6 +12,7 @@ package eu.locklogin.plugin.bukkit.command.util;
  */
 
 import eu.locklogin.plugin.bukkit.command.*;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,6 +27,7 @@ import java.util.List;
 public @interface SystemCommand {
 
     String command() default "";
+    String bungee_command() default "";
 
     String[] aliases() default {""};
 
@@ -67,7 +69,15 @@ public @interface SystemCommand {
                 SystemCommand cmd = clazz.getAnnotation(SystemCommand.class);
 
                 try {
-                    return cmd.command();
+                    String command = cmd.command();
+
+                    if (cmd.bungeecord()) {
+                        String bungee_cmd = cmd.bungee_command();
+                        if (!StringUtils.isNullOrEmpty(bungee_cmd))
+                            command = bungee_cmd;
+                    }
+
+                    return command;
                 } catch (Throwable ignored) {
                 }
             }

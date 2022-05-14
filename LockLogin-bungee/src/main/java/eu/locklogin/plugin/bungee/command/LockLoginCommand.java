@@ -32,7 +32,8 @@ import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
@@ -150,7 +151,7 @@ public final class LockLoginCommand extends Command {
                                         });
                                     }
 
-                                    SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+                                    SimpleScheduler timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
                                     timer.restartAction(() -> {
                                         if (canPost.get()) {
                                             timer.cancel();
@@ -327,7 +328,7 @@ public final class LockLoginCommand extends Command {
                                     });
                                 }
 
-                                SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+                                SimpleScheduler timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
                                 timer.restartAction(() -> {
                                     if (canPost.get()) {
                                         timer.cancel();

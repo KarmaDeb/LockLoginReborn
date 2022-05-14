@@ -1,7 +1,8 @@
 package eu.locklogin.plugin.velocity.util.player;
 
 import com.velocitypowered.api.proxy.Player;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 
 import java.util.Collections;
@@ -16,7 +17,7 @@ import static eu.locklogin.plugin.velocity.LockLogin.plugin;
 public class PlayerPool {
 
     private final static Set<UUID> players = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+    private final static SimpleScheduler checkScheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
     private static Consumer<Player> whenValidPlayer = null;
 
     /**

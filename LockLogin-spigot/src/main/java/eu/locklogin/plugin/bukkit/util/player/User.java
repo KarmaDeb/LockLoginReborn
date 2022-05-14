@@ -59,6 +59,7 @@ public final class User {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
     private final static Set<UUID> registered = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<UUID> panicking = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Map<UUID, Collection<PotionEffect>> effects = new ConcurrentHashMap<>();
     private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
@@ -375,6 +376,29 @@ public final class User {
     }
 
     /**
+     * Register the user; in bungeecord
+     *
+     * @param status the register status
+     */
+    public void setRegistered(final boolean status) {
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.isBungeeCord()) {
+            if (status) {
+                registered.add(player.getUniqueId());
+            } else {
+                registered.remove(player.getUniqueId());
+            }
+        }
+    }
+
+    /**
+     * Set the client in panic mode
+     */
+    public void panic() {
+        panicking.add(player.getUniqueId());
+    }
+
+    /**
      * Get the client session checker
      *
      * @return the client session checker
@@ -476,15 +500,13 @@ public final class User {
         return player.hasMetadata("LockLoginUser");
     }
 
-    public void setRegistered(final boolean status) {
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
-        if (config.isBungeeCord()) {
-            if (status) {
-                registered.add(player.getUniqueId());
-            } else {
-                registered.remove(player.getUniqueId());
-            }
-        }
+    /**
+     * Get if the client is panicking
+     *
+     * @return if the client is panicking
+     */
+    public boolean isPanicking() {
+        return panicking.contains(player.getUniqueId());
     }
 
     /**
@@ -496,9 +518,11 @@ public final class User {
     private String[] parseMessage(final String official) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        if (official.contains("{newline}")) {
-            String messageData = official.replace("{newline}", "\n");
-            String[] messages = messageData.split("\\n");
+        if (official.contains("{newline}") || official.contains("\\n") || official.contains("\n")) {
+            String messageData = official
+                    .replace("{newline}", "\n")
+                    .replace("\\n", "\n");
+            String[] messages = messageData.split("\\r?\\n");
 
             for (int i = 0; i < messages.length; i++) {
                 String previous = (i - 1 >= 0 ? messages[i - 1] : "");

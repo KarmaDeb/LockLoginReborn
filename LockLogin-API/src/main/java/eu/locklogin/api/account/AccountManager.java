@@ -182,6 +182,27 @@ public abstract class AccountManager implements Serializable {
     public abstract void setPin(final @Nullable String pin);
 
     /**
+     * Save the account panic unsafe token
+     *
+     * @param token the account panic token
+     */
+    public abstract void setUnsafePanic(final @Nullable String token);
+
+    /**
+     * Get the account panic token
+     *
+     * @return the account panic token
+     */
+    public abstract @NotNull String getPanic();
+
+    /**
+     * Save the account panic token
+     *
+     * @param token the panic token
+     */
+    public abstract void setPanic(final @Nullable String token);
+
+    /**
      * Get if the account has pin
      *
      * @return if the account has pin

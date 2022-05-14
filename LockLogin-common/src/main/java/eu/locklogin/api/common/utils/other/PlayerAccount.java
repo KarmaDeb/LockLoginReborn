@@ -7,6 +7,7 @@ import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.encryption.CryptTarget;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
@@ -584,6 +585,47 @@ public final class PlayerAccount extends AccountManager {
     }
 
     /**
+     * Save the account panic unsafe token
+     *
+     * @param token the account panic token
+     */
+    @Override
+    public void setUnsafePanic(@Nullable String token) {
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
+        HashType hash = HashType.pickRandom();
+
+        manager.set("PANIC", util.hash(hash, true));
+    }
+
+    /**
+     * Get the account panic token
+     *
+     * @return the account panic token
+     */
+    @Override
+    public @NotNull String getPanic() {
+        PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+        if (configuration.enablePin()) {
+            return manager.getString("PANIC", "").replace("PANIC:", "");
+        }
+
+        return "";
+    }
+
+    /**
+     * Save the account panic token
+     *
+     * @param token the panic token
+     */
+    @Override
+    public void setPanic(@Nullable String token) {
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
+        HashType hash = HashType.pickRandom();
+
+        manager.set("PANIC", util.hash(hash, true));
+    }
+
+    /**
      * Get if the account has pin
      *
      * @return if the account has pin
@@ -640,8 +682,6 @@ public final class PlayerAccount extends AccountManager {
     /**
      * Get all the player accounts
      *
-     * TODO: Remove null check ( it shouldn't be null anyway since 1.13.16 )
-     *
      * @return the player accounts
      */
     @Override
@@ -657,11 +697,9 @@ public final class PlayerAccount extends AccountManager {
 
                     AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
                     AccountID uuid = manager.getUUID();
-                    if (uuid != null) {
-                        String name = manager.getName();
-                        if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())
-                            managers.add(manager);
-                    }
+                    String name = manager.getName();
+                    if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())
+                        managers.add(manager);
                 });
             } catch (Throwable ex) {
                 ex.printStackTrace();

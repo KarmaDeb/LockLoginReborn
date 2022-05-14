@@ -4,7 +4,10 @@ import eu.locklogin.api.util.enums.UpdateChannel;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
@@ -211,29 +214,21 @@ public class FileInfo {
             defaults.set("ml.karmaconfigs.safe", true);
             defaults.set("ml.karmaconfigs.target", "/locklogin/");
             defaults.set("ml.karmaconfigs.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("ml.karmaconfigs.version", "version/");
-            defaults.set("ml.karmaconfigs.dependency", "repository/{0}/");
             defaults.set("ml.karmaconfigs.alternative", Collections.singletonList("backup"));
 
             defaults.set("ml.karmarepo.safe", true);
             defaults.set("ml.karmarepo.target", "/locklogin/");
             defaults.set("ml.karmarepo.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("ml.karmarepo.version", "version/");
-            defaults.set("ml.karmarepo.dependency", "repository/{0}/");
             defaults.set("ml.karmarepo.alternative", Collections.singletonList("backup"));
 
             defaults.set("es.karmadev.safe", true);
             defaults.set("es.karmadev.target", "/locklogin/");
             defaults.set("es.karmadev.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("es.karmadev.version", "version/");
-            defaults.set("es.karmadev.dependency", "repository/{0}/");
             defaults.set("es.karmadev.alternative", Collections.singletonList("backup"));
 
             defaults.set("io.github.safe", true);
             defaults.set("io.github.target", "/karmaconfigs/updates/LockLogin/");
             defaults.set("io.github.checksum", "data/{0}/checksum.lldb");
-            defaults.set("io.github.version", "version/");
-            defaults.set("io.github.dependency", "repository/{0}/");
             defaults.set("io.github.alternative", Collections.emptyList());
 
             KarmaYamlManager section = manager.getSection("project_urls", defaults);
@@ -292,30 +287,22 @@ public class FileInfo {
             KarmaYamlManager defaults = new KarmaYamlManager(new HashMap<>());
             defaults.set("ml.karmaconfigs.safe", true);
             defaults.set("ml.karmaconfigs.target", "/locklogin/");
-            defaults.set("ml.karmaconfigs.checksum", "checksum/{0}/checksum.lldb");
             defaults.set("ml.karmaconfigs.version", "version/");
-            defaults.set("ml.karmaconfigs.dependency", "repository/{0}/");
             defaults.set("ml.karmaconfigs.alternative", Collections.singletonList("backup"));
 
             defaults.set("ml.karmarepo.safe", true);
             defaults.set("ml.karmarepo.target", "/locklogin/");
-            defaults.set("ml.karmarepo.checksum", "checksum/{0}/checksum.lldb");
             defaults.set("ml.karmarepo.version", "version/");
-            defaults.set("ml.karmarepo.dependency", "repository/{0}/");
             defaults.set("ml.karmarepo.alternative", Collections.singletonList("backup"));
 
             defaults.set("es.karmadev.safe", true);
             defaults.set("es.karmadev.target", "/locklogin/");
-            defaults.set("es.karmadev.checksum", "checksum/{0}/checksum.lldb");
             defaults.set("es.karmadev.version", "version/");
-            defaults.set("es.karmadev.dependency", "repository/{0}/");
             defaults.set("es.karmadev.alternative", Collections.singletonList("backup"));
 
             defaults.set("io.github.safe", true);
             defaults.set("io.github.target", "/karmaconfigs/updates/LockLogin/");
-            defaults.set("io.github.checksum", "data/{0}/checksum.lldb");
             defaults.set("io.github.version", "version/");
-            defaults.set("io.github.dependency", "repository/{0}/");
             defaults.set("io.github.alternative", Collections.emptyList());
 
             KarmaYamlManager section = manager.getSection("project_urls", defaults);
@@ -372,29 +359,21 @@ public class FileInfo {
             KarmaYamlManager defaults = new KarmaYamlManager(new HashMap<>());
             defaults.set("ml.karmaconfigs.safe", true);
             defaults.set("ml.karmaconfigs.target", "/locklogin/");
-            defaults.set("ml.karmaconfigs.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("ml.karmaconfigs.version", "version/");
             defaults.set("ml.karmaconfigs.dependency", "repository/{0}/");
             defaults.set("ml.karmaconfigs.alternative", Collections.singletonList("backup"));
 
             defaults.set("ml.karmarepo.safe", true);
             defaults.set("ml.karmarepo.target", "/locklogin/");
-            defaults.set("ml.karmarepo.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("ml.karmarepo.version", "version/");
             defaults.set("ml.karmarepo.dependency", "repository/{0}/");
             defaults.set("ml.karmarepo.alternative", Collections.singletonList("backup"));
 
             defaults.set("es.karmadev.safe", true);
             defaults.set("es.karmadev.target", "/locklogin/");
-            defaults.set("es.karmadev.checksum", "checksum/{0}/checksum.lldb");
-            defaults.set("es.karmadev.version", "version/");
             defaults.set("es.karmadev.dependency", "repository/{0}/");
             defaults.set("es.karmadev.alternative", Collections.singletonList("backup"));
 
             defaults.set("io.github.safe", true);
             defaults.set("io.github.target", "/karmaconfigs/updates/LockLogin/");
-            defaults.set("io.github.checksum", "data/{0}/checksum.lldb");
-            defaults.set("io.github.version", "version/");
             defaults.set("io.github.dependency", "repository/{0}/");
             defaults.set("io.github.alternative", Collections.emptyList());
 
@@ -421,6 +400,78 @@ public class FileInfo {
                             url = url.replace(domain + "." + ext, alt + "." + domain + "." + ext);
 
                             domains.add(url + data.getString("dependency").replace("{0}", repositoryVersion) + file);
+                        }
+                    });
+                }
+            }
+
+            for (String url : domains) {
+                int response_code = URLUtils.getResponseCode(url);
+                if (response_code == 200)
+                    try {
+                        return new URL(url);
+                    } catch (Throwable ignored) {}
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get hosts LockLogin communicates with
+     *
+     * @return the LockLogin trusted hosts
+     */
+    public static URL updateHost(final File target) {
+        InputStream global = getGlobal(target);
+        if (global != null) {
+            KarmaYamlManager manager = new KarmaYamlManager(global);
+            String currentChannel = getChannel(target).webName();
+
+            KarmaYamlManager defaults = new KarmaYamlManager(new HashMap<>());
+            defaults.set("ml.karmaconfigs.safe", true);
+            defaults.set("ml.karmaconfigs.target", "/locklogin/");
+            defaults.set("ml.karmaconfigs.update", "version/{0}/LockLogin.jar");
+            defaults.set("ml.karmaconfigs.alternative", Collections.singletonList("backup"));
+
+            defaults.set("ml.karmarepo.safe", true);
+            defaults.set("ml.karmarepo.target", "/locklogin/");
+            defaults.set("ml.karmarepo.update", "version/{0}/LockLogin.jar");
+            defaults.set("ml.karmarepo.alternative", Collections.singletonList("backup"));
+
+            defaults.set("es.karmadev.safe", true);
+            defaults.set("es.karmadev.target", "/locklogin/");
+            defaults.set("es.karmadev.update", "version/{0}/LockLogin.jar");
+            defaults.set("es.karmadev.alternative", Collections.singletonList("backup"));
+
+            defaults.set("io.github.safe", true);
+            defaults.set("io.github.target", "/karmaconfigs/updates/LockLogin/");
+            defaults.set("io.github.update", "version/{0}/LockLogin.jar");
+            defaults.set("io.github.alternative", Collections.emptyList());
+
+            KarmaYamlManager section = manager.getSection("project_urls", defaults);
+            Set<String> keys = section.getKeySet();
+
+            Set<String> domains = new LinkedHashSet<>();
+            for (String ext : keys) {
+                KarmaYamlManager extension = section.getSection(ext);
+                if (extension.getKeySet().size() > 0) {
+                    extension.getKeySet().forEach((domain) -> {
+                        KarmaYamlManager data = extension.getSection(domain);
+                        boolean overHttps = data.getBoolean("safe");
+                        String domainDirectory = data.getString("target");
+
+                        String url = "http://";
+                        if (overHttps) {
+                            url = "https://";
+                        }
+
+                        url = url + domain + "." + ext + domainDirectory;
+                        domains.add(url + data.getString("update").replace("{0}", currentChannel));
+                        for (String alt : data.getStringList("alternative")) {
+                            url = url.replace(domain + "." + ext, alt + "." + domain + "." + ext);
+
+                            domains.add(url + data.getString("update").replace("{0}", currentChannel));
                         }
                     });
                 }

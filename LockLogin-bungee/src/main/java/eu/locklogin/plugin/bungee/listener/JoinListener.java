@@ -46,7 +46,8 @@ import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -163,8 +164,8 @@ public final class JoinListener implements Listener {
 
                         SimpleScheduler tmp_timer = null;
                         if (!session.isCaptchaLogged()) {
-                            tmp_timer = new SourceSecondsTimer(plugin, 1, true);
-                            tmp_timer.secondChangeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                            tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                            tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                         }
 
                         MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)

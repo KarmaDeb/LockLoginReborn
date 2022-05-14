@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: English (Official)
 #Editor: KarmaDev
-#Last edited: 5 - October - 2021 01:47
+#Last edited: 30 - April - 2022 16:21
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -127,6 +127,16 @@ PanicSubtitle: "&cRUN &4/panic <token>"
 PanicMode: "&5&oThe account entered in panic mode, you have 1 token login try before being IP-blocked"
 PanicDisabled: "&5&oThe server is not protected against brute force attacks"
 PanicAlready: "&dYou already have a brute force token, your account is secure"
+PanicUnsafeUsage: "&dTo disable panic token you must run /account unsafe <password> <token> [pin] [2fa]"
+PanicNowUnsafe:
+  - "&eLockLogin"
+  - ""
+  - "&dYou've disabled your panic token, this will"
+  - "&dmake your account vulnerable to distributed"
+  - "&dbrute force attacks. Panic token will require a token"
+  - "&donce an specified amount of failed login attempts are done"
+  - "&din your account instead of asking the password, please"
+  - "&dtoggle it now using /account protect!"
 PanicRequested:
   - "&eLockLogin"
   - ""

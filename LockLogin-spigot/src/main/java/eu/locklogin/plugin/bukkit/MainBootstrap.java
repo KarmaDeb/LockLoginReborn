@@ -9,7 +9,6 @@ import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -25,10 +24,7 @@ import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
-import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
-import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -150,7 +146,6 @@ public class MainBootstrap {
         Consumer<ModulePlayer> onLogin = modulePlayer -> {
             UUID id = modulePlayer.getUUID();
 
-            PluginConfiguration config = CurrentPlatform.getConfiguration();
             Player player = loader.getServer().getPlayer(id);
             if (player != null) {
                 User user = new User(player);
@@ -161,11 +156,6 @@ public class MainBootstrap {
                     session.setLogged(true);
                     session.setPinLogged(true);
                     session.set2FALogged(true);
-
-                    if (config.hideNonLogged()) {
-                        ClientVisor visor = new ClientVisor(player);
-                        visor.show();
-                    }
 
                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
                             UserAuthenticateEvent.Result.SUCCESS,

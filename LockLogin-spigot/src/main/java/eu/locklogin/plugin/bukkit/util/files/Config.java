@@ -222,6 +222,8 @@ public final class Config extends PluginConfiguration {
             case "authme":
             case "authmesha":
                 return HashType.AUTHME_SHA;
+            case "wordpress":
+                return HashType.WORDPRESS;
             case "512":
             case "sha512":
             default:
@@ -247,6 +249,8 @@ public final class Config extends PluginConfiguration {
             case "authme":
             case "authmesha":
                 return HashType.AUTHME_SHA;
+            case "wordpress":
+                return HashType.WORDPRESS;
             case "512":
             case "sha512":
             default:

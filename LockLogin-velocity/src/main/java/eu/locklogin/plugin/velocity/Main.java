@@ -14,7 +14,6 @@ import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -36,19 +35,17 @@ import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.velocity.KarmaPlugin;
-import ml.karmaconfigs.api.velocity.makeiteasy.TitleMessage;
 import net.kyori.adventure.text.Component;
 
 import java.io.File;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+//TODO: If you see this you can also buy me a coffee ;) [ https://www.buymeacoffee.com/karmadev ]
 public class Main extends KarmaPlugin {
 
     public Main(final ProxyServer server, final PluginContainer plugin) {
@@ -151,7 +148,8 @@ public class Main extends KarmaPlugin {
                 Player player = mp.getPlayer();
 
                 if (player != null) {
-                    player.disconnect(Component.text().content(StringUtils.toColor(messageSender.getMessage())).build());
+                    User user = new User(player);
+                    user.kick(messageSender.getMessage());
                 }
             }
         };

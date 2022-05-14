@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.21</version>
+    <version>1.13.22</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -48,9 +48,9 @@
         <java.version>8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.manager>v6</project.manager>
+        <project.manager>v7</project.manager>
         <!-- This is more efficient than having checksum per version -->
-        <project.checksum>v1</project.checksum>
+        <project.checksum>v2</project.checksum>
         <!-- Now using my own repository host, let's goooo -->
         <project.repository>v1</project.repository>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -58,7 +58,7 @@
         <project.name>LockLogin</project.name>
         <project.author>KarmaDev</project.author>
         <project.buildType>RELEASE</project.buildType>
-        <project.karmaapi>1.3.2-SNAPSHOT</project.karmaapi>
+        <project.karmaapi>1.3.3-SNAPSHOT</project.karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>
             LockLogin is an advanced login plugin, one of the most secure available,
@@ -68,8 +68,8 @@
             always open to new feature requests, and bug reports. More than a plugin,
             a plugin you can contribute indirectly; A community plugin for the plugin community.
         </project.description>
-        <project.url>https://locklogin.eu/</project.url>
-        <project.update>APIUpdate</project.update>
+        <project.url>https://karmaconfigs.ml/locklogin</project.url>
+        <project.update>WebUpdate</project.update>
         <project.showchecksums>false</project.showchecksums>
     </properties>
 

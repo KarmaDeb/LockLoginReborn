@@ -44,7 +44,8 @@ public final class Message extends PluginMessages {
         if ((original.contains("<captcha>") || original.contains("{captcha}")) && !config.captchaOptions().isEnabled())
             original = original.replace("<captcha>", "").replace("{captcha}", "");
 
-        return component.parse(original.replace("{ServerName}", config.serverName()));
+        return component.parse(original.replace("{ServerName}", config.serverName()))
+                .replace("{newline}", "\n");
     }
 
     /**

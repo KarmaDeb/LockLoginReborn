@@ -16,7 +16,8 @@ package eu.locklogin.api.module.plugin.javamodule.updater;
 
 import eu.locklogin.api.module.PluginModule;
 import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
@@ -78,7 +79,7 @@ public final class JavaModuleVersion {
                 } else {
                     recently_cached.add(module);
 
-                    SimpleScheduler scheduler = new SourceSecondsTimer(module, 300, false).multiThreading(true);
+                    SimpleScheduler scheduler = new SourceScheduler(module, 5, SchedulerUnit.MINUTE, false).multiThreading(true);
                     scheduler.restartAction(() -> recently_cached.remove(module)).start();
 
                     updater.fetch(true).whenComplete((fetchResult, error) -> {

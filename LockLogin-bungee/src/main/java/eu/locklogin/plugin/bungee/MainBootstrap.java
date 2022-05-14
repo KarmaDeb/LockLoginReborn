@@ -28,14 +28,13 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -148,14 +147,16 @@ public class MainBootstrap {
                 }
             };
             Consumer<MessageSender> onKick = messageSender -> {
-                SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, false).multiThreading(false);
-                scheduler.endAction(() -> scheduler.requestSync(() -> {
+                SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, false).multiThreading(false);
+                scheduler.endAction(() -> plugin.sync().queue("kick_request", () -> {
                     if (messageSender.getSender() instanceof ModulePlayer) {
                         ModulePlayer mp = (ModulePlayer) messageSender.getSender();
                         ProxiedPlayer player = mp.getPlayer();
 
-                        if (player != null)
-                            player.disconnect(TextComponent.fromLegacyText(StringUtils.toColor(messageSender.getMessage())));
+                        if (player != null) {
+                            User user = new User(player);
+                            user.kick(messageSender.getMessage());
+                        }
                     }
                 })).start();
             };

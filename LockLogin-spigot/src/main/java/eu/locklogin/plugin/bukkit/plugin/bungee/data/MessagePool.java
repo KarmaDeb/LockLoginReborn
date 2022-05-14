@@ -1,7 +1,8 @@
 package eu.locklogin.plugin.bukkit.plugin.bungee.data;
 
 import com.google.common.io.ByteArrayDataInput;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.TriConsumer;
 import org.bukkit.entity.Player;
@@ -16,7 +17,7 @@ public final class MessagePool {
 
     private final static Map<UUID, ByteArrayDataInput> players = new ConcurrentHashMap<>();
     private final static Map<UUID, String> channels = new ConcurrentHashMap<>();
-    private final static SimpleScheduler checkScheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+    private final static SimpleScheduler checkScheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
     private static TriConsumer<String, Player, ByteArrayDataInput> whenValidPlayer = null;
 
     /**

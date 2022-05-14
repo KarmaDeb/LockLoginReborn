@@ -23,11 +23,13 @@ import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
@@ -48,7 +50,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.version;
 import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 
-@SystemCommand(command = "locklogin")
+@SystemCommand(command = "locklogin", bungee_command = "slocklogin", bungeecord = true)
 public final class LockLoginCommand implements CommandExecutor {
 
     /**
@@ -72,7 +74,7 @@ public final class LockLoginCommand implements CommandExecutor {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", label)));
 
-        plugin.async().queue(() -> {
+        tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -82,11 +84,7 @@ public final class LockLoginCommand implements CommandExecutor {
                     case 1:
                         switch (args[0].toLowerCase()) {
                             case "reload":
-                                if (player.hasPermission(reload())) {
-                                    FileReloader.reload(player);
-                                } else {
-                                    user.send(messages.prefix() + messages.permissionError(reload()));
-                                }
+                                FileReloader.reload(player); //Permission check is made internally... xD
                                 break;
                             case "applyupdates":
                                 if (player.hasPermission(applyUpdates())) {
@@ -130,7 +128,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                         });
                                     }
 
-                                    SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+                                    SimpleScheduler timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
                                     timer.restartAction(() -> {
                                         if (canPost.get()) {
                                             timer.cancel();
@@ -172,6 +170,15 @@ public final class LockLoginCommand implements CommandExecutor {
                                     });
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(changelog()));
+                                }
+                                break;
+                            case "synchronize":
+                            case "remove":
+                            case "execute":
+                                if (player.hasPermission(web())) {
+                                    user.send(messages.prefix() + "&cComing soon; LockLogin web panel");
+                                } else {
+                                    user.send(messages.prefix() + messages.permissionError(sync()));
                                 }
                                 break;
                             case "check":
@@ -298,7 +305,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                     });
                                 }
 
-                                SimpleScheduler timer = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+                                SimpleScheduler timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
                                 timer.restartAction(() -> {
                                     if (canPost.get()) {
                                         timer.cancel();
@@ -330,6 +337,11 @@ public final class LockLoginCommand implements CommandExecutor {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest changelog");
                                     }
                                 });
+                                break;
+                            case "synchronize":
+                            case "remove":
+                            case "execute":
+                                console.send(messages.prefix() + "&cComing soon; LockLogin web panel");
                                 break;
                             case "check":
                                 console.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");

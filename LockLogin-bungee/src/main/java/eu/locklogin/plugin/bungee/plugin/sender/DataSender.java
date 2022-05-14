@@ -19,7 +19,8 @@ import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -43,7 +44,7 @@ public final class DataSender {
 
     private final static Set<MessagePool> auto_data_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final static SimpleScheduler scheduler = new SourceSecondsTimer(plugin, 1, true).multiThreading(true);
+    private final static SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
 
     /**
      * Initialize the data sender

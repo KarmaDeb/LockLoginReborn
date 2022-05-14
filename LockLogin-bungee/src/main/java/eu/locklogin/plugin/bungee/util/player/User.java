@@ -485,9 +485,11 @@ public final class User {
     private String[] parseMessage(final String official) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        if (official.contains("{newline}")) {
-            String messageData = official.replace("{newline}", "\n");
-            String[] messages = messageData.split("\\n");
+        if (official.contains("{newline}") || official.contains("\\n") || official.contains("\n")) {
+            String messageData = official
+                    .replace("{newline}", "\n")
+                    .replace("\\n", "\n");
+            String[] messages = messageData.split("\\r?\\n");
 
             for (int i = 0; i < messages.length; i++) {
                 String previous = (i - 1 >= 0 ? messages[i - 1] : "");

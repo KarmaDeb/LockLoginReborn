@@ -44,6 +44,8 @@ softdepend:
 commands:
   locklogin:
     description: The command to manage the plugin, such as reload, or apply updates
+  slocklogin:
+    description: Spigot version of the locklogin command for bungeecord mode
   setloginspawn:
     description: The command to set login spawn, must be enabled in config.yml!
   register:

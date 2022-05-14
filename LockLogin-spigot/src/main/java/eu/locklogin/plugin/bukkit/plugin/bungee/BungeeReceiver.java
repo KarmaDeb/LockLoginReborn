@@ -18,7 +18,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
-import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -151,9 +150,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     break;
                                 case GAUTH:
                                     session.set2FALogged(true);
-
-                                    ClientVisor visor = new ClientVisor(player);
-                                    visor.show();
                                     break;
                                 case CLOSE:
                                     if (session.isLogged()) {

@@ -17,6 +17,7 @@ package eu.locklogin.api.util.platform;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.param.AccountConstructor;
+import eu.locklogin.api.encryption.libraries.sha.SHA512;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
@@ -26,9 +27,15 @@ import eu.locklogin.api.util.enums.Manager;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
+import ml.karmaconfigs.api.common.utils.string.RandomString;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.string.util.TextContent;
+import ml.karmaconfigs.api.common.utils.string.util.TextType;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,6 +50,14 @@ public final class CurrentPlatform {
     private final static ModuleServer server = new ModuleServer();
     private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
 
+    //Unique server hash, for panel utilities and more...
+    private final static String server_hash = "beta_" + Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
+            RandomString.createBuilder()
+                    .withContent(TextContent.NUMBERS_AND_LETTERS)
+                    .withType(TextType.RANDOM_SIZE)
+                    .withSize(64)
+    ).create()).getBytes(StandardCharsets.UTF_8));
+
     //private static Server remoteServer;
     private static Platform platform;
     private static Class<?> main;
@@ -51,6 +66,10 @@ public final class CurrentPlatform {
     private static Class<? extends AccountManager> default_manager;
     private static Class<? extends AccountManager> last_manager;
     private static Class<? extends ClientSession> sessionManager;
+
+    private static PluginConfiguration fake_config;
+    private static ProxyConfiguration fake_proxy;
+
     private static PluginConfiguration current_config;
     private static ProxyConfiguration current_proxy;
     private static PluginMessages current_messages;
@@ -407,7 +426,7 @@ public final class CurrentPlatform {
      *
      * @return the current plugin configuration manager
      */
-    public static PluginConfiguration getConfiguration() {
+    public static PluginConfiguration getRealConfiguration() {
         return current_config;
     }
 
@@ -416,8 +435,26 @@ public final class CurrentPlatform {
      *
      * @return the current proxy configuration manager
      */
-    public static ProxyConfiguration getProxyConfiguration() {
+    public static ProxyConfiguration getRealProxyConfiguration() {
         return current_proxy;
+    }
+
+    /**
+     * Get the current plugin configuration manager
+     *
+     * @return the current plugin configuration manager
+     */
+    public static PluginConfiguration getConfiguration() {
+        return (fake_config != null ? fake_config : current_config);
+    }
+
+    /**
+     * Get the current proxy configuration manager
+     *
+     * @return the current proxy configuration manager
+     */
+    public static ProxyConfiguration getProxyConfiguration() {
+        return (fake_proxy != null ? fake_proxy : current_proxy);
     }
 
     /**
@@ -492,5 +529,14 @@ public final class CurrentPlatform {
     @Nullable
     public static Object getRemoteServer() {
         return null;
+    }
+
+    /**
+     * Get the LockLogin generated server hash
+     *
+     * @return the LockLogin generated server hash
+     */
+    public static String getServerHash() {
+        return server_hash;
     }
 }

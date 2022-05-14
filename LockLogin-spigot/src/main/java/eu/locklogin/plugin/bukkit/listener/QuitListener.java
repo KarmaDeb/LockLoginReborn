@@ -91,7 +91,7 @@ public final class QuitListener implements Listener {
                     user.setTempSpectator(false);
 
                     ClientVisor visor = new ClientVisor(player);
-                    visor.show();
+                    visor.forceView();
 
                     UserDatabase.removeUser(player);
                     Event event = new UserQuitEvent(user.getModule(), e);
@@ -171,7 +171,7 @@ public final class QuitListener implements Listener {
                 user.setTempSpectator(false);
 
                 ClientVisor visor = new ClientVisor(player);
-                visor.show();
+                visor.forceView();
 
                 UserDatabase.removeUser(player);
                 Event event = new UserQuitEvent(user.getModule(), e);

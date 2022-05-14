@@ -9,7 +9,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.boss.BossColor;
 import ml.karmaconfigs.api.common.boss.BossProvider;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
@@ -92,8 +93,8 @@ public final class SessionCheck<T> implements Runnable {
 
                 int time = tmp_time;
                 AccountManager manager = player.getAccount();
-                SimpleScheduler timer = new SourceSecondsTimer(source, time, false).multiThreading(false);
-                timer.secondChangeAction((timer_time) -> {
+                SimpleScheduler timer = new SourceScheduler(source, time, SchedulerUnit.SECOND, false).multiThreading(false);
+                timer.changeAction((timer_time) -> {
                     if (!cancel_queue.contains(player.getUUID())) {
                         ClientSession session = player.getSession();
                         if (!session.isLogged()) {
@@ -175,18 +176,21 @@ public final class SessionCheck<T> implements Runnable {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
         AccountManager manager = player.getAccount();
+        ClientSession session = player.getSession();
 
         int time = config.registerOptions().getMessageInterval();
         if (manager.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
-        SimpleScheduler timer = new SourceSecondsTimer(source, time, true);
+        SimpleScheduler timer = new SourceScheduler(source, time, SchedulerUnit.SECOND, true);
         timer.restartAction(() -> {
             if (under_check.contains(player.getUUID())) {
-                if (manager.isRegistered()) {
-                    player.sendMessage(messages.prefix() + messages.login());
-                } else {
-                    player.sendMessage(messages.prefix() + messages.register());
+                if (!session.isLogged()) {
+                    if (manager.isRegistered()) {
+                        player.sendMessage(messages.prefix() + messages.login());
+                    } else {
+                        player.sendMessage(messages.prefix() + messages.register());
+                    }
                 }
             } else {
                 timer.cancel();

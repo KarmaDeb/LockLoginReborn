@@ -14,17 +14,22 @@ package eu.locklogin.api.common.security;
  * the version number 2.1.]
  */
 
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * LockLogin brute force protection
  */
 public final class BruteForce {
 
+    private final static KarmaSource plugin = APISource.loadProvider("LockLogin");
     private final static Map<InetAddress, Integer> tries = new HashMap<>();
     private final static Map<InetAddress, Long> block_time = new HashMap<>();
 
@@ -42,14 +47,14 @@ public final class BruteForce {
     /**
      * Fail the login
      */
-    public final void fail() {
+    public void fail() {
         tries.put(ip, tries() + 1);
     }
 
     /**
      * Success the login
      */
-    public final void success() {
+    public void success() {
         tries.remove(ip);
     }
 
@@ -58,21 +63,21 @@ public final class BruteForce {
      *
      * @param time the block time
      */
-    public final void block(final int time) {
+    public void block(final int time) {
         block_time.put(ip, (long) time);
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (getBlockLeft() > 0) {
-                    block_time.put(ip, getBlockLeft() - 1);
-                } else {
-                    block_time.remove(ip);
-                    timer.cancel();
-                }
+        SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+        scheduler.restartAction(() -> {
+            long time_left = block_time.getOrDefault(ip, 0L);
+            if (time_left > 0) {
+                block_time.put(ip, time_left - 1);
+            } else {
+                block_time.remove(ip);
+                scheduler.cancel();
             }
-        }, 0, 1000);
+        });
+
+        scheduler.start();
     }
 
     /**
@@ -80,7 +85,7 @@ public final class BruteForce {
      *
      * @return the failed login tries the account has
      */
-    public final int tries() {
+    public int tries() {
         return tries.getOrDefault(ip, 0);
     }
 
@@ -89,7 +94,7 @@ public final class BruteForce {
      *
      * @return the uuid block time left
      */
-    public final long getBlockLeft() {
+    public long getBlockLeft() {
         return block_time.getOrDefault(ip, 0L);
     }
 
@@ -98,7 +103,7 @@ public final class BruteForce {
      *
      * @return if the uuid is blocked
      */
-    public final boolean isBlocked() {
+    public boolean isBlocked() {
         return block_time.getOrDefault(ip, 0L) > 1L;
     }
 }

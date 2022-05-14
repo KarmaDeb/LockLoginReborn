@@ -45,6 +45,13 @@ public abstract class PluginConfiguration {
     public abstract boolean enableSessions();
 
     /**
+     * Get the session life time
+     *
+     * @return the session life time
+     */
+    public abstract int sessionTime();
+
+    /**
      * Get if the plugin should check if an
      * IP is healthy for the server integrity
      *
@@ -59,13 +66,6 @@ public abstract class PluginConfiguration {
      * UUIDs
      */
     public abstract boolean uuidValidator();
-
-    /**
-     * Get the session life time
-     *
-     * @return the session life time
-     */
-    public abstract int sessionTime();
 
     /**
      * Get if the non-logged players

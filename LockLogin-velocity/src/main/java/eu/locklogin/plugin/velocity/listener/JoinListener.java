@@ -58,7 +58,8 @@ import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.files.client.OfflineClient;
 import eu.locklogin.plugin.velocity.util.player.PlayerPool;
 import eu.locklogin.plugin.velocity.util.player.User;
-import ml.karmaconfigs.api.common.timer.SourceSecondsTimer;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -168,8 +169,8 @@ public final class JoinListener {
 
                         SimpleScheduler tmp_timer = null;
                         if (!session.isCaptchaLogged()) {
-                            tmp_timer = new SourceSecondsTimer(plugin, 1, true);
-                            tmp_timer.secondChangeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
+                            tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                            tmp_timer.changeAction((second) -> player.sendActionBar(Component.text().content(StringUtils.toColor(messages.captcha(session.getCaptcha()))).build())).start();
                         }
 
                         MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)

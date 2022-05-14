@@ -23,10 +23,12 @@ import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
+import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.string.VersionComparator;
-import ml.karmaconfigs.api.common.utils.string.util.VersionDiff;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -36,18 +38,21 @@ import net.md_5.bungee.api.plugin.PluginDescription;
 import net.md_5.bungee.api.plugin.PluginManager;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.text.MessageFormat;
-import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Handler;
+import java.util.stream.Stream;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -208,61 +213,66 @@ public class BungeeManager {
      * @return the update LockLogin instance
      */
     private static File getUpdateJar() {
-        File update_folder = new File(plugin.getDataFolder() + File.separator + "plugin", "updater");
-        if (update_folder.exists()) {
-            Set<File> major_files = new LinkedHashSet<>();
-            File[] update_files = update_folder.listFiles();
-            if (update_files != null) {
-                for (File file : update_files) {
-                    String extension = FileUtilities.getExtension(file);
-                    if (extension.equals("jar")) {
-                        String version = FileInfo.getJarVersion(file);
-                        String current = versionID.resolve(versionID.getVersionID());
+        AtomicReference<File> update_file = new AtomicReference<>(null);
 
-                        VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
-                                .currentVersion(current).checkVersion(version));
-                        if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
-                            major_files.add(file);
-                        } else {
-                            try {
-                                Files.deleteIfExists(file.toPath());
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    }
-                }
-            }
+        Path update_folder = PathUtilities.getFixedPath(plugin.getDataPath()).resolve("plugin").resolve("updater");
+        String latest_version = versionID.resolve(version);
+        if (Files.exists(update_folder) && Files.isDirectory(update_folder)) {
+            try {
+                Stream<Path> files = Files.list(update_folder);
+                files.forEachOrdered((downloaded) -> {
+                    String name = PathUtilities.getName(downloaded, true);
+                    String extension = PathUtilities.getExtension(downloaded);
+                    if (extension.equalsIgnoreCase("jar")) {
+                        //We only want jar files here!
+                        JarFile jar = null;
+                        InputStream data = null;
+                        try {
+                            jar = new JarFile(downloaded.toFile());
+                            JarEntry entry = jar.getJarEntry("global.yml");
 
-            if (major_files.size() > 0) {
-                if (major_files.size() == 1) {
-                    return major_files.toArray(new File[0])[0];
-                } else {
-                    File latest_major = null;
-                    for (File major : major_files) {
-                        if (latest_major != null) {
-                            String latest_major_version = FileInfo.getJarVersion(latest_major);
-                            String current_major_version = FileInfo.getJarVersion(major);
+                            if (entry != null) {
+                                data = jar.getInputStream(entry);
+                                KarmaYamlManager manager = new KarmaYamlManager(data);
 
-                            VersionComparator comparator = StringUtils.compareTo(VersionComparator.createBuilder()
-                                    .currentVersion(current_major_version).checkVersion(latest_major_version));
-                            if (comparator.getDifference().equals(VersionDiff.OVERDATED)) {
-                                try {
-                                    Files.deleteIfExists(latest_major.toPath());
-                                } catch (Throwable ignored) {
+                                String target_version = manager.getString("project_version", null);
+                                if (!StringUtils.isNullOrEmpty(target_version)) {
+                                    VersionComparator comparator = StringUtils.compareTo(VersionComparator
+                                            .createBuilder()
+                                            .currentVersion(target_version)
+                                            .checkVersion(latest_version));
+
+                                    if (comparator.isUpToDate()) {
+                                        File curr = update_file.get();
+                                        if (curr != null)
+                                            FileUtilities.destroy(curr);
+
+                                        update_file.set(downloaded.toFile());
+                                    } else {
+                                        PathUtilities.destroy(downloaded);
+                                    }
                                 }
-                                latest_major = major;
                             }
-                        } else {
-                            latest_major = major;
+                        } catch (Throwable ex) {
+                            plugin.logger().scheduleLog(Level.GRAVE, ex);
+                            plugin.logger().scheduleLog(Level.INFO, "Failed to read POSSIBLE LockLogin update jar {0}", name);
+
+                            plugin.console().send("An error occurred while trying to read jar file {0}. This may cause the plugin to not update", Level.INFO, name);
+                        } finally {
+                            tryClose(jar);
+                            tryClose(data);
                         }
                     }
+                });
+            } catch (Throwable ex) {
+                plugin.logger().scheduleLog(Level.GRAVE, ex);
+                plugin.logger().scheduleLog(Level.INFO, "Failed to update LockLogin");
 
-                    return latest_major;
-                }
+                plugin.console().send("An internal error occurred while trying to update LockLogin. More information at logs", Level.GRAVE);
             }
         }
 
-        return null;
+        return update_file.get();
     }
 
     /**
@@ -357,12 +367,13 @@ public class BungeeManager {
                             eu.locklogin.api.module.plugin.api.event.util.Event update_end = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.UPDATE_END, null);
                             ModulePlugin.callEvent(update_end);
                         } catch (Throwable ex) {
-                            ex.printStackTrace();
+                            plugin.logger().scheduleLog(Level.GRAVE, ex);
+                            plugin.logger().scheduleLog(Level.INFO, "Failed to update LockLogin");
+
+                            plugin.console().send("An internal error occurred while trying to update LockLogin. RESTARTING THE SERVER MAY TRIGGER THE UPDATE. More information at logs", Level.GRAVE);
                             try {
                                 Files.copy(update_jar.toPath(), current_jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            } catch (Throwable exc) {
-                                exc.printStackTrace();
-                            }
+                            } catch (Throwable ignored) {}
                         }
                     }
                 }
@@ -373,52 +384,16 @@ public class BungeeManager {
         unload();
         issuer.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.getProperty("updater_unloaded", "&dUnloaded current LockLogin instance and prepared new instance..."))));
     }
-}
-
-@SuppressWarnings("unused")
-class FileData {
-
-    private final File file;
-    private final Instant update_time;
-    private final String version_id;
 
     /**
-     * Initialize the file data
+     * Tries to close a closeable object
      *
-     * @param update_jar the update LockLogin file
-     * @param date       the download date of the file
-     * @param version    the jar version id
+     * @param closeable the closeable object
      */
-    public FileData(final File update_jar, final Instant date, final String version) {
-        file = update_jar;
-        update_time = date;
-        version_id = version;
-    }
-
-    /**
-     * Get the update jar file
-     *
-     * @return the update jar file
-     */
-    public final File getFile() {
-        return file;
-    }
-
-    /**
-     * Get the update jar download time
-     *
-     * @return the update jar download time
-     */
-    public final Instant getDate() {
-        return update_time;
-    }
-
-    /**
-     * Get the update jar version id
-     *
-     * @return the update jar version id
-     */
-    public final String getVersion() {
-        return version_id;
+    private static void tryClose(final Closeable closeable) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (Throwable ignored) {}
     }
 }

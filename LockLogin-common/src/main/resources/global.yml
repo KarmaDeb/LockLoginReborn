@@ -17,6 +17,7 @@ project_urls:
       checksum: "checksum/{0}/checksum.lldb"
       version: "version/"
       dependency: "repository/{0}/"
+      update: "version/{0}/LockLogin.jar"
       alternative:
         - "backup"
     karmarepo:
@@ -25,6 +26,7 @@ project_urls:
       checksum: "checksum/{0}/checksum.lldb"
       version: "version/"
       dependency: "repository/{0}/"
+      update: "version/{0}/LockLogin.jar"
       alternative:
         - "backup"
   es:
@@ -34,6 +36,7 @@ project_urls:
       checksum: "checksum/{0}/checksum.lldb"
       version: "version/"
       dependency: "repository/{0}/"
+      update: "version/{0}/LockLogin.jar"
       alternative:
         - "backup"
   io:
@@ -43,4 +46,5 @@ project_urls:
       checksum: "data/{0}/checksum.lldb"
       version: "version/"
       dependency: "repository/{0}/"
+      update: "version/{0}/LockLogin.jar"
       alternative: []
