@@ -17,7 +17,14 @@ jobs:
       with:
         java-version: 1.11
     - name: Build with Maven
-      run: mvn package
+      run: |
+        mv LockLogin-API locklogin-API
+        mv LockLogin-bundle locklogin-bundle
+        mv LockLogin-common locklogin-common
+        mv LockLogin-manager locklogin-manager
+        mv LockLogin-spigot locklogin-spigot
+        mv LockLogin-velocity locklogin-velocity
+        mvn -B package --file pom.xml
     - name: Archive results
       uses: actions/upload-artifact@v1
       with:
