@@ -9,10 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -72,13 +69,14 @@ public class FileInfo {
             try {
                 if (zip != null) {
                     zip.close();
+                }
 
-                    if (stream != null) {
-                        stream.close();
+                if (stream != null) {
+                    stream.close();
+                }
 
-                        if (b != null)
-                            b.close();
-                    }
+                if (b != null) {
+                    b.close();
                 }
             } catch (Throwable ignored) {}
         }
@@ -202,6 +200,7 @@ public class FileInfo {
     /**
      * Get hosts LockLogin communicates with
      *
+     * @param target the file to read from
      * @return the LockLogin trusted hosts
      */
     public static URL checksumHost(final File target) {
@@ -276,6 +275,7 @@ public class FileInfo {
     /**
      * Get hosts LockLogin communicates with
      *
+     * @param target the file to read from
      * @return the LockLogin trusted hosts
      */
     public static URL versionHost(final File target) {
@@ -347,6 +347,9 @@ public class FileInfo {
 
     /**
      * Get hosts LockLogin communicates with
+     *
+     * @param target the file to read from
+     * @param file the dependency file name
      *
      * @return the LockLogin trusted hosts
      */
@@ -420,6 +423,7 @@ public class FileInfo {
     /**
      * Get hosts LockLogin communicates with
      *
+     * @param target the file to read from
      * @return the LockLogin trusted hosts
      */
     public static URL updateHost(final File target) {
@@ -476,6 +480,33 @@ public class FileInfo {
                     });
                 }
             }
+
+            for (String url : domains) {
+                int response_code = URLUtils.getResponseCode(url);
+                if (response_code == 200)
+                    try {
+                        return new URL(url);
+                    } catch (Throwable ignored) {}
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the host for LockLogin web editor
+     *
+     * @param target the file to read from
+     * @return the LockLogin web editor host
+     */
+    public static URL getEditorURL(final File target) {
+        InputStream global = getGlobal(target);
+        if (global != null) {
+            KarmaYamlManager manager = new KarmaYamlManager(global);
+            List<String> domains = manager.getStringList("editor_urls",
+                    "https://panel.karmaconfigs.ml/editor/",
+                    "https://panel.karmarepo.ml/editor/",
+                    "https://panel.karmadev.es/editor/");
 
             for (String url : domains) {
                 int response_code = URLUtils.getResponseCode(url);

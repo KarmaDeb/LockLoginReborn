@@ -18,6 +18,7 @@ import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.*;
 import eu.locklogin.api.util.enums.Lang;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
@@ -30,6 +31,7 @@ import java.io.File;
 
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
+//TODO: Generate docs
 public final class Config extends PluginConfiguration {
 
     private final static File cfg_file = new File(plugin.getDataFolder(), "config.yml");
@@ -84,6 +86,17 @@ public final class Config extends PluginConfiguration {
         }
 
         return server_name;
+    }
+
+    /**
+     * Get the assigned LockLogin web panel
+     * server key
+     *
+     * @return the panel server key
+     */
+    @Override
+    public String serverKey() {
+        return cfg.getString("ServerKey", CurrentPlatform.getServerHash());
     }
 
     @Override

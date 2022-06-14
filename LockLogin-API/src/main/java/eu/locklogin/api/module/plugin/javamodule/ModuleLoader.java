@@ -14,22 +14,32 @@ package eu.locklogin.api.module.plugin.javamodule;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.InvalidKeyError;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.url.HttpUtil;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -173,28 +183,100 @@ public final class ModuleLoader {
                         Yaml yaml = new Yaml();
                         Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
                         name = values.getOrDefault("name", FileUtilities.getName(moduleFile, false)).toString();
-                        String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
-                        String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
+                        String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();String load_rule = values.getOrDefault("load", "PREPLUGIN").toString();
                         LoadRule lr = LoadRule.PREPLUGIN;
                         if (load_rule.equalsIgnoreCase("POSTPLUGIN"))
                             lr = LoadRule.POSTPLUGIN;
 
                         if (lr.equals(rule)) {
-                            if (class_name != null) {
-                                BruteLoader appender = CurrentPlatform.getPluginAppender();
-                                appender.add(moduleFile);
+                            if (class_name == null && ((boolean) values.getOrDefault("obfuscated", false))) {
+                                class_name = values.getOrDefault("license", "").toString();
+                                source.console().send("Validating obfuscated resource load license for security reasons. ONLY TRUSTED OBFUSCATED MODULES SHOULD BE LOADED!. Remember to have your module up to date for this to work!", Level.WARNING);
 
-                                Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+                                String[] check = new String[]{
+                                        "https://karmaconfigs.ml",
+                                        "https://karmarepo.ml",
+                                        "https://karmadev.es",
+                                        "https://backup.karmaconfigs.ml",
+                                        "https://backup.karmarepo.ml",
+                                        "https://backup.karmadev.es"
+                                };
 
-                                PluginModule module = null;
-                                try {
-                                    module = module_class.getDeclaredConstructor().newInstance();
-                                } catch (InvocationTargetException ignored) {}
-                                if (module != null && !isLoaded(module)) {
-                                    module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
+                                for (String str : check) {
+                                    if (URLUtils.exists(str)) {
+                                        String complete_url = str + "/locklogin/api/?license=" + class_name;
+                                        URL url = URLUtils.getOrNull(complete_url);
+                                        if (url != null) {
+                                            HttpUtil util = URLUtils.extraUtils(url);
+                                            if (util != null) {
+                                                String response = util.getResponse();
+                                                if (!StringUtils.isNullOrEmpty(response)) {
+                                                    Yaml json = new Yaml();
+                                                    Map<String, Object> data = json.load(response);
 
-                                    loaded.put(FileUtilities.getPrettyFile(moduleFile), module);
-                                    module.enable();
+                                                    boolean validation = (boolean) data.getOrDefault("status", false);
+                                                    String uniqueKey = data.getOrDefault("key", "").toString();
+
+                                                    BruteLoader appender = CurrentPlatform.getPluginAppender();
+                                                    appender.add(moduleFile);
+                                                    try (JarFile jarFile = new JarFile(moduleFile)) {
+                                                        Enumeration<JarEntry> e = jarFile.entries();
+                                                        while (e.hasMoreElements()) {
+                                                            JarEntry jarEntry = e.nextElement();
+                                                            if (jarEntry.getName().endsWith(".class")) {
+                                                                String className = jarEntry.getName()
+                                                                        .replace("/", ".")
+                                                                        .replace(".class", "");
+
+                                                                try {
+                                                                    Class<?> clazz = appender.getLoader().loadClass(className);
+                                                                    if (clazz.isAssignableFrom(PluginModule.class) || PluginModule.class.isAssignableFrom(clazz)) {
+                                                                        Class<? extends PluginModule> moduleClass = clazz.asSubclass(PluginModule.class);
+                                                                        try {
+                                                                            Constructor<? extends PluginModule> expectedConstructor = moduleClass.getConstructor(Platform.class, String.class);
+                                                                            expectedConstructor.setAccessible(true);
+
+                                                                            try {
+                                                                                PluginModule module = expectedConstructor.newInstance(CurrentPlatform.getPlatform(), uniqueKey);
+                                                                                if (!isLoaded(module)) {
+                                                                                    loaded.put(FileUtilities.getPrettyFile(moduleFile), module);
+
+                                                                                    module.enable();
+                                                                                }
+                                                                            } catch (InvalidKeyError error) {
+                                                                                source.console().send("Failed to load module {0} ( invalid key provided )", Level.GRAVE, name);
+                                                                            }
+                                                                        } catch (Throwable ignored) {}
+                                                                    }
+                                                                } catch (Throwable ignored) {}
+                                                            }
+                                                        }
+                                                    }
+
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (class_name != null) {
+                                    BruteLoader appender = CurrentPlatform.getPluginAppender();
+                                    appender.add(moduleFile);
+
+                                    Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+
+                                    PluginModule module = null;
+                                    try {
+                                        module = module_class.getDeclaredConstructor().newInstance();
+                                    } catch (InvocationTargetException ignored) {
+                                    }
+                                    if (module != null && !isLoaded(module)) {
+                                        module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
+
+                                        loaded.put(FileUtilities.getPrettyFile(moduleFile), module);
+                                        module.enable();
+                                    }
                                 }
                             }
                         }

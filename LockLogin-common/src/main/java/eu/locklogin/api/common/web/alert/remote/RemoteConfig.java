@@ -58,6 +58,17 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get the assigned LockLogin web panel
+     * server key
+     *
+     * @return the panel server key
+     */
+    @Override
+    public String serverKey() {
+        return manager.getString("ServerKey", CurrentPlatform.getServerHash());
+    }
+
+    /**
      * Get the registration options
      *
      * @return the registration options

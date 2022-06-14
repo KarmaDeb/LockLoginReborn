@@ -17,13 +17,22 @@ package eu.locklogin.api.common.security.client;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,11 +43,13 @@ import java.util.Set;
  */
 public final class AccountData {
 
+    private final KarmaSource plugin = APISource.loadProvider("LockLogin");
+
     private final String ip;
     private final AccountID uuid;
 
-    private final KarmaFile lib;
-    private final KarmaFile rev_lib;
+    private final KarmaMain lib;
+    private final KarmaMain rev_lib;
 
     /**
      * Initialize the account data
@@ -46,6 +57,7 @@ public final class AccountData {
      * @param libraryName the player ip
      * @param account     the player account id
      */
+    @SuppressWarnings("deprecation")
     public AccountData(final @Nullable InetAddress libraryName, final AccountID account) {
         uuid = account;
 
@@ -60,14 +72,50 @@ public final class AccountData {
             ip = "none";
         }
 
-        File libFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File libFileOld = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "lib", ip + ".library");
-
-        File revLibFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File revLibFileOld = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "rev_lib", account.getId() + ".library");
 
-        lib = new KarmaFile(libFile);
-        rev_lib = new KarmaFile(revLibFile);
+        File libFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+                "ips" + File.separator + "lib", ip + ".kf");
+
+        File revLibFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+                "ips" + File.separator + "rev_lib", account.getId() + ".kf");
+
+        if (libFileOld.exists()) {
+            try {
+                KarmaMain mn = KarmaMain.fromLegacy(new KarmaFile(libFileOld));
+                if (mn.save(libFile.toPath())) {
+                    mn.delete();
+                    plugin.console().send("Updated legacy KarmaFile {0} to modern KarmaMain file", Level.OK, FileUtilities.getPrettyFile(libFileOld));
+                } else {
+                    plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.WARNING, FileUtilities.getPrettyFile(libFileOld));
+                }
+            } catch (Throwable ex) {
+                plugin.logger().scheduleLog(Level.GRAVE, ex);
+                plugin.logger().scheduleLog(Level.INFO, "Failed to update KarmaFile {0} to KarmaMain", FileUtilities.getPrettyFile(libFileOld));
+                plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.GRAVE, FileUtilities.getPrettyFile(libFileOld));
+            }
+        }
+        if (revLibFileOld.exists()) {
+            try {
+                KarmaMain mn = KarmaMain.fromLegacy(new KarmaFile(revLibFileOld));
+                if (mn.save(revLibFile.toPath())) {
+                    mn.delete();
+                    plugin.console().send("Updated legacy KarmaFile {0} to modern KarmaMain file", Level.OK, FileUtilities.getPrettyFile(revLibFileOld));
+                } else {
+                    plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.WARNING, FileUtilities.getPrettyFile(revLibFileOld));
+                }
+            } catch (Throwable ex) {
+                plugin.logger().scheduleLog(Level.GRAVE, ex);
+                plugin.logger().scheduleLog(Level.INFO, "Failed to update KarmaFile {0} to KarmaMain", FileUtilities.getPrettyFile(revLibFileOld));
+                plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.GRAVE, FileUtilities.getPrettyFile(revLibFileOld));
+            }
+        }
+
+        lib = new KarmaMain(libFile.toPath());
+        rev_lib = new KarmaMain(revLibFile.toPath());
     }
 
     /**
@@ -75,34 +123,52 @@ public final class AccountData {
      */
     public void save() {
         if (!lib.exists()) {
-            lib.create();
+            List<KarmaElement> sets = new ArrayList<>();
+            sets.add(new KarmaObject(uuid.getId()));
 
-            List<String> sets = new ArrayList<>();
-            sets.add(uuid.getId());
-
-            lib.set("ASSIGNED", sets);
+            lib.set("assigned", new KarmaArray(sets.toArray(new KarmaElement[0])));
         } else {
-            List<String> sets = lib.getStringList("ASSIGNED");
-            if (!sets.contains(uuid.getId())) {
-                sets.add(uuid.getId());
+            if (lib.isSet("assigned")) {
+                KarmaElement sets = lib.get("assigned");
+                if (sets.isArray()) {
+                    KarmaArray array = sets.getArray();
+                    KarmaObject id = new KarmaObject(uuid.getId());
 
-                lib.set("ASSIGNED", sets);
+                    if (!array.contains(id)) {
+                        array.add(id);
+                        lib.set("assigned", array);
+
+                        if (!lib.save()) {
+                            plugin.console().send("Failed to save player IP data of {0}", Level.GRAVE, uuid.getId());
+                            plugin.logger().scheduleLog(Level.GRAVE, "Failed to save player IP data of {0}", uuid.getId());
+                        }
+                    }
+                }
             }
         }
 
         if (!rev_lib.exists()) {
-            rev_lib.create();
+            List<KarmaElement> sets = new ArrayList<>();
+            sets.add(new KarmaObject(ip));
 
-            List<String> sets = new ArrayList<>();
-            sets.add(ip);
-
-            rev_lib.set("ASSIGNED", sets);
+            rev_lib.set("assigned", new KarmaArray(sets.toArray(new KarmaElement[0])));
         } else {
-            List<String> sets = rev_lib.getStringList("ASSIGNED");
-            if (!sets.contains(ip)) {
-                sets.add(ip);
+            if (rev_lib.isSet("assigned")) {
+                KarmaElement sets = rev_lib.get("assigned");
+                if (sets.isArray()) {
+                    KarmaArray array = sets.getArray();
+                    KarmaObject id = new KarmaObject(ip);
 
-                rev_lib.set("ASSIGNED", sets);
+                    if (!array.contains(id)) {
+                        array.add(id);
+                        rev_lib.set("assigned", array);
+
+                        if (!rev_lib.save()) {
+                            plugin.console().send("Failed to save player recursive IP data of {0}", Level.GRAVE, uuid.getId());
+                            plugin.logger().scheduleLog(Level.GRAVE, "Failed to save player IP data of {0}", uuid.getId());
+                        }
+                    }
+                }
             }
         }
     }
@@ -118,11 +184,15 @@ public final class AccountData {
             return true;
         }
 
-        if (lib.exists()) {
-            if (lib.getStringList("ASSIGNED").contains(uuid.getId())) {
-                return true;
-            } else {
-                return lib.getStringList("ASSIGNED").size() < max;
+        if (lib.exists() && lib.isSet("assigned")) {
+            KarmaElement sets = lib.get("assigned");
+            if (sets.isArray()) {
+                KarmaArray array = sets.getArray();
+                if (array.contains(new KarmaObject(uuid.getId()))) {
+                    return true;
+                } else {
+                    return array.size() < max;
+                }
             }
         }
 
@@ -137,10 +207,19 @@ public final class AccountData {
     public Set<AccountID> getAlts() {
         Set<AccountID> accounts = new HashSet<>();
 
-        if (lib.exists()) {
-            for (String str : lib.getStringList("ASSIGNED")) {
-                if (!StringUtils.isNullOrEmpty(str)) {
-                    accounts.add(AccountID.fromString(str));
+        if (lib.exists() && lib.isSet("assigned")) {
+            KarmaElement sets = lib.get("assigned");
+            if (sets.isArray()) {
+                KarmaArray array = sets.getArray();
+
+                for (KarmaElement element : array.getElements()) {
+                    if (element.isString()) {
+                        String str = element.getObjet().getString();
+
+                        if (!StringUtils.isNullOrEmpty(str)) {
+                            accounts.add(AccountID.fromString(str));
+                        }
+                    }
                 }
             }
         }
@@ -156,16 +235,28 @@ public final class AccountData {
     public Set<AccountID> getReverseAlts() {
         Set<AccountID> accounts = new HashSet<>();
 
-        if (rev_lib.exists()) {
-            Set<String> address = new HashSet<>(rev_lib.getStringList("ASSIGNED"));
+        if (rev_lib.exists() && rev_lib.isSet("assigned")) {
+            KarmaElement sets = rev_lib.get("assigned");
+            if (sets.isArray()) {
+                KarmaArray array = sets.getArray();
 
-            for (String libName : address) {
-                File libFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
-                        "ips" + File.separator + "lib", libName + ".library");
-
-                KarmaFile file = new KarmaFile(libFile);
-                for (String str : file.getStringList("ASSIGNED"))
-                    accounts.add(AccountID.fromString(str));
+                for (KarmaElement libName : array.getElements()) {
+                    Path libFile = plugin.getDataPath().resolve("data").resolve("ips").resolve("lib").resolve(libName + ".kf");
+                    if (Files.exists(libFile)) {
+                        KarmaMain lb = new KarmaMain(libFile);
+                        if (lb.isSet("assigned")) {
+                            KarmaElement lbAssigned = lb.get("assigned");
+                            if (lbAssigned.isArray()) {
+                                KarmaArray lbArray = lbAssigned.getArray();
+                                for (KarmaElement element : lbArray) {
+                                    if (element.isString()) {
+                                        accounts.add(AccountID.fromString(element.getObjet().getString()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

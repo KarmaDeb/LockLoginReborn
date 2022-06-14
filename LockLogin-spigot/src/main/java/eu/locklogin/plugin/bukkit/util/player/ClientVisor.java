@@ -20,7 +20,8 @@ import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
@@ -36,6 +37,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 public final class ClientVisor {
 
     private final Player player;
+    private final Map<UUID, Set<UUID>> locklogin_vanished = new HashMap<>();
 
     /**
      * Initialize the client visor
@@ -56,8 +58,12 @@ public final class ClientVisor {
         for (Player online : plugin.getServer().getOnlinePlayers()) {
             //We don't want to do it to himself ( even though it wouldn't work if we did )
             if (!online.getUniqueId().equals(id)) {
-                hide(online, player);
-                hide(player, online);
+                if (player.canSee(online)) {
+                    hide(player, online);
+                }
+                if (online.canSee(player)) {
+                    hide(online, player);
+                }
             }
         }
 
@@ -87,14 +93,11 @@ public final class ClientVisor {
             } else {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     for (Player online : plugin.getServer().getOnlinePlayers()) {
+                        if (player.canSee(online)) {
+                            hide(player, online);
+                        }
                         if (online.canSee(player)) {
-                            User tmp = new User(online);
-                            ClientSession tmpSession = tmp.getSession();
-
-                            if (tmpSession.isLogged() && tmpSession.isTempLogged()) {
-                                hide(online, player);
-                                hide(player, online);
-                            }
+                            hide(online, player);
                         }
                     }
                 });
@@ -123,10 +126,17 @@ public final class ClientVisor {
      * @param target the target player
      */
     private void hide(final Player origin, final Player target) {
-        try {
-            origin.hidePlayer(target);
-        } catch (Throwable ex) {
-            origin.hidePlayer(plugin, target);
+        if (!canSee(origin, target)) {
+            try {
+                origin.hidePlayer(target);
+            } catch (Throwable ex) {
+                origin.hidePlayer(plugin, target);
+            }
+
+            Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            vanished.add(target.getUniqueId());
+
+            locklogin_vanished.put(origin.getUniqueId(), vanished);
         }
     }
 
@@ -137,11 +147,30 @@ public final class ClientVisor {
      * @param target the target player
      */
     private void show(final Player origin, final Player target) {
-        try {
-            origin.showPlayer(target);
-        } catch (Throwable ex) {
-            //Thanks spigot :)
-            origin.showPlayer(plugin, target);
+        if (canSee(origin, target)) {
+            try {
+                origin.showPlayer(target);
+            } catch (Throwable ex) {
+                //Thanks spigot :)
+                origin.showPlayer(plugin, target);
+            }
+
+            Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            vanished.remove(target.getUniqueId());
+
+            locklogin_vanished.put(origin.getUniqueId(), vanished);
         }
+    }
+
+    /**
+     * Get if the player can see the target player
+     *
+     * @param origin the player
+     * @param target the target player
+     * @return if the player can see the target
+     */
+    private boolean canSee(final Player origin, final Player target) {
+        Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        return !vanished.contains(target.getUniqueId());
     }
 }

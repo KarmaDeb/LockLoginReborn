@@ -13,6 +13,11 @@
 #and some plugin messages
 ServerName: ""
 
+#This is used by LockLogin panel to
+#make sure the communication gets at least
+#encrypted
+PanelKey: ""
+
 #Registration options
 # Boss -> Shows a boss bar which health and color
 #         depends on the remaining time ( bar color requires

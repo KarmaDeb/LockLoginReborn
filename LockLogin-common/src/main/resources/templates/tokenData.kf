@@ -1,0 +1,17 @@
+("main"
+
+    */Local stored token
+    'local_token' -> ""
+
+    */Default token server name
+    'local_node' -> ""
+
+    *(
+        This list contains the proxy <-> token list
+
+        "server" -> "token"
+        "server2" -> "token"
+    )*
+    'external_tokens' -> {
+    }
+)

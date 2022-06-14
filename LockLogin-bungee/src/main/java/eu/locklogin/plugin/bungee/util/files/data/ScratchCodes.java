@@ -14,17 +14,20 @@ package eu.locklogin.plugin.bungee.util.files.data;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 public class ScratchCodes {
 
-    private final KarmaFile codesFile;
+    private final KarmaMain codesFile;
 
     /**
      * Initialize the scratch code utility
@@ -32,10 +35,7 @@ public class ScratchCodes {
      * @param _player the player to manage scratch codes who
      */
     public ScratchCodes(final ProxiedPlayer _player) {
-        codesFile = new KarmaFile(plugin, _player.getUniqueId().toString().replace("-", "") + ".lldb", "data", ".codes");
-
-        if (!codesFile.exists())
-            codesFile.create();
+        codesFile = new KarmaMain(plugin, _player.getUniqueId().toString().replace("-", "") + ".kf", "data", ".codes");
     }
 
     /**
@@ -44,14 +44,14 @@ public class ScratchCodes {
      * @param scratch_codes the codes to store
      */
     public final void store(final List<Integer> scratch_codes) {
-        List<String> codes = new ArrayList<>();
+        List<KarmaElement> codes = new ArrayList<>();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         for (int code : scratch_codes) {
             CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).build();
-            codes.add(util.hash(config.pinEncryption(), false));
+            codes.add(new KarmaObject(util.hash(config.pinEncryption(), false)));
         }
 
-        codesFile.set("CODES", codes);
+        codesFile.set("codes", new KarmaArray(codes.toArray(new KarmaElement[0])));
     }
 
     /**
@@ -62,23 +62,32 @@ public class ScratchCodes {
     public final boolean validate(final int code) {
         boolean status = false;
 
-        List<String> codes = codesFile.getStringList("CODES");
-        String remove = "";
-        if (!codes.isEmpty()) {
-            for (String token : codes) {
-                CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token).build();
-                if (util.validate()) {
-                    remove = token;
-                    status = true;
+        if (codesFile.isSet("codes")) {
+            KarmaElement element = codesFile.get("codes");
+            if (element.isArray()) {
+                KarmaElement remove = null;
+                List<KarmaElement> codes = new ArrayList<>();
+                element.getArray().iterator().forEachRemaining(codes::add);
 
-                    break;
+                for (KarmaElement token : codes) {
+                    if (token.isString()) {
+                        CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token.getObjet().toString()).build();
+                        if (util.validate()) {
+                            remove = token;
+                            status = true;
+
+                            break;
+                        }
+                    }
+                }
+
+                if (remove != null) {
+                    element.getArray().remove(remove);
+                    codesFile.set("codes", element);
+
+                    codesFile.save();
                 }
             }
-        }
-
-        if (!remove.replaceAll("\\s", "").isEmpty()) {
-            codes.remove(remove);
-            codesFile.set("CODES", codes);
         }
 
         return status;
@@ -90,59 +99,14 @@ public class ScratchCodes {
      * @return if the client needs new scratch codes
      */
     public final boolean needsNew() {
-        List<String> codes = codesFile.getStringList("CODES");
-        return codes.isEmpty();
-    }
+        KarmaElement codes = codesFile.get("codes");
+        if (codes != null && codes.isArray()) {
+            AtomicInteger size = new AtomicInteger();
+            codes.getArray().iterator().forEachRemaining((element) -> size.incrementAndGet());
 
-    /**
-     * Convert the numeric code into a string code
-     *
-     * @param code the number code
-     * @return the string code
-     * @deprecated no longer used, but may be util
-     * in some future
-     */
-    @Deprecated
-    private String codeToString(final int code) {
-        String codeString = String.valueOf(code);
-        StringBuilder codeBuilder = new StringBuilder();
-        for (int i = 0; i < codeString.length(); i++) {
-            String number = String.valueOf(codeString.charAt(i));
-
-            switch (Integer.parseInt(number)) {
-                case 0:
-                    codeBuilder.append("A");
-                    break;
-                case 1:
-                    codeBuilder.append("B");
-                    break;
-                case 2:
-                    codeBuilder.append("C");
-                    break;
-                case 3:
-                    codeBuilder.append("D");
-                    break;
-                case 4:
-                    codeBuilder.append("E");
-                    break;
-                case 5:
-                    codeBuilder.append("F");
-                    break;
-                case 6:
-                    codeBuilder.append("G");
-                    break;
-                case 7:
-                    codeBuilder.append("H");
-                    break;
-                case 8:
-                    codeBuilder.append("I");
-                    break;
-                case 9:
-                    codeBuilder.append("J");
-                    break;
-            }
+            return size.get() > 0;
         }
 
-        return codeBuilder.toString();
+        return true;
     }
 }

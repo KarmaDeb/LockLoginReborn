@@ -26,7 +26,9 @@ import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.enums.Manager;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
+import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.string.RandomString;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.string.util.TextContent;
@@ -51,12 +53,27 @@ public final class CurrentPlatform {
     private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
 
     //Unique server hash, for panel utilities and more...
-    private final static String server_hash = "beta_" + Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
-            RandomString.createBuilder()
-                    .withContent(TextContent.NUMBERS_AND_LETTERS)
-                    .withType(TextType.RANDOM_SIZE)
-                    .withSize(64)
-    ).create()).getBytes(StandardCharsets.UTF_8));
+    private static final String server_hash;
+
+    static {
+        //Make server hash
+        KarmaSource plugin = APISource.getOriginal(false);
+        KarmaFile kf = new KarmaFile(plugin, "server.cfg", "cache", "locklogin");
+
+        String tmp_hash = kf.getString("HASH", "");
+        if (StringUtils.isNullOrEmpty(tmp_hash)) {
+            tmp_hash = Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
+                    RandomString.createBuilder()
+                            .withContent(TextContent.NUMBERS_AND_LETTERS)
+                            .withType(TextType.RANDOM_SIZE)
+                            .withSize(64)
+            ).create()).getBytes(StandardCharsets.UTF_8));
+
+            kf.set("HASH", tmp_hash);
+        }
+
+        server_hash = tmp_hash;
+    }
 
     //private static Server remoteServer;
     private static Platform platform;

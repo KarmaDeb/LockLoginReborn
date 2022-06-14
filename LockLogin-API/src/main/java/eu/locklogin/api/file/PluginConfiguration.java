@@ -24,6 +24,14 @@ public abstract class PluginConfiguration {
     public abstract String serverName();
 
     /**
+     * Get the assigned LockLogin web panel
+     * server key
+     *
+     * @return the panel server key
+     */
+    public abstract String serverKey();
+
+    /**
      * Get the registration options
      *
      * @return the registration options

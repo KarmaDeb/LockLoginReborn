@@ -2,7 +2,12 @@ package eu.locklogin.api.common.security;
 
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karmafile.Key;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.security.token.TokenStorage;
@@ -11,6 +16,8 @@ import ml.karmaconfigs.api.common.utils.security.token.exception.TokenIncorrectP
 import ml.karmaconfigs.api.common.utils.security.token.exception.TokenNotFoundException;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -19,6 +26,45 @@ import java.util.UUID;
 public final class TokenGen {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
+
+    static {
+        //Update from legacy KarmaFile to modern KarmaMain
+        Path existingData = lockLogin.getDataPath().resolve("cache").resolve("keys").resolve("data.lldb");
+        if (Files.exists(existingData)) {
+            @SuppressWarnings("deprecation")
+            KarmaFile legacy = new KarmaFile(existingData);
+
+            String token = legacy.getString("LOCAL_TOKEN", "");
+            String local_node = legacy.getString("DEFAULT_NODE", "");
+
+            KarmaMain modern = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
+                    .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
+            try {
+                modern.validate();
+                modern.set("local_token", new KarmaObject(token));
+                modern.set("local_node", new KarmaObject(local_node));
+
+                KarmaKeyArray ka = modern.get("external_tokens").getKeyArray();
+                for (@SuppressWarnings("deprecation")Key k : legacy.getKeys(false)) {
+                    if (!k.getPath().equals("DEFAULT_NODE") && !k.getPath().equals("LOCAL_TOKEN")) {
+                        ka.add(k.getPath(), new KarmaObject(k.getValue().toString()), false);
+                    }
+                }
+                modern.set("external_tokens", ka);
+
+                if (modern.save()) {
+                    lockLogin.console().send("Updated token data", Level.OK);
+                    lockLogin.logger().scheduleLog(Level.INFO, "Updated token data to modern KarmaMain file format");
+
+                    legacy.delete();
+                    TokenStorage storage = new TokenStorage(lockLogin);
+                    storage.migrate(UUID.fromString(token));
+                }
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 
     /**
      * Generate the keys for the server
@@ -30,7 +76,7 @@ public final class TokenGen {
 
         boolean generate = false;
         try {
-            String token = storage.load(find("LOCAL_TOKEN"), password);
+            String token = storage.load(find("local_token"), password);
             if (token != null) {
                 lockLogin.console().send("Loaded and verified communication token", Level.INFO);
             } else {
@@ -41,7 +87,7 @@ public final class TokenGen {
             generate = true;
         } catch (TokenExpiredException ex) {
             lockLogin.console().send("Communication token has expired, LockLogin will destroy it and try to generate a new one", Level.WARNING);
-            storage.destroy(find("LOCAL_TOKEN"), password);
+            storage.destroy(find("local_token"), password);
             generate = true;
         } catch (TokenIncorrectPasswordException ex) {
             lockLogin.console().send("Advanced administrator power is needed, please remove the folder plugins/LockLogin/cache/ and restart your server", Level.GRAVE);
@@ -55,8 +101,16 @@ public final class TokenGen {
             UUID tokenID = storage.store(generated, password, calendar.toInstant());
             lockLogin.console().send("Communication token has been generated with ID {0}", Level.INFO, tokenID.toString());
 
-            KarmaFile idData = new KarmaFile(lockLogin, "data.lldb", "cache", "keys");
-            idData.set("LOCAL_TOKEN", tokenID.toString());
+            KarmaMain idData = new KarmaMain(lockLogin, "data.lldb", "cache", "keys")
+                    .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
+
+            try {
+                idData.validate();
+                idData.set("local_token", new KarmaObject(tokenID.toString()));
+                idData.save();
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -66,8 +120,16 @@ public final class TokenGen {
      * @param name the node name
      */
     public static void assignDefaultNodeName(final String name) {
-        KarmaFile idData = new KarmaFile(lockLogin, "data.lldb", "cache", "keys");
-        idData.set("DEFAULT_NODE", name);
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
+                .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
+
+        try {
+            idData.validate();
+            idData.set("local_node", new KarmaObject(name));
+            idData.save();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -78,12 +140,29 @@ public final class TokenGen {
      * @param password the node password
      */
     public static void assign(final String token, final String node, final String password, final Instant expiration) throws Exception {
-        KarmaFile idData = new KarmaFile(lockLogin, "data.lldb", "cache", "keys");
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
+                .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
 
-        TokenStorage storage = new TokenStorage(lockLogin);
-        UUID tokenID = storage.store(token, password, expiration);
+        try {
+            idData.validate();
+            if (idData.isSet("external_tokens")) {
+                KarmaElement element = idData.get("external_tokens");
+                if (element.isKeyArray()) {
+                    KarmaKeyArray keys = element.getKeyArray();
+                    TokenStorage storage = new TokenStorage(lockLogin);
+                    UUID tokenID = storage.store(token, password, expiration);
 
-        idData.set(node, tokenID);
+                    keys.add(node, new KarmaObject(tokenID.toString()), false);
+
+                    idData.set("external_tokens", keys);
+                    if (!idData.save()) {
+                        throw new Exception("Failed to assign token data of " + node);
+                    }
+                }
+            }
+        } catch (Throwable ex) {
+            throw new Exception(ex);
+        }
     }
 
     /**
@@ -92,8 +171,16 @@ public final class TokenGen {
      * @return the default node name
      */
     public static String requestNode() {
-        KarmaFile idData = new KarmaFile(lockLogin, "data.lldb", "cache", "keys");
-        return idData.getString("DEFAULT_NODE", StringUtils.generateString().create());
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
+        if (idData.isSet("local_node")) {
+            KarmaElement node = idData.get("local_node");
+
+            if (node.isString()) {
+                return node.getObjet().getString();
+            }
+        }
+
+        return StringUtils.generateString().create();
     }
 
     /**
@@ -125,8 +212,30 @@ public final class TokenGen {
      * @return the token UUID
      */
     public static UUID find(final String node) {
-        KarmaFile idData = new KarmaFile(lockLogin, "data.lldb", "cache", "keys");
-        return UUID.fromString(idData.getString(node, UUID.randomUUID().toString()));
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
+        if (node.equals("local_token")) {
+            if (idData.isSet("local_token")) {
+                KarmaElement element = idData.get("local_token");
+                if (element.isString())
+                    return UUID.fromString(element.getObjet().getString());
+            }
+        } else {
+            if (idData.isSet("external_tokens")) {
+                KarmaElement element = idData.get("external_tokens");
+                if (element.isKeyArray()) {
+                    KarmaKeyArray keys = element.getKeyArray();
+                    if (keys.containsKey(node)) {
+                        KarmaElement value = keys.get(node);
+
+                        if (value.isString()) {
+                            return UUID.fromString(value.getObjet().getString());
+                        }
+                    }
+                }
+            }
+        }
+
+        return UUID.fromString(UUID.randomUUID().toString());
     }
 
     /**

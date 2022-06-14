@@ -48,3 +48,7 @@ project_urls:
       dependency: "repository/{0}/"
       update: "version/{0}/LockLogin.jar"
       alternative: []
+editor_urls:
+  - "https://panel.karmaconfigs.ml/editor/"
+  - "https://panel.karmarepo.ml/editor/"
+  - "https://panel.karmadev.es/editor/"

@@ -11,6 +11,7 @@ package eu.locklogin.plugin.bukkit.command.util;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.*;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
@@ -71,7 +72,7 @@ public @interface SystemCommand {
                 try {
                     String command = cmd.command();
 
-                    if (cmd.bungeecord()) {
+                    if (cmd.bungeecord() && CurrentPlatform.getConfiguration().isBungeeCord()) {
                         String bungee_cmd = cmd.bungee_command();
                         if (!StringUtils.isNullOrEmpty(bungee_cmd))
                             command = bungee_cmd;

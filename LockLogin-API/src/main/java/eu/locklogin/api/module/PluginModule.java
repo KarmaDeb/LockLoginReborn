@@ -14,6 +14,7 @@ package eu.locklogin.api.module;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
@@ -22,10 +23,12 @@ import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardConsume
 import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardPostQueueEvent;
 import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardPreConsumeEvent;
 import eu.locklogin.api.module.plugin.javamodule.card.listener.event.CardQueueEvent;
+import eu.locklogin.api.module.plugin.javamodule.console.MessageLevel;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
+import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
@@ -43,6 +46,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -64,6 +68,59 @@ public abstract class PluginModule implements KarmaSource {
     private BruteLoader appender;
     private final Map<String, List<APICard<?>>> cards = new ConcurrentHashMap<>();
     private final Map<String, APICard<?>> card = new ConcurrentHashMap<>();
+
+    /**
+     * Initialize the plugin module
+     *
+     * @param platform the current server platform
+     * @param key the module license key
+     * @throws InvalidKeyError if the license key is not valid and does not
+     * match the module one
+     *
+     * NOTE: UNLESS YOU KNOW WHAT YOU ARE DOING, DO NOT OVERWRITE THIS
+     */
+    public PluginModule(final Platform platform, final String key) throws InvalidKeyError {
+        if (!StringUtils.isNullOrEmpty(key)) {
+            try {
+                Field stored_key = getClass().getField("module_key");
+                Field allowed_platforms = getClass().getField("module_platform");
+
+                if (stored_key.getType().equals(String.class) && allowed_platforms.getType().equals(Platform[].class)) {
+                    String str = (String) stored_key.get(this);
+                    Platform[] platforms = (Platform[]) allowed_platforms.get(this);
+
+                    boolean hasPlatform = false;
+                    for (Platform useful : platforms) {
+                        if (useful.equals(platform)) {
+                            hasPlatform = true;
+                            break;
+                        }
+                    }
+                    if (hasPlatform) {
+                        if (!StringUtils.isNullOrEmpty(str)) {
+                            CryptoFactory factory = CryptoFactory.getBuilder()
+                                    .withPassword(stored_key)
+                                    .withToken(key).build();
+
+                            if (factory.validate()) {
+                                getConsole().sendMessage(MessageLevel.INFO, "Validated module key successfully");
+                            } else {
+                                throw new InvalidKeyError(this);
+                            }
+                        } else {
+                            getConsole().sendMessage(MessageLevel.ERROR, "Module has invalid internal key. Make sure it's up to date");
+                        }
+                    } else {
+                        getConsole().sendMessage(MessageLevel.INFO, "Module is not compatible with {1}", CurrentPlatform.getPlatform().name());
+                    }
+                } else {
+                    getConsole().sendMessage(MessageLevel.ERROR, "Module is invalid. Make sure it's up to date");
+                }
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 
     /**
      * Initialize the plugin module

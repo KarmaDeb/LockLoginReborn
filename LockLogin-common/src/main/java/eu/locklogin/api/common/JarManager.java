@@ -14,6 +14,8 @@ package eu.locklogin.api.common;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -24,7 +26,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Files;
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
@@ -88,14 +89,10 @@ public final class JarManager {
                     URLConnection connection = download_url.openConnection();
                     connection.connect();
 
-                    if (!jarFile.getParentFile().exists())
-                        Files.createDirectories(jarFile.getParentFile().toPath());
-
-                    if (!jarFile.exists())
-                        Files.createFile(jarFile.toPath());
+                    FileUtilities.create(jarFile);
 
                     TrustManager[] trustManagers = new TrustManager[]{new NvbTrustManager()};
-                    final SSLContext context = SSLContext.getInstance("TLSv1.2");
+                    final SSLContext context = SSLContext.getInstance("TLSv1.3");
                     context.init(null, trustManagers, null);
 
                     // Set connections to use lenient TrustManager and HostnameVerifier
@@ -108,6 +105,8 @@ public final class JarManager {
 
                     fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
                 } catch (Throwable ex) {
+                    lockLogin.logger().scheduleLog(Level.GRAVE, ex);
+                    lockLogin.logger().scheduleLog(Level.INFO, "Failed to download dependency {0} from {1}", download.getName(), download_url.toString());
                     if (!success.contains(download.getName()))
                         error.add(download.getName());
                 } finally {
@@ -128,6 +127,7 @@ public final class JarManager {
                         success.add(download.getName());
                 }
             } else {
+                lockLogin.logger().scheduleLog(Level.GRAVE, "Failed to download dependency {0} because its download URL was null", download.getName());
                 if (!success.contains(download.getName()))
                     error.add(download.getName());
             }

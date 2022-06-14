@@ -33,6 +33,7 @@ import java.util.List;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
+//TODO: Generate docs
 public final class Config extends PluginConfiguration {
 
     private final static File cfg_file = new File(plugin.getDataFolder(), "config.yml");
@@ -107,6 +108,17 @@ public final class Config extends PluginConfiguration {
         }
 
         return server_name;
+    }
+
+    /**
+     * Get the assigned LockLogin web panel
+     * server key
+     *
+     * @return the panel server key
+     */
+    @Override
+    public String serverKey() {
+        return cfg.getString("ServerKey", CurrentPlatform.getServerHash());
     }
 
     @Override
