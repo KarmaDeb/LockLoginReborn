@@ -17,6 +17,9 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -57,7 +60,7 @@ public final class PlayerAccount extends AccountManager {
     private final static KarmaSource source = APISource.loadProvider("LockLogin");
     private final static Console console = source.console();
 
-    private final KarmaFile manager;
+    private final KarmaMain manager;
 
     /**
      * Initialize the player file
@@ -90,61 +93,12 @@ public final class PlayerAccount extends AccountManager {
                         throw new IllegalArgumentException("Cannot initialize player file instance for unknown account constructor type: " + parameter.getLocalName());
                 }
 
-                manager = new KarmaFile(randomId.getAccountFile());
+                manager = new KarmaMain(randomId.getAccountFile())
+                        .internal(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
 
-                String name = manager.getString("PLAYER", "");
-                String uuid = manager.getString("UUID", "");
-                String password = manager.getString("PASSWORD", "");
-                String token = manager.getString("TOKEN", "");
-                String pin = manager.getString("PIN", "");
-                String gAuth = manager.getString("2FA", "");
-                if (name.startsWith("PLAYER:")) {
-                    manager.set("PLAYER", name.replaceFirst("PLAYER:", ""));
-                } else {
-                    if (name.startsWith("PLAYER: ")) {
-                        manager.set("PLAYER", name.replaceFirst("PLAYER: ", ""));
-                    }
-                }
-
-                if (uuid.startsWith("UUID:")) {
-                    manager.set("UUID", uuid.replaceFirst("UUID:", ""));
-                } else {
-                    if (uuid.startsWith("UUID: ")) {
-                        manager.set("UUID", uuid.replaceFirst("UUID: ", ""));
-                    }
-                }
-
-                if (password.startsWith("PASSWORD:")) {
-                    manager.set("PASSWORD", password.replaceFirst("PASSWORD:", ""));
-                } else {
-                    if (password.startsWith("PASSWORD: ")) {
-                        manager.set("PASSWORD", password.replaceFirst("PASSWORD: ", ""));
-                    }
-                }
-
-                if (token.startsWith("TOKEN:")) {
-                    manager.set("TOKEN", token.replaceFirst("TOKEN:", ""));
-                } else {
-                    if (token.startsWith("TOKEN: ")) {
-                        manager.set("TOKEN", token.replaceFirst("TOKEN: ", ""));
-                    }
-                }
-
-                if (pin.startsWith("PIN:")) {
-                    manager.set("PIN", pin.replaceFirst("PIN:", ""));
-                } else {
-                    if (pin.startsWith("PIN: ")) {
-                        manager.set("PIN", pin.replaceFirst("PIN: ", ""));
-                    }
-                }
-
-                if (gAuth.startsWith("2FA:")) {
-                    manager.set("2FA", gAuth.replaceFirst("2FA:", ""));
-                } else {
-                    if (gAuth.startsWith("2FA: ")) {
-                        manager.set("2FA", gAuth.replaceFirst("2FA: ", ""));
-                    }
-                }
+                try {
+                    manager.validate();
+                } catch (Throwable ignored) {}
             } else {
                 throw new IllegalArgumentException("Cannot initialize player file instance for invalid account constructor parameter");
             }
@@ -156,6 +110,7 @@ public final class PlayerAccount extends AccountManager {
     /**
      * Migrate from LockLogin v1 player database
      */
+    @SuppressWarnings("deprecation")
     public static void migrateV1() {
         File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "Users");
         File[] files = v1DataFolder.listFiles();
@@ -239,6 +194,7 @@ public final class PlayerAccount extends AccountManager {
     /**
      * Migrate from LockLogin v2 player database
      */
+    @SuppressWarnings("deprecation")
     public static void migrateV2() {
         File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "playerdata");
         File[] files = v1DataFolder.listFiles();
@@ -359,6 +315,60 @@ public final class PlayerAccount extends AccountManager {
         }
     }
 
+    /**
+     * Migrate from LockLogin v4 player database
+     */
+    public static void migrateV4() {
+        File v3DataFolder = source.getDataPath().resolve("data").resolve("accounts").toFile();
+        File[] files = v3DataFolder.listFiles();
+
+        if (files != null) {
+            console.send("Initializing LockLogin v4 player database migration", Level.INFO);
+
+            for (File file : files) {
+                if (FileUtilities.isKarmaFile(file)) {
+                    console.send("Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
+
+                    try {
+                        Path tmp = Files.createTempFile(file.getName(), "");
+                        Files.move(file.toPath(), tmp, StandardCopyOption.REPLACE_EXISTING);
+                        PathUtilities.destroy(file.toPath());
+
+                        @SuppressWarnings("deprecation")
+                        KarmaFile m = new KarmaFile(tmp);
+
+                        KarmaMain original = new KarmaMain(file.toPath());
+
+                        original.set("player", new KarmaObject(m.getString("PLAYER", "")));
+                        original.set("uuid", new KarmaObject(m.getString("UUID", "")));
+                        original.set("password", new KarmaObject(m.getString("PASSWORD", "")));
+                        original.set("token", new KarmaObject(m.getString("TOKEN", "")));
+                        original.set("pin", new KarmaObject(m.getString("PIN", "")));
+                        original.set("2fa", new KarmaObject(m.getBoolean("2FA", false)));
+
+                        if (!original.save()) {
+                            console.send("Failed to migrate account of {0}", Level.GRAVE, file.getName().replace(".lldb", ""));
+                            source.logger().scheduleLog(Level.GRAVE, "Failed to migrate account of {0}", file.getName().replace(".lldb", ""));
+
+                            Files.move(tmp, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                            @SuppressWarnings("deprecation")
+                            KarmaFile fl = new KarmaFile(file);
+                            fl.applyKarmaAttribute();
+                        } else {
+                            original.validate();
+                            m.delete();
+                        }
+                    } catch (Throwable ex) {
+                        source.logger().scheduleLog(Level.GRAVE, ex);
+                        source.logger().scheduleLog(Level.INFO, "Failed to migrate account of {0}", file.getName().replace(".lldb", ""));
+                        console.send("Failed to migrate account of {0}", Level.GRAVE, file.getName().replace(".lldb", ""));
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public boolean exists() {
         return manager.exists();
@@ -367,10 +377,14 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public boolean create() {
         if (!manager.exists()) {
-            manager.exportFromFile(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
+            try {
+                manager.validate();
+                manager.save();
 
-            manager.applyKarmaAttribute();
-            return true;
+                return true;
+            } catch (Throwable ex) {
+                return false;
+            }
         }
 
         return false;
@@ -382,7 +396,7 @@ public final class PlayerAccount extends AccountManager {
             Event event = new AccountRemovedEvent(this, issuer, null);
             ModulePlugin.callEvent(event);
 
-            return Files.deleteIfExists(manager.getFile().toPath());
+            return Files.deleteIfExists(manager.getDocument());
         } catch (Throwable ex) {
             return false;
         }
@@ -390,7 +404,7 @@ public final class PlayerAccount extends AccountManager {
 
     @Override
     public void saveUUID(final @NotNull AccountID id) {
-        manager.set("UUID", id.getId());
+        manager.set("uuid", new KarmaObject(id.getId()));
     }
 
     /**
@@ -400,7 +414,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void set2FA(final boolean status) {
-        manager.set("2FA", status);
+        manager.set("2fa", new KarmaObject(status));
     }
 
     /**
@@ -411,12 +425,12 @@ public final class PlayerAccount extends AccountManager {
     @Override
     protected void importFrom(final @NotNull AccountManager account) {
         if (exists()) {
-            manager.set("PLAYER", account.getName());
-            manager.set("UUID", account.getUUID().getId());
-            manager.set("PASSWORD", account.getPassword());
-            manager.set("TOKEN", account.getGAuth());
-            manager.set("PIN", account.getPin());
-            manager.set("2FA", account.has2FA());
+            manager.set("player", new KarmaObject(account.getName()));
+            manager.set("uuid", new KarmaObject(account.getUUID().getId()));
+            manager.set("password", new KarmaObject(account.getPassword()));
+            manager.set("token", new KarmaObject(account.getGAuth()));
+            manager.set("pin", new KarmaObject(account.getPin()));
+            manager.set("2fa", new KarmaObject(account.has2FA()));
         }
     }
 
@@ -427,7 +441,12 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getName() {
-        return manager.getString("PLAYER", "").replace("PLAYER:", "");
+        if (manager.isSet("player")) {
+            KarmaElement element = manager.get("player");
+            return element.getObjet().getString();
+        }
+
+        return "";
     }
 
     /**
@@ -437,45 +456,51 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setName(final @NotNull String name) {
-        manager.set("PLAYER", name);
+        manager.set("player", new KarmaObject(name));
+        manager.save();
     }
 
     /**
      * Get the player UUID
      *
-     * TODO: Make the method use {@link ml.karmaconfigs.api.common.utils.uuid.UUIDUtil} instead of using the deprecated one
-     * TODO: Make the method to not return a 'nullable' object as LockLogin's AccountManager standard requires it
-     *
      * @return the player UUID
      */
     @Override
     public @NotNull AccountID getUUID() {
-        String id = manager.getString("UUID", UUID.randomUUID().toString());
-        if (StringUtils.isNullOrEmpty(id)) {
-            String name = manager.getFile().getName();
-            String extension = FileUtilities.getExtension(name);
-            UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
+        if (manager.isSet("uuid")) {
+            KarmaElement element = manager.get("uuid");
+            if (element.isString()) {
+                String id = element.getObjet().getString();
 
-            String nick = UUIDUtil.fetchNick(fixed);
-            if (nick != null && !nick.startsWith("Ratelimited")) {
-                setName(nick);
+                if (StringUtils.isNullOrEmpty(id)) {
+                    String name = PathUtilities.getName(manager.getDocument(), false);
+                    String extension = FileUtilities.getExtension(name);
+                    UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
 
-                if (CurrentPlatform.isOnline()) {
-                    id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
-                } else {
-                    id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
+                    String nick = UUIDUtil.fetchNick(fixed);
+                    if (nick != null && !nick.startsWith("Ratelimited")) {
+                        setName(nick);
+
+                        if (CurrentPlatform.isOnline()) {
+                            id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
+                        } else {
+                            id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
+                        }
+
+                        manager.set("uuid", new KarmaObject(id));
+                    } else {
+                        if (fixed != null) {
+                            manager.set("uuid", new KarmaObject(fixed.toString()));
+                            id = fixed.toString();
+                        }
+                    }
                 }
 
-                manager.set("UUID", id);
-            } else {
-                if (fixed != null) {
-                    manager.set("UUID", fixed.toString());
-                    id = fixed.toString();
-                }
+                return AccountID.fromString(id);
             }
         }
 
-        return AccountID.fromString(id);
+        return AccountID.fromUUID(UUID.randomUUID());
     }
 
     /**
@@ -485,7 +510,12 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getPassword() {
-        return manager.getString("PASSWORD", "").replace("PASSWORD:", "");
+        if (manager.isSet("password")) {
+            KarmaElement element = manager.get("password");
+            return element.getObjet().getString();
+        }
+
+        return "";
     }
 
     /**
@@ -498,7 +528,8 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
+        manager.set("PASSWORD", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
+        manager.save();
     }
 
     /**
@@ -517,11 +548,12 @@ public final class PlayerAccount extends AccountManager {
      * @param newPassword the account password
      */
     @Override
-    public void setUnsafePassword(final @NotNull String newPassword) {
+    public void setUnsafePassword(final @Nullable String newPassword) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PASSWORD", util.hash(config.passwordEncryption(), config.encryptBase64()));
+        manager.set("password", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
+        manager.save();
     }
 
     /**
@@ -531,7 +563,12 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getGAuth() {
-        return manager.getString("TOKEN", "").replace("TOKEN:", "");
+        if (manager.isSet("token")) {
+            KarmaElement element = manager.get("token");
+            return element.getObjet().getString();
+        }
+
+        return "";
     }
 
     /**
@@ -542,7 +579,9 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public void setGAuth(final String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
-        manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
+        manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
+
+        manager.save();
     }
 
     /**
@@ -551,9 +590,11 @@ public final class PlayerAccount extends AccountManager {
      * @param token the account google auth token
      */
     @Override
-    public void setUnsafeGAuth(final @NotNull String token) {
+    public void setUnsafeGAuth(final @Nullable String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
-        manager.set("TOKEN", util.toBase64(CryptTarget.PASSWORD));
+        manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
+
+        manager.save();
     }
 
     /**
@@ -565,7 +606,10 @@ public final class PlayerAccount extends AccountManager {
     public @NotNull String getPin() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
-            return manager.getString("PIN", "").replace("PIN:", "");
+            if (manager.isSet("pin")) {
+                KarmaElement element = manager.get("pin");
+                return element.getObjet().getString();
+            }
         }
 
         return "";
@@ -581,7 +625,8 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
+        manager.set("pin", new KarmaObject(util.hash(config.pinEncryption(), config.encryptBase64())));
+        manager.save();
     }
 
     /**
@@ -594,7 +639,8 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         HashType hash = HashType.pickRandom();
 
-        manager.set("PANIC", util.hash(hash, true));
+        manager.set("panic", new KarmaObject(util.hash(hash, true)));
+        manager.save();
     }
 
     /**
@@ -606,7 +652,10 @@ public final class PlayerAccount extends AccountManager {
     public @NotNull String getPanic() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
-            return manager.getString("PANIC", "").replace("PANIC:", "");
+            if (manager.isSet("panic")) {
+                KarmaElement element = manager.get("panic");
+                return element.getObjet().getString();
+            }
         }
 
         return "";
@@ -622,7 +671,8 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
         HashType hash = HashType.pickRandom();
 
-        manager.set("PANIC", util.hash(hash, true));
+        manager.set("panic", new KarmaObject(util.hash(hash, true)));
+        manager.save();
     }
 
     /**
@@ -641,11 +691,12 @@ public final class PlayerAccount extends AccountManager {
      * @param pin the account pin
      */
     @Override
-    public void setUnsafePin(@NotNull String pin) {
+    public void setUnsafePin(@Nullable String pin) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PIN", util.hash(config.pinEncryption(), config.encryptBase64()));
+        manager.set("pin", new KarmaObject(util.hash(config.pinEncryption(), config.encryptBase64())));
+        manager.save();
     }
 
     /**
@@ -657,7 +708,10 @@ public final class PlayerAccount extends AccountManager {
     public boolean has2FA() {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enable2FA()) {
-            return manager.getBoolean("2FA", false);
+            if (manager.isSet("2fa")) {
+                KarmaElement element = manager.get("2fa");
+                return element.getObjet().getBoolean();
+            }
         }
 
         return false;
@@ -671,7 +725,7 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public @NotNull Instant getCreationTime() {
         try {
-            BasicFileAttributes attr = Files.readAttributes(manager.getFile().toPath(), BasicFileAttributes.class);
+            BasicFileAttributes attr = Files.readAttributes(manager.getDocument(), BasicFileAttributes.class);
             return attr.creationTime().toInstant();
         } catch (Throwable ignored) {
         }

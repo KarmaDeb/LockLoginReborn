@@ -37,31 +37,29 @@ public final class TokenGen {
             String token = legacy.getString("LOCAL_TOKEN", "");
             String local_node = legacy.getString("DEFAULT_NODE", "");
 
-            KarmaMain modern = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
-                    .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
-            try {
-                modern.validate();
-                modern.set("local_token", new KarmaObject(token));
-                modern.set("local_node", new KarmaObject(local_node));
+            KarmaMain modern = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
+            modern.set("local_token", new KarmaObject(token));
+            modern.set("local_node", new KarmaObject(local_node));
 
-                KarmaKeyArray ka = modern.get("external_tokens").getKeyArray();
-                for (@SuppressWarnings("deprecation")Key k : legacy.getKeys(false)) {
-                    if (!k.getPath().equals("DEFAULT_NODE") && !k.getPath().equals("LOCAL_TOKEN")) {
-                        ka.add(k.getPath(), new KarmaObject(k.getValue().toString()), false);
-                    }
+            KarmaElement element = modern.get("external_tokens");
+            if (element == null || !element.isKeyArray())
+                element = new KarmaKeyArray();
+
+            KarmaKeyArray ka = element.getKeyArray();
+            for (@SuppressWarnings("deprecation")Key k : legacy.getKeys(false)) {
+                if (!k.getPath().equals("DEFAULT_NODE") && !k.getPath().equals("LOCAL_TOKEN")) {
+                    ka.add(k.getPath(), new KarmaObject(k.getValue().toString()), false);
                 }
-                modern.set("external_tokens", ka);
+            }
+            modern.set("external_tokens", ka);
 
-                if (modern.save()) {
-                    lockLogin.console().send("Updated token data", Level.OK);
-                    lockLogin.logger().scheduleLog(Level.INFO, "Updated token data to modern KarmaMain file format");
+            if (modern.save()) {
+                lockLogin.console().send("Updated token data", Level.OK);
+                lockLogin.logger().scheduleLog(Level.INFO, "Updated token data to modern KarmaMain file format");
 
-                    legacy.delete();
-                    TokenStorage storage = new TokenStorage(lockLogin);
-                    storage.migrate(UUID.fromString(token));
-                }
-            } catch (Throwable ex) {
-                ex.printStackTrace();
+                legacy.delete();
+                TokenStorage storage = new TokenStorage(lockLogin);
+                storage.migrate(UUID.fromString(token));
             }
         }
     }
@@ -101,16 +99,9 @@ public final class TokenGen {
             UUID tokenID = storage.store(generated, password, calendar.toInstant());
             lockLogin.console().send("Communication token has been generated with ID {0}", Level.INFO, tokenID.toString());
 
-            KarmaMain idData = new KarmaMain(lockLogin, "data.lldb", "cache", "keys")
-                    .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
-
-            try {
-                idData.validate();
-                idData.set("local_token", new KarmaObject(tokenID.toString()));
-                idData.save();
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
+            KarmaMain idData = new KarmaMain(lockLogin, "data.lldb", "cache", "keys");
+            idData.set("local_token", new KarmaObject(tokenID.toString()));
+            idData.save();
         }
     }
 
@@ -120,16 +111,10 @@ public final class TokenGen {
      * @param name the node name
      */
     public static void assignDefaultNodeName(final String name) {
-        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
-                .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
 
-        try {
-            idData.validate();
-            idData.set("local_node", new KarmaObject(name));
-            idData.save();
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-        }
+        idData.set("local_node", new KarmaObject(name));
+        idData.save();
     }
 
     /**
@@ -140,28 +125,22 @@ public final class TokenGen {
      * @param password the node password
      */
     public static void assign(final String token, final String node, final String password, final Instant expiration) throws Exception {
-        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys")
-                .internal(TokenGen.class.getResourceAsStream("/templates/tokenData.kf"));
+        KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
 
-        try {
-            idData.validate();
-            if (idData.isSet("external_tokens")) {
-                KarmaElement element = idData.get("external_tokens");
-                if (element.isKeyArray()) {
-                    KarmaKeyArray keys = element.getKeyArray();
-                    TokenStorage storage = new TokenStorage(lockLogin);
-                    UUID tokenID = storage.store(token, password, expiration);
+        if (idData.isSet("external_tokens")) {
+            KarmaElement element = idData.get("external_tokens");
+            if (element.isKeyArray()) {
+                KarmaKeyArray keys = element.getKeyArray();
+                TokenStorage storage = new TokenStorage(lockLogin);
+                UUID tokenID = storage.store(token, password, expiration);
 
-                    keys.add(node, new KarmaObject(tokenID.toString()), false);
+                keys.add(node, new KarmaObject(tokenID.toString()), false);
 
-                    idData.set("external_tokens", keys);
-                    if (!idData.save()) {
-                        throw new Exception("Failed to assign token data of " + node);
-                    }
+                idData.set("external_tokens", keys);
+                if (!idData.save()) {
+                    throw new Exception("Failed to assign token data of " + node);
                 }
             }
-        } catch (Throwable ex) {
-            throw new Exception(ex);
         }
     }
 

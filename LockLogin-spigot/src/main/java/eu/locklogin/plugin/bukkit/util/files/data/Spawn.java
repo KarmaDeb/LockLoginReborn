@@ -14,10 +14,13 @@ package eu.locklogin.plugin.bukkit.util.files.data;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -31,7 +34,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 public final class Spawn {
 
-    private final static KarmaFile spawnFile = new KarmaFile(plugin, "spawn.lldb", "data", "location");
+    private final static KarmaMain spawnFile = new KarmaMain(plugin, "spawn.lldb", "data", "location");
     private Location spawn_location;
 
     /**
@@ -57,30 +60,30 @@ public final class Spawn {
 
         if (config.enableSpawn()) {
             Location spawn_location;
-            String x_string = spawnFile.getString("X", "");
-            String y_string = spawnFile.getString("Y", "");
-            String z_string = spawnFile.getString("Z", "");
-            String pitch_string = spawnFile.getString("PITCH", "");
-            String yaw_string = spawnFile.getString("YAW", "");
-            String world_string = spawnFile.getString("WORLD", "");
+            KarmaElement x_string = spawnFile.get("X", null);
+            KarmaElement y_string = spawnFile.get("Y", null);
+            KarmaElement z_string = spawnFile.get("Z", null);
+            KarmaElement pitch_string = spawnFile.get("PITCH", null);
+            KarmaElement yaw_string = spawnFile.get("YAW", null);
+            KarmaElement world_string = spawnFile.get("WORLD", null);
 
-            if (!isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string)) {
+            if (!StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string)) {
                 try {
-                    double x = Double.parseDouble(x_string);
-                    double y = Double.parseDouble(y_string);
-                    double z = Double.parseDouble(z_string);
+                    double x = x_string.getObjet().getNumber().doubleValue();
+                    double y = y_string.getObjet().getNumber().doubleValue();
+                    double z = z_string.getObjet().getNumber().doubleValue();
 
-                    float pitch = Float.parseFloat(pitch_string);
-                    float yaw = Float.parseFloat(yaw_string);
+                    float pitch = pitch_string.getObjet().getNumber().floatValue();
+                    float yaw = yaw_string.getObjet().getNumber().floatValue();
 
-                    World world = plugin.getServer().getWorld(world_string);
+                    World world = plugin.getServer().getWorld(world_string.getObjet().getString());
 
                     if (world == null) {
                         try {
-                            console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
-                            world = plugin.getServer().createWorld(WorldCreator.name(world_string));
+                            console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string.getObjet().getString());
+                            world = plugin.getServer().createWorld(WorldCreator.name(world_string.getObjet().getString()));
                         } catch (Throwable ex) {
-                            console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
+                            console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string.getObjet().getString(), ex.fillInStackTrace());
                         }
                     }
 
@@ -125,12 +128,14 @@ public final class Spawn {
     public void save(final @NotNull Location location) {
         tryAsync(TaskTarget.DATA_SAVE, () -> {
             if (location.getWorld() != null) {
-                spawnFile.set("X", location.getX());
-                spawnFile.set("Y", location.getY());
-                spawnFile.set("Z", location.getZ());
-                spawnFile.set("PITCH", location.getPitch());
-                spawnFile.set("YAW", location.getYaw());
-                spawnFile.set("WORLD", location.getWorld().getName());
+                spawnFile.set("X", new KarmaObject(location.getX()));
+                spawnFile.set("Y", new KarmaObject(location.getY()));
+                spawnFile.set("Z", new KarmaObject(location.getZ()));
+                spawnFile.set("PITCH", new KarmaObject(location.getPitch()));
+                spawnFile.set("YAW", new KarmaObject(location.getYaw()));
+                spawnFile.set("WORLD", new KarmaObject(location.getWorld().getName()));
+
+                spawnFile.save();
             }
         });
     }
@@ -144,30 +149,30 @@ public final class Spawn {
         LateScheduler<Void> result = new AsyncLateScheduler<>();
 
         tryAsync(TaskTarget.DATA_LOAD, () -> {
-            String x_string = spawnFile.getString("X", "");
-            String y_string = spawnFile.getString("Y", "");
-            String z_string = spawnFile.getString("Z", "");
-            String pitch_string = spawnFile.getString("PITCH", "");
-            String yaw_string = spawnFile.getString("YAW", "");
-            String world_string = spawnFile.getString("WORLD", "");
+            KarmaElement x_string = spawnFile.get("X", null);
+            KarmaElement y_string = spawnFile.get("Y", null);
+            KarmaElement z_string = spawnFile.get("Z", null);
+            KarmaElement pitch_string = spawnFile.get("PITCH", null);
+            KarmaElement yaw_string = spawnFile.get("YAW", null);
+            KarmaElement world_string = spawnFile.get("WORLD", null);
 
-            if (isNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
+            if (StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
                 return;
 
             try {
-                double x = Double.parseDouble(x_string);
-                double y = Double.parseDouble(y_string);
-                double z = Double.parseDouble(z_string);
+                double x = x_string.getObjet().getNumber().doubleValue();
+                double y = y_string.getObjet().getNumber().doubleValue();
+                double z = z_string.getObjet().getNumber().doubleValue();
 
-                float pitch = Float.parseFloat(pitch_string);
-                float yaw = Float.parseFloat(yaw_string);
+                float pitch = pitch_string.getObjet().getNumber().floatValue();
+                float yaw = yaw_string.getObjet().getNumber().floatValue();
 
-                World world = plugin.getServer().getWorld(world_string);
+                World world = plugin.getServer().getWorld(world_string.getObjet().getString());
 
                 if (world == null) {
                     try {
-                        console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string);
-                        world = plugin.getServer().createWorld(WorldCreator.name(world_string));
+                        console.send("Creating world {0} because is set as spawn location", Level.INFO, world_string.getObjet().getString());
+                        world = plugin.getServer().createWorld(WorldCreator.name(world_string.getObjet().getString()));
                     } catch (Throwable ex) {
                         console.send("Failed to create world {0} ( {1} )", Level.GRAVE, world_string, ex.fillInStackTrace());
                         return;

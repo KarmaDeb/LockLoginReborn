@@ -7,8 +7,8 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.command.ConsoleCommandSender;
 
 import java.util.Collections;
 import java.util.Map;
@@ -65,7 +65,7 @@ public class WaterfallInjector extends Injector {
             Command command = new Command(cmd, "", fixedAliases) {
                 @Override
                 public void execute(final CommandSender commandSender, final String[] strings) {
-                    if (commandSender instanceof ConsoleCommandSender) {
+                    if (!(commandSender instanceof ProxiedPlayer)) {
                         if (ModulePlugin.parseCommand(cmd)) {
                             PluginModule module = ModulePlugin.getCommandOwner(cmd);
 
@@ -80,6 +80,6 @@ public class WaterfallInjector extends Injector {
             plugin.getProxy().getPluginManager().registerCommand(plugin, command);
         }
 
-        plugin.console().send("Injected LockLogin's commands for WaterFall", Level.WARNING);
+        plugin.console().send("Injected LockLogin's commands for BungeeCord/Waterfall", Level.WARNING);
     }
 }

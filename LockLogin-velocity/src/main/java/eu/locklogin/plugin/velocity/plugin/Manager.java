@@ -116,6 +116,7 @@ public final class Manager {
         PlayerAccount.migrateV1();
         PlayerAccount.migrateV2();
         PlayerAccount.migrateV3();
+        PlayerAccount.migrateV4();
         PlayerPool.startCheckTask();
 
         setupFiles();

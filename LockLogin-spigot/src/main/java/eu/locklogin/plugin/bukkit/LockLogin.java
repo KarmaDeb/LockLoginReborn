@@ -66,19 +66,6 @@ public interface LockLogin {
         return new ModuleLoader();
     }
 
-    static boolean isNullOrEmpty(final String... values) {
-        boolean any = false;
-
-        for (String str : values) {
-            if (StringUtils.isNullOrEmpty(str)) {
-                any = true;
-                break;
-            }
-        }
-
-        return any;
-    }
-
     static void trySync(final TaskTarget target, final Runnable action) {
         try {
             plugin.getServer().getScheduler().runTask(plugin, action);

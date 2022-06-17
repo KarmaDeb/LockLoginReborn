@@ -49,7 +49,6 @@ import eu.locklogin.plugin.bungee.listener.JoinListener;
 import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.listener.QuitListener;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
-import eu.locklogin.plugin.bungee.plugin.injector.BungeeInjector;
 import eu.locklogin.plugin.bungee.plugin.injector.Injector;
 import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
@@ -120,6 +119,7 @@ public final class Manager {
         PlayerAccount.migrateV1();
         PlayerAccount.migrateV2();
         PlayerAccount.migrateV3();
+        PlayerAccount.migrateV4();
         PlayerPool.startCheckTask();
 
         setupFiles();
@@ -195,13 +195,8 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
-        Injector injector;
-        try {
-            Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
-            injector = new WaterfallInjector();
-        } catch (Throwable ex) {
-            injector = new BungeeInjector();
-        }
+        Injector injector = new WaterfallInjector();
+        //As off 1.13.24 injector is the same for everyone! [ NO MORE REFLECTION LOL ]
 
         injector.inject();
 

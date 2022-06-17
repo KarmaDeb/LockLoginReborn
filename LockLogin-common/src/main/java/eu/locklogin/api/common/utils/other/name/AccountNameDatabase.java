@@ -2,21 +2,53 @@ package eu.locklogin.api.common.utils.other.name;
 
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.karmafile.Key;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
+import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public final class AccountNameDatabase {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
-    private final static KarmaFile nameDatabase = new KarmaFile(lockLogin, "names.lldb", "data");
+    private final static KarmaMain nameDatabase;
+
     private final UUID uuid;
+
+    static {
+        Path existing = lockLogin.getDataPath().resolve("data").resolve("names.lldb");
+        KarmaMain tmp = null;
+        if (Files.exists(existing)) {
+            List<String> lines = PathUtilities.readAllLines(existing);
+            if (!lines.isEmpty()) {
+                String first = lines.get(0);
+
+                if (!first.equals("(") && !first.equals("(\"main\"")) {
+                    try {
+                        tmp = KarmaMain.migrate(new KarmaFile(existing));
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        if (tmp == null)
+            tmp = new KarmaMain(existing);
+
+        nameDatabase = tmp;
+    }
 
     /**
      * Initialize the account name database
@@ -36,18 +68,14 @@ public final class AccountNameDatabase {
     public static LateScheduler<NameSearchResult> find(final String name) {
         LateScheduler<NameSearchResult> result = new AsyncLateScheduler<>();
 
-        lockLogin.async().queue(() -> {
+        KarmaObject nm = new KarmaObject(name);
+        lockLogin.async().queue("find_user_name", () -> {
             Set<UUID> ids = new LinkedHashSet<>();
 
-            for (Key key : nameDatabase.getKeys(false)) {
-                String path = key.getPath();
-                List<String> values = nameDatabase.getStringList(path);
-
-                if (values.contains(name)) {
-                    try {
-                        ids.add(UUID.fromString(path));
-                    } catch (Throwable ignored) {
-                    }
+            for (String key : nameDatabase.getKeys()) {
+                KarmaElement value = nameDatabase.get(key);
+                if (value.isArray() && value.getArray().contains(nm)) {
+                    ids.add(UUID.fromString(key));
                 }
             }
 
@@ -67,20 +95,21 @@ public final class AccountNameDatabase {
     public static LateScheduler<String[]> otherPossible(final String name) {
         LateScheduler<String[]> result = new AsyncLateScheduler<>();
 
-        lockLogin.async().queue(() -> {
+        KarmaObject nm = new KarmaObject(name);
+        lockLogin.async().queue("find_user_names", () -> {
             Set<String> names = new LinkedHashSet<>();
 
-            for (Key key : nameDatabase.getKeys(false)) {
-                String path = key.getPath();
-                List<String> values = nameDatabase.getStringList(path);
+            for (String key : nameDatabase.getKeys()) {
+                KarmaElement value = nameDatabase.get(key);
 
-                if (values.contains(name)) {
-                    try {
-                        names.addAll(values);
-                    } catch (Throwable ignored) {
+                if (value.isArray()) {
+                    KarmaArray array = value.getArray();
+                    if (array.contains(nm)) {
+                        array.forEach((sub) -> names.add(sub.getObjet().getString()));
                     }
                 }
             }
+
             names.remove(name);
 
             String[] rs = names.toArray(new String[0]);
@@ -96,10 +125,27 @@ public final class AccountNameDatabase {
      * @param name the name
      */
     public void assign(final String name) {
-        List<String> names = nameDatabase.getStringList(uuid.toString());
-        if (!names.contains(name)) {
-            names.add(name);
-            nameDatabase.set(uuid.toString(), names);
+        KarmaArray array = null;
+
+        if (nameDatabase.isSet(uuid.toString())) {
+            KarmaElement element = nameDatabase.get(uuid.toString());
+            if (element.isArray()) {
+                array = element.getArray();
+            }
         }
+
+        if (array == null) {
+            array = new KarmaArray(
+                    new KarmaObject(name)
+            );
+        }
+
+        KarmaObject object = new KarmaObject(name);
+        if (!array.contains(object)) {
+            array.add(object);
+        }
+
+        nameDatabase.set(uuid.toString(), array);
+        nameDatabase.save();
     }
 }

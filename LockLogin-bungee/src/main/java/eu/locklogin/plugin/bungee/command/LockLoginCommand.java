@@ -26,7 +26,6 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.FileReloader;
 import eu.locklogin.plugin.bungee.plugin.Manager;
-import eu.locklogin.plugin.bungee.plugin.injector.BungeeInjector;
 import eu.locklogin.plugin.bungee.plugin.injector.Injector;
 import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
 import eu.locklogin.plugin.bungee.util.player.User;
@@ -96,14 +95,7 @@ public final class LockLoginCommand extends Command {
                                 if (user.hasPermission(reload())) {
                                     FileReloader.reload(player);
 
-                                    Injector injector;
-                                    try {
-                                        Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
-                                        injector = new WaterfallInjector();
-                                    } catch (Throwable ex) {
-                                        injector = new BungeeInjector();
-                                    }
-
+                                    Injector injector = new WaterfallInjector();;
                                     injector.inject();
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(reload()));
@@ -280,14 +272,7 @@ public final class LockLoginCommand extends Command {
                             case "reload":
                                 FileReloader.reload(null);
 
-                                Injector injector;
-                                try {
-                                    Class.forName("io.github.waterfallmc.waterfall.conf.WaterfallConfiguration");
-                                    injector = new WaterfallInjector();
-                                } catch (Throwable ex) {
-                                    injector = new BungeeInjector();
-                                }
-
+                                Injector injector = new WaterfallInjector();
                                 injector.inject();
 
                                 break;

@@ -18,7 +18,9 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.LockManager;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +31,7 @@ import java.time.Instant;
  */
 public final class LockedAccount extends LockManager {
 
-    private final KarmaFile lockedFile;
+    private final KarmaMain lockedFile;
 
     /**
      * Initialize the locked account
@@ -42,7 +44,7 @@ public final class LockedAccount extends LockManager {
         KarmaSource source = APISource.loadProvider("LockLogin");
 
         Path file = source.getDataPath().resolve("data").resolve("accounts").resolve(accId.getId().replace("-", "") + ".locked");
-        lockedFile = new KarmaFile(file);
+        lockedFile = new KarmaMain(file);
     }
 
     /**
@@ -52,8 +54,10 @@ public final class LockedAccount extends LockManager {
     public void lock(final String administrator) {
         lockedFile.create();
 
-        lockedFile.set("ISSUER", administrator);
-        lockedFile.set("DATE", Instant.now());
+        lockedFile.set("issuer", new KarmaObject(administrator));
+        lockedFile.set("date", new KarmaObject(Instant.now().toString()));
+
+        lockedFile.save();
     }
 
     /**
@@ -62,7 +66,7 @@ public final class LockedAccount extends LockManager {
     @Override
     public boolean release() {
         try {
-            return Files.deleteIfExists(lockedFile.getFile().toPath());
+            return Files.deleteIfExists(lockedFile.getDocument());
         } catch (Throwable ex) {
             return false;
         }
@@ -75,7 +79,14 @@ public final class LockedAccount extends LockManager {
      */
     @Override
     public String getIssuer() {
-        return lockedFile.getString("ISSUER", "");
+        if (lockedFile.isSet("issuer")) {
+            KarmaElement element = lockedFile.get("issuer");
+            if (element.isString()) {
+                return element.getObjet().getString();
+            }
+        }
+
+        return "";
     }
 
     /**
@@ -85,7 +96,14 @@ public final class LockedAccount extends LockManager {
      */
     @Override
     public Instant getLockDate() {
-        return Instant.parse(lockedFile.getString("DATE", Instant.now().toString()));
+        if (lockedFile.isSet("date")) {
+            KarmaElement element = lockedFile.get("date");
+            if (element.isString()) {
+                return Instant.parse(element.getObjet().getString());
+            }
+        }
+
+        return Instant.now();
     }
 
     /**
@@ -95,6 +113,6 @@ public final class LockedAccount extends LockManager {
      */
     @Override
     public boolean isLocked() {
-        return (lockedFile.exists() && !lockedFile.getFile().isDirectory());
+        return (lockedFile.exists() && !Files.isDirectory(lockedFile.getDocument()));
     }
 }

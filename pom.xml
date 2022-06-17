@@ -182,11 +182,11 @@
     </distributionManagement>
 
     <modules>
-        <module>LockLogin-API</module>
-        <module>LockLogin-common</module>
-        <module>LockLogin-spigot</module>
-        <module>LockLogin-bungee</module>
-        <module>LockLogin-velocity</module>
+        <module>locklogin-API</module>
+        <module>locklogin-common</module>
+        <module>locklogin-spigot</module>
+        <module>locklogin-bungee</module>
+        <module>locklogin-velocity</module>
         <module>LockLogin-bundle</module>
         <module>LockLogin-manager</module>
     </modules>

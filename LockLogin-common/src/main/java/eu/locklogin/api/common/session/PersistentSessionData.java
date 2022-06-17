@@ -18,7 +18,10 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import java.io.File;
@@ -34,7 +37,7 @@ public final class PersistentSessionData {
     private final static File folder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "data");
     private final static File file = new File(folder, "sessions.lldb");
 
-    private final static KarmaFile sessions = new KarmaFile(file);
+    private final static KarmaMain sessions = new KarmaMain(file.toPath());
 
     private final AccountID id;
 
@@ -58,11 +61,18 @@ public final class PersistentSessionData {
 
         if (tmp_manager != null) {
             Set<AccountManager> tmp_accounts = tmp_manager.getAccounts();
-            List<String> ids = sessions.getStringList("PERSISTENT");
-            for (AccountManager manager : tmp_accounts) {
-                if (manager != null) {
-                    if (ids.contains(manager.getUUID().getId()))
-                        accounts.add(manager);
+            if (sessions.isSet("persistent")) {
+                KarmaElement element = sessions.get("persistent");
+
+                if (element.isArray()) {
+                    KarmaArray array = element.getArray();
+
+                    for (AccountManager manager : tmp_accounts) {
+                        if (manager != null) {
+                            if (array.contains(new KarmaObject(manager.getUUID().getId())))
+                                accounts.add(manager);
+                        }
+                    }
                 }
             }
         }
@@ -78,18 +88,28 @@ public final class PersistentSessionData {
      * status
      */
     public boolean toggleSession() {
-        List<String> ids = sessions.getStringList("PERSISTENT");
+        boolean result = false;
 
-        boolean result;
-        if (ids.contains(id.getId())) {
-            ids.remove(id.getId());
-            result = false;
-        } else {
-            ids.add(id.getId());
-            result = true;
+        if (sessions.isSet("persistent")) {
+            KarmaElement element = sessions.get("persistent");
+
+            if (element.isArray()) {
+                KarmaArray array = element.getArray();
+
+                KarmaObject d = new KarmaObject(id.getId());
+
+                if (array.contains(d)) {
+                    array.remove(d);
+                } else {
+                    array.add(d);
+                    result = true;
+                }
+
+                sessions.set("persistent", array);
+                sessions.save();
+            }
         }
 
-        sessions.set("PERSISTENT", ids);
         return result;
     }
 
@@ -99,18 +119,28 @@ public final class PersistentSessionData {
      * @return the account panic mode
      */
     public boolean togglePanic() {
-        List<String> ids = sessions.getStringList("PANIC");
+        boolean result = false;
 
-        boolean result;
-        if (ids.contains(id.getId())) {
-            ids.remove(id.getId());
-            result = false;
-        } else {
-            ids.add(id.getId());
-            result = true;
+        if (sessions.isSet("panic")) {
+            KarmaElement element = sessions.get("panic");
+
+            if (element.isArray()) {
+                KarmaArray array = element.getArray();
+
+                KarmaObject d = new KarmaObject(id.getId());
+
+                if (array.contains(d)) {
+                    array.remove(d);
+                } else {
+                    array.add(d);
+                    result = true;
+                }
+
+                sessions.set("panic", array);
+                sessions.save();
+            }
         }
 
-        sessions.set("PANIC", ids);
         return result;
     }
 
@@ -120,8 +150,16 @@ public final class PersistentSessionData {
      * @return if the user account is persistent
      */
     public boolean isPersistent() {
-        List<String> ids = sessions.getStringList("PERSISTENT");
-        return ids.contains(id.getId());
+        if (sessions.isSet("persistent")) {
+            KarmaElement element = sessions.get("persistent");
+
+            if (element.isArray()) {
+                KarmaArray array = element.getArray();
+                return array.contains(new KarmaObject(id.getId()));
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -130,7 +168,15 @@ public final class PersistentSessionData {
      * @return if the user account is panicking
      */
     public boolean isPanicking() {
-        List<String> ids = sessions.getStringList("PANIC");
-        return ids.contains(id.getId());
+        if (sessions.isSet("panic")) {
+            KarmaElement element = sessions.get("panic");
+
+            if (element.isArray()) {
+                KarmaArray array = element.getArray();
+                return array.contains(new KarmaObject(id.getId()));
+            }
+        }
+
+        return false;
     }
 }
