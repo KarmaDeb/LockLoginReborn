@@ -1,6 +1,8 @@
 package eu.locklogin.plugin.bukkit.util.inventory.object;
 
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
@@ -23,7 +25,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
  */
 public final class SkullCache {
 
-    private final KarmaFile sk_cache;
+    private final KarmaMain sk_cache;
 
     /**
      * Initialize the skull cache
@@ -31,7 +33,7 @@ public final class SkullCache {
      * @param owner_name the skull cache owner name
      */
     public SkullCache(final String owner_name) {
-        sk_cache = new KarmaFile(plugin, owner_name, "data", "skulls");
+        sk_cache = new KarmaMain(plugin, owner_name, "data", "skulls");
 
         if (!sk_cache.exists())
             sk_cache.create();
@@ -42,7 +44,7 @@ public final class SkullCache {
      *
      * @param value the skull value
      */
-    public final void save(final String value) {
+    public void save(final String value) {
         if (!sk_cache.exists())
             sk_cache.create();
 
@@ -50,8 +52,10 @@ public final class SkullCache {
         SimpleDateFormat ll_format = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = ll_format.format(today);
 
-        sk_cache.set("Value", value);
-        sk_cache.set("Timestamp", timestamp);
+        sk_cache.set("value", new KarmaObject(value));
+        sk_cache.set("timestamp", new KarmaObject(timestamp));
+
+        sk_cache.save();
     }
 
     /**
@@ -60,12 +64,12 @@ public final class SkullCache {
      * @return the cache skull value
      */
     @Nullable
-    public final String get() {
+    public String get() {
         if (!sk_cache.exists())
             sk_cache.create();
 
-        String value = sk_cache.getString("Value", "");
-        return (value.replaceAll("\\s", "").isEmpty() ? null : value);
+        KarmaElement value = sk_cache.get("value");
+        return (value == null || !value.isString() ? null : value.getObjet().getString());
     }
 
     /**
@@ -73,18 +77,18 @@ public final class SkullCache {
      *
      * @return if the skull needs to reload cache
      */
-    public final boolean needsCache() {
+    public boolean needsCache() {
         if (!sk_cache.exists())
             sk_cache.create();
 
-        if (sk_cache.isSet("Timestamp")) {
+        if (sk_cache.isSet("timestamp")) {
             Date today = new Date();
             SimpleDateFormat ll_format = new SimpleDateFormat("yyyyMMddHHmmss");
             String timestamp = ll_format.format(today);
 
-            String stored_timestamp = sk_cache.getString("Timestamp", timestamp);
+            KarmaElement stored_timestamp = sk_cache.get("timestamp", new KarmaObject(timestamp));
             try {
-                Date way_back = ll_format.parse(stored_timestamp);
+                Date way_back = ll_format.parse(stored_timestamp.getObjet().getString());
 
                 return Math.round((today.getTime() - way_back.getTime()) / (double) 86400000) > 1;
             } catch (Throwable ex) {

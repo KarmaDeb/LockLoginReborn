@@ -21,6 +21,7 @@ import eu.locklogin.api.common.security.Password;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
@@ -107,7 +108,7 @@ public final class LoginCommand extends Command {
                                         protection = new BruteForce(ip);
 
                                     CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                    if (utils.validate()) {
+                                    if (utils.validate(Validation.ALL)) {
                                         if (!checker.isSecure()) {
                                             user.send(messages.prefix() + messages.loginInsecure());
 

@@ -52,6 +52,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
+import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
@@ -232,12 +233,19 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.FIRST)
     public void onServerPing(ProxyPingEvent e) {
-        InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
+        if (Manager.isInitialized()) {
+            InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
 
-        Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
-                PluginIpValidationEvent.ValidationResult.SUCCESS,
-                "Plugin added the IP to the IP validation queue", e);
-        ModulePlugin.callEvent(ipEvent);
+            Event ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                    PluginIpValidationEvent.ValidationResult.SUCCESS,
+                    "Plugin added the IP to the IP validation queue", e);
+
+            ModulePlugin.callEvent(ipEvent);
+        } else {
+            if (config.showMOTD()) {
+                e.setPing(e.getPing().asBuilder().description(Component.text().content(StringUtils.toColor("&dLockLogin &8&l| &aStarting server")).build()).build());
+            }
+        }
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -251,139 +259,143 @@ public final class JoinListener {
 
     @Subscribe(order = PostOrder.FIRST)
     public void onPreLogin(PreLoginEvent e) {
-        InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
+        if (Manager.isInitialized()) {
+            InetAddress ip = e.getConnection().getRemoteAddress().getAddress();
 
-        PluginIpValidationEvent.ValidationResult validationResult = validateIP(ip);
+            PluginIpValidationEvent.ValidationResult validationResult = validateIP(ip);
 
-        PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.VALID_IP,
-                validationResult,
-                validationResult.getReason(),
-                e);
-        ModulePlugin.callEvent(ipEvent);
+            PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip, PluginIpValidationEvent.ValidationProcess.VALID_IP,
+                    validationResult,
+                    validationResult.getReason(),
+                    e);
+            ModulePlugin.callEvent(ipEvent);
 
-        String conn_name = e.getUsername();
-        UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
-        if (CurrentPlatform.isOnline() || e.getResult().isOnlineModeAllowed()) {
-            gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
-        }
-        UUID tar_uuid = ids.getOrDefault(conn_name, gen_uuid);
+            String conn_name = e.getUsername();
+            UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
+            if (CurrentPlatform.isOnline() || e.getResult().isOnlineModeAllowed()) {
+                gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+            }
+            UUID tar_uuid = ids.getOrDefault(conn_name, gen_uuid);
 
-        if (!ipEvent.isHandled()) {
-            switch (ipEvent.getResult()) {
-                case SUCCESS:
-                    if (e.getResult().isAllowed()) {
-                        if (config.registerOptions().maxAccounts() > 0) {
-                            AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
+            if (!ipEvent.isHandled()) {
+                switch (ipEvent.getResult()) {
+                    case SUCCESS:
+                        if (e.getResult().isAllowed()) {
+                            if (config.registerOptions().maxAccounts() > 0) {
+                                AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
 
-                            if (data.allow(config.registerOptions().maxAccounts())) {
-                                data.save();
+                                if (data.allow(config.registerOptions().maxAccounts())) {
+                                    data.save();
 
-                                int amount = data.getAlts().size();
-                                if (amount > 2) {
-                                    for (Player online : plugin.getServer().getAllPlayers()) {
-                                        User user = new User(online);
+                                    int amount = data.getAlts().size();
+                                    if (amount > 2) {
+                                        for (Player online : plugin.getServer().getAllPlayers()) {
+                                            User user = new User(online);
 
-                                        if (user.hasPermission(PluginPermission.altInfo())) {
-                                            user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                            if (user.hasPermission(PluginPermission.altInfo())) {
+                                                user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
+                                            }
                                         }
+
+                                        if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
+                                            console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                                     }
-
-                                    if (!messages.altFound(conn_name, amount).replaceAll("\\s", "").isEmpty())
-                                        console.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
-                                }
-                            } else {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxRegisters())).build()));
-                                return;
-                            }
-                        }
-
-                        if (config.bruteForceOptions().getMaxTries() > 0) {
-                            BruteForce protection = new BruteForce(ip);
-                            if (protection.isBlocked()) {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))).build()));
-                                return;
-                            }
-                        }
-
-                        boolean check = CurrentPlatform.isOnline() || !e.getResult().isOnlineModeAllowed();
-                        if (check) {
-                            if (config.uuidValidator()) {
-                                if (!gen_uuid.equals(tar_uuid)) {
-                                    FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                                    if (!util.isFloodClient()) {
-                                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (config.checkNames()) {
-                            Name name = new Name(conn_name);
-                            name.check();
-
-                            if (name.notValid()) {
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
-                                return;
-                            }
-                        }
-
-                        OfflineClient offline = new OfflineClient(conn_name);
-                        AccountManager manager = offline.getAccount();
-                        if (manager != null) {
-                            if (config.enforceNameCheck()) {
-                                if (!manager.getName().equals(conn_name)) {
-                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.similarName(manager.getName()))).build()));
+                                } else {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.maxRegisters())).build()));
                                     return;
                                 }
                             }
 
-                            LockedAccount account = new LockedAccount(manager.getUUID());
+                            if (config.bruteForceOptions().getMaxTries() > 0) {
+                                BruteForce protection = new BruteForce(ip);
+                                if (protection.isBlocked()) {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))).build()));
+                                    return;
+                                }
+                            }
 
-                            if (account.isLocked()) {
-                                String administrator = account.getIssuer();
-                                Instant date = account.getLockDate();
-                                InstantParser parser = new InstantParser(date);
-                                String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+                            boolean check = CurrentPlatform.isOnline() || !e.getResult().isOnlineModeAllowed();
+                            if (check) {
+                                if (config.uuidValidator()) {
+                                    if (!gen_uuid.equals(tar_uuid)) {
+                                        FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                        if (!util.isFloodClient()) {
+                                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.uuidFetchError())).build()));
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
 
-                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"))).build()));
-                                logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
+                            if (config.checkNames()) {
+                                Name name = new Name(conn_name);
+                                name.check();
+
+                                if (name.notValid()) {
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))).build()));
+                                    return;
+                                }
+                            }
+
+                            OfflineClient offline = new OfflineClient(conn_name);
+                            AccountManager manager = offline.getAccount();
+                            if (manager != null) {
+                                if (config.enforceNameCheck()) {
+                                    if (!manager.getName().equals(conn_name)) {
+                                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.similarName(manager.getName()))).build()));
+                                        return;
+                                    }
+                                }
+
+                                LockedAccount account = new LockedAccount(manager.getUUID());
+
+                                if (account.isLocked()) {
+                                    String administrator = account.getIssuer();
+                                    Instant date = account.getLockDate();
+                                    InstantParser parser = new InstantParser(date);
+                                    String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+
+                                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"))).build()));
+                                    logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
+                                    return;
+                                }
+                            }
+
+                            Event event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, conn_name, e);
+                            ModulePlugin.callEvent(event);
+
+                            if (event.isHandled()) {
+                                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
                                 return;
                             }
+
+                            PlayerPool.addPlayer(tar_uuid);
+                        }
+                        break;
+                    case INVALID:
+                    case ERROR:
+                    default:
+                        if (!ipEvent.getResult().equals(validationResult)) {
+                            logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                    ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                         }
 
-                        Event event = new UserPreJoinEvent(e.getConnection().getRemoteAddress().getAddress(), tar_uuid, conn_name, e);
-                        ModulePlugin.callEvent(event);
+                        logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", conn_name, ipEvent.getResult().getReason());
+                        e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(
+                                StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                        ipEvent.getResult().getReason()))).build())
+                        );
 
-                        if (event.isHandled()) {
-                            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(event.getHandleReason())).build()));
-                            return;
-                        }
-
-                        PlayerPool.addPlayer(tar_uuid);
-                    }
-                    break;
-                case INVALID:
-                case ERROR:
-                default:
-                    if (!ipEvent.getResult().equals(validationResult)) {
-                        logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
-                                ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
-                    }
-
-                    logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", conn_name, ipEvent.getResult().getReason());
-                    e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(
-                            StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
-                                    ipEvent.getResult().getReason()))).build())
-                    );
-
-                    break;
+                        break;
+                }
+            } else {
+                e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(ipEvent.getHandleReason())).build()));
             }
-        } else {
-            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor(ipEvent.getHandleReason())).build()));
-        }
 
-        ids.remove(conn_name);
+            ids.remove(conn_name);
+        } else {
+            e.setResult(PreLoginEvent.PreLoginComponentResult.denied(Component.text().content(StringUtils.toColor("&cThe server is starting up!")).build()));
+        }
     }
 
     @Subscribe(order = PostOrder.FIRST)

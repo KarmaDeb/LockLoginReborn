@@ -6,49 +6,19 @@ import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-@SuppressWarnings("deprecation")
 public final class AccountNameDatabase {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
-    private final static KarmaMain nameDatabase;
+    private final static KarmaMain nameDatabase = new KarmaMain(lockLogin, "names.lldb", "data");
 
     private final UUID uuid;
-
-    static {
-        Path existing = lockLogin.getDataPath().resolve("data").resolve("names.lldb");
-        KarmaMain tmp = null;
-        if (Files.exists(existing)) {
-            List<String> lines = PathUtilities.readAllLines(existing);
-            if (!lines.isEmpty()) {
-                String first = lines.get(0);
-
-                if (!first.equals("(") && !first.equals("(\"main\"")) {
-                    try {
-                        tmp = KarmaMain.migrate(new KarmaFile(existing));
-                    } catch (Throwable ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        if (tmp == null)
-            tmp = new KarmaMain(existing);
-
-        nameDatabase = tmp;
-    }
 
     /**
      * Initialize the account name database

@@ -24,6 +24,7 @@ import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
@@ -89,7 +90,7 @@ public class AccountCommand implements CommandExecutor {
                                 AccountManager manager = user.getManager();
 
                                 CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                if (util.validate()) {
+                                if (util.validate(Validation.ALL)) {
                                     UserChangePasswordEvent.ChangeResult result;
                                     if (!password.equals(new_pass)) {
                                         Password secure = new Password(new_pass);
@@ -288,7 +289,7 @@ public class AccountCommand implements CommandExecutor {
 
                                     if (password.equals(confirmation)) {
                                         CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                        if (util.validate()) {
+                                        if (util.validate(Validation.ALL)) {
                                             user.send(messages.prefix() + messages.accountRemoved());
                                             manager.remove(player.getName());
 

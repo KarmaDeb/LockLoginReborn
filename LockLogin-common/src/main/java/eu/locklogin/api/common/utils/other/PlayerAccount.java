@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -61,6 +62,72 @@ public final class PlayerAccount extends AccountManager {
     private final static Console console = source.console();
 
     private final KarmaMain manager;
+
+    static {
+        Path backup = source.getDataPath().resolve("data").resolve("accounts_backup");
+        if (!Files.exists(backup)) {
+            Path original = source.getDataPath().resolve("data").resolve("accounts");
+
+            boolean success = false;
+            try {
+                AtomicBoolean error = new AtomicBoolean(false);
+
+                Files.list(original).forEachOrdered((sub) -> {
+                    Path newPath = backup.resolve(sub.getFileName().toString());
+
+                    try {
+                        PathUtilities.create(newPath);
+                        Files.copy(sub, newPath, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (Throwable fcE) {
+                        error.set(true);
+                    }
+                });
+
+                success = !error.get();
+            } catch (Throwable ex) {
+                source.logger().scheduleLog(Level.GRAVE, ex);
+                source.logger().scheduleLog(Level.INFO, "Failed to copy accounts data to backup");
+            }
+
+            ASCIIArtGenerator generator = new ASCIIArtGenerator();
+            if (success) {
+                generator.print("&c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+
+                source.console().send("-------------------------------------------");
+                source.console().send("");
+                source.console().send("&eDue to the new file system KarmaAPI introduced");
+                source.console().send("&eand which LockLogin is now using. A backup of all");
+                source.console().send("&ethe player data has been made. If something breaks");
+                source.console().send("&edo not say you lost all your player data. Just restore");
+                source.console().send("&ethe backup data and report the problem to RedDo discord");
+                source.console().send("");
+                source.console().send("&dDiscord: &7{0}", "https://discord.gg/jRFfsdxnJR");
+                source.console().send("&dBackup: &7{0}", PathUtilities.getPrettyPath(backup));
+                source.console().send("");
+                source.console().send("-------------------------------------------");
+            } else {
+                generator.print("&c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+
+                source.console().send("-------------------------------------------");
+                source.console().send("");
+                source.console().send("&eDue to the new file system KarmaAPI introduced");
+                source.console().send("&eand which LockLogin is now using. A backup of all");
+                source.console().send("&ethe player data should have been done automatically");
+                source.console().send("&ebut the plugin couldn't do it. Do it manually by copying");
+                source.console().send("&e{0} &7to&e {1}.", PathUtilities.getPrettyPath(original), PathUtilities.getPrettyPath(backup));
+                source.console().send("&eIf you need help, ask for support in our discord");
+                source.console().send("");
+                source.console().send("&dDiscord: &7{0}", "https://discord.gg/jRFfsdxnJR");
+                source.console().send("");
+                source.console().send("-------------------------------------------");
+
+                source.console().send("");
+                source.console().send("Exiting server as backup couldn't be done", Level.GRAVE);
+
+                System.exit(1);
+            }
+        }
+    }
 
     /**
      * Initialize the player file
@@ -93,7 +160,7 @@ public final class PlayerAccount extends AccountManager {
                         throw new IllegalArgumentException("Cannot initialize player file instance for unknown account constructor type: " + parameter.getLocalName());
                 }
 
-                manager = new KarmaMain(randomId.getAccountFile())
+                manager = new KarmaMain(source, randomId.getAccountFile())
                         .internal(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
 
                 try {
@@ -315,60 +382,6 @@ public final class PlayerAccount extends AccountManager {
         }
     }
 
-    /**
-     * Migrate from LockLogin v4 player database
-     */
-    public static void migrateV4() {
-        File v3DataFolder = source.getDataPath().resolve("data").resolve("accounts").toFile();
-        File[] files = v3DataFolder.listFiles();
-
-        if (files != null) {
-            console.send("Initializing LockLogin v4 player database migration", Level.INFO);
-
-            for (File file : files) {
-                if (FileUtilities.isKarmaFile(file)) {
-                    console.send("Migrating account #" + file.getName().replace(".lldb", ""), Level.INFO);
-
-                    try {
-                        Path tmp = Files.createTempFile(file.getName(), "");
-                        Files.move(file.toPath(), tmp, StandardCopyOption.REPLACE_EXISTING);
-                        PathUtilities.destroy(file.toPath());
-
-                        @SuppressWarnings("deprecation")
-                        KarmaFile m = new KarmaFile(tmp);
-
-                        KarmaMain original = new KarmaMain(file.toPath());
-
-                        original.set("player", new KarmaObject(m.getString("PLAYER", "")));
-                        original.set("uuid", new KarmaObject(m.getString("UUID", "")));
-                        original.set("password", new KarmaObject(m.getString("PASSWORD", "")));
-                        original.set("token", new KarmaObject(m.getString("TOKEN", "")));
-                        original.set("pin", new KarmaObject(m.getString("PIN", "")));
-                        original.set("2fa", new KarmaObject(m.getBoolean("2FA", false)));
-
-                        if (!original.save()) {
-                            console.send("Failed to migrate account of {0}", Level.GRAVE, file.getName().replace(".lldb", ""));
-                            source.logger().scheduleLog(Level.GRAVE, "Failed to migrate account of {0}", file.getName().replace(".lldb", ""));
-
-                            Files.move(tmp, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                            @SuppressWarnings("deprecation")
-                            KarmaFile fl = new KarmaFile(file);
-                            fl.applyKarmaAttribute();
-                        } else {
-                            original.validate();
-                            m.delete();
-                        }
-                    } catch (Throwable ex) {
-                        source.logger().scheduleLog(Level.GRAVE, ex);
-                        source.logger().scheduleLog(Level.INFO, "Failed to migrate account of {0}", file.getName().replace(".lldb", ""));
-                        console.send("Failed to migrate account of {0}", Level.GRAVE, file.getName().replace(".lldb", ""));
-                    }
-                }
-            }
-        }
-    }
-
     @Override
     public boolean exists() {
         return manager.exists();
@@ -405,6 +418,7 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public void saveUUID(final @NotNull AccountID id) {
         manager.set("uuid", new KarmaObject(id.getId()));
+        manager.save();
     }
 
     /**
@@ -415,6 +429,7 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public void set2FA(final boolean status) {
         manager.set("2fa", new KarmaObject(status));
+        manager.save();
     }
 
     /**
@@ -431,6 +446,8 @@ public final class PlayerAccount extends AccountManager {
             manager.set("token", new KarmaObject(account.getGAuth()));
             manager.set("pin", new KarmaObject(account.getPin()));
             manager.set("2fa", new KarmaObject(account.has2FA()));
+
+            manager.save();
         }
     }
 
@@ -528,7 +545,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("PASSWORD", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
+        manager.set("password", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
         manager.save();
     }
 

@@ -39,7 +39,7 @@
                             <shadedPattern>eu.locklogin.plugin.velocity.util.security.TokenGen</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>eu.locklogin.api.common.security.GoogleAuthFactory</pattern>
+                            <pattern>eu.locklogin.api.common.security.google.GoogleAuthFactory</pattern>
                             <shadedPattern>eu.locklogin.plugin.velocity.util.security.GoogleAuthFactory</shadedPattern>
                         </relocation>
                         <relocation>

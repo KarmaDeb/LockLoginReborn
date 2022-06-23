@@ -44,7 +44,7 @@ public final class LockedAccount extends LockManager {
         KarmaSource source = APISource.loadProvider("LockLogin");
 
         Path file = source.getDataPath().resolve("data").resolve("accounts").resolve(accId.getId().replace("-", "") + ".locked");
-        lockedFile = new KarmaMain(file);
+        lockedFile = new KarmaMain(source, file);
     }
 
     /**

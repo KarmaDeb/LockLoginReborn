@@ -61,8 +61,7 @@ public final class STFetcher {
                 }, wait);
 
                 String[] urls = new String[]{
-                        /*"https://karmadev.es/locklogin/stf/",
-                        "https://karmarepo.000webhostapp.com/locklogin/stf/",*/
+                        "https://karmadev.es/locklogin/stf/",
                         "https://karmaconfigs.ml/locklogin/stf/",
                         "https://karmarepo.ml/locklogin/stf/",
                         "https://karmaconfigs.github.io/updates/LockLogin/data/stf.json",

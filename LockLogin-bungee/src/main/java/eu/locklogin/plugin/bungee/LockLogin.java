@@ -21,8 +21,8 @@ import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.utils.KarmaLogger;
 import net.md_5.bungee.api.ProxyServer;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public interface LockLogin {
             .getLocation()
             .getPath().replaceAll("%20", " "));
 
-    Logger logger = CurrentPlatform.getLogger();
+    KarmaLogger logger = CurrentPlatform.getLogger();
 
     PluginProperties properties = new PluginProperties();
 

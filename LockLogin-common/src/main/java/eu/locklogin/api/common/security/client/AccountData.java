@@ -23,7 +23,6 @@ import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -57,7 +56,6 @@ public final class AccountData {
      * @param libraryName the player ip
      * @param account     the player account id
      */
-    @SuppressWarnings("deprecation")
     public AccountData(final @Nullable InetAddress libraryName, final AccountID account) {
         uuid = account;
 
@@ -72,50 +70,13 @@ public final class AccountData {
             ip = "none";
         }
 
-        File libFileOld = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File libFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "lib", ip + ".library");
-        File revLibFileOld = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
+        File revLibFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "rev_lib", account.getId() + ".library");
 
-        File libFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
-                "ips" + File.separator + "lib", ip + ".kf");
-
-        File revLibFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
-                "ips" + File.separator + "rev_lib", account.getId() + ".kf");
-
-        if (libFileOld.exists()) {
-            try {
-                KarmaMain mn = KarmaMain.fromLegacy(new KarmaFile(libFileOld));
-                if (mn.save(libFile.toPath())) {
-                    mn.delete();
-                    plugin.console().send("Updated legacy KarmaFile {0} to modern KarmaMain file", Level.OK, FileUtilities.getPrettyFile(libFileOld));
-                } else {
-                    plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.WARNING, FileUtilities.getPrettyFile(libFileOld));
-                }
-            } catch (Throwable ex) {
-                plugin.logger().scheduleLog(Level.GRAVE, ex);
-                plugin.logger().scheduleLog(Level.INFO, "Failed to update KarmaFile {0} to KarmaMain", FileUtilities.getPrettyFile(libFileOld));
-                plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.GRAVE, FileUtilities.getPrettyFile(libFileOld));
-            }
-        }
-        if (revLibFileOld.exists()) {
-            try {
-                KarmaMain mn = KarmaMain.fromLegacy(new KarmaFile(revLibFileOld));
-                if (mn.save(revLibFile.toPath())) {
-                    mn.delete();
-                    plugin.console().send("Updated legacy KarmaFile {0} to modern KarmaMain file", Level.OK, FileUtilities.getPrettyFile(revLibFileOld));
-                } else {
-                    plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.WARNING, FileUtilities.getPrettyFile(revLibFileOld));
-                }
-            } catch (Throwable ex) {
-                plugin.logger().scheduleLog(Level.GRAVE, ex);
-                plugin.logger().scheduleLog(Level.INFO, "Failed to update KarmaFile {0} to KarmaMain", FileUtilities.getPrettyFile(revLibFileOld));
-                plugin.console().send("Failed to update legacy KarmaFile {0} to modern KarmaMain file", Level.GRAVE, FileUtilities.getPrettyFile(revLibFileOld));
-            }
-        }
-
-        lib = new KarmaMain(libFile.toPath());
-        rev_lib = new KarmaMain(revLibFile.toPath());
+        lib = new KarmaMain(plugin, libFile.toPath());
+        rev_lib = new KarmaMain(plugin, revLibFile.toPath());
     }
 
     /**
@@ -243,7 +204,7 @@ public final class AccountData {
                 for (KarmaElement libName : array.getElements()) {
                     Path libFile = plugin.getDataPath().resolve("data").resolve("ips").resolve("lib").resolve(libName + ".kf");
                     if (Files.exists(libFile)) {
-                        KarmaMain lb = new KarmaMain(libFile);
+                        KarmaMain lb = new KarmaMain(plugin, libFile);
                         if (lb.isSet("assigned")) {
                             KarmaElement lbAssigned = lb.get("assigned");
                             if (lbAssigned.isArray()) {

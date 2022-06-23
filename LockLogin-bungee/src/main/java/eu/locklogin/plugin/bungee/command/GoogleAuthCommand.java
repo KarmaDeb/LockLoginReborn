@@ -16,10 +16,12 @@ package eu.locklogin.plugin.bungee.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.GoogleAuthFactory;
+import eu.locklogin.api.account.ScratchCodes;
+import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -28,7 +30,6 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.data.ScratchCodes;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
@@ -86,7 +87,7 @@ public final class GoogleAuthCommand extends Command {
                                             String password = args[1];
 
                                             CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                            if (util.validate()) {
+                                            if (util.validate(Validation.ALL)) {
                                                 String token = manager.getGAuth();
 
                                                 if (token.replaceAll("\\s", "").isEmpty()) {
@@ -123,7 +124,7 @@ public final class GoogleAuthCommand extends Command {
                                                     List<Integer> scratch_codes = factory.getRecoveryCodes();
                                                     user.send(messages.gAuthScratchCodes(scratch_codes));
 
-                                                    ScratchCodes codes = new ScratchCodes(player);
+                                                    ScratchCodes codes = new ScratchCodes(user.getManager().getUUID());
                                                     codes.store(scratch_codes);
 
                                                     manager.setGAuth(token);
@@ -161,7 +162,7 @@ public final class GoogleAuthCommand extends Command {
                                                     CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                                     GoogleAuthFactory factory = user.getTokenFactory();
 
-                                                    if (util.validate() && factory.validate(manager.getGAuth(), code)) {
+                                                    if (util.validate(Validation.ALL) && factory.validate(manager.getGAuth(), code)) {
                                                         manager.set2FA(false);
                                                         manager.setGAuth(null);
 
@@ -191,7 +192,7 @@ public final class GoogleAuthCommand extends Command {
                                             int code = Integer.parseInt(codeBuilder.toString());
 
                                             GoogleAuthFactory factory = user.getTokenFactory();
-                                            ScratchCodes codes = new ScratchCodes(player);
+                                            ScratchCodes codes = new ScratchCodes(user.getManager().getUUID());
 
                                             if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
                                                 DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build());

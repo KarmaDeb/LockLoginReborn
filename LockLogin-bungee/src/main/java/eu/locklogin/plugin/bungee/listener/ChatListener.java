@@ -47,7 +47,7 @@ public final class ChatListener implements Listener {
                         e.setCancelled(true);
                         user.send(messages.prefix() + messages.gAuthenticate());
                     } else {
-                        if (!AllowedCommand.isAllowed(getCommand(e.getMessage()))) {
+                        if (AllowedCommand.notAllowed(getCommand(e.getMessage()))) {
                             e.setCancelled(true);
                             return;
                         }
@@ -82,7 +82,7 @@ public final class ChatListener implements Listener {
         if (session.isValid()) {
             if (!session.isLogged()) {
                 String command = getCommand(e.getMessage());
-                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !AllowedCommand.isAllowed(command));
+                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && AllowedCommand.notAllowed(command));
 
                 return;
             } else {

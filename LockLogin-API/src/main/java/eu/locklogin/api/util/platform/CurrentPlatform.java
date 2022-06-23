@@ -27,8 +27,12 @@ import eu.locklogin.api.util.enums.Manager;
 import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.utils.KarmaLogger;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.RandomString;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.string.util.TextContent;
@@ -50,29 +54,47 @@ public final class CurrentPlatform {
 
     private final static Map<UUID, Object> players = new ConcurrentHashMap<>();
     private final static ModuleServer server = new ModuleServer();
-    private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
+    private final static KarmaLogger logger = new Logger(APISource.loadProvider("LockLogin"));
 
     //Unique server hash, for panel utilities and more...
     private static final String server_hash;
 
     static {
         //Make server hash
+        String hash;
         KarmaSource plugin = APISource.getOriginal(false);
-        KarmaFile kf = new KarmaFile(plugin, "server.cfg", "cache", "locklogin");
+        try {
+            KarmaMain kf = new KarmaMain(plugin, "server.cfg", "cache", "locklogin");
 
-        String tmp_hash = kf.getString("HASH", "");
-        if (StringUtils.isNullOrEmpty(tmp_hash)) {
-            tmp_hash = Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
+            KarmaElement tmp_hash = kf.get("hash");
+            if (tmp_hash == null || tmp_hash.isString() && StringUtils.isNullOrEmpty(tmp_hash.getObjet().getString().isEmpty()) || !tmp_hash.isString()) {
+                tmp_hash = new KarmaObject(Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
+                        RandomString.createBuilder()
+                                .withContent(TextContent.NUMBERS_AND_LETTERS)
+                                .withType(TextType.RANDOM_SIZE)
+                                .withSize(64)
+                ).create()).getBytes(StandardCharsets.UTF_8)));
+
+                kf.set("hash", tmp_hash);
+                kf.save();
+            }
+
+            hash = tmp_hash.getObjet().getString();
+        } catch (Throwable ex) {
+            plugin.logger().scheduleLog(Level.GRAVE, ex);
+            plugin.logger().scheduleLog(Level.INFO, "Failed to load server hash");
+
+            hash = Base64.getEncoder().encodeToString(new SHA512().hash(StringUtils.generateString(
                     RandomString.createBuilder()
                             .withContent(TextContent.NUMBERS_AND_LETTERS)
                             .withType(TextType.RANDOM_SIZE)
                             .withSize(64)
             ).create()).getBytes(StandardCharsets.UTF_8));
 
-            kf.set("HASH", tmp_hash);
+            plugin.console().send("Using temporal server hash due an error", Level.GRAVE);
         }
 
-        server_hash = tmp_hash;
+        server_hash = hash;
     }
 
     //private static Server remoteServer;
@@ -193,20 +215,9 @@ public final class CurrentPlatform {
     }
 
     /**
-     * Set the current remote server
-     *
-     * @param remote the current remote server
-     */
-    public static void setRemoteServer(final Object remote) {
-        /*if (remoteServer == null) {
-            remoteServer = remote;
-        }*/
-    }
-
-    /**
      * Get the LockLogin logger
      */
-    public static Logger getLogger() {
+    public static KarmaLogger getLogger() {
         return logger;
     }
 

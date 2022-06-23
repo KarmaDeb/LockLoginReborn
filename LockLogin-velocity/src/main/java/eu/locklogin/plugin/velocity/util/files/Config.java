@@ -88,6 +88,17 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin should replace the server MOTD while in
+     * bungeecord mode
+     *
+     * @return if the server should replace MOTD
+     */
+    @Override
+    public boolean showMOTD() {
+        return cfg.getBoolean("BungeeMotd", true);
+    }
+
+    /**
      * Get the assigned LockLogin web panel
      * server key
      *
@@ -257,6 +268,18 @@ public final class Config extends PluginConfiguration {
     @Override
     public boolean encryptBase64() {
         return cfg.getBoolean("Encryption.Encrypt", true);
+    }
+
+    /**
+     * Get if the plugin should encrypt the password
+     * using a virtual ID
+     *
+     * @return if the plugin should hash password using
+     * a virtual ID
+     */
+    @Override
+    public boolean useVirtualID() {
+        return cfg.getBoolean("Encryption.VirtualID", false);
     }
 
     /**

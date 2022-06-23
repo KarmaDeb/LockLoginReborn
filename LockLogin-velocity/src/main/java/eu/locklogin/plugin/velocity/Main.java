@@ -50,7 +50,6 @@ public class Main extends KarmaPlugin {
 
     public Main(final ProxyServer server, final PluginContainer plugin) {
         super(server, plugin, false);
-
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(VelocityPlugin.class);
 

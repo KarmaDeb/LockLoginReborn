@@ -20,6 +20,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -96,7 +97,7 @@ public class PinCommand extends BungeeLikeCommand {
                                             String current = args[1];
 
                                             CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
-                                            if (util.validate()) {
+                                            if (util.validate(Validation.ALL)) {
                                                 manager.setUnsafePin("");
                                                 user.send(messages.prefix() + messages.pinReseted());
                                             } else {
@@ -116,7 +117,7 @@ public class PinCommand extends BungeeLikeCommand {
                                             String newPin = args[2];
 
                                             CryptoFactory util = CryptoFactory.getBuilder().withPassword(current).withToken(manager.getPin()).build();
-                                            if (util.validate()) {
+                                            if (util.validate(Validation.ALL)) {
                                                 manager.setPin(newPin);
                                                 user.send(messages.prefix() + messages.pinChanged());
                                             } else {

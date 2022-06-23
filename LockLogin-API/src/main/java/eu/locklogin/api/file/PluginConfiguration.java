@@ -24,6 +24,14 @@ public abstract class PluginConfiguration {
     public abstract String serverName();
 
     /**
+     * Get if the plugin should replace the server MOTD while in
+     * bungeecord mode
+     *
+     * @return if the server should replace MOTD
+     */
+    public abstract boolean showMOTD();
+
+    /**
      * Get the assigned LockLogin web panel
      * server key
      *
@@ -113,6 +121,15 @@ public abstract class PluginConfiguration {
      * @return if the plugin should encrypt in Base64
      */
     public abstract boolean encryptBase64();
+
+    /**
+     * Get if the plugin should encrypt the password
+     * using a virtual ID
+     *
+     * @return if the plugin should hash password using
+     *         a virtual ID
+     */
+    public abstract boolean useVirtualID();
 
     /**
      * Get if the plugin should block the player

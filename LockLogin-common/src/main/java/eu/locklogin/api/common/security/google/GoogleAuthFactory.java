@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.security;
+package eu.locklogin.api.common.security.google;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -57,7 +57,7 @@ public final class GoogleAuthFactory {
      *
      * @return the user token
      */
-    public final String generateToken() {
+    public String generateToken() {
         GoogleAuthenticatorKey credentials = authenticator.createCredentials();
 
         recovery_codes.put(playerID, credentials.getScratchCodes());
@@ -69,7 +69,7 @@ public final class GoogleAuthFactory {
      *
      * @return the user recovery codes
      */
-    public final List<Integer> getRecoveryCodes() {
+    public List<Integer> getRecoveryCodes() {
         return recovery_codes.getOrDefault(playerID, Collections.emptyList());
     }
 
@@ -80,7 +80,7 @@ public final class GoogleAuthFactory {
      * @param code  the provided code
      * @return if the user code is valid
      */
-    public final boolean validate(final String token, final int code) {
+    public boolean validate(final String token, final int code) {
         return authenticator.authorize(token, code);
     }
 
@@ -193,9 +193,10 @@ public final class GoogleAuthFactory {
 
         static class ReseedingSecureRandom {
 
+            private String algorithm;
+
             private static final int MAX_OPERATIONS = 1_000_000;
             private final String provider;
-            private final String algorithm;
             private final AtomicInteger count = new AtomicInteger(0);
             private volatile SecureRandom secureRandom;
 
@@ -220,8 +221,9 @@ public final class GoogleAuthFactory {
                         this.secureRandom = new SecureRandom();
                     } else if (this.provider == null) {
                         this.secureRandom = SecureRandom.getInstance(this.algorithm);
-                    } else {
-                        this.secureRandom = SecureRandom.getInstance(this.algorithm, this.provider);
+                    } else if (this.algorithm == null) {
+                        this.algorithm = SecureRandom.getInstanceStrong().getAlgorithm();
+                        this.secureRandom = SecureRandom.getInstance(algorithm, this.provider);
                     }
                 } catch (NoSuchAlgorithmException e) {
                     throw new GoogleAuthenticatorException(

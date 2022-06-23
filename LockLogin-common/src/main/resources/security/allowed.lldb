@@ -1,6 +1,10 @@
-/// List of allowed commands -->
-/// Adding commands with : ( for example -->
-/// bukkit:help won't work -->
-[LIST=ALLOWED]
-recovery
-[/LIST=ALLOWED]
+("main"
+
+    *(
+        List of allowed commands. Any entry that has
+        :, such as bukkit:help won't work!
+    )*
+    'allowed' -> {
+        'recovery'
+    }
+)

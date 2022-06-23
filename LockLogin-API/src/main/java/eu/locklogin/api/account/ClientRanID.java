@@ -16,8 +16,10 @@ package eu.locklogin.api.account;
 
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.karmafile.Key;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -26,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * LockLogin LocalId memory
@@ -43,7 +43,7 @@ public final class ClientRanID {
     private final String uuid;
 
     private final static KarmaSource source = APISource.loadProvider("LockLogin");
-    private final static KarmaFile idData = new KarmaFile(source.getDataPath().resolve("data").resolve("local").resolve("ids.lldb"));
+    private final static KarmaMain idData = new KarmaMain(source, source.getDataPath().resolve("data").resolve("local").resolve("ids.lldb"));
 
     /**
      * Initialize the azuriom id memory
@@ -55,8 +55,10 @@ public final class ClientRanID {
         if (Files.exists(oldFile)) {
             source.console().send("Found legacy client random ID storage ( azuriom/ids.lldb ). Starting migration to the new system", Level.INFO);
 
+            @SuppressWarnings("deprecation")
             KarmaFile tmpMigration = new KarmaFile(oldFile);
-            tmpMigration.getKeys(false).forEach((key) -> idData.set(key.getPath(), key.getValue()));
+            tmpMigration.getKeys(false).forEach((key) -> idData.set(key.getPath().toLowerCase(), new KarmaObject(key.getValue().toString())));
+            idData.save();
 
             tmpMigration.delete();
         }
@@ -70,7 +72,8 @@ public final class ClientRanID {
      * @param name the account name
      */
     public void assignTo(final String name) {
-        idData.set(name, uuid);
+        idData.set(name, new KarmaObject(name));
+        idData.save();
     }
 
     /**
@@ -82,17 +85,15 @@ public final class ClientRanID {
     public LateScheduler<String> getAssigned() {
         LateScheduler<String> result = new AsyncLateScheduler<>();
 
-        source.async().queue(() -> {
-            Set<Key> keys = idData.getKeys(false);
-
+        source.async().queue("load_assigned_ids", () -> {
             boolean response = false;
-            for (Key key : keys) {
-                Object tmpVal = key.getValue();
+            for (String key : idData.getKeys()) {
+                KarmaElement tmpVal = idData.get(key);
 
-                if (tmpVal instanceof UUID) {
-                    UUID value = (UUID) tmpVal;
-                    if (value.toString().equals(uuid)) {
-                        result.complete(key.getPath());
+                if (tmpVal.isString()) {
+                    String id = tmpVal.getObjet().getString();
+                    if (uuid.equals(id)) {
+                        result.complete(key);
 
                         response = true;
                         break;
@@ -126,9 +127,9 @@ public final class ClientRanID {
      */
     @Nullable
     public static AccountID getAssigned(final String name) {
-        String id = idData.getString(name, "");
+        KarmaElement id = idData.get(name);
         if (!StringUtils.isNullOrEmpty(id)) {
-            return AccountID.fromString(id);
+            return AccountID.fromString(id.getObjet().getString());
         } else {
             return null;
         }

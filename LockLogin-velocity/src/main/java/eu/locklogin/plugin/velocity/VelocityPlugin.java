@@ -9,14 +9,13 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.velocity.KarmaPlugin;
 import org.bstats.velocity.Metrics;
 
 @Plugin(
         id = "locklogin",
         name = "LockLogin",
-        version = "1.13.23",
+        version = "1.13.24",
         authors = {"KarmaDev"},
         description =
                 "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +

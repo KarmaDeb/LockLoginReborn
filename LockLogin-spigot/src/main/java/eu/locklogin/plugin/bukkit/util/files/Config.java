@@ -33,7 +33,6 @@ import java.util.List;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
-//TODO: Generate docs
 public final class Config extends PluginConfiguration {
 
     private final static File cfg_file = new File(plugin.getDataFolder(), "config.yml");
@@ -108,6 +107,17 @@ public final class Config extends PluginConfiguration {
         }
 
         return server_name;
+    }
+
+    /**
+     * Get if the plugin should replace the server MOTD while in
+     * bungeecord mode
+     *
+     * @return if the server should replace MOTD
+     */
+    @Override
+    public boolean showMOTD() {
+        return cfg.getBoolean("BungeeMotd", true);
     }
 
     /**
@@ -279,6 +289,18 @@ public final class Config extends PluginConfiguration {
     @Override
     public boolean encryptBase64() {
         return cfg.getBoolean("Encryption.Encrypt", true);
+    }
+
+    /**
+     * Get if the plugin should encrypt the password
+     * using a virtual ID
+     *
+     * @return if the plugin should hash password using
+     * a virtual ID
+     */
+    @Override
+    public boolean useVirtualID() {
+        return cfg.getBoolean("Encryption.VirtualID", false);
     }
 
     /**

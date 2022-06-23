@@ -15,6 +15,7 @@ package eu.locklogin.api.module;
  */
 
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.ModuleScheduler;
@@ -102,7 +103,7 @@ public abstract class PluginModule implements KarmaSource {
                                     .withPassword(stored_key)
                                     .withToken(key).build();
 
-                            if (factory.validate()) {
+                            if (factory.validate(Validation.MODERN)) {
                                 getConsole().sendMessage(MessageLevel.INFO, "Validated module key successfully");
                             } else {
                                 throw new InvalidKeyError(this);

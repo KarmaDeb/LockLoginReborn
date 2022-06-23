@@ -14,10 +14,11 @@ package eu.locklogin.api.common.security;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,19 +28,24 @@ import java.util.Set;
  */
 public final class AllowedCommand {
 
+    private final static KarmaSource plugin = APISource.loadProvider("LockLogin");
     private final static Set<String> allowed = new HashSet<>();
 
     /**
      * Scan for allowed passwords
      */
     public static void scan() {
-        File file = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "allowed.lldb");
-        KarmaFile allowedFile = new KarmaFile(file);
+        KarmaMain allowedFile = new KarmaMain(plugin, "allowed.lldb")
+                .internal(AllowedCommand.class.getResourceAsStream("/security/allowed.lldb"));
 
         if (!allowedFile.exists())
-            allowedFile.exportFromFile(AllowedCommand.class.getResourceAsStream("/security/allowed.lldb"));
+            allowedFile.exportDefaults();
 
-        allowed.addAll(allowedFile.getStringList("ALLOWED", "recovery"));
+        KarmaElement a = allowedFile.get("allowed");
+
+        if (a != null && a.isArray()) {
+            a.getArray().forEach((entry) -> allowed.add(entry.getObjet().textValue()));
+        }
     }
 
     /**
@@ -58,7 +64,7 @@ public final class AllowedCommand {
      * @param command the command
      * @return if it's allowed
      */
-    public static boolean isAllowed(final String command) {
-        return allowed.stream().anyMatch(command::startsWith);
+    public static boolean notAllowed(final String command) {
+        return allowed.stream().noneMatch(command::startsWith);
     }
 }

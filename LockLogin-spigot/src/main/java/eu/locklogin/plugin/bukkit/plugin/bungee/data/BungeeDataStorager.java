@@ -15,6 +15,7 @@ import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
+import eu.locklogin.api.encryption.Validation;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
@@ -47,7 +48,7 @@ public final class BungeeDataStorager {
             if (proxyKey.replaceAll("\\s", "").isEmpty()) {
                 return true;
             } else {
-                return CryptoFactory.getBuilder().withPassword(key).withToken(proxyKey).build().validate();
+                return CryptoFactory.getBuilder().withPassword(key).withToken(proxyKey).build().validate(Validation.ALL);
             }
         } catch (Throwable ex) {
             ex.printStackTrace();

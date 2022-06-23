@@ -30,7 +30,6 @@ public final class Main extends KarmaPlugin {
 
     public Main() throws Throwable {
         super(false);
-
         CurrentPlatform.setPlatform(Platform.BUNGEE);
         CurrentPlatform.setMain(Main.class);
 

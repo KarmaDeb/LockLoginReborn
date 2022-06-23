@@ -84,6 +84,7 @@ public final class ChecksumTables {
                         BufferedReader bf = new BufferedReader(reader);
 
                         File dataFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "tables.lldb");
+                        @SuppressWarnings("deprecation")
                         KarmaFile checksum = new KarmaFile(dataFile);
                         checksum.create();
 

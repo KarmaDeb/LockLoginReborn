@@ -18,6 +18,7 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
@@ -26,7 +27,6 @@ import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import java.io.File;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,7 +37,7 @@ public final class PersistentSessionData {
     private final static File folder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "data");
     private final static File file = new File(folder, "sessions.lldb");
 
-    private final static KarmaMain sessions = new KarmaMain(file.toPath());
+    private final static KarmaMain sessions = new KarmaMain(APISource.loadProvider("LockLogin"), file.toPath());
 
     private final AccountID id;
 

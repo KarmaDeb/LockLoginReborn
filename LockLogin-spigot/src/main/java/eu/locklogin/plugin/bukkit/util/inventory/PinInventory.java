@@ -4,6 +4,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -147,7 +148,7 @@ public final class PinInventory implements InventoryHolder {
                     String pin = input.get(player).replaceAll("-", "");
 
                     CryptoFactory utils = CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build();
-                    if (utils.validate()) {
+                    if (utils.validate(Validation.ALL)) {
                         if (utils.needsRehash(config.passwordEncryption())) {
                             //Set the player password again to update his hash
                             manager.setPin(pin);

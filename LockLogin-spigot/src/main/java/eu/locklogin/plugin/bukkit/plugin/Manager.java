@@ -32,6 +32,7 @@ import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
@@ -92,6 +93,8 @@ public final class Manager {
     private static int updater_id = 0;
     private static int alert_id = 0;
 
+    private static boolean initialized = false;
+
     public static void initialize() {
         int size = 10;
         String character = "*";
@@ -111,7 +114,6 @@ public final class Manager {
         PlayerAccount.migrateV1();
         PlayerAccount.migrateV2();
         PlayerAccount.migrateV3();
-        PlayerAccount.migrateV4();
         MessagePool.startCheckTask();
 
         setupFiles();
@@ -138,6 +140,12 @@ public final class Manager {
         loadCache();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
+        if (config.useVirtualID()) {
+            CryptoFactory.loadVirtualID(CurrentPlatform.getServerHash());
+        } else {
+            console.send("Virtual ID ( disabled by default) is disabled. You should enable it to enforce you clients security against database leaks", Level.GRAVE);
+        }
+
         if (config.isBungeeCord()) {
             Messenger messenger = plugin.getServer().getMessenger();
             BungeeReceiver receiver = new BungeeReceiver();
@@ -196,9 +204,12 @@ public final class Manager {
             RemoteNotification notification = new RemoteNotification();
             notification.checkAlerts().whenComplete(() -> console.send(notification.getStartup()));
         }, 20 * 10);
+
+        initialized = true;
     }
 
     public static void terminate() {
+        initialized = false;
         endPlayers();
 
         try {
@@ -692,5 +703,14 @@ public final class Manager {
      */
     public static VersionUpdater getUpdater() {
         return updater;
+    }
+
+    /**
+     * Get if LockLogin has been initialized
+     *
+     * @return if the plugin has been initialized
+     */
+    public static boolean isInitialized() {
+        return initialized;
     }
 }

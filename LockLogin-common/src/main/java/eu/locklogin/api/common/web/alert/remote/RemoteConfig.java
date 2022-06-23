@@ -58,6 +58,17 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin should replace the server MOTD while in
+     * bungeecord mode
+     *
+     * @return if the server should replace MOTD
+     */
+    @Override
+    public boolean showMOTD() {
+        return manager.getBoolean("BungeeMotd", CurrentPlatform.getRealConfiguration().showMOTD());
+    }
+
+    /**
      * Get the assigned LockLogin web panel
      * server key
      *
@@ -210,6 +221,18 @@ public class RemoteConfig extends PluginConfiguration {
     @Override
     public boolean encryptBase64() {
         return manager.getBoolean("Encryption.Encrypt", CurrentPlatform.getRealConfiguration().encryptBase64());
+    }
+
+    /**
+     * Get if the plugin should encrypt the password
+     * using a virtual ID
+     *
+     * @return if the plugin should hash password using
+     * a virtual ID
+     */
+    @Override
+    public boolean useVirtualID() {
+        return manager.getBoolean("Encryption.VirtualID", CurrentPlatform.getRealConfiguration().useVirtualID());
     }
 
     /**

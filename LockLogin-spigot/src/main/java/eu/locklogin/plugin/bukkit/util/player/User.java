@@ -14,7 +14,7 @@ package eu.locklogin.plugin.bukkit.util.player;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.GoogleAuthFactory;
+import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginConfiguration;

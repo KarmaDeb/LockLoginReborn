@@ -99,7 +99,7 @@ public final class TokenGen {
             UUID tokenID = storage.store(generated, password, calendar.toInstant());
             lockLogin.console().send("Communication token has been generated with ID {0}", Level.INFO, tokenID.toString());
 
-            KarmaMain idData = new KarmaMain(lockLogin, "data.lldb", "cache", "keys");
+            KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
             idData.set("local_token", new KarmaObject(tokenID.toString()));
             idData.save();
         }

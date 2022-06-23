@@ -44,7 +44,7 @@ public final class ChatListener {
                     e.setResult(PlayerChatEvent.ChatResult.denied());
                     user.send(messages.prefix() + messages.gAuthenticate());
                 } else {
-                    if (!AllowedCommand.isAllowed(getCommand(e.getMessage()))) {
+                    if (AllowedCommand.notAllowed(getCommand(e.getMessage()))) {
                         e.setResult(PlayerChatEvent.ChatResult.denied());
                         return;
                     }
@@ -76,7 +76,7 @@ public final class ChatListener {
             if (session.isValid()) {
                 if (!session.isLogged()) {
                     String command = getCommand(e.getCommand());
-                    if (!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !AllowedCommand.isAllowed(command)) {
+                    if (!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && AllowedCommand.notAllowed(command)) {
                         e.setResult(CommandExecuteEvent.CommandResult.denied());
                     }
 

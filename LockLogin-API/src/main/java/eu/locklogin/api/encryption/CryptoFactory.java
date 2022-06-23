@@ -23,7 +23,15 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.libraries.wordpress.WordPressCrypt;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.utils.security.file.FileEncryptor;
+import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -34,6 +42,8 @@ import java.util.regex.Pattern;
  * LockLogin crypto util
  */
 public final class CryptoFactory {
+
+    private static String virtual_id = "";
 
     private final String password;
     private final String token;
@@ -129,19 +139,19 @@ public final class CryptoFactory {
                 case SHA512:
                     SHA512 sha512 = new SHA512();
                     if (encrypt) {
-                        return Base64.getEncoder().encodeToString(sha512.hash(password).getBytes(StandardCharsets.UTF_8));
+                        return Base64.getEncoder().encodeToString(sha512.hash(virtual_id + password).getBytes(StandardCharsets.UTF_8));
                     } else {
-                        return sha512.hash(password);
+                        return sha512.hash(virtual_id + password);
                     }
                 case SHA256:
-                    SHA256 sha256 = new SHA256(password);
+                    SHA256 sha256 = new SHA256(virtual_id + password);
                     if (encrypt) {
                         return Base64.getEncoder().encodeToString(sha256.hash().getBytes(StandardCharsets.UTF_8));
                     } else {
                         return sha256.hash();
                     }
                 case LS_SHA256:
-                    LSSHA256 lessSHA256 = new LSSHA256(password);
+                    LSSHA256 lessSHA256 = new LSSHA256(virtual_id + password);
                     if (encrypt) {
                         return Base64.getEncoder().encodeToString(lessSHA256.hash().getBytes(StandardCharsets.UTF_8));
                     } else {
@@ -150,13 +160,13 @@ public final class CryptoFactory {
                 case BCrypt:
                 case BCryptPHP:
                     if (encrypt) {
-                        return Base64.getEncoder().encodeToString(BCryptLib.hashpw(password, BCryptLib.gensalt()).getBytes(StandardCharsets.UTF_8));
+                        return Base64.getEncoder().encodeToString(BCryptLib.hashpw(virtual_id + password, BCryptLib.gensalt()).getBytes(StandardCharsets.UTF_8));
                     } else {
-                        return BCryptLib.hashpw(password, BCryptLib.gensalt());
+                        return BCryptLib.hashpw(virtual_id + password, BCryptLib.gensalt());
                     }
                 case ARGON2I:
                 case ARGON2ID:
-                    Argon2Util argon2 = new Argon2Util(password);
+                    Argon2Util argon2 = new Argon2Util(virtual_id + password);
                     if (encrypt) {
                         return Base64.getEncoder().encodeToString(argon2.hashPassword(type).getBytes(StandardCharsets.UTF_8));
                     } else {
@@ -164,12 +174,12 @@ public final class CryptoFactory {
                     }
                 case AUTHME_SHA:
                     if (encrypt) {
-                        return Base64.getEncoder().encodeToString(AuthMeAuth.hashSha256(password).getBytes(StandardCharsets.UTF_8));
+                        return Base64.getEncoder().encodeToString(AuthMeAuth.hashSha256(virtual_id + password).getBytes(StandardCharsets.UTF_8));
                     } else {
-                        return AuthMeAuth.hashSha256(password);
+                        return AuthMeAuth.hashSha256(virtual_id + password);
                     }
                 case WORDPRESS:
-                    WordPressCrypt crypt = new WordPressCrypt(password);
+                    WordPressCrypt crypt = new WordPressCrypt(virtual_id + password);
                     if (encrypt) {
                         return Base64.getEncoder().encodeToString(crypt.hash().getBytes(StandardCharsets.UTF_8));
                     } else {
@@ -263,6 +273,14 @@ public final class CryptoFactory {
      * @return if the token needs a re-hash
      */
     public boolean needsRehash(final HashType current_crypto) {
+        if (!StringUtils.isNullOrEmpty(password) && !StringUtils.isNullOrEmpty(token)) {
+            if (!validate(Validation.MODERN) && validate(Validation.LEGACY)) {
+                //Basically, we can authenticate the user using legacy password verification ( without virtual id ). But we cannot
+                //validate him with the modern password verification ( virtual id based )
+                return true;
+            }
+        }
+
         HashType token_crypto = getTokenHash();
 
         if (!token_crypto.equals(HashType.NONE) && !token_crypto.equals(HashType.UNKNOWN))
@@ -275,9 +293,10 @@ public final class CryptoFactory {
      * Check if the password is equals
      * to the decoded password
      *
+     * @param validation set the validation method
      * @return if the password is correct
      */
-    public boolean validate() {
+    public boolean validate(final Validation validation) {
         if (!StringUtils.isNullOrEmpty(token) && !StringUtils.isNullOrEmpty(password)) {
             HashType current_type = getTokenHash();
 
@@ -286,33 +305,140 @@ public final class CryptoFactory {
                 key = new String(Base64.getDecoder().decode(key));
 
             SHA512 sha512 = new SHA512();
-            SHA512X sha512X = new SHA512X(password);
-            Argon2Util argon2id = new Argon2Util(password);
-            WordPressCrypt wordPress = new WordPressCrypt(password);
+
+            String pwd;
+            switch (validation) {
+                case ALL:
+                    String password_try = virtual_id + password;
+                    boolean try_result = false;
+
+                    SHA512X sha512X = new SHA512X(password_try);
+                    Argon2Util argon2id = new Argon2Util(password_try);
+                    WordPressCrypt wordPress = new WordPressCrypt(password_try);
+
+                    SaltData data = new SaltData(key);
+                    switch (current_type) {
+                        case SHA512:
+                            try_result = sha512.auth(password_try, key);
+                            break;
+                        case SHA256:
+                            SHA256 sha256 = new SHA256(password_try);
+                            try_result = sha256.check(key);
+                            break;
+                        case LS_SHA256:
+                            LSSHA256 lssha256 = new LSSHA256(password_try);
+                            try_result = lssha256.check(key);
+                            break;
+                        case BCrypt:
+                        case BCryptPHP:
+                            try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                            break;
+                        case ARGON2I:
+                            try_result = argon2id.checkPassword(key, HashType.ARGON2I);
+                            break;
+                        case ARGON2ID:
+                            try_result = argon2id.checkPassword(key, HashType.ARGON2ID);
+                            break;
+                        case AUTHME_SHA:
+                            try_result = AuthMeAuth.check(password_try, key);
+                            break;
+                        case WORDPRESS:
+                            try_result = wordPress.validate(key);
+                            break;
+                        case UNKNOWN:
+                            try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt());
+                            break;
+                        case NONE:
+                        default:
+                            APISource.loadProvider("LockLogin").console().send("&cError while getting current token hash type: " + current_type.name());
+                            break;
+                    }
+
+                    if (!try_result) {
+                        password_try = password;
+
+                        sha512X = new SHA512X(password_try);
+                        argon2id = new Argon2Util(password_try);
+                        wordPress = new WordPressCrypt(password_try);
+
+                        data = new SaltData(key);
+                        switch (current_type) {
+                            case SHA512:
+                                try_result = sha512.auth(password_try, key);
+                                break;
+                            case SHA256:
+                                SHA256 sha256 = new SHA256(password_try);
+                                try_result = sha256.check(key);
+                                break;
+                            case LS_SHA256:
+                                LSSHA256 lssha256 = new LSSHA256(password_try);
+                                try_result = lssha256.check(key);
+                                break;
+                            case BCrypt:
+                            case BCryptPHP:
+                                try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                                break;
+                            case ARGON2I:
+                                try_result = argon2id.checkPassword(key, HashType.ARGON2I);
+                                break;
+                            case ARGON2ID:
+                                try_result = argon2id.checkPassword(key, HashType.ARGON2ID);
+                                break;
+                            case AUTHME_SHA:
+                                try_result = AuthMeAuth.check(password_try, key);
+                                break;
+                            case WORDPRESS:
+                                try_result = wordPress.validate(key);
+                                break;
+                            case UNKNOWN:
+                                try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt());
+                                break;
+                            case NONE:
+                            default:
+                                APISource.loadProvider("LockLogin").console().send("&cError while getting current token hash type: " + current_type.name());
+                                break;
+                        }
+                    }
+
+                    return try_result;
+                case LEGACY:
+                    pwd = password;
+                    break;
+                case MODERN:
+                default:
+                    pwd = virtual_id + password;
+                    break;
+            }
+
+            String usePassword = pwd;
+
+            SHA512X sha512X = new SHA512X(usePassword);
+            Argon2Util argon2id = new Argon2Util(usePassword);
+            WordPressCrypt wordPress = new WordPressCrypt(usePassword);
 
             SaltData data = new SaltData(key);
             switch (current_type) {
                 case SHA512:
-                    return sha512.auth(password, key);
+                    return sha512.auth(usePassword, key);
                 case SHA256:
-                    SHA256 sha256 = new SHA256(password);
+                    SHA256 sha256 = new SHA256(usePassword);
                     return sha256.check(key);
                 case LS_SHA256:
-                    LSSHA256 lssha256 = new LSSHA256(password);
+                    LSSHA256 lssha256 = new LSSHA256(usePassword);
                     return lssha256.check(key);
                 case BCrypt:
                 case BCryptPHP:
-                    return BCryptLib.checkpw(password, key.replaceFirst("2y", "2a"));
+                    return BCryptLib.checkpw(usePassword, key.replaceFirst("2y", "2a"));
                 case ARGON2I:
                     return argon2id.checkPassword(key, HashType.ARGON2I);
                 case ARGON2ID:
                     return argon2id.checkPassword(key, HashType.ARGON2ID);
                 case AUTHME_SHA:
-                    return AuthMeAuth.check(password, key);
+                    return AuthMeAuth.check(usePassword, key);
                 case WORDPRESS:
                     return wordPress.validate(key);
                 case UNKNOWN:
-                    return AuthMeAuth.check(password, key) || LoginSecurityAuth.check(password, key) || sha512X.validate(key, data.getSalt());
+                    return AuthMeAuth.check(usePassword, key) || LoginSecurityAuth.check(usePassword, key) || sha512X.validate(key, data.getSalt());
                 case NONE:
                 default:
                     APISource.loadProvider("LockLogin").console().send("&cError while getting current token hash type: " + current_type.name());
@@ -363,6 +489,56 @@ public final class CryptoFactory {
 
         Pattern patron = Pattern.compile(regex);
         return patron.matcher(data).matches();
+    }
+
+    /**
+     * Load the plugin virtual key used on password hashing
+     * to avoid password cracks on database leaks
+     *
+     * @param password the virtual id file password
+     */
+    public static void loadVirtualID(final String password) {
+        KarmaSource plugin = APISource.loadProvider("LockLogin");
+        KarmaMain vid = new KarmaMain(plugin, "virtual_id.kf", "cache");
+
+        FileEncryptor encryptor = new FileEncryptor(vid.getDocument(), password);
+        encryptor.decrypt();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        if (vid.exists() && vid.isSet("virtual_key")) {
+            KarmaElement stored = vid.get("virtual_key");
+            if (stored.isString()) {
+                if (config.useVirtualID()) {
+                    virtual_id = stored.getObjet().getString();
+                } else {
+                    System.setProperty("locklogin.virtual.key", stored.getObjet().getString());
+                }
+            }
+        }
+
+        if (StringUtils.isNullOrEmpty(virtual_id)) {
+            String generated = TokenGenerator.generateLiteral(128);
+            if (config.useVirtualID()) {
+                virtual_id = generated;
+            } else {
+                System.setProperty("locklogin.virtual.key", virtual_id);
+            }
+        }
+
+        vid.delete();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            vid.create();
+            if (!StringUtils.isNullOrEmpty(virtual_id)) {
+                vid.set("virtual_key", new KarmaObject(virtual_id));
+            } else {
+                vid.set("virtual_key", new KarmaObject(System.getProperty("locklogin.virtual.key")));
+            }
+            vid.save();
+
+            encryptor.encrypt();
+        }));
     }
 
     /**

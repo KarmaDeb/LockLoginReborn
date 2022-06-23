@@ -21,8 +21,8 @@ import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.Logger;
 import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.utils.KarmaLogger;
 import ml.karmaconfigs.api.velocity.KarmaPlugin;
 import org.bstats.velocity.Metrics;
 
@@ -43,7 +43,7 @@ public interface LockLogin {
 
     String version = versionID.getVersionID();
 
-    Logger logger = CurrentPlatform.getLogger();
+    KarmaLogger logger = CurrentPlatform.getLogger();
 
     PluginProperties properties = new PluginProperties();
 

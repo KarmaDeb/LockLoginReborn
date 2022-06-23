@@ -2,6 +2,7 @@ package eu.locklogin.api.account;
 
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
@@ -140,7 +141,7 @@ public final class BruteForce extends BruteForceProvider {
                 withToken(data.getString("TOKEN", StringUtils.generateString().create())).
                 build();
 
-        return factory.validate();
+        return factory.validate(Validation.MODERN);
     }
 
     /**

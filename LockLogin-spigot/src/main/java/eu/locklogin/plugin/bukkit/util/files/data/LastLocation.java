@@ -16,7 +16,6 @@ import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.Location;
@@ -28,7 +27,8 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.*;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.LockLogin.trySync;
 
 public final class LastLocation {
 
@@ -73,14 +73,14 @@ public final class LastLocation {
                     //I didn't think I would need this when I made it
                     //I was wrong...
                     if (FileUtilities.isKarmaFile(file)) {
-                        KarmaMain database = new KarmaMain(file.toPath());
+                        KarmaMain database = new KarmaMain(plugin, file.toPath());
 
-                        KarmaElement x_string = database.get("X", null);
-                        KarmaElement y_string = database.get("Y", null);
-                        KarmaElement z_string = database.get("Z", null);
-                        KarmaElement pitch_string = database.get("PITCH", null);
-                        KarmaElement yaw_string = database.get("YAW", null);
-                        KarmaElement world_string = database.get("WORLD", null);
+                        KarmaElement x_string = database.get("y", null);
+                        KarmaElement y_string = database.get("x", null);
+                        KarmaElement z_string = database.get("z", null);
+                        KarmaElement pitch_string = database.get("pitch", null);
+                        KarmaElement yaw_string = database.get("yaw", null);
+                        KarmaElement world_string = database.get("world", null);
 
                         if (StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
                             return;
@@ -107,19 +107,19 @@ public final class LastLocation {
                                 if (blockNotSafe(legs) || blockNotSafe(feet) || blockNotSafe(torso) || isSuffocating(legs, torso)) {
                                     Location highest = world.getHighestBlockAt(last_location).getLocation().add(0D, 1D, 0D);
 
-                                    database.set("X", new KarmaObject(highest.getX()));
-                                    database.set("Y", new KarmaObject(highest.getY()));
-                                    database.set("Z", new KarmaObject(highest.getZ()));
+                                    database.set("x", new KarmaObject(highest.getX()));
+                                    database.set("y", new KarmaObject(highest.getY()));
+                                    database.set("z", new KarmaObject(highest.getZ()));
 
                                     database.save();
                                 }
                             } else {
-                                database.set("X", new KarmaObject(Double.MIN_VALUE));
-                                database.set("Y", new KarmaObject(Double.MIN_VALUE));
-                                database.set("Z", new KarmaObject(Double.MIN_VALUE));
-                                database.set("PITCH", new KarmaObject(Float.MIN_VALUE));
-                                database.set("YAW", new KarmaObject(Float.MIN_VALUE));
-                                database.set("WORLD", new KarmaObject(""));
+                                database.set("x", new KarmaObject(Double.MIN_VALUE));
+                                database.set("y", new KarmaObject(Double.MIN_VALUE));
+                                database.set("z", new KarmaObject(Double.MIN_VALUE));
+                                database.set("pitch", new KarmaObject(Float.MIN_VALUE));
+                                database.set("yaw", new KarmaObject(Float.MIN_VALUE));
+                                database.set("world", new KarmaObject(""));
 
                                 database.save();
                             }
@@ -146,15 +146,15 @@ public final class LastLocation {
                     //I didn't thought I would need this when I made it
                     //I was wrong...
                     if (FileUtilities.isKarmaFile(file)) {
-                        KarmaMain database = new KarmaMain(file.toPath());
+                        KarmaMain database = new KarmaMain(plugin, file.toPath());
 
-                        database.set("X", new KarmaObject(Double.MIN_VALUE));
-                        database.set("Y", new KarmaObject(Double.MIN_VALUE));
-                        database.set("Z", new KarmaObject(Double.MIN_VALUE));
-                        database.set("PITCH", new KarmaObject(Float.MIN_VALUE));
-                        database.set("YAW", new KarmaObject(Float.MIN_VALUE));
-                        database.set("WORLD", new KarmaObject(""));
-                        database.set("FALLING", new KarmaObject(Float.MIN_VALUE));
+                        database.set("x", new KarmaObject(Double.MIN_VALUE));
+                        database.set("y", new KarmaObject(Double.MIN_VALUE));
+                        database.set("z", new KarmaObject(Double.MIN_VALUE));
+                        database.set("pitch", new KarmaObject(Float.MIN_VALUE));
+                        database.set("yaw", new KarmaObject(Float.MIN_VALUE));
+                        database.set("world", new KarmaObject(""));
+                        database.set("falling", new KarmaObject(Float.MIN_VALUE));
 
                         database.save();
                     }

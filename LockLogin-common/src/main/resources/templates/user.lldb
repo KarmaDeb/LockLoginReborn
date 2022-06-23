@@ -16,7 +16,7 @@
     'pin' -> ""
 
     */The player google auth status
-    '2fa' -> ""
+    '2fa' -> false
 
     */The player panic token
     'panic' -> ""
