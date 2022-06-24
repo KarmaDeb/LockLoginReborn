@@ -26,6 +26,8 @@ public final class Main extends KarmaPlugin {
 
     private final MainBootstrap plugin;
 
+    private boolean unloaded = false;
+
     public Main() throws Throwable {
         super(false);
 
@@ -41,6 +43,11 @@ public final class Main extends KarmaPlugin {
     @Override
     public void enable() {
         plugin.enable();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (!unloaded) {
+                onDisable();
+            }
+        })); //Make sure the plugin shuts down correctly.
         CurrentPlatform.setOnline(getServer().getOnlineMode());
     }
 
@@ -48,6 +55,7 @@ public final class Main extends KarmaPlugin {
     public void onDisable() {
         plugin.disable();
         stopTasks();
+        unloaded = true;
     }
 
     @Override

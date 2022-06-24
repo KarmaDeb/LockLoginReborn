@@ -88,30 +88,31 @@ public final class ModuleLoader {
             if (moduleFile.exists() && moduleFile.isFile() && moduleFile.getName().endsWith(".jar")) {
                 return moduleFile;
             } else {
-                moduleFile = new File(modulesFolder, name + ".jar");
-                if (moduleFile.exists()) {
-                    return moduleFile;
-                } else {
-                    File[] files = modulesFolder.listFiles();
-                    if (files != null) {
-                        for (File file : files) {
-                            if (file.isFile() && file.getName().endsWith(".jar")) {
-                                JarFile jar = new JarFile(file);
-                                ZipEntry entry = jar.getEntry("module.yml");
-                                if (entry != null) {
-                                    InputStream stream = jar.getInputStream(entry);
-                                    if (stream != null) {
-                                        KarmaYamlManager manager = new KarmaYamlManager(stream);
-                                        String module_name = manager.getString("name", "");
-                                        if (name.equalsIgnoreCase(module_name)) {
-                                            return moduleFile;
-                                        }
+                File[] files = modulesFolder.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        if (file.isFile() && file.getName().endsWith(".jar")) {
+                            JarFile jar = new JarFile(file);
+                            ZipEntry entry = jar.getEntry("module.yml");
+                            if (entry != null) {
+                                InputStream stream = jar.getInputStream(entry);
+                                if (stream != null) {
+                                    KarmaYamlManager manager = new KarmaYamlManager(stream);
+                                    String module_name = manager.getString("name", "");
+
+                                    if (name.equalsIgnoreCase(module_name)) {
+                                        return moduleFile;
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            moduleFile = new File(modulesFolder, name + ".jar");
+            if (moduleFile.exists() && moduleFile.isFile()) {
+                return moduleFile;
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -127,13 +128,15 @@ public final class ModuleLoader {
      * @return the plugin module
      */
     @Nullable
-    public static PluginModule getByFile(final @NotNull File moduleFile) {
+    public static PluginModule getByFile(final @Nullable File moduleFile) {
         PluginModule loadedModule = null;
 
-        for (PluginModule module : loaded.values()) {
-            if (module.getModule().equals(moduleFile)) {
-                loadedModule = module;
-                break;
+        if (moduleFile != null) {
+            for (PluginModule module : loaded.values()) {
+                if (FileUtilities.getPrettyFile(module.getModule()).equalsIgnoreCase(FileUtilities.getPrettyFile(moduleFile))) {
+                    loadedModule = module;
+                    break;
+                }
             }
         }
 
@@ -290,6 +293,130 @@ public final class ModuleLoader {
     }
 
     /**
+     * Get the specified module
+     *
+     * @param moduleFile the module file
+     * @return the module from the file
+     */
+    public PluginModule getModule(final File moduleFile) {
+        if (!loaded.containsKey(FileUtilities.getPrettyFile(moduleFile)) || loaded.getOrDefault(FileUtilities.getPrettyFile(moduleFile), null) == null) {
+            String name = FileUtilities.getName(moduleFile, false);
+
+            try {
+                if (moduleFile.getName().endsWith(".jar")) {
+                    JarFile jar = new JarFile(moduleFile);
+                    JarEntry plugin = jar.getJarEntry("module.yml");
+
+                    if (plugin != null) {
+                        Yaml yaml = new Yaml();
+                        Map<String, Object> values = yaml.load(jar.getInputStream(plugin));
+                        name = values.getOrDefault("name", FileUtilities.getName(moduleFile, false)).toString();
+                        String class_name = values.getOrDefault("loader_" + CurrentPlatform.getPlatform().name().toLowerCase(), null).toString();
+
+                        if (class_name == null && ((boolean) values.getOrDefault("obfuscated", false))) {
+                            class_name = values.getOrDefault("license", "").toString();
+                            source.console().send("Validating obfuscated resource load license for security reasons. ONLY TRUSTED OBFUSCATED MODULES SHOULD BE LOADED!. Remember to have your module up to date for this to work!", Level.WARNING);
+
+                            String[] check = new String[]{
+                                    "https://karmaconfigs.ml",
+                                    "https://karmarepo.ml",
+                                    "https://karmadev.es",
+                                    "https://backup.karmaconfigs.ml",
+                                    "https://backup.karmarepo.ml",
+                                    "https://backup.karmadev.es"
+                            };
+
+                            for (String str : check) {
+                                if (URLUtils.exists(str)) {
+                                    String complete_url = str + "/locklogin/api/?license=" + class_name;
+                                    URL url = URLUtils.getOrNull(complete_url);
+                                    if (url != null) {
+                                        HttpUtil util = URLUtils.extraUtils(url);
+                                        if (util != null) {
+                                            String response = util.getResponse();
+                                            if (!StringUtils.isNullOrEmpty(response)) {
+                                                Yaml json = new Yaml();
+                                                Map<String, Object> data = json.load(response);
+
+                                                boolean validation = (boolean) data.getOrDefault("status", false);
+                                                String uniqueKey = data.getOrDefault("key", "").toString();
+
+                                                BruteLoader appender = CurrentPlatform.getPluginAppender();
+                                                appender.add(moduleFile);
+                                                try (JarFile jarFile = new JarFile(moduleFile)) {
+                                                    Enumeration<JarEntry> e = jarFile.entries();
+                                                    while (e.hasMoreElements()) {
+                                                        JarEntry jarEntry = e.nextElement();
+                                                        if (jarEntry.getName().endsWith(".class")) {
+                                                            String className = jarEntry.getName()
+                                                                    .replace("/", ".")
+                                                                    .replace(".class", "");
+
+                                                            try {
+                                                                Class<?> clazz = appender.getLoader().loadClass(className);
+                                                                if (clazz.isAssignableFrom(PluginModule.class) || PluginModule.class.isAssignableFrom(clazz)) {
+                                                                    Class<? extends PluginModule> moduleClass = clazz.asSubclass(PluginModule.class);
+                                                                    try {
+                                                                        Constructor<? extends PluginModule> expectedConstructor = moduleClass.getConstructor(Platform.class, String.class);
+                                                                        expectedConstructor.setAccessible(true);
+
+                                                                        try {
+                                                                            PluginModule module = expectedConstructor.newInstance(CurrentPlatform.getPlatform(), uniqueKey);
+                                                                            module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
+
+                                                                            return module;
+                                                                        } catch (InvalidKeyError error) {
+                                                                            source.console().send("Failed to load module {0} ( invalid key provided )", Level.GRAVE, name);
+                                                                        }
+                                                                    } catch (Throwable ignored) {
+                                                                    }
+                                                                }
+                                                            } catch (Throwable ignored) {
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if (class_name != null) {
+                                BruteLoader appender = CurrentPlatform.getPluginAppender();
+                                appender.add(moduleFile);
+
+                                Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
+
+                                PluginModule module = null;
+                                try {
+                                    module = module_class.getDeclaredConstructor().newInstance();
+                                } catch (InvocationTargetException ignored) {}
+
+                                if (module != null && !isLoaded(module)) {
+                                    module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
+                                    return module;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                source.logger().scheduleLog(Level.GRAVE, ex);
+                source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
+
+                source.console().send("Failed to load module {0}. More info has been stored in plugins/LockLogin/logs/", Level.GRAVE, name);
+            }
+        } else {
+            return getByFile(moduleFile);
+        }
+
+        return null;
+    }
+
+    /**
      * Unload the specified module
      *
      * @param moduleFile the module file
@@ -304,6 +431,8 @@ public final class ModuleLoader {
             loadedModule.disable();
             loaded.remove(FileUtilities.getPrettyFile(moduleFile));
             clazz_map.remove(loadedModule.getClass());
+
+            System.gc();
         }
     }
 

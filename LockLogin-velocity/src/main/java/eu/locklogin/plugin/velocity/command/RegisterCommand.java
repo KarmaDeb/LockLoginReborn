@@ -133,6 +133,11 @@ public final class RegisterCommand extends BungeeLikeCommand {
                                             DataSender.send(player, gauth);
 
                                         user.checkServer(0);
+
+                                        if (!config.useVirtualID() && user.hasPermission(PluginPermission.account())) {
+                                            user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
+                                            user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &4THIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
+                                        }
                                     } else {
                                         user.send(messages.prefix() + messages.registerError());
                                     }

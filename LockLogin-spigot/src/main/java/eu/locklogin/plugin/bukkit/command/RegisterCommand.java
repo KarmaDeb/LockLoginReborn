@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
@@ -114,6 +115,11 @@ public final class RegisterCommand implements CommandExecutor {
 
                                             Event event = new AccountCreatedEvent(user.getModule(), null);
                                             ModulePlugin.callEvent(event);
+
+                                            if (!config.useVirtualID() && player.hasPermission("locklogin.account")) {
+                                                user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
+                                                user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &5&lTHIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
+                                            }
                                         } else {
                                             user.send(messages.prefix() + messages.registerError());
                                         }

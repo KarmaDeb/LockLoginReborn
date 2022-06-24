@@ -163,6 +163,11 @@ public final class LoginCommand implements CommandExecutor {
                                             if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
                                                 trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
                                             }
+
+                                            if (!config.useVirtualID() && player.hasPermission("locklogin.account")) {
+                                                user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
+                                                user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &5&lTHIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
+                                            }
                                         } else {
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
                                             ModulePlugin.callEvent(event);

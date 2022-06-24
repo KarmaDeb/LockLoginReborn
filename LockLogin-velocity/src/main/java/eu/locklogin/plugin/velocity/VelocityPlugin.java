@@ -15,7 +15,7 @@ import org.bstats.velocity.Metrics;
 @Plugin(
         id = "locklogin",
         name = "LockLogin",
-        version = "1.13.24",
+        version = "1.13.25",
         authors = {"KarmaDev"},
         description =
                 "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +
@@ -34,6 +34,8 @@ public class VelocityPlugin {
     static Metrics.Factory factory;
     static KarmaPlugin plugin;
 
+    private boolean unloaded = false;
+
     @Inject
     public VelocityPlugin(final ProxyServer sv, final Metrics.Factory fact) {
         KarmaAPI.install();
@@ -47,6 +49,11 @@ public class VelocityPlugin {
         server.getPluginManager().getPlugin("locklogin").ifPresent((container) -> {
             plugin = new Main(server, container);
             plugin.enable();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (!unloaded) {
+                    plugin.disable();
+                }
+            })); //Make sure the plugin shuts down correctly.
 
             CurrentPlatform.setOnline(server.getConfiguration().isOnlineMode());
         });
@@ -55,5 +62,6 @@ public class VelocityPlugin {
     @Subscribe(order = PostOrder.LAST)
     public void onProxyInitialization(ProxyShutdownEvent e) {
         plugin.disable();
+        unloaded = true;
     }
 }

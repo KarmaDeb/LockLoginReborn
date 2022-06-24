@@ -65,9 +65,9 @@ public final class PlayerAccount extends AccountManager {
 
     static {
         Path backup = source.getDataPath().resolve("data").resolve("accounts_backup");
-        if (!Files.exists(backup)) {
-            Path original = source.getDataPath().resolve("data").resolve("accounts");
+        Path original = source.getDataPath().resolve("data").resolve("accounts");
 
+        if (Files.exists(original) && !Files.exists(backup)) {
             boolean success = false;
             try {
                 AtomicBoolean error = new AtomicBoolean(false);
@@ -165,6 +165,9 @@ public final class PlayerAccount extends AccountManager {
 
                 try {
                     manager.validate();
+
+                    manager.clearCache();
+                    manager.preCache();
                 } catch (Throwable ignored) {}
             } else {
                 throw new IllegalArgumentException("Cannot initialize player file instance for invalid account constructor parameter");
@@ -392,8 +395,6 @@ public final class PlayerAccount extends AccountManager {
         if (!manager.exists()) {
             try {
                 manager.validate();
-                manager.save();
-
                 return true;
             } catch (Throwable ex) {
                 return false;
@@ -505,10 +506,12 @@ public final class PlayerAccount extends AccountManager {
                         }
 
                         manager.set("uuid", new KarmaObject(id));
+                        manager.save();
                     } else {
                         if (fixed != null) {
                             manager.set("uuid", new KarmaObject(fixed.toString()));
                             id = fixed.toString();
+                            manager.save();
                         }
                     }
                 }
@@ -597,7 +600,6 @@ public final class PlayerAccount extends AccountManager {
     public void setGAuth(final String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
         manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
-
         manager.save();
     }
 
@@ -610,7 +612,6 @@ public final class PlayerAccount extends AccountManager {
     public void setUnsafeGAuth(final @Nullable String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
-
         manager.save();
     }
 

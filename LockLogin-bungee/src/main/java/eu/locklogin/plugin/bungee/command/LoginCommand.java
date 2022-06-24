@@ -183,6 +183,11 @@ public final class LoginCommand extends Command {
                                         if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermission.forceFA())) {
                                             user.performCommand("2fa setup " + password);
                                         }
+
+                                        if (!config.useVirtualID() && user.hasPermission(PluginPermission.account())) {
+                                            user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
+                                            user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &4THIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
+                                        }
                                     } else {
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD,
                                                 UserAuthenticateEvent.Result.ERROR,

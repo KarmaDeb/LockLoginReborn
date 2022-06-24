@@ -28,6 +28,8 @@ public final class Main extends KarmaPlugin {
     private static boolean status = false;
     private static MainBootstrap plugin;
 
+    private boolean unloaded = false;
+
     public Main() throws Throwable {
         super(false);
         CurrentPlatform.setPlatform(Platform.BUNGEE);
@@ -42,18 +44,22 @@ public final class Main extends KarmaPlugin {
     @Override
     public void enable() {
         status = true;
-
         plugin.enable();
-
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (!unloaded) {
+                onDisable();
+            }
+        })); //Make sure the plugin shuts down correctly.
         CurrentPlatform.setOnline(ProxyServer.getInstance().getConfig().isOnlineMode());
     }
 
     @Override
     public void onDisable() {
         status = false;
-
         plugin.disable();
         stopTasks();
+
+        unloaded = true;
     }
 
     public boolean enabled() {

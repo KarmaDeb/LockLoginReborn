@@ -15,7 +15,6 @@ package eu.locklogin.module.manager.bungee;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import eu.locklogin.module.manager.LockLoginManager;
 import eu.locklogin.module.manager.ModuleHelpCommand;
 import eu.locklogin.module.manager.ModuleInfoCommand;
 import eu.locklogin.module.manager.UsersListener;
@@ -33,8 +32,8 @@ public final class Main extends PluginModule {
         getConsole().sendMessage("&aEnabling LockLogin manager module, to dynamically update LockLogin and enable helpme command");
 
         try {
-            FileCopy copy = new FileCopy(LockLoginManager.module, "config.yml");
-            copy.copy(LockLoginManager.module.getFile("config.yml"));
+            FileCopy copy = new FileCopy(this, "config.yml");
+            copy.copy(getFile("config.yml"));
         } catch (Throwable ex) {
             ex.printStackTrace();
         }

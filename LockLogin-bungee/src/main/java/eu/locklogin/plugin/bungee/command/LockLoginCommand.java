@@ -213,13 +213,13 @@ public final class LockLoginCommand extends Command {
                             File moduleFile = ModuleLoader.getModuleFile(moduleName);
 
                             if (moduleFile != null) {
-                                PluginModule module = ModuleLoader.getByFile(moduleFile);
+                                PluginModule module = getLoader().getModule(moduleFile);
 
                                 if (module != null) {
                                     switch (args[1].toLowerCase()) {
                                         case "load":
                                             if (user.hasPermission(loadModules())) {
-                                                if (module.load()) {
+                                                if (!ModuleLoader.isLoaded(module) && module.load()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
@@ -230,7 +230,7 @@ public final class LockLoginCommand extends Command {
                                             break;
                                         case "unload":
                                             if (user.hasPermission(unloadModules())) {
-                                                if (module.unload()) {
+                                                if (ModuleLoader.isLoaded(module) && module.unload()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
@@ -252,7 +252,7 @@ public final class LockLoginCommand extends Command {
                                             break;
                                     }
                                 } else {
-                                    user.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
+                                    user.send(messages.prefix() + "&5&oModule " + moduleName + " does not exist!");
                                 }
                             } else {
                                 user.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
@@ -369,19 +369,19 @@ public final class LockLoginCommand extends Command {
                             File moduleFile = ModuleLoader.getModuleFile(moduleName);
 
                             if (moduleFile != null) {
-                                PluginModule module = ModuleLoader.getByFile(moduleFile);
+                                PluginModule module = getLoader().getModule(moduleFile);
 
                                 if (module != null) {
                                     switch (args[1].toLowerCase()) {
                                         case "load":
-                                            if (module.load()) {
+                                            if (!ModuleLoader.isLoaded(module) && module.load()) {
                                                 console.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
                                             } else {
                                                 console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
                                             }
                                             break;
                                         case "unload":
-                                            if (module.unload()) {
+                                            if (ModuleLoader.isLoaded(module) && module.unload()) {
                                                 console.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
                                             } else {
                                                 console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
@@ -395,7 +395,7 @@ public final class LockLoginCommand extends Command {
                                             break;
                                     }
                                 } else {
-                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
+                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " does not exist!");
                                 }
                             } else {
                                 console.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
