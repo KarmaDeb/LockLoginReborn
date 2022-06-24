@@ -88,21 +88,21 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onServerPing(ServerListPingEvent e) {
+        if (!config.isBungeeCord()) {
+            Event ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
+                    PluginIpValidationEvent.ValidationResult.SUCCESS,
+                    "Plugin added the IP to the IP validation queue", e);
+
+            ModulePlugin.callEvent(ipEvent);
+        }
+
         if (!Manager.isInitialized()) {
             if (config.showMOTD()) {
                 e.setMotd(StringUtils.toColor("&dLockLogin &8&l| &aStarting server"));
             }
         } else {
-            if (!config.isBungeeCord()) {
-                Event ipEvent = new PluginIpValidationEvent(e.getAddress(), PluginIpValidationEvent.ValidationProcess.SERVER_PING,
-                        PluginIpValidationEvent.ValidationResult.SUCCESS,
-                        "Plugin added the IP to the IP validation queue", e);
-
-                ModulePlugin.callEvent(ipEvent);
-            } else {
-                if (config.showMOTD()) {
-                    e.setMotd(StringUtils.toColor("&aThis server is being protected by &dLockLogin"));
-                }
+            if (config.showMOTD() && config.isBungeeCord()) {
+                e.setMotd(StringUtils.toColor("&aThis server is being protected by &dLockLogin"));
             }
         }
     }

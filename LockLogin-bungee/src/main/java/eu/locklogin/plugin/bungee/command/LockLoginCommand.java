@@ -82,7 +82,7 @@ public final class LockLoginCommand extends Command {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", "locklogin"))));
 
-        lockLogin.async().queue(() -> {
+        lockLogin.async().queue("command_process", () -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof ProxiedPlayer) {
                 ProxiedPlayer player = (ProxiedPlayer) sender;
@@ -95,7 +95,7 @@ public final class LockLoginCommand extends Command {
                                 if (user.hasPermission(reload())) {
                                     FileReloader.reload(player);
 
-                                    Injector injector = new WaterfallInjector();;
+                                    Injector injector = new WaterfallInjector();
                                     injector.inject();
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(reload()));

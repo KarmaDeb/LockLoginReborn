@@ -81,7 +81,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", "locklogin"))).build());
 
-        lockLogin.async().queue(() -> {
+        lockLogin.async().queue("command_process", () -> {
             VersionUpdater updater = Manager.getUpdater();
             if (sender instanceof Player) {
                 Player player = (Player) sender;
