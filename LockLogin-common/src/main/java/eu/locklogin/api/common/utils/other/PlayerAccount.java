@@ -14,6 +14,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -124,7 +126,25 @@ public final class PlayerAccount extends AccountManager {
                 source.console().send("");
                 source.console().send("Exiting server as backup couldn't be done", Level.GRAVE);
 
-                System.exit(1);
+                //System.exit(1); Exiting server is too much
+                /*
+                Instead we will set the plugin as disabled. We can do this in BungeeCord and
+                Spigot, but I have no idea on how to do it in Velocity so...
+                 */
+                try {
+                    Method unload;
+                    if (CurrentPlatform.getPlatform().equals(Platform.BUKKIT)) {
+                        Class<?> bukkitManager = Class.forName("eu.locklogin.module.manager.bukkit.manager.BukkitManager");
+                        unload = bukkitManager.getDeclaredMethod("unload");
+                    } else {
+                        Class<?> bungeeManager = Class.forName("eu.locklogin.module.manager.bungee.manager.BungeeManager");
+                        unload = bungeeManager.getDeclaredMethod("unload");
+                    }
+
+                    unload.invoke(null);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -545,7 +565,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPassword(final String newPassword) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("password", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
@@ -598,7 +618,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setGAuth(final String token) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
         manager.save();
     }
@@ -640,7 +660,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPin(final String pin) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         manager.set("pin", new KarmaObject(util.hash(config.pinEncryption(), config.encryptBase64())));
@@ -686,7 +706,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPanic(@Nullable String token) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).build();
+        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         HashType hash = HashType.pickRandom();
 
         manager.set("panic", new KarmaObject(util.hash(hash, true)));

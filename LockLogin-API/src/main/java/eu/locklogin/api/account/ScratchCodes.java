@@ -60,7 +60,7 @@ public final class ScratchCodes {
             stored = codes.getArray();
 
             for (KarmaElement token : stored) {
-                CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token).build();
+                CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token.getObjet().getString()).build();
                 if (util.validate(Validation.ALL)) {
                     remove = token;
                     status = true;

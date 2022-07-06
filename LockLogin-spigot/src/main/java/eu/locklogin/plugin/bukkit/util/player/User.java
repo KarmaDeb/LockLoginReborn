@@ -23,6 +23,7 @@ import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
@@ -90,7 +91,7 @@ public final class User {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
                     AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                    lockLogin.async().queue(() -> {
+                    lockLogin.async().queue("database_update", () -> {
                         database.assign(StringUtils.stripColor(player.getName()));
                         database.assign(StringUtils.stripColor(player.getDisplayName()));
                         database.assign(StringUtils.stripColor(player.getPlayerListName()));
@@ -486,7 +487,18 @@ public final class User {
      * factory
      */
     public GoogleAuthFactory getTokenFactory() {
-        return new GoogleAuthFactory(player.getUniqueId(), StringUtils.toColor(player.getDisplayName()));
+        return new GoogleAuthFactory(player.getUniqueId());
+    }
+
+    /**
+     * Check if the user has the specified permission
+     *
+     * @param permission the permission
+     * @return if the player has the permission
+     */
+    public boolean hasPermission(final PermissionObject permission) {
+        ModulePlayer player = getModule();
+        return permission.isPermissible(player);
     }
 
     /**

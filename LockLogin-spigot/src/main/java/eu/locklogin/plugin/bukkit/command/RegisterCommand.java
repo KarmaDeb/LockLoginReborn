@@ -17,11 +17,11 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.Password;
-import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
@@ -36,7 +36,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.forceFA;
 
 @SystemCommand(command = "register", aliases = {"reg"})
 public final class RegisterCommand implements CommandExecutor {
@@ -105,7 +104,7 @@ public final class RegisterCommand implements CommandExecutor {
 
                                             session.setLogged(true);
 
-                                            if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
+                                            if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
                                                 trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
                                             } else {
                                                 session.set2FALogged(true);

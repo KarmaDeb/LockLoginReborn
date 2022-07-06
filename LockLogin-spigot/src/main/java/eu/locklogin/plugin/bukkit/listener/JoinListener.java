@@ -32,6 +32,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -72,7 +73,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.altAlert;
 
 public final class JoinListener implements Listener {
 
@@ -153,8 +153,8 @@ public final class JoinListener implements Listener {
                                         int amount = data.getAlts().size();
                                         if (amount > 2) {
                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
-                                                if (online.hasPermission(altAlert())) {
-                                                    User user = new User(online);
+                                                User user = new User(online);
+                                                if (user.hasPermission(PluginPermissions.info_alt_alert())) {
                                                     user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                                                 }
                                             }
@@ -375,8 +375,6 @@ public final class JoinListener implements Listener {
             if (!ipEvent.isHandled()) {
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
-                        LateScheduler<Event> result = new AsyncLateScheduler<>();
-
                         tryAsync(TaskTarget.EVENT, () -> {
                             ClientSession session = user.getSession();
 
@@ -433,11 +431,8 @@ public final class JoinListener implements Listener {
                                 }
                             }
 
-                            Event event = new UserPostJoinEvent(user.getModule(), e);
-                            result.complete(event);
-                        });
-                        result.whenComplete((event) -> {
                             if (!config.isBungeeCord()) {
+                                Event event = new UserPostJoinEvent(user.getModule(), e);
                                 ModulePlugin.callEvent(event);
 
                                 if (event.isHandled()) {

@@ -36,19 +36,15 @@ public final class GoogleAuthFactory {
     private final static Map<UUID, List<Integer>> recovery_codes = new LinkedHashMap<>();
 
     private final UUID playerID;
-    private final String player;
 
     /**
      * Initialize the google auth factory
      *
      * @param owner the google auth factory
      *              player target
-     * @param name  the google auth factory
-     *              player target name
      */
-    public GoogleAuthFactory(final UUID owner, final String name) {
+    public GoogleAuthFactory(final UUID owner) {
         playerID = owner;
-        player = name;
     }
 
     /**

@@ -149,10 +149,10 @@ public final class DataSender {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                            String token = TokenGen.request("local_token", proxy.proxyKey());
                             if (token == null) {
                                 TokenGen.generate(proxy.proxyKey());
-                                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                                token = TokenGen.request("local_token", proxy.proxyKey());
                                 assert token != null;
                             }
 
@@ -214,10 +214,10 @@ public final class DataSender {
         MessageDataBuilder(final DataType data, final Player owner) throws IllegalArgumentException {
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            String token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+            String token = TokenGen.request("local_token", proxy.proxyKey());
             if (token == null) {
                 TokenGen.generate(proxy.proxyKey());
-                token = TokenGen.request("LOCAL_TOKEN", proxy.proxyKey());
+                token = TokenGen.request("local_token", proxy.proxyKey());
                 assert token != null;
             }
 

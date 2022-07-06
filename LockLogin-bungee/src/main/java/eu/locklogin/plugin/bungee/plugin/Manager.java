@@ -41,6 +41,7 @@ import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
@@ -49,9 +50,8 @@ import eu.locklogin.plugin.bungee.listener.ChatListener;
 import eu.locklogin.plugin.bungee.listener.JoinListener;
 import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.listener.QuitListener;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.injector.Injector;
-import eu.locklogin.plugin.bungee.plugin.injector.WaterfallInjector;
+import eu.locklogin.plugin.bungee.plugin.injector.ModuleExecutorInjector;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
@@ -203,7 +203,7 @@ public final class Manager {
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
-        Injector injector = new WaterfallInjector();
+        Injector injector = new ModuleExecutorInjector();
         //As off 1.13.24 injector is the same for everyone! [ NO MORE REFLECTION LOL ]
 
         injector.inject();
@@ -431,7 +431,7 @@ public final class Manager {
                         PluginMessages messages = CurrentPlatform.getMessages();
                         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                             User user = new User(player);
-                            if (user.hasPermission(PluginPermission.applyUpdates())) {
+                            if (user.hasPermission(PluginPermissions.updater_apply())) {
                                 user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
                                 user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                             }
@@ -446,7 +446,7 @@ public final class Manager {
 
                             for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                                 User user = new User(player);
-                                if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                if (user.hasPermission(PluginPermissions.updater_apply())) {
                                     user.send(messages.prefix() + "&dFollow console instructions to update");
                                 }
                             }
@@ -561,7 +561,7 @@ public final class Manager {
                             if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
                                 DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                                         .addTextData(proxy.proxyKey()).addTextData(info.getName())
-                                        .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                        .addTextData(TokenGen.expiration("local_token").toString())
                                         .build());
                             }
                         }
@@ -589,6 +589,7 @@ public final class Manager {
                     }
 
                     ClientSession session = user.getSession();
+                    AccountManager manager = user.getManager();
                     session.validate();
 
                     if (!config.captchaOptions().isEnabled())
@@ -604,7 +605,7 @@ public final class Manager {
                             .addBoolData(session.isLogged())
                             .addBoolData(session.is2FALogged())
                             .addBoolData(session.isPinLogged())
-                            .addBoolData(user.isRegistered()).build();
+                            .addBoolData(manager.isRegistered()).build();
                     DataSender.send(player, join);
 
                     SimpleScheduler timer = tmp_timer;
@@ -683,6 +684,8 @@ public final class Manager {
      */
     public static CompletableFuture<Boolean> connect(final String address, final int port) {
         /*
+        Actually this is ready to work. We should only have to make the API For it lol
+
         Factory factory = new Factory(WorkLevel.TCP);
         client = factory.createClient(address, port);
 

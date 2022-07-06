@@ -18,12 +18,12 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.FileReloader;
 import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.injector.Injector;
@@ -91,17 +91,10 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                     case 1:
                         switch (args[0].toLowerCase()) {
                             case "reload":
-                                if (user.hasPermission(PluginPermission.reload())) {
-                                    FileReloader.reload(player);
-
-                                    Injector injector = new VelocityInjector();
-                                    injector.inject();
-                                } else {
-                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
-                                }
+                                FileReloader.reload(player);
                                 break;
                             case "modules":
-                                if (user.hasPermission(PluginPermission.modules())) {
+                                if (user.hasPermission(PluginPermissions.module_list())) {
                                     user.send(messages.prefix() + "&dFetching modules info, please stand by");
 
                                     Set<PluginModule> modules = ModuleLoader.getModules();
@@ -144,11 +137,11 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                         }
                                     }).start();
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.modules()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_list()));
                                 }
                                 break;
                             case "version":
-                                if (user.hasPermission(PluginPermission.version())) {
+                                if (user.hasPermission(PluginPermissions.updater_version())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.get().whenComplete((result, error) -> {
@@ -160,11 +153,11 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.version()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_version()));
                                 }
                                 break;
                             case "changelog":
-                                if (user.hasPermission(PluginPermission.changelog())) {
+                                if (user.hasPermission(PluginPermissions.updater_changelog())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.get().whenComplete((result, error) -> {
@@ -177,11 +170,11 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.changelog()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_changelog()));
                                 }
                                 break;
                             case "check":
-                                if (user.hasPermission(PluginPermission.check())) {
+                                if (user.hasPermission(PluginPermissions.updater_check())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.fetch(true).whenComplete((result, error) -> {
@@ -192,7 +185,7 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(PluginPermission.check()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_check()));
                                 }
                                 break;
                             default:
@@ -211,33 +204,33 @@ public final class LockLoginCommand extends BungeeLikeCommand {
                                 if (module != null) {
                                     switch (args[1].toLowerCase()) {
                                         case "load":
-                                            if (user.hasPermission(PluginPermission.loadModules())) {
+                                            if (user.hasPermission(PluginPermissions.module_load())) {
                                                 if (!ModuleLoader.isLoaded(module) && module.load()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
                                                 }
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(PluginPermission.loadModules()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_load()));
                                             }
                                             break;
                                         case "unload":
-                                            if (user.hasPermission(PluginPermission.unloadModules())) {
+                                            if (user.hasPermission(PluginPermissions.module_unload())) {
                                                 if (ModuleLoader.isLoaded(module) && module.unload()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
                                                 }
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(PluginPermission.unloadModules()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_unload()));
                                             }
                                             break;
                                         case "reload":
-                                            if (user.hasPermission(PluginPermission.reload())) {
+                                            if (user.hasPermission(PluginPermissions.module_reload())) {
                                                 module.reload();
                                                 user.send(messages.prefix() + "&dModule " + moduleName + " has been reloaded, check console for more info");
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_reload()));
                                             }
                                             break;
                                         default:

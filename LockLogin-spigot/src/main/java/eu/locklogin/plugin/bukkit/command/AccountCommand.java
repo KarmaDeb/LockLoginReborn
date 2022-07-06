@@ -30,12 +30,12 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
-import eu.locklogin.plugin.bukkit.plugin.PluginPermission;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
@@ -135,7 +135,7 @@ public class AccountCommand implements CommandExecutor {
                             }
                             break;
                         case "unlock":
-                            if (player.hasPermission(PluginPermission.account())) {
+                            if (user.hasPermission(PluginPermissions.account_unlock())) {
                                 if (args.length == 2) {
                                     String target = args[1];
                                     AccountNameDatabase.find(target).whenComplete((nsr) -> {
@@ -167,7 +167,7 @@ public class AccountCommand implements CommandExecutor {
                                     user.send(messages.prefix() + messages.accountUnLock());
                                 }
                             } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.unlockAccount()));
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_unlock()));
                             }
                             break;
                         case "close":
@@ -202,7 +202,7 @@ public class AccountCommand implements CommandExecutor {
                                     ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
-                                    if (player.hasPermission(PluginPermission.account())) {
+                                    if (user.hasPermission(PluginPermissions.account_close())) {
                                         String tar_name = args[1];
                                         Player tar_p = LockLogin.plugin.getServer().getPlayer(tar_name);
 
@@ -224,7 +224,7 @@ public class AccountCommand implements CommandExecutor {
                                             user.send(messages.prefix() + messages.connectionError(tar_name));
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.closeAccount()));
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_close()));
                                     }
                                     break;
                                 default:
@@ -236,7 +236,7 @@ public class AccountCommand implements CommandExecutor {
                         case "delete":
                             switch (args.length) {
                                 case 2:
-                                    if (player.hasPermission(PluginPermission.account())) {
+                                    if (user.hasPermission(PluginPermissions.account_remove())) {
                                         String target = args[1];
                                         AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                             if (nsr.singleResult()) {
@@ -277,7 +277,7 @@ public class AccountCommand implements CommandExecutor {
                                             }
                                         });
                                     } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.delAccount()));
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_remove()));
                                     }
                                     break;
                                 case 3:
@@ -315,7 +315,7 @@ public class AccountCommand implements CommandExecutor {
                             }
                             break;
                         case "alts":
-                            if (player.hasPermission(PluginPermission.altInfo())) {
+                            if (user.hasPermission(PluginPermissions.info_alt())) {
                                 if (args.length == 2) {
                                     String target = args[1];
                                     AccountNameDatabase.find(target).whenComplete((nsr) -> {
@@ -339,7 +339,7 @@ public class AccountCommand implements CommandExecutor {
                                     user.send(messages.prefix() + messages.lookupUsage());
                                 }
                             } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.altInfo()));
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.info_alt()));
                             }
                             break;
                         case "session":
@@ -368,6 +368,7 @@ public class AccountCommand implements CommandExecutor {
                             } else {
                                 user.send(messages.prefix() + messages.panicAlready());
                             }*/
+                            user.send(messages.prefix() + "&5TODO");
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;

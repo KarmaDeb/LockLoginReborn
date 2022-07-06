@@ -19,6 +19,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.plugin.UpdateRequestEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
@@ -31,7 +32,11 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.logging.web.WebLog;
+import ml.karmaconfigs.api.common.utils.logging.web.WebTarget;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.url.Post;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -42,13 +47,12 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.version;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.*;
 
 @SystemCommand(command = "locklogin", bungee_command = "slocklogin", bungeecord = true)
 public final class LockLoginCommand implements CommandExecutor {
@@ -83,20 +87,69 @@ public final class LockLoginCommand implements CommandExecutor {
                 switch (args.length) {
                     case 1:
                         switch (args[0].toLowerCase()) {
+                            case "log":
+                                if (user.hasPermission(PluginPermissions.web_log())) {
+                                    WebLog wl = new WebLog(plugin);
+                                    plugin.console().send("Uploading log to mclo.gs, please wait.", Level.INFO);
+
+                                    wl.upload(WebTarget.MCLO_GS, Post.newPost())
+                                            .whenComplete((r, e) -> {
+                                                if (e != null || r == null) {
+                                                    if (e != null) {
+                                                        user.send(messages.prefix() + "&5Failed to upload log due to rate limit.");
+                                                    } else {
+                                                        user.send(messages.prefix() + "&5An unknown error occurred while uploading the log.");
+                                                    }
+                                                } else {
+                                                    URL pretty = r.getPretty();
+                                                    URL raw = r.getRaw();
+
+                                                    if (pretty != null || raw != null) {
+                                                        user.send(messages.prefix() + "&dLog has been uploaded successfully");
+                                                        user.send("");
+                                                        user.send("&3----------------------------------");
+                                                        user.send("");
+                                                        if (pretty != null) {
+                                                            user.send("&dLog link: &7" + pretty);
+                                                        }
+                                                        if (raw != null) {
+                                                            user.send("&dRaw log link: &7" + raw);
+                                                        }
+                                                        user.send("");
+                                                        user.send("&3----------------------------------");
+                                                    } else {
+                                                        user.send(messages.prefix() + "&5An unknown error occurred while uploading the log.");
+                                                    }
+                                                }
+                                            });
+                                } else {
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.web_log()));
+                                }
+                                break;
                             case "reload":
                                 FileReloader.reload(player); //Permission check is made internally... xD
                                 break;
                             case "applyupdates":
-                                if (player.hasPermission(applyUpdates())) {
-                                    //BukkitManager.update(sender);
-                                    Event event = new UpdateRequestEvent(sender, player.hasPermission(applyUnsafeUpdates()), null);
+                                if (user.hasPermission(PluginPermissions.updater_apply())) {
+                                    for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                        if (!online.equals(sender)) {
+                                            User u = new User(online);
+                                            if (u.hasPermission(PluginPermissions.updater_apply())) {
+                                                u.send(messages.prefix() + "&7" + StringUtils.stripColor(sender.getName()) + "&d is updating LockLogin");
+                                            }
+                                        }
+                                    }
+
+                                    plugin.console().send("{0} is updating LockLogin", Level.INFO, StringUtils.toColor(player.getName()));
+
+                                    Event event = new UpdateRequestEvent(sender, null);
                                     ModulePlugin.callEvent(event);
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(applyUpdates()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_apply()));
                                 }
                                 break;
                             case "modules":
-                                if (player.hasPermission(modules())) {
+                                if (user.hasPermission(PluginPermissions.module_list())) {
                                     user.send(messages.prefix() + "&dFetching modules info, please stand by");
 
                                     Set<PluginModule> modules = ModuleLoader.getModules();
@@ -136,11 +189,11 @@ public final class LockLoginCommand implements CommandExecutor {
                                         }
                                     }).start();
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(modules()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_list()));
                                 }
                                 break;
                             case "version":
-                                if (player.hasPermission(version())) {
+                                if (user.hasPermission(PluginPermissions.updater_version())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.get().whenComplete((result, error) -> {
@@ -152,11 +205,11 @@ public final class LockLoginCommand implements CommandExecutor {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(version()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_version()));
                                 }
                                 break;
                             case "changelog":
-                                if (player.hasPermission(changelog())) {
+                                if (user.hasPermission(PluginPermissions.updater_changelog())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.get().whenComplete((result, error) -> {
@@ -169,20 +222,20 @@ public final class LockLoginCommand implements CommandExecutor {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(changelog()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_changelog()));
                                 }
                                 break;
                             case "synchronize":
                             case "remove":
                             case "execute":
-                                if (player.hasPermission(web())) {
+                                if (user.hasPermission(PluginPermissions.web())) {
                                     user.send(messages.prefix() + "&cComing soon; LockLogin web panel");
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(sync()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.web()));
                                 }
                                 break;
                             case "check":
-                                if (player.hasPermission(check())) {
+                                if (user.hasPermission(PluginPermissions.updater_check())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
                                     updater.fetch(true).whenComplete((result, error) -> {
@@ -193,7 +246,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                         }
                                     });
                                 } else {
-                                    user.send(messages.prefix() + messages.permissionError(check()));
+                                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.updater_check()));
                                 }
                                 break;
                             default:
@@ -212,33 +265,33 @@ public final class LockLoginCommand implements CommandExecutor {
                                 if (module != null) {
                                     switch (args[1].toLowerCase()) {
                                         case "load":
-                                            if (player.hasPermission(loadModules())) {
+                                            if (user.hasPermission(PluginPermissions.module_load())) {
                                                 if (!ModuleLoader.isLoaded(module) && module.load()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
                                                 }
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(loadModules()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_load()));
                                             }
                                             break;
                                         case "unload":
-                                            if (player.hasPermission(unloadModules())) {
+                                            if (user.hasPermission(PluginPermissions.module_unload())) {
                                                 if (ModuleLoader.isLoaded(module) && module.unload()) {
                                                     user.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
                                                 } else {
                                                     user.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
                                                 }
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(unloadModules()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_unload()));
                                             }
                                             break;
                                         case "reload":
-                                            if (player.hasPermission(reload())) {
+                                            if (user.hasPermission(PluginPermissions.module_reload())) {
                                                 module.reload();
                                                 user.send(messages.prefix() + "&dModule " + moduleName + " has been reloaded, check console for more info");
                                             } else {
-                                                user.send(messages.prefix() + messages.permissionError(reload()));
+                                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.module_reload()));
                                             }
                                             break;
                                         default:
@@ -263,12 +316,55 @@ public final class LockLoginCommand implements CommandExecutor {
                 switch (args.length) {
                     case 1:
                         switch (args[0].toLowerCase()) {
+                            case "log":
+                                WebLog wl = new WebLog(plugin);
+                                plugin.console().send("Uploading log to mclo.gs, please wait.", Level.INFO);
+
+                                wl.upload(WebTarget.MCLO_GS, Post.newPost())
+                                        .whenComplete((r, e) -> {
+                                            if (e != null || r == null) {
+                                                if (e != null) {
+                                                    plugin.console().send("Failed to upload log due to rate limit.", Level.WARNING);
+                                                } else {
+                                                    plugin.console().send("An unknown error occurred while uploading the log.", Level.GRAVE);
+                                                }
+                                            } else {
+                                                URL pretty = r.getPretty();
+                                                URL raw = r.getRaw();
+
+                                                if (pretty != null || raw != null) {
+                                                    plugin.console().send("Log has been uploaded successfully", Level.INFO);
+                                                    plugin.console().send("");
+                                                    plugin.console().send("&3----------------------------------");
+                                                    plugin.console().send("");
+                                                    if (pretty != null) {
+                                                        plugin.console().send("&dLog link: &7{0}", pretty);
+                                                    }
+                                                    if (raw != null) {
+                                                        plugin.console().send("&dRaw log link: &7{0}", raw);
+                                                    }
+                                                    plugin.console().send("");
+                                                    plugin.console().send("&3----------------------------------");
+                                                } else {
+                                                    plugin.console().send("An unknown error occurred while uploading the log.", Level.GRAVE);
+                                                }
+                                            }
+                                        });
+                                break;
                             case "reload":
                                 FileReloader.reload(null);
-
                                 break;
                             case "applyupdates":
-                                Event event = new UpdateRequestEvent(sender, true, null);
+                                for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                    if (!online.equals(sender)) {
+                                        User user = new User(online);
+                                        if (user.hasPermission(PluginPermissions.updater_apply())) {
+                                            user.send(messages.prefix() + "&7" + StringUtils.stripColor(sender.getName()) + "&d is updating LockLogin");
+                                        }
+                                    }
+                                }
+
+                                Event event = new UpdateRequestEvent(sender, null);
                                 ModulePlugin.callEvent(event);
 
                                 break;

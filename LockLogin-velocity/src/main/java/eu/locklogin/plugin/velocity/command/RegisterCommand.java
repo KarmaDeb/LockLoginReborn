@@ -24,11 +24,11 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -81,7 +81,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
                             user.send(messages.prefix() + properties.getProperty("could_not_create_user", "&5&oWe're sorry, but we couldn't create your account"));
                         }
 
-                    if (user.isRegistered()) {
+                    if (manager.isRegistered()) {
                         user.send(messages.alreadyRegistered());
                     } else {
                         switch (args.length) {
@@ -108,7 +108,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
 
                                         session.setLogged(true);
 
-                                        if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermission.forceFA())) {
+                                        if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermissions.force_2fa())) {
                                             user.performCommand("2fa setup " + password);
                                         } else {
                                             session.set2FALogged(true);
@@ -134,7 +134,7 @@ public final class RegisterCommand extends BungeeLikeCommand {
 
                                         user.checkServer(0);
 
-                                        if (!config.useVirtualID() && user.hasPermission(PluginPermission.account())) {
+                                        if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
                                             user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
                                             user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &4THIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
                                         }

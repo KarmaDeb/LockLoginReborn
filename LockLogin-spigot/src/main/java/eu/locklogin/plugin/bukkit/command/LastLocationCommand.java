@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -31,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.account;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.locations;
 
 @SystemCommand(command = "lastloc", bungeecord = true)
 public final class LastLocationCommand implements CommandExecutor {
@@ -59,7 +58,7 @@ public final class LastLocationCommand implements CommandExecutor {
             ClientSession session = user.getSession();
 
             if (session.isValid()) {
-                if (player.hasPermission(account())) {
+                if (user.hasPermission(PluginPermissions.location_client())){
                     if (args.length == 2) {
                         String target = args[0];
                         String action = args[1];
@@ -127,7 +126,7 @@ public final class LastLocationCommand implements CommandExecutor {
                         user.send(messages.prefix() + messages.resetLocUsage());
                     }
                 } else {
-                    user.send(messages.prefix() + messages.permissionError(locations()));
+                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.location_client()));
                 }
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));

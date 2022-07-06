@@ -22,6 +22,7 @@ import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
@@ -39,7 +40,6 @@ import java.time.Instant;
 import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.playerInfo;
 
 @SystemCommand(command = "playerinfo")
 public final class PlayerInfoCommand implements CommandExecutor {
@@ -65,7 +65,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
             User user = new User(player);
 
             if (user.getSession().isValid()) {
-                if (player.hasPermission(playerInfo())) {
+                if (user.hasPermission(PluginPermissions.info_request())) {
                     switch (args.length) {
                         case 0:
                             user.send(messages.prefix() + messages.infoUsage());
@@ -188,7 +188,7 @@ public final class PlayerInfoCommand implements CommandExecutor {
                             break;
                     }
                 } else {
-                    user.send(messages.prefix() + messages.permissionError(playerInfo()));
+                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.info_request()));
                 }
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));

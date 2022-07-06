@@ -26,11 +26,11 @@ import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.command.util.BungeeLikeCommand;
 import eu.locklogin.plugin.velocity.command.util.SystemCommand;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -150,7 +150,7 @@ public final class GoogleAuthCommand extends BungeeLikeCommand {
                                 }
                                 break;
                             case "remove":
-                                if (user.hasPermission(PluginPermission.forceFA())) {
+                                if (user.hasPermission(PluginPermissions.force_2fa())) {
                                     user.send(messages.prefix() + messages.gauthLocked());
                                 } else {
                                     if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {

@@ -289,10 +289,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     }
                                     break;
                                 case REMOVE:
-                                    //Yes, when a bungeecord proxy goes down
-                                    //he must send this message, otherwise, when
-                                    //the proxy starts again, it will have another
-                                    //access key and won't be able to access anymore
+                                    //This can be removed as proxy key is always the same
                                     if (storager.isProxyKey(proxyKey)) {
                                         JarManager.changeField(BungeeDataStorager.class, "proxyKey", "");
                                         BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());

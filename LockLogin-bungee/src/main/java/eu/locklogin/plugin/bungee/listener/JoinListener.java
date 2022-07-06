@@ -36,10 +36,10 @@ import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Config;
@@ -148,7 +148,7 @@ public final class JoinListener implements Listener {
                                     if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
                                         DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                                                 .addTextData(proxy.proxyKey()).addTextData(info.getName())
-                                                .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                                .addTextData(TokenGen.expiration("local_token").toString())
                                                 .build());
                                     }
                                 }
@@ -170,6 +170,7 @@ public final class JoinListener implements Listener {
                             }
 
                             ClientSession session = user.getSession();
+                            AccountManager manager = user.getManager();
                             session.validate();
 
                             if (!config.captchaOptions().isEnabled())
@@ -185,7 +186,7 @@ public final class JoinListener implements Listener {
                                     .addBoolData(session.isLogged())
                                     .addBoolData(session.is2FALogged())
                                     .addBoolData(session.isPinLogged())
-                                    .addBoolData(user.isRegistered()).build();
+                                    .addBoolData(manager.isRegistered()).build();
                             DataSender.send(player, join);
 
                             SimpleScheduler timer = tmp_timer;
@@ -294,7 +295,7 @@ public final class JoinListener implements Listener {
                                         for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                             User user = new User(online);
 
-                                            if (user.hasPermission(PluginPermission.altInfo())) {
+                                            if (user.hasPermission(PluginPermissions.info_alt_alert())) {
                                                 user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                                             }
                                         }
@@ -451,7 +452,7 @@ public final class JoinListener implements Listener {
                 if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
                     DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                             .addTextData(proxy.proxyKey()).addTextData(info.getName())
-                            .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                            .addTextData(TokenGen.expiration("local_token").toString())
                             .build());
                 }
             }
@@ -467,18 +468,19 @@ public final class JoinListener implements Listener {
             CurrentPlatform.requestDataContainerUpdate();
 
             ClientSession session = user.getSession();
+            AccountManager manager = user.getManager();
             session.validate();
 
             MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
                     .addBoolData(session.isLogged())
                     .addBoolData(session.is2FALogged())
                     .addBoolData(session.isPinLogged())
-                    .addBoolData(user.isRegistered()).build();
+                    .addBoolData(manager.isRegistered()).build();
             DataSender.send(player, join);
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
-            if (!user.hasPermission(PluginPermission.limbo()))
+            if (!user.hasPermission(PluginPermissions.join_limbo()))
                 user.checkServer(0);
         }, (long) 1.5, TimeUnit.SECONDS);
     }

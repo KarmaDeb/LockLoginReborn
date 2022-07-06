@@ -19,6 +19,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.alias;
 
 @SystemCommand(command = "alias")
 public final class AliasCommand implements CommandExecutor {
@@ -60,7 +60,7 @@ public final class AliasCommand implements CommandExecutor {
             ClientSession session = user.getSession();
 
             if (session.isValid()) {
-                if (player.hasPermission(alias())) {
+                if (user.hasPermission(PluginPermissions.alias())) {
                     if (args.length >= 2) {
                         String sub = args[0];
 
@@ -169,7 +169,7 @@ public final class AliasCommand implements CommandExecutor {
                         user.send(messages.prefix() + messages.alias());
                     }
                 } else {
-                    user.send(messages.prefix() + messages.permissionError(alias()));
+                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.alias()));
                 }
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));

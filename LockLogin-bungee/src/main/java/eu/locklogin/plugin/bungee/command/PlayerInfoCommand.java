@@ -23,10 +23,10 @@ import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
@@ -75,7 +75,7 @@ public final class PlayerInfoCommand extends Command {
             int max = 0;
 
             if (user.getSession().isValid()) {
-                if (user.hasPermission(PluginPermission.infoRequest())) {
+                if (user.hasPermission(PluginPermissions.info_request())) {
                     switch (args.length) {
                         case 0:
                             user.send(messages.prefix() + messages.infoUsage());
@@ -267,7 +267,7 @@ public final class PlayerInfoCommand extends Command {
                             break;
                     }
                 } else {
-                    user.send(messages.prefix() + messages.permissionError(PluginPermission.playerInfo()));
+                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.info_request()));
                 }
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));

@@ -119,7 +119,7 @@ public final class InventoryListener implements Listener {
             ClientSession session = user.getSession();
 
             if (!session.isLogged() || !session.isTempLogged()) {
-                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue(() -> {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue("inventory_update", () -> {
                     if (!(inventory.getHolder() instanceof PinInventory)) {
                         player.closeInventory();
                     }
@@ -138,7 +138,7 @@ public final class InventoryListener implements Listener {
             ClientSession session = user.getSession();
 
             if (!session.isPinLogged()) {
-                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue(() -> {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.sync().queue("inventory_update", () -> {
                     BungeeDataStorager storage = new BungeeDataStorager();
 
                     if (user.getManager().hasPin() || storage.needsPinConfirmation(player)) {

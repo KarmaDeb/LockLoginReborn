@@ -26,7 +26,6 @@ public final class UpdateRequestEvent extends Event {
 
     private final Object event;
     private final Object commandSender;
-    private final boolean isUnsafe;
 
     private boolean handled = false;
     private String handleReason = "";
@@ -35,12 +34,10 @@ public final class UpdateRequestEvent extends Event {
      * Initialize the update request event
      *
      * @param sender     the update request sender
-     * @param unsafe     if the sender has unsafe update permission
      * @param eventOwner the update request owner
      */
-    public UpdateRequestEvent(final Object sender, final boolean unsafe, final Object eventOwner) {
+    public UpdateRequestEvent(final Object sender, final Object eventOwner) {
         commandSender = sender;
-        isUnsafe = unsafe;
         event = eventOwner;
     }
 
@@ -51,20 +48,6 @@ public final class UpdateRequestEvent extends Event {
      */
     public Object getSender() {
         return commandSender;
-    }
-
-    /**
-     * Get if the sender who requested update
-     * has unsafe update permission
-     *
-     * @return if the update issuer has unsafe
-     * update permission
-     * @deprecated unsafe updates are no longer
-     * an option
-     */
-    @Deprecated
-    public boolean canPerformUnsafeUpdate() {
-        return isUnsafe;
     }
 
     /**

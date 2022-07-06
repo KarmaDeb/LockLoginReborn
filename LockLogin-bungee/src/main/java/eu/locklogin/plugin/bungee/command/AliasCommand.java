@@ -19,9 +19,9 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -61,7 +61,7 @@ public final class AliasCommand extends Command {
             ClientSession session = user.getSession();
 
             if (session.isValid()) {
-                if (user.hasPermission(PluginPermission.alias())) {
+                if (user.hasPermission(PluginPermissions.alias())) {
                     if (args.length >= 2) {
                         String sub = args[0];
 
@@ -170,7 +170,7 @@ public final class AliasCommand extends Command {
                         user.send(messages.prefix() + messages.alias());
                     }
                 } else {
-                    user.send(messages.prefix() + messages.permissionError(PluginPermission.alias()));
+                    user.send(messages.prefix() + messages.permissionError(PluginPermissions.alias()));
                 }
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));

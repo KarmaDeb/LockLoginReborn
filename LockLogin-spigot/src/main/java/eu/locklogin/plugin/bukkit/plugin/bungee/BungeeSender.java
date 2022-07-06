@@ -44,10 +44,10 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
-                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
             }
 
@@ -56,7 +56,7 @@ public final class BungeeSender {
             output.writeUTF(sub);
             output.writeUTF(id);
             if (sub.equalsIgnoreCase("register")) {
-                output.writeUTF(TokenGen.expiration("LOCAL_TOKEN").toString());
+                output.writeUTF(TokenGen.expiration("local_token").toString());
             }
 
             recipient.sendPluginMessage(LockLogin.plugin, "ll:access", output.toByteArray());
@@ -76,10 +76,10 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
-                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
             }
 
@@ -110,10 +110,10 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
-                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
             }
 
@@ -142,10 +142,10 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
-                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
             }
 
@@ -174,10 +174,10 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+            String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
-                token = TokenGen.request("LOCAL_TOKEN", plugin.getServer().getName());
+                token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
             }
 

@@ -83,6 +83,11 @@ public final class ModuleLoader {
      */
     @Nullable
     public static File getModuleFile(final String name) {
+        for (PluginModule module : loaded.values()) {
+            if (module.name().equalsIgnoreCase(name))
+                return module.getModule();
+        }
+
         try {
             File moduleFile = new File(modulesFolder, name);
             if (moduleFile.exists() && moduleFile.isFile() && moduleFile.getName().endsWith(".jar")) {
@@ -208,7 +213,7 @@ public final class ModuleLoader {
                                         String complete_url = str + "/locklogin/api/?license=" + class_name;
                                         URL url = URLUtils.getOrNull(complete_url);
                                         if (url != null) {
-                                            HttpUtil util = URLUtils.extraUtils(url);
+                                            /*HttpUtil util = URLUtils.extraUtils(url);
                                             if (util != null) {
                                                 String response = util.getResponse();
                                                 if (!StringUtils.isNullOrEmpty(response)) {
@@ -256,7 +261,7 @@ public final class ModuleLoader {
 
                                                     break;
                                                 }
-                                            }
+                                            }*/
                                         }
                                     }
                                 }
@@ -331,7 +336,7 @@ public final class ModuleLoader {
                                     String complete_url = str + "/locklogin/api/?license=" + class_name;
                                     URL url = URLUtils.getOrNull(complete_url);
                                     if (url != null) {
-                                        HttpUtil util = URLUtils.extraUtils(url);
+                                        /*HttpUtil util = URLUtils.extraUtils(url);
                                         if (util != null) {
                                             String response = util.getResponse();
                                             if (!StringUtils.isNullOrEmpty(response)) {
@@ -379,7 +384,7 @@ public final class ModuleLoader {
 
                                                 break;
                                             }
-                                        }
+                                        }*/
                                     }
                                 }
                             }

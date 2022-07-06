@@ -46,6 +46,7 @@ import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.velocity.VelocityPlugin;
@@ -55,7 +56,6 @@ import eu.locklogin.plugin.velocity.listener.ChatListener;
 import eu.locklogin.plugin.velocity.listener.JoinListener;
 import eu.locklogin.plugin.velocity.listener.MessageListener;
 import eu.locklogin.plugin.velocity.listener.QuitListener;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.injector.Injector;
 import eu.locklogin.plugin.velocity.plugin.injector.VelocityInjector;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
@@ -431,7 +431,7 @@ public final class Manager {
                         PluginMessages messages = CurrentPlatform.getMessages();
                         for (Player player : plugin.getServer().getAllPlayers()) {
                             User user = new User(player);
-                            if (user.hasPermission(PluginPermission.applyUpdates())) {
+                            if (user.hasPermission(PluginPermissions.updater_apply())) {
                                 user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
                                 user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                             }
@@ -446,7 +446,7 @@ public final class Manager {
 
                             for (Player player : plugin.getServer().getAllPlayers()) {
                                 User user = new User(player);
-                                if (user.hasPermission(PluginPermission.applyUpdates())) {
+                                if (user.hasPermission(PluginPermissions.updater_apply())) {
                                     user.send(messages.prefix() + "&dFollow console instructions to update");
                                 }
                             }
@@ -560,7 +560,7 @@ public final class Manager {
                             if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
                                 DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player)
                                         .addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName())
-                                        .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                        .addTextData(TokenGen.expiration("local_token").toString())
                                         .build());
                             }
                         }
@@ -587,6 +587,7 @@ public final class Manager {
                     }
 
                     ClientSession session = user.getSession();
+                    AccountManager manager = user.getManager();
                     session.validate();
 
                     if (!config.captchaOptions().isEnabled())
@@ -602,7 +603,7 @@ public final class Manager {
                             .addBoolData(session.isLogged())
                             .addBoolData(session.is2FALogged())
                             .addBoolData(session.isPinLogged())
-                            .addBoolData(user.isRegistered()).build();
+                            .addBoolData(manager.isRegistered()).build();
                     DataSender.send(player, join);
 
                     SimpleScheduler timer = tmp_timer;

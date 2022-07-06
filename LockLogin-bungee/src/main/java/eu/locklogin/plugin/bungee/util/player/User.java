@@ -25,11 +25,11 @@ import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.permissibles.Permission;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.api.bungee.makeiteasy.BossMessage;
@@ -90,7 +90,7 @@ public final class User {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
                 } else {
                     AccountNameDatabase database = new AccountNameDatabase(player.getUniqueId());
-                    lockLogin.async().queue(() -> {
+                    lockLogin.async().queue("user_fetch", () -> {
                         database.assign(StringUtils.stripColor(player.getName()));
                         database.assign(StringUtils.stripColor(player.getDisplayName()));
                     });
@@ -338,7 +338,7 @@ public final class User {
     public synchronized void applySessionEffects() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         DataSender.MessageDataBuilder builder = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player);
-        if (isRegistered()) {
+        if (getManager().isRegistered()) {
             LoginConfig login = config.loginOptions();
 
             builder.addBoolData(login.blindEffect());
@@ -451,19 +451,7 @@ public final class User {
      * factory
      */
     public GoogleAuthFactory getTokenFactory() {
-        return new GoogleAuthFactory(player.getUniqueId(), StringUtils.toColor(player.getDisplayName()));
-    }
-
-    /**
-     * Check if the user is registered or not
-     *
-     * @return if the user is registered
-     */
-    public boolean isRegistered() {
-        AccountManager manager = getManager();
-        String password = manager.getPassword();
-
-        return !password.replaceAll("\\s", "").isEmpty();
+        return new GoogleAuthFactory(player.getUniqueId());
     }
 
     /**
@@ -472,8 +460,9 @@ public final class User {
      * @param permission the permission
      * @return if the player has the permission
      */
-    public boolean hasPermission(final Permission permission) {
-        return permission.isPermissible(player, permission);
+    public boolean hasPermission(final PermissionObject permission) {
+        ModulePlayer player = getModule();
+        return permission.isPermissible(player);
     }
 
     /**

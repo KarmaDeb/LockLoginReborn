@@ -26,6 +26,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
@@ -42,7 +43,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.forceFA;
 
 @SystemCommand(command = "login", aliases = {"log"})
 public final class LoginCommand implements CommandExecutor {
@@ -111,6 +111,7 @@ public final class LoginCommand implements CommandExecutor {
                                                 if (config.blockUnsafePasswords()) {
                                                     manager.setPassword(null);
 
+                                                    user.getChecker().cancelCheck();
                                                     SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                                     plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
                                                     return;
@@ -160,11 +161,11 @@ public final class LoginCommand implements CommandExecutor {
                                             if (protection != null)
                                                 protection.success();
 
-                                            if (!manager.has2FA() && config.enable2FA() && player.hasPermission(forceFA())) {
+                                            if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
                                                 trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
                                             }
 
-                                            if (!config.useVirtualID() && player.hasPermission("locklogin.account")) {
+                                            if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
                                                 user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
                                                 user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &5&lTHIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
                                             }

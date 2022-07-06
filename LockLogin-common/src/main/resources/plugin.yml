@@ -26,7 +26,6 @@ depend:
 softdepend:
   - AnotherBarelyCodedKarmaPlugin
   - PlaceholderAPI
-  - ProtocolLib
 
 
 
@@ -93,75 +92,94 @@ permissions:
         default: false
     description: The permission required to reload configuration/messages files
     default: false
-  locklogin.applyupdates:
+  locklogin.location:
     children:
-      locklogin.applyupdates.unsafe:
-        description: The permission required to apply unsafe updates
+      locklogin.location.spawn:
+        description: The permission required to set spawn
         default: false
-    description: The permission required to apply LockLogin update
+      locklogin.location.client:
+        description: The permission required to manage client last location
+        default: false
+    description: The permission required to manage locations
     default: false
-  locklogin.setspawn:
-    description: The permission required to set the login spawn location
-    default: op
   locklogin.info:
     children:
       locklogin.info.request:
-        description: The permission required to request other player information
-        default: false
+        description: The permission required to request information about a player account
+        default: op
       locklogin.info.alt:
         children:
           locklogin.info.alt.alert:
-            description: The permission required to receive alerts when a player with alt account joins the server
+            description: The permission required to be notified when LockLogin detects there may be a player using alt account
             default: false
-        description: The permission required to request alt account information
-        default: false
-    description: The permission required to request player or plugin information
-    default: op
+        description: The permission required to request a list of possible alt accounts
+        default: op
+    description: The permission required to view clients information
+    default: false
   locklogin.account:
     children:
       locklogin.account.close:
-        description: The permission required to close a client account
+        description: The permission required to close a client session
         default: false
       locklogin.account.remove:
         description: The permission required to remove a client account
         default: false
       locklogin.account.unlock:
-        description: The permission required to unlock a client account
+        description: The permission required to unlock a client account after being removed
         default: false
-      locklogin.account.location:
-        description: The permission required to manage player(s) last location
-        default: false
-    description: The permission required to manage a player account
+    description: The permission required to manage player accounts
     default: false
   locklogin.forcefa:
-    description: The permission that will force the player run /2fa setup after register
+    description: The permission required to force clients to use 2fa
     default: false
   locklogin.alias:
-    description: The permission to create/destroy or manage aliases
+    description: The permission required to use /alias command
     default: false
   locklogin.module:
     children:
+      locklogin.module.reload:
+        description: The permission required to reload a module
+        default: false
       locklogin.module.load:
-        description: The permission to load a module
+        description: The permission required to load modules
         default: false
       locklogin.module.unload:
-        description: The permission to unload a module
+        description: The permission required to unload a module
         default: false
       locklogin.module.list:
-        description: The permission to list all the modules
+        description: The permission required to list modules
         default: false
-    description: The permission to manage LockLogin modules
+    description: The permission required to manage modules
     default: false
   locklogin.updater:
     children:
+      locklogin.updater.apply:
+        description: The permission required to apply updates
+        default: false
       locklogin.updater.version:
-        description: The permission to retrieve current plugin version and latest plugin version
+        description: The permission required to view current and latest version
         default: op
       locklogin.updater.changelog:
-        description: The permission to retrieve the latest plugin changelog
+        description: The permission required to fetch changelog
         default: op
       locklogin.updater.check:
-        description: The permission to force a version check
-        default: op
-    description: The permission to manage LockLogin updater
-    default: op
+        description: The permission required to check for updates
+        default: false
+    description: The permission required to manage plugin updater
+    default: false
+  locklogin.web:
+    children:
+      locklogin.web.log:
+        description: The permission required to upload logs to the web
+        default: false
+      locklogin.web.sync:
+        description: The permission required to synchronize web data
+        default: false
+      locklogin.web.remove:
+        description: The permission required to remove queries in web data
+        default: false
+      locklogin.web.execute:
+        description: The permission required to execute queries in web data
+        default: false
+    description: The permission required for web related options in LockLogin
+    default: false

@@ -9,6 +9,7 @@ import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.karmafile.KarmaFile;
 import ml.karmaconfigs.api.common.karmafile.Key;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.file.PathUtilities;
 import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.security.token.TokenStorage;
 import ml.karmaconfigs.api.common.utils.security.token.exception.TokenExpiredException;
@@ -38,6 +39,7 @@ public final class TokenGen {
             String local_node = legacy.getString("DEFAULT_NODE", "");
 
             KarmaMain modern = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
+
             modern.set("local_token", new KarmaObject(token));
             modern.set("local_node", new KarmaObject(local_node));
 
@@ -88,7 +90,11 @@ public final class TokenGen {
             storage.destroy(find("local_token"), password);
             generate = true;
         } catch (TokenIncorrectPasswordException ex) {
-            lockLogin.console().send("Advanced administrator power is needed, please remove the folder plugins/LockLogin/cache/ and restart your server", Level.GRAVE);
+            //Manually removing the token file should fix it without having to remove cache folder
+            Path tokenFile = lockLogin.getDataPath().resolve("cache").resolve("tokens").resolve(find("local_token").toString().replace("-", ""));
+            PathUtilities.destroy(tokenFile);
+
+            lockLogin.console().send("Communication token has corrupted authentication data. Restart your server to fix it", Level.GRAVE);
         }
 
         if (generate) {
@@ -124,24 +130,24 @@ public final class TokenGen {
      * @param node     the node
      * @param password the node password
      */
-    public static void assign(final String token, final String node, final String password, final Instant expiration) throws Exception {
+    public static void assign(final String token, final String node, final String password, final Instant expiration) {
         KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
 
+        KarmaElement external = null;
         if (idData.isSet("external_tokens")) {
-            KarmaElement element = idData.get("external_tokens");
-            if (element.isKeyArray()) {
-                KarmaKeyArray keys = element.getKeyArray();
-                TokenStorage storage = new TokenStorage(lockLogin);
-                UUID tokenID = storage.store(token, password, expiration);
-
-                keys.add(node, new KarmaObject(tokenID.toString()), false);
-
-                idData.set("external_tokens", keys);
-                if (!idData.save()) {
-                    throw new Exception("Failed to assign token data of " + node);
-                }
-            }
+            external = idData.get("external_tokens");
         }
+        if (external == null || !external.isKeyArray())
+            external = new KarmaKeyArray();
+
+        KarmaKeyArray keys = external.getKeyArray();
+        TokenStorage storage = new TokenStorage(lockLogin);
+        UUID tokenID = storage.store(token, password, expiration);
+
+        keys.add(node, new KarmaObject(tokenID.toString()), false);
+
+        idData.set("external_tokens", keys);
+        idData.save();
     }
 
     /**
@@ -151,15 +157,20 @@ public final class TokenGen {
      */
     public static String requestNode() {
         KarmaMain idData = new KarmaMain(lockLogin, "data.kf", "cache", "keys");
-        if (idData.isSet("local_node")) {
-            KarmaElement node = idData.get("local_node");
 
-            if (node.isString()) {
-                return node.getObjet().getString();
-            }
+        KarmaElement local = null;
+        if (idData.isSet("local_node")) {
+            local = idData.get("local_node");
         }
 
-        return StringUtils.generateString().create();
+        if (local == null || !local.isString()) {
+            local = new KarmaObject(StringUtils.generateString().create());
+
+            idData.set("local_node", local);
+            idData.save();
+        }
+
+        return local.getObjet().getString();
     }
 
     /**
@@ -199,18 +210,17 @@ public final class TokenGen {
                     return UUID.fromString(element.getObjet().getString());
             }
         } else {
+            KarmaElement external = null;
             if (idData.isSet("external_tokens")) {
-                KarmaElement element = idData.get("external_tokens");
-                if (element.isKeyArray()) {
-                    KarmaKeyArray keys = element.getKeyArray();
-                    if (keys.containsKey(node)) {
-                        KarmaElement value = keys.get(node);
+                external = idData.get("external_tokens");
+            }
+            if (external == null || !external.isKeyArray())
+                external = new KarmaKeyArray();
 
-                        if (value.isString()) {
-                            return UUID.fromString(value.getObjet().getString());
-                        }
-                    }
-                }
+            KarmaKeyArray keys = external.getKeyArray();
+            if (keys.containsKey(node)) {
+                KarmaElement value = keys.get(node);
+                return UUID.fromString(value.getObjet().textValue());
             }
         }
 

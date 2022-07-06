@@ -20,17 +20,17 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
+import eu.locklogin.plugin.velocity.plugin.injector.Injector;
+import eu.locklogin.plugin.velocity.plugin.injector.VelocityInjector;
 import eu.locklogin.plugin.velocity.util.files.Config;
 import eu.locklogin.plugin.velocity.util.files.Proxy;
 import eu.locklogin.plugin.velocity.util.player.User;
 
 import static eu.locklogin.plugin.velocity.LockLogin.console;
 import static eu.locklogin.plugin.velocity.LockLogin.properties;
-import static eu.locklogin.plugin.velocity.permissibles.PluginPermission.reload_config;
-import static eu.locklogin.plugin.velocity.permissibles.PluginPermission.reload_messages;
 
 public class FileReloader {
 
@@ -47,8 +47,8 @@ public class FileReloader {
         if (player != null) {
             User user = new User(player);
 
-            if (user.hasPermission(reload_config()) || user.hasPermission(reload_messages())) {
-                if (user.hasPermission(reload_config())) {
+            if (user.hasPermission(PluginPermissions.reload_config()) || user.hasPermission(PluginPermissions.reload_messages())) {
+                if (user.hasPermission(PluginPermissions.reload_config())) {
                     if (Config.manager.reload()) {
                         Config.manager.checkValues();
 
@@ -61,20 +61,23 @@ public class FileReloader {
                         user.send(messages.prefix() + properties.getProperty("reload_proxy", "&dReloaded proxy configuration"));
                     }
                 }
-                if (user.hasPermission(reload_messages())) {
+                if (user.hasPermission(PluginPermissions.reload_messages())) {
                     if (CurrentPlatform.getMessages().reload()) {
                         user.send(messages.prefix() + properties.getProperty("reload_messages", "&dReloaded messages file"));
                     }
                 }
 
-                if (user.hasPermission(PluginPermission.reload())) {
+                if (user.hasPermission(PluginPermissions.reload())) {
                     user.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
                     Manager.restartVersionChecker();
                     Manager.restartAlertSystem();
+
+                    Injector injector = new VelocityInjector();
+                    injector.inject();
                 }
             } else {
-                user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
+                user.send(messages.prefix() + messages.permissionError(PluginPermissions.reload()));
             }
         } else {
             if (Config.manager.reload()) {

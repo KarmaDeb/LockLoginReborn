@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
-public class WaterfallInjector extends Injector {
+public class ModuleExecutorInjector extends Injector {
 
     private final static Map<String, Command> registered = new ConcurrentHashMap<>();
 

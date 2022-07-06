@@ -19,6 +19,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Config;
@@ -43,8 +44,8 @@ public class FileReloader {
         if (player != null) {
             User user = new User(player);
 
-            if (player.hasPermission(PluginPermission.reload_config()) || player.hasPermission(PluginPermission.reload_messages())) {
-                if (player.hasPermission(PluginPermission.reload_config())) {
+            if (user.hasPermission(PluginPermissions.reload_config()) || user.hasPermission(PluginPermissions.reload_messages())) {
+                if (user.hasPermission(PluginPermissions.reload_config())) {
                     if (Config.manager.reload()) {
                         Config.manager.checkValues();
 
@@ -55,20 +56,20 @@ public class FileReloader {
                         CurrentPlatform.setPrefix(config.getModulePrefix());
                     }
                 }
-                if (player.hasPermission(PluginPermission.reload_messages())) {
+                if (user.hasPermission(PluginPermissions.reload_messages())) {
                     if (CurrentPlatform.getMessages().reload()) {
                         user.send(messages.prefix() + properties.getProperty("reload_messages", "&dReloaded messages file"));
                     }
                 }
 
-                if (player.hasPermission(PluginPermission.reload())) {
+                if (user.hasPermission(PluginPermissions.reload())) {
                     user.send(messages.prefix() + properties.getProperty("restart_systems", "&7Restarting version checker and plugin alert systems"));
 
                     Manager.restartVersionChecker();
                     Manager.restartAlertSystem();
                 }
             } else {
-                user.send(messages.prefix() + messages.permissionError(PluginPermission.reload()));
+                user.send(messages.prefix() + messages.permissionError(PluginPermissions.reload()));
             }
         } else {
             if (Config.manager.reload()) {

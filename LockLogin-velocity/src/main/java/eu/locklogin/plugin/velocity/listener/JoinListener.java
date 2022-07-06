@@ -48,10 +48,10 @@ import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.VelocityGameProfileEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.velocity.permissibles.PluginPermission;
 import eu.locklogin.plugin.velocity.plugin.Manager;
 import eu.locklogin.plugin.velocity.plugin.sender.DataSender;
 import eu.locklogin.plugin.velocity.util.files.Config;
@@ -68,6 +68,7 @@ import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.kyori.adventure.text.Component;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
@@ -126,6 +127,15 @@ public final class JoinListener {
                     validationResult.getReason(), null);
             ModulePlugin.callEvent(ipEvent);
 
+            if (ipEvent.getResult() != validationResult && ipEvent.getHandleOwner() == null) {
+                try {
+                    Field f = ipEvent.getClass().getDeclaredField("validationResult");
+                    f.setAccessible(true);
+
+                    f.set(ipEvent, validationResult); //Deny changes from unknown sources
+                } catch (Throwable ignored) {}
+            }
+
             if (!ipEvent.isHandled()) {
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
@@ -142,7 +152,7 @@ public final class JoinListener {
                                 if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
                                     DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                                             .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                                            .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                                            .addTextData(TokenGen.expiration("local_token").toString())
                                             .build());
                                 }
                             }
@@ -163,6 +173,7 @@ public final class JoinListener {
                         }
 
                         ClientSession session = user.getSession();
+                        AccountManager manager = user.getManager();
                         session.validate();
 
                         if (!config.captchaOptions().isEnabled())
@@ -178,7 +189,7 @@ public final class JoinListener {
                                 .addBoolData(session.isLogged())
                                 .addBoolData(session.is2FALogged())
                                 .addBoolData(session.isPinLogged())
-                                .addBoolData(user.isRegistered()).build();
+                                .addBoolData(manager.isRegistered()).build();
                         DataSender.send(player, join);
 
                         SimpleScheduler timer = tmp_timer;
@@ -206,7 +217,7 @@ public final class JoinListener {
                             user.kick(event.getHandleReason());
                         }
 
-                        if (!ipEvent.getResult().equals(validationResult)) {
+                        if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
                             logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
                                     ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                         }
@@ -214,7 +225,7 @@ public final class JoinListener {
                     case INVALID:
                     case ERROR:
                     default:
-                        if (!ipEvent.getResult().equals(validationResult)) {
+                        if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
                             logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
                                     ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                         }
@@ -270,6 +281,15 @@ public final class JoinListener {
                     e);
             ModulePlugin.callEvent(ipEvent);
 
+            if (ipEvent.getResult() != validationResult && ipEvent.getHandleOwner() == null) {
+                try {
+                    Field f = ipEvent.getClass().getDeclaredField("validationResult");
+                    f.setAccessible(true);
+
+                    f.set(ipEvent, validationResult); //Deny changes from unknown sources
+                } catch (Throwable ignored) {}
+            }
+
             String conn_name = e.getUsername();
             UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
             if (CurrentPlatform.isOnline() || e.getResult().isOnlineModeAllowed()) {
@@ -292,7 +312,7 @@ public final class JoinListener {
                                         for (Player online : plugin.getServer().getAllPlayers()) {
                                             User user = new User(online);
 
-                                            if (user.hasPermission(PluginPermission.altInfo())) {
+                                            if (user.hasPermission(PluginPermissions.info_alt_alert())) {
                                                 user.send(messages.prefix() + messages.altFound(conn_name, amount - 1));
                                             }
                                         }
@@ -375,7 +395,7 @@ public final class JoinListener {
                     case INVALID:
                     case ERROR:
                     default:
-                        if (!ipEvent.getResult().equals(validationResult)) {
+                        if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
                             logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
                                     ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                         }
@@ -427,7 +447,7 @@ public final class JoinListener {
                 if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
                     DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                             .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                            .addTextData(TokenGen.expiration("LOCAL_TOKEN").toString())
+                            .addTextData(TokenGen.expiration("local_token").toString())
                             .build());
                 }
             }
@@ -440,18 +460,19 @@ public final class JoinListener {
             DataSender.send(player, validation);
 
             ClientSession session = user.getSession();
+            AccountManager manager = user.getManager();
             session.validate();
 
             MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
                     .addBoolData(session.isLogged())
                     .addBoolData(session.is2FALogged())
                     .addBoolData(session.isPinLogged())
-                    .addBoolData(user.isRegistered()).build();
+                    .addBoolData(manager.isRegistered()).build();
             DataSender.send(player, join);
 
             DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
 
-            if (!user.hasPermission(PluginPermission.limbo()))
+            if (!user.hasPermission(PluginPermissions.join_limbo()))
                 user.checkServer(0);
         }).delay((long) 1.5, TimeUnit.SECONDS).schedule();
     }

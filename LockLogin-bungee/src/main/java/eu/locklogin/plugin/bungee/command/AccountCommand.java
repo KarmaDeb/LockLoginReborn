@@ -32,10 +32,10 @@ import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent.ChangeResult;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.permissibles.PluginPermission;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
@@ -140,7 +140,7 @@ public class AccountCommand extends Command {
                             }
                             break;
                         case "unlock":
-                            if (user.hasPermission(PluginPermission.account())) {
+                            if (user.hasPermission(PluginPermissions.account_unlock())) {
                                 if (args.length == 2) {
                                     String target = args[1];
                                     AccountNameDatabase.find(target).whenComplete((nsr) -> {
@@ -172,7 +172,7 @@ public class AccountCommand extends Command {
                                     user.send(messages.prefix() + messages.accountUnLock());
                                 }
                             } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.unlockAccount()));
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_unlock()));
                             }
                             break;
                         case "close":
@@ -201,7 +201,7 @@ public class AccountCommand extends Command {
                                     ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
-                                    if (user.hasPermission(PluginPermission.account())) {
+                                    if (user.hasPermission(PluginPermissions.account_close())) {
                                         String tar_name = args[1];
                                         ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
 
@@ -224,7 +224,7 @@ public class AccountCommand extends Command {
                                             user.send(messages.prefix() + messages.connectionError(tar_name));
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.closeAccount()));
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_close()));
                                     }
                                     break;
                                 default:
@@ -236,7 +236,7 @@ public class AccountCommand extends Command {
                         case "remove":
                             switch (args.length) {
                                 case 2:
-                                    if (user.hasPermission(PluginPermission.account())) {
+                                    if (user.hasPermission(PluginPermissions.account_remove())) {
                                         String target = args[1];
                                         AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                             if (nsr.singleResult()) {
@@ -280,7 +280,7 @@ public class AccountCommand extends Command {
                                             }
                                         });
                                     } else {
-                                        user.send(messages.prefix() + messages.permissionError(PluginPermission.delAccount()));
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_remove()));
                                     }
                                     break;
                                 case 3:
@@ -328,7 +328,7 @@ public class AccountCommand extends Command {
                             }
                             break;
                         case "alts":
-                            if (user.hasPermission(PluginPermission.altInfo())) {
+                            if (user.hasPermission(PluginPermissions.info_alt())) {
                                 if (args.length == 2) {
                                     String target = args[1];
                                     AccountNameDatabase.find(target).whenComplete((nsr) -> {
@@ -376,7 +376,7 @@ public class AccountCommand extends Command {
                                     user.send(messages.prefix() + messages.lookupUsage());
                                 }
                             } else {
-                                user.send(messages.prefix() + messages.permissionError(PluginPermission.altInfo()));
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.info_alt()));
                             }
                             break;
                         case "session":

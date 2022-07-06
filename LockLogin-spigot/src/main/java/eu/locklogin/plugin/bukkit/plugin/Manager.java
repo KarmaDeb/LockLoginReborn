@@ -38,6 +38,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
@@ -455,7 +456,7 @@ public final class Manager {
                         PluginMessages messages = CurrentPlatform.getMessages();
                         for (Player player : plugin.getServer().getOnlinePlayers()) {
                             User user = new User(player);
-                            if (player.hasPermission(PluginPermission.applyUpdates())) {
+                            if (user.hasPermission(PluginPermissions.updater_apply())) {
                                 user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
                                 user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                             }
@@ -470,7 +471,7 @@ public final class Manager {
 
                             for (Player player : plugin.getServer().getOnlinePlayers()) {
                                 User user = new User(player);
-                                if (player.hasPermission(PluginPermission.applyUpdates())) {
+                                if (user.hasPermission(PluginPermissions.updater_apply())) {
                                     user.send(messages.prefix() + "&dFollow console instructions to update");
                                 }
                             }

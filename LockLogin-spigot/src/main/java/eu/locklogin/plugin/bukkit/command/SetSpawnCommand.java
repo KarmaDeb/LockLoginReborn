@@ -15,6 +15,7 @@ package eu.locklogin.plugin.bukkit.command;
  */
 
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -27,11 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
-import static eu.locklogin.plugin.bukkit.plugin.PluginPermission.setSpawn;
 
 @SystemCommand(command = "setloginspawn", bungeecord = true)
 public final class SetSpawnCommand implements CommandExecutor {
-
 
     /**
      * Executes the given command, returning its success.
@@ -53,13 +52,13 @@ public final class SetSpawnCommand implements CommandExecutor {
             Player player = (Player) sender;
             User user = new User(player);
 
-            if (player.hasPermission(setSpawn())) {
+            if (user.hasPermission(PluginPermissions.location_spawn())) {
                 Spawn spawn = new Spawn(player.getWorld());
                 spawn.save(player.getLocation());
 
                 user.send(messages.prefix() + messages.spawnSet());
             } else {
-                user.send(messages.prefix() + messages.permissionError(setSpawn()));
+                user.send(messages.prefix() + messages.permissionError(PluginPermissions.location_spawn()));
             }
         } else {
             console.send(messages.prefix() + properties.getProperty("command_not_available", "&cThis command is not available for console"));
