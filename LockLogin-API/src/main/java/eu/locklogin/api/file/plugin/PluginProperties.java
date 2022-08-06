@@ -29,8 +29,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.time.format.TextStyle;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * LockLogin plugin messages
@@ -132,18 +131,24 @@ public final class PluginProperties {
                     jar.store(Files.newBufferedWriter(propFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE), comment);
                     plugin.console().send("Plugin message properties updated successfully", Level.INFO);
                 } else {
+                    Set<Object> remove = new HashSet<>();
+                    Map<Object, String> add = new LinkedHashMap<>();
+
                     for (Object k : local.keySet()) {
                         if (!jar.containsKey(k)) {
-                            local.remove(k);
+                            remove.add(k);
                         }
                     }
                     for (Object k : jar.keySet()) {
                         String key = (String) k;
 
                         if (!local.containsKey(key)) {
-                            local.setProperty(key, jar.getProperty(key, ""));
+                            add.put(key, jar.getProperty(key, ""));
                         }
                     }
+
+                    remove.forEach(local::remove);
+                    local.putAll(add);
 
                     local.store(Files.newBufferedWriter(propFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE), comment);
                 }

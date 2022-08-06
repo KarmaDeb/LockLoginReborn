@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Chinese (Official - Community based)
 #Editor: MAX_XiaoKui, KarmaDev
-#Last edited: 30 - April - 2022 16:21
+#Last edited: 10 - July - 2022 21:57
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -49,7 +49,8 @@ SessionEnabled: "&d为您的账户启用了持久会话"
 SessionDisabled: "&5&o为您的账户禁用了持久会话"
 
 #Session messages - Register
-Register: "&5&o请使用/register <密码> <密码> <验证码>"
+Register: "&5&o请使用/register <password> <password> <captcha>"
+KarmaRegister: "&5&o请使用/register <password> <captcha> <email>"
 RegisterBar: "{color}你还有&7{time}{color}来注册"
 Registered: "&d已注册，欢迎"
 AlreadyRegistered: "&5&o你已经注册过了！"

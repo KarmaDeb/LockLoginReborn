@@ -23,6 +23,7 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.Config;
+import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.entity.Player;
 
@@ -45,6 +46,8 @@ public class FileReloader {
             User user = new User(player);
 
             if (user.hasPermission(PluginPermissions.reload_config()) || user.hasPermission(PluginPermissions.reload_messages())) {
+                Button.reload();
+
                 if (user.hasPermission(PluginPermissions.reload_config())) {
                     if (Config.manager.reload()) {
                         Config.manager.checkValues();
@@ -72,6 +75,8 @@ public class FileReloader {
                 user.send(messages.prefix() + messages.permissionError(PluginPermissions.reload()));
             }
         } else {
+            Button.reload();
+
             if (Config.manager.reload()) {
                 Config.manager.checkValues();
 

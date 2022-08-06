@@ -16,9 +16,12 @@ package eu.locklogin.plugin.bukkit;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.common.web.panel.KarmaPanelAuth;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.net.URL;
 
@@ -48,6 +51,7 @@ public final class Main extends KarmaPlugin {
                 onDisable();
             }
         })); //Make sure the plugin shuts down correctly.
+
         CurrentPlatform.setOnline(getServer().getOnlineMode());
     }
 

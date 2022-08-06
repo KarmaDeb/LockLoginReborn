@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: German (Official)
 #Editor: KarmaDev
-#Last edited: 30 - April - 2022 16:21
+#Last edited: 10 - July - 2022 21:57
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -49,7 +49,8 @@ SessionEnabled: "&dDauerhafte Sitzung für Ihr Konto aktiviert"
 SessionDisabled: "&5&oDeaktivierte dauerhafte Sitzung für Ihr Konto"
 
 #Session messages - Register
-Register: "&5&oBitte verwenden Sie /register <password> <password> <captcha> <captcha>"
+Register: "&5&oBitte verwenden Sie /register <password> <password> <captcha>"
+KarmaRegister: "&5&oBitte verwenden Sie /register <password> <captcha> <email>"
 RegisterBar: "{color}Sie haben &7{time}{color} zum Registrieren"
 Registered: "&dRegistrieren abgeschlossen, danke für das Spielen"
 AlreadyRegistered: "&5&oSie sind bereits registriert"

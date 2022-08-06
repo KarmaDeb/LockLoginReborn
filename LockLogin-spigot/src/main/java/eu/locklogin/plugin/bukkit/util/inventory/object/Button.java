@@ -3,6 +3,12 @@ package eu.locklogin.plugin.bukkit.util.inventory.object;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
+import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -12,11 +18,10 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 import static eu.locklogin.plugin.bukkit.LockLogin.tryAsync;
 
 /**
@@ -31,6 +36,38 @@ import static eu.locklogin.plugin.bukkit.LockLogin.tryAsync;
 public class Button {
 
     private final static PropertyManager manager = new PropertyManager();
+    private final static Map<Integer, ItemStack> numbers = new ConcurrentHashMap<>();
+
+    private static KarmaMain translation;
+
+    static {
+        translation = new KarmaMain(plugin, "pin.kf").internal(PinInventory.class.getResourceAsStream("/templates/pin.kf"));
+
+        try {
+            translation.validate();
+        } catch (Throwable ex) {
+            plugin.logger().scheduleLog(Level.GRAVE, ex);
+            plugin.logger().scheduleLog(Level.INFO, "Failed to validate pin translation file");
+
+            plugin.console().send("Failed to validate pin translation file, default values may be used", Level.WARNING);
+        }
+    }
+
+    public static void reload() {
+        translation = new KarmaMain(plugin, "pin.kf").internal(PinInventory.class.getResourceAsStream("/templates/pin.kf"));
+
+        try {
+            translation.validate();
+        } catch (Throwable ex) {
+            plugin.logger().scheduleLog(Level.GRAVE, ex);
+            plugin.logger().scheduleLog(Level.INFO, "Failed to validate pin translation file");
+
+            plugin.console().send("Failed to validate pin translation file, default values may be used", Level.WARNING);
+        }
+
+        translation.clearCache();
+        translation.preCache();
+    }
 
     static Object getNumberProperties(int number) {
         String value;
@@ -85,154 +122,48 @@ public class Button {
         return manager.createProperty("textures", value, signature);
     }
 
-    public static ItemStack one() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(1));
-        } catch (Throwable ignore) {
+    public static ItemStack getNumber(final int number) {
+        if (!numbers.containsKey(number)) {
+            ItemStack stack = getRandomItemStack();
+            try {
+                stack = getSkull(getNumberProperties(number));
+            } catch (Throwable ignore) {
+            }
+            ItemMeta stackMeta = stack.getItemMeta();
+            assert stackMeta != null;
+
+            KarmaKeyArray def = new KarmaKeyArray();
+            def.add("0", new KarmaObject("&b0"), false);
+            def.add("1", new KarmaObject("&b1"), false);
+            def.add("2", new KarmaObject("&b2"), false);
+            def.add("3", new KarmaObject("&b3"), false);
+            def.add("4", new KarmaObject("&b4"), false);
+            def.add("5", new KarmaObject("&b5"), false);
+            def.add("6", new KarmaObject("&b6"), false);
+            def.add("7", new KarmaObject("&b7"), false);
+            def.add("8", new KarmaObject("&b8"), false);
+            def.add("9", new KarmaObject("&b9"), false);
+
+            KarmaElement e = translation.get("numbers");
+            if (e == null || !e.isKeyArray()) {
+                e = def;
+            }
+            KarmaKeyArray k = (KarmaKeyArray) e;
+
+            KarmaObject n;
+            if (!k.containsKey(String.valueOf(number)) || !k.get(String.valueOf(number)).isString()) {
+                n = new KarmaObject("&b" + number);
+            } else {
+                n = k.get(String.valueOf(number)).getObjet();
+            }
+
+            stackMeta.setDisplayName(StringUtils.toColor(n.getObjet().getString()));
+            stack.setItemMeta(stackMeta);
+
+            numbers.put(number, stack);
         }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 1));
 
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack two() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(2));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 2));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack three() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(3));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 3));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack four() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(4));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 4));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack five() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(5));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 5));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack six() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(6));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 6));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack seven() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(7));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 7));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack eight() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(8));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 8));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack nine() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(9));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 9));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
-    }
-
-    public static ItemStack zero() {
-        ItemStack stack = getRandomItemStack();
-        try {
-            stack = getSkull(getNumberProperties(0));
-        } catch (Throwable ignore) {
-        }
-        ItemMeta stackMeta = stack.getItemMeta();
-        assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&b" + 0));
-
-        stack.setItemMeta(stackMeta);
-
-        return stack;
+        return numbers.get(number);
     }
 
     public static ItemStack confirm() {
@@ -248,7 +179,13 @@ public class Button {
         }
         ItemMeta stackMeta = stack.getItemMeta();
         assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&aConfirm"));
+
+        KarmaElement confirm = translation.get("confirm");
+        if (confirm == null || !confirm.isString()) {
+            confirm = new KarmaObject("&aConfirm");
+        }
+
+        stackMeta.setDisplayName(StringUtils.toColor(confirm.getObjet().getString()));
 
         stack.setItemMeta(stackMeta);
 
@@ -268,7 +205,13 @@ public class Button {
         }
         ItemMeta stackMeta = stack.getItemMeta();
         assert stackMeta != null;
-        stackMeta.setDisplayName(StringUtils.toColor("&7Erase"));
+
+        KarmaElement erase = translation.get("erase");
+        if (erase == null || !erase.isString()) {
+            erase = new KarmaObject("&7Erase");
+        }
+
+        stackMeta.setDisplayName(StringUtils.toColor(erase.getObjet().getString()));
 
         stack.setItemMeta(stackMeta);
 
@@ -386,21 +329,14 @@ public class Button {
     }
 
     /**
-     * Make the server loads the cache
+     * Make the server pre-load the cache
      */
     @SuppressWarnings("deprecation")
     public static void preCache() {
         tryAsync(TaskTarget.CACHE, () -> {
-            one();
-            two();
-            three();
-            four();
-            five();
-            six();
-            seven();
-            eight();
-            nine();
-            zero();
+            for (int i = 0; i < 9; i++)
+                getNumber(i);
+
             confirm();
             erase();
             next();
@@ -413,5 +349,249 @@ public class Button {
             } catch (Throwable ignored) {
             }
         });
+    }
+
+    /**
+     * Possible enumeration
+     */
+    public enum Action {
+        /**
+         * Click '1' number stack
+         */
+        ONE(1),
+
+        /**
+         * Click '2' number stack
+         */
+        TWO(2),
+
+        /**
+         * Click '3' number stack
+         */
+        THREE(3),
+
+        /**
+         * Click '4' number stack
+         */
+        FOUR(4),
+
+        /**
+         * Click '5' number stack
+         */
+        FIVE(5),
+
+        /**
+         * Click '6' number stack
+         */
+        SIX(6),
+
+        /**
+         * Click '7' number stack
+         */
+        SEVEN(7),
+
+        /**
+         * Click '8' number stack
+         */
+        EIGHT(8),
+
+        /**
+         * Click '9' number stack
+         */
+        NINE(9),
+
+        /**
+         * Click '0' number stack
+         */
+        ZERO(0),
+
+        /**
+         * Erase number input
+         */
+        ERASE(Integer.MIN_VALUE),
+
+        /**
+         * Confirm pin input
+         */
+        CONFIRM(Integer.MAX_VALUE),
+
+        /**
+         * Next page
+         */
+        NEXT(50),
+
+        /**
+         * Previous page
+         */
+        BACK(-50),
+
+        /**
+         * Prevent errors
+         */
+        NONE(-1);
+
+        private final int number;
+
+        Action(final int n) {
+            number = n;
+        }
+
+        /**
+         * Check if the clicked item is similar
+         * to the one to check with
+         *
+         * @param clicked the clicked item
+         * @param check   the one to check with
+         * @return if the clicked stack is similar to the "check" one
+         */
+        private static boolean isSimilar(ItemStack clicked, ItemStack check) {
+            boolean isSimilar = false;
+            if (clicked.hasItemMeta()) {
+                assert clicked.getItemMeta() != null;
+                if (clicked.getItemMeta().hasDisplayName()) {
+                    if (check.hasItemMeta()) {
+                        assert check.getItemMeta() != null;
+                        if (check.getItemMeta().hasDisplayName()) {
+                            if (StringUtils.stripColor(clicked.getItemMeta().getDisplayName()).equals(StringUtils.stripColor(check.getItemMeta().getDisplayName()))) {
+                                isSimilar = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return isSimilar;
+        }
+
+        /**
+         * Get the action attached to the item stack
+         *
+         * @param stack the item
+         * @return the action attached to the item
+         */
+        public static Action getAction(final ItemStack stack) {
+            for (int i = 0; i <= 9; i++) {
+                ItemStack n = Button.getNumber(i);
+                if (isSimilar(stack, n)) {
+                    return getByNumber(i);
+                }
+            }
+
+            ItemStack erase = erase();
+            ItemStack confirm = confirm();
+            ItemStack next = next();
+            ItemStack back = back();
+            if (isSimilar(stack, erase)) {
+                return Action.ERASE;
+            }
+
+            if (isSimilar(stack, confirm)) {
+                return Action.CONFIRM;
+            }
+
+            if (isSimilar(stack, next)) {
+                return Action.NEXT;
+            }
+
+            if (isSimilar(stack, back)) {
+                return Action.BACK;
+            }
+
+            return Action.NONE;
+        }
+
+        /**
+         * Get an action by its id
+         *
+         * @param n the action id
+         * @return the action
+         */
+        public static Action getByNumber(final int n) {
+            switch (n) {
+                case 0:
+                    return Action.ZERO;
+                case 1:
+                    return Action.ONE;
+                case 2:
+                    return Action.TWO;
+                case 3:
+                    return Action.THREE;
+                case 4:
+                    return Action.FOUR;
+                case 5:
+                    return Action.FIVE;
+                case 6:
+                    return Action.SIX;
+                case 7:
+                    return Action.SEVEN;
+                case 8:
+                    return Action.EIGHT;
+                case 9:
+                    return Action.NINE;
+                case Integer.MIN_VALUE:
+                    return Action.ERASE;
+                case Integer.MAX_VALUE:
+                    return Action.CONFIRM;
+                case 50:
+                    return Action.NEXT;
+                case -50:
+                    return Action.BACK;
+                case -1:
+                default:
+                    return Action.NONE;
+            }
+        }
+
+        /**
+         * Get the number attached to the action
+         *
+         * @return the action number
+         */
+        public int getNumber() {
+            return number;
+        }
+
+        /**
+         * Get the friendly name of the action, in case
+         * the action was a number click, the number will
+         * be returned instead
+         *
+         * @return the friendly action name
+         */
+        public String friendly() {
+            switch (this) {
+                case ONE:
+                    return "1";
+                case TWO:
+                    return "2";
+                case THREE:
+                    return "3";
+                case FOUR:
+                    return "4";
+                case FIVE:
+                    return "5";
+                case SIX:
+                    return "6";
+                case SEVEN:
+                    return "7";
+                case EIGHT:
+                    return "8";
+                case NINE:
+                    return "9";
+                case ZERO:
+                    return "0";
+                case ERASE:
+                    return "erase";
+                case CONFIRM:
+                    return "confirm";
+                case NEXT:
+                    return "->";
+                case BACK:
+                    return "<-";
+                case NONE:
+                default:
+                    return "";
+            }
+        }
     }
 }

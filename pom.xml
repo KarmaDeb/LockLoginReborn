@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.29</version>
+    <version>1.13.31</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>

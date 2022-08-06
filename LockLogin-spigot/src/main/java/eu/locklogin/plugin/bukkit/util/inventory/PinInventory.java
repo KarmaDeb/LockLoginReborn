@@ -77,18 +77,18 @@ public final class PinInventory implements InventoryHolder {
      * Initialize the inventory items
      */
     void makeInventory() {
-        inventory.setItem(12, Button.seven());
-        inventory.setItem(13, Button.eight());
-        inventory.setItem(14, Button.nine());
-        inventory.setItem(21, Button.four());
-        inventory.setItem(22, Button.five());
-        inventory.setItem(23, Button.six());
+        inventory.setItem(12, Button.getNumber(7));
+        inventory.setItem(13, Button.getNumber(8));
+        inventory.setItem(14, Button.getNumber(9));
+        inventory.setItem(21, Button.getNumber(4));
+        inventory.setItem(22, Button.getNumber(5));
+        inventory.setItem(23, Button.getNumber(6));
         inventory.setItem(25, getInput());
-        inventory.setItem(30, Button.one());
-        inventory.setItem(31, Button.two());
-        inventory.setItem(32, Button.three());
+        inventory.setItem(30, Button.getNumber(1));
+        inventory.setItem(31, Button.getNumber(2));
+        inventory.setItem(32, Button.getNumber(3));
         inventory.setItem(36, Button.erase());
-        inventory.setItem(40, Button.zero());
+        inventory.setItem(40, Button.getNumber(0));
         inventory.setItem(44, Button.confirm());
 
         try {

@@ -19,9 +19,7 @@ import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
-import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.Sound;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -35,78 +33,12 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Collections;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static eu.locklogin.plugin.bukkit.util.inventory.object.Button.Action;
 
 public final class InventoryListener implements Listener {
 
     private static Sound NOTE_PLING = null;
     private static Sound NOTE_HAT = null;
-
-    /**
-     * Check if the clicked item is similar
-     * to the one to check with
-     *
-     * @param clicked the clicked item
-     * @param check   the one to check with
-     * @return if the clicked stack is similar to the "check" one
-     */
-    private boolean isSimilar(ItemStack clicked, ItemStack check) {
-        boolean isSimilar = false;
-        if (clicked.hasItemMeta()) {
-            assert clicked.getItemMeta() != null;
-            if (clicked.getItemMeta().hasDisplayName()) {
-                if (check.hasItemMeta()) {
-                    assert check.getItemMeta() != null;
-                    if (check.getItemMeta().hasDisplayName()) {
-                        if (StringUtils.stripColor(clicked.getItemMeta().getDisplayName()).equals(StringUtils.stripColor(check.getItemMeta().getDisplayName()))) {
-                            isSimilar = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return isSimilar;
-    }
-
-    /**
-     * Get the number of the item stack
-     *
-     * @param stack the item stack
-     * @return the stack number or null
-     * if its not a number
-     */
-    private Action getAction(final ItemStack stack) {
-        if (isSimilar(stack, Button.one()))
-            return Action.ONE;
-        if (isSimilar(stack, Button.two()))
-            return Action.TWO;
-        if (isSimilar(stack, Button.three()))
-            return Action.THREE;
-        if (isSimilar(stack, Button.four()))
-            return Action.FOUR;
-        if (isSimilar(stack, Button.five()))
-            return Action.FIVE;
-        if (isSimilar(stack, Button.six()))
-            return Action.SIX;
-        if (isSimilar(stack, Button.seven()))
-            return Action.SEVEN;
-        if (isSimilar(stack, Button.eight()))
-            return Action.EIGHT;
-        if (isSimilar(stack, Button.nine()))
-            return Action.NINE;
-        if (isSimilar(stack, Button.zero()))
-            return Action.ZERO;
-        if (isSimilar(stack, Button.erase()))
-            return Action.ERASE;
-        if (isSimilar(stack, Button.confirm()))
-            return Action.CONFIRM;
-        if (isSimilar(stack, Button.next()))
-            return Action.NEXT;
-        if (isSimilar(stack, Button.back()))
-            return Action.BACK;
-
-        return Action.NONE;
-    }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryOpen(InventoryOpenEvent e) {
@@ -177,7 +109,7 @@ public final class InventoryListener implements Listener {
                     PinInventory pin = new PinInventory(player);
 
                     if (clicked != null) {
-                        Action action = getAction(clicked);
+                        Action action = Action.getAction(clicked);
                         switch (action) {
                             case ZERO:
                             case ONE:
@@ -242,7 +174,7 @@ public final class InventoryListener implements Listener {
             if (inventory.getHolder() instanceof AltAccountsInventory) {
                 if (e.getClick() == ClickType.LEFT) {
                     if (clicked != null) {
-                        Action action = getAction(clicked);
+                        Action action = Action.getAction(clicked);
                         AltAccountsInventory alts;
                         switch (action) {
                             case NEXT:
@@ -272,7 +204,7 @@ public final class InventoryListener implements Listener {
                 if (inventory.getHolder() instanceof PlayersInfoInventory) {
                     if (e.getClick() == ClickType.LEFT) {
                         if (clicked != null) {
-                            Action action = getAction(clicked);
+                            Action action = Action.getAction(clicked);
                             PlayersInfoInventory infos;
                             switch (action) {
                                 case NEXT:
@@ -339,128 +271,5 @@ public final class InventoryListener implements Listener {
         }
 
         return 1f;
-    }
-
-    /**
-     * Possible enumeration
-     */
-    private enum Action {
-        /**
-         * Click '1' number stack
-         */
-        ONE,
-
-        /**
-         * Click '2' number stack
-         */
-        TWO,
-
-        /**
-         * Click '3' number stack
-         */
-        THREE,
-
-        /**
-         * Click '4' number stack
-         */
-        FOUR,
-
-        /**
-         * Click '5' number stack
-         */
-        FIVE,
-
-        /**
-         * Click '6' number stack
-         */
-        SIX,
-
-        /**
-         * Click '7' number stack
-         */
-        SEVEN,
-
-        /**
-         * Click '8' number stack
-         */
-        EIGHT,
-
-        /**
-         * Click '9' number stack
-         */
-        NINE,
-
-        /**
-         * Click '0' number stack
-         */
-        ZERO,
-
-        /**
-         * Erase number input
-         */
-        ERASE,
-
-        /**
-         * Confirm pin input
-         */
-        CONFIRM,
-
-        /**
-         * Next page
-         */
-        NEXT,
-
-        /**
-         * Previous page
-         */
-        BACK,
-
-        /**
-         * Prevent errors
-         */
-        NONE;
-
-        /**
-         * Get the friendly name of the action, in case
-         * the action was a number click, the number will
-         * be returned instead
-         *
-         * @return the friendly action name
-         */
-        private String friendly() {
-            switch (this) {
-                case ONE:
-                    return "1";
-                case TWO:
-                    return "2";
-                case THREE:
-                    return "3";
-                case FOUR:
-                    return "4";
-                case FIVE:
-                    return "5";
-                case SIX:
-                    return "6";
-                case SEVEN:
-                    return "7";
-                case EIGHT:
-                    return "8";
-                case NINE:
-                    return "9";
-                case ZERO:
-                    return "0";
-                case ERASE:
-                    return "erase";
-                case CONFIRM:
-                    return "confirm";
-                case NEXT:
-                    return "->";
-                case BACK:
-                    return "<-";
-                case NONE:
-                default:
-                    return "";
-            }
-        }
     }
 }

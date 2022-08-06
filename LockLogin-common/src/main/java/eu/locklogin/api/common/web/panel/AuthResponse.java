@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.web.auth;
+package eu.locklogin.api.common.web.panel;
 
 public enum AuthResponse {
     SUCCESS,

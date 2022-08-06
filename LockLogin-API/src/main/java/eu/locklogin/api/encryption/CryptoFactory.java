@@ -23,14 +23,12 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.libraries.wordpress.WordPressCrypt;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.utils.security.file.FileEncryptor;
 import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
@@ -494,51 +492,54 @@ public final class CryptoFactory {
     /**
      * Load the plugin virtual key used on password hashing
      * to avoid password cracks on database leaks
-     *
-     * @param password the virtual id file password
      */
-    public static void loadVirtualID(final String password) {
+    public static void loadVirtualID() {
         KarmaSource plugin = APISource.loadProvider("LockLogin");
         KarmaMain vid = new KarmaMain(plugin, "virtual_id.kf", "cache");
 
-        FileEncryptor encryptor = new FileEncryptor(vid.getDocument(), password);
-        encryptor.decrypt();
+        /*
+        boolean proceed;
+        FileEncryptor e = new FileEncryptor(vid.getDocument(), CurrentPlatform.getServerHash());
 
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        There's no purpose on encrypting a file that is being encrypted with a password that is not secret.
 
-        if (vid.exists() && vid.isSet("virtual_key")) {
-            KarmaElement stored = vid.get("virtual_key");
-            if (stored.isString()) {
-                if (config.useVirtualID()) {
-                    virtual_id = stored.getObjet().getString();
-                } else {
-                    System.setProperty("locklogin.virtual.key", stored.getObjet().getString());
-                }
+        virtual id will help to avoid database leaks for systems such as MySQL. But there's no guarantee that file
+        system will be completely protected using this system as to steal player file accounts you need access to the
+        machine, so you also have access to the virtual id file.
+         */
+
+        /*if (e.decrypt()) {
+            proceed = true;
+        } else {
+            try {
+                KarmaSource original = APISource.getOriginal(true);
+                Throwable error = original.getHandler(FileEncryptor.class).getLast();
+                if (error != null)
+                    error.printStackTrace();
+            } catch (Throwable ignored) {}
+
+            if (vid.exists()) {
+                proceed = vid.isSet("virtual_key");
+            } else {
+                proceed = true;
             }
         }
 
-        if (StringUtils.isNullOrEmpty(virtual_id)) {
-            String generated = TokenGenerator.generateLiteral(128);
-            if (config.useVirtualID()) {
-                virtual_id = generated;
-            } else {
-                System.setProperty("locklogin.virtual.key", virtual_id);
+        if (proceed) {*/
+            KarmaElement virtual_id = vid.get("virtual_key");
+            if (virtual_id == null || !virtual_id.isString()) {
+                virtual_id = new KarmaObject(TokenGenerator.generateToken());
+
+                vid.set("virtual_key", virtual_id);
+                vid.save();
             }
-        }
 
-        vid.delete();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            vid.create();
-            if (!StringUtils.isNullOrEmpty(virtual_id)) {
-                vid.set("virtual_key", new KarmaObject(virtual_id));
-            } else {
-                vid.set("virtual_key", new KarmaObject(System.getProperty("locklogin.virtual.key")));
+            if (CurrentPlatform.getConfiguration().useVirtualID()) {
+                CryptoFactory.virtual_id = virtual_id.getObjet().getString();
             }
-            vid.save();
-
-            encryptor.encrypt();
-        }));
+        /*} else {
+            plugin.console().send("Failed to load virtual ID, try restarting your server. If the issue persists ask for support at https://discord.gg/jRFfsdxnJR", Level.GRAVE);
+        }*/
     }
 
     /**

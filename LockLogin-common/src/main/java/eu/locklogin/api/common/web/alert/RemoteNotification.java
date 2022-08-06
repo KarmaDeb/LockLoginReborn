@@ -42,7 +42,7 @@ import java.util.List;
  */
 public final class RemoteNotification {
 
-    private final static KarmaSource plugin = APISource.loadProvider("LockLogin");
+    private final static KarmaSource plugin = /*APISource.loadProvider("LockLogin");*/ APISource.getOriginal(false);
 
     private static String simple_json = "{}";
 

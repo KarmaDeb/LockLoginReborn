@@ -47,9 +47,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
@@ -250,10 +248,6 @@ public final class JoinListener implements Listener {
                                             user.kick(messages.bungeeProxy());
                                         }
 
-                                    /*
-                                    As of LockLogin 1.13.15, this check will be done until the player is fully connected,
-                                    when the player is connected, the correspondent check will be done and the timer cancelled
-                                     */
                                         timer.cancel();
                                     }
                                 }).start();
@@ -298,7 +292,6 @@ public final class JoinListener implements Listener {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
 
-            LateScheduler<Event> result = new AsyncLateScheduler<>();
             tryAsync(TaskTarget.EVENT, () -> {
                 User user = new User(player);
                 ModulePlayer sender = new ModulePlayer(
@@ -328,15 +321,12 @@ public final class JoinListener implements Listener {
                     OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
                     Event event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
-                    result.complete(event);
-                }
-            });
-            result.whenComplete((event) -> {
-                if (!config.isBungeeCord()) {
-                    ModulePlugin.callEvent(event);
+                    if (!config.isBungeeCord()) {
+                        ModulePlugin.callEvent(event);
 
-                    if (event.isHandled()) {
-                        e.disallow(PlayerLoginEvent.Result.KICK_OTHER, StringUtils.toColor(event.getHandleReason()));
+                        if (event.isHandled()) {
+                            sender.requestKick(event.getHandleReason());
+                        }
                     }
                 }
             });

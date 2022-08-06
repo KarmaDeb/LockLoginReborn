@@ -188,7 +188,7 @@ public final class Manager {
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.useVirtualID()) {
-            CryptoFactory.loadVirtualID(CurrentPlatform.getServerHash());
+            CryptoFactory.loadVirtualID();
         } else {
             console.send("Virtual ID ( disabled by default) is disabled. You should enable it to enforce you clients security against database leaks", Level.GRAVE);
         }

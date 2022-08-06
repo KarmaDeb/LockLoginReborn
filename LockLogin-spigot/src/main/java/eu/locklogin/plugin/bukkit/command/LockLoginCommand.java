@@ -36,7 +36,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.logging.web.WebLog;
 import ml.karmaconfigs.api.common.utils.logging.web.WebTarget;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.url.Post;
+import ml.karmaconfigs.api.common.utils.url.helper.Post;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;

@@ -40,7 +40,7 @@ public final class ModuleInfoCommand extends Command {
             if (parameters.length == 1) {
                 String param = parameters[0];
                 if (param.equalsIgnoreCase("--force-alert")) {
-                    rm.checkAlerts();
+                    rm.checkAlerts().whenComplete(() -> System.out.println("Done!"));
                 }
             }
             Notification notification = rm.getNotification();

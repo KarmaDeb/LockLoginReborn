@@ -13,6 +13,20 @@
 #and some plugin messages
 ServerName: ""
 
+#NOT IMPLEMENTED YET
+#
+# This is the KarmaAPI panel service. When enabled, the server
+# won't store any account, instead, users will be authenticated and
+# registered using the KarmaPanel ( https://karmadev.es | https://karmaconfigs.ml | https://karmarepo.ml ).
+#
+# ( IF ANY OF THE URLS WORK, TRY WITH https://backup.[karmadev.es|karmaconfigs.ml|karmarepo.ml] )
+#
+# By enabling this you accept that player accounts won't pertain to you so you won't
+# be able to perform actions under them like requesting info about them. ( /playerinfo )
+# or removing an account. If removing an account is what you want, the user must login in any
+# of the URLs provided before and remove his account manually.
+OnlineAccounts: true
+
 #While true, if your server is in bungeecord
 #mode. The server MOTD will be replaced with
 #This server is being protected by LockLogin

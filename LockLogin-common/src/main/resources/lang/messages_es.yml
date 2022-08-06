@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Spanish (Official)
 #Editor: KarmaDev
-#Last edited: 30 - April - 2022 16:21
+#Last edited: 10 - July - 2022 21:57
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -50,6 +50,7 @@ SessionDisabled: "&5&oSe ha desactivado la sesión persistente en tu cuenta"
 
 #Session messages - Register
 Register: "&5&oPor favor, usa /register <contraseña> <contraseña> <captcha>"
+KarmaRegister: "&5&oPor favor, usa /register <contraseña> <captcha> <email>"
 RegisterBar: "{color}Tienes &7{time}{color} para registrarte"
 Registered: "&dRegistro completado, gracias por jugar"
 AlreadyRegistered: "&5&oYa estás registrado!"
