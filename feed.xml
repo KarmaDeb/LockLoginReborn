@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <title>LockLogine Docs</title>
-    <link href="https://ims-network.github.io/locklogin/feed.xml" rel="self" />
-    <link href="https://ims-network.github.io/locklogin" />
+    <link href="https://ims-network.github.io/LockLogin/feed.xml" rel="self" />
+    <link href="https://ims-network.github.io/LockLogin" />
     <updated>2022-08-23T17:55:49+03:00</updated>
     <author>
         <name>KarmaDev</name>
     </author>
-    <id>https://ims-network.github.io/locklogin</id>
+    <id>https://ims-network.github.io/LockLogin</id>
 
     <entry>
         <title>Web API</title>
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/web-api.html"/>
-        <id>https://ims-network.github.io/locklogin/web-api.html</id>
+        <link href="https://ims-network.github.io/LockLogin/web-api.html"/>
+        <id>https://ims-network.github.io/LockLogin/web-api.html</id>
             <category term="Web API"/>
             <category term="Module"/>
             <category term="Events"/>
@@ -45,8 +45,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/api-card.html"/>
-        <id>https://ims-network.github.io/locklogin/api-card.html</id>
+        <link href="https://ims-network.github.io/LockLogin/api-card.html"/>
+        <id>https://ims-network.github.io/LockLogin/api-card.html</id>
             <category term="API"/>
 
         <updated>2022-08-23T17:43:59+03:00</updated>
@@ -250,8 +250,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/account-manager.html"/>
-        <id>https://ims-network.github.io/locklogin/account-manager.html</id>
+        <link href="https://ims-network.github.io/LockLogin/account-manager.html"/>
+        <id>https://ims-network.github.io/LockLogin/account-manager.html</id>
             <category term="Module"/>
             <category term="Events"/>
             <category term="Configuration"/>
@@ -580,8 +580,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/module-player.html"/>
-        <id>https://ims-network.github.io/locklogin/module-player.html</id>
+        <link href="https://ims-network.github.io/LockLogin/module-player.html"/>
+        <id>https://ims-network.github.io/LockLogin/module-player.html</id>
             <category term="Module"/>
             <category term="API"/>
 
@@ -686,8 +686,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/commands-api.html"/>
-        <id>https://ims-network.github.io/locklogin/commands-api.html</id>
+        <link href="https://ims-network.github.io/LockLogin/commands-api.html"/>
+        <id>https://ims-network.github.io/LockLogin/commands-api.html</id>
             <category term="Commands"/>
             <category term="API"/>
 
@@ -755,8 +755,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/api-events-2.html"/>
-        <id>https://ims-network.github.io/locklogin/api-events-2.html</id>
+        <link href="https://ims-network.github.io/LockLogin/api-events-2.html"/>
+        <id>https://ims-network.github.io/LockLogin/api-events-2.html</id>
             <category term="Events"/>
             <category term="API"/>
 
@@ -922,8 +922,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/api-events.html"/>
-        <id>https://ims-network.github.io/locklogin/api-events.html</id>
+        <link href="https://ims-network.github.io/LockLogin/api-events.html"/>
+        <id>https://ims-network.github.io/LockLogin/api-events.html</id>
             <category term="Events"/>
             <category term="Configuration"/>
             <category term="API"/>
@@ -1113,7 +1113,7 @@
     }
 }</code></pre>
 <h2 id="mcetoc_1gb5hg09d3ii">Full Event List</h2>
-<p><a href="https://ims-network.github.io/locklogin/api-events-2.html" class="btn btn--white">Click Me</a></p>
+<p><a href="https://ims-network.github.io/LockLogin/api-events-2.html" class="btn btn--white">Click Me</a></p>
 <h2 id="mcetoc_1gb5hg09d3ij">Handling events</h2>
 <p>When using the API, you may have noticed there're 3 extra methods, in all the event objects, which are</p>
 <div class="highlight highlight-source-java notranslate position-relative overflow-auto">
@@ -1246,8 +1246,8 @@
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/how-to-create-a-module.html"/>
-        <id>https://ims-network.github.io/locklogin/how-to-create-a-module.html</id>
+        <link href="https://ims-network.github.io/LockLogin/how-to-create-a-module.html"/>
+        <id>https://ims-network.github.io/LockLogin/how-to-create-a-module.html</id>
             <category term="Module"/>
             <category term="Configuration"/>
             <category term="API"/>
@@ -1313,8 +1313,8 @@ https://mydomain.com/modulename/Latest.jar</code></pre>
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/getting-started.html"/>
-        <id>https://ims-network.github.io/locklogin/getting-started.html</id>
+        <link href="https://ims-network.github.io/LockLogin/getting-started.html"/>
+        <id>https://ims-network.github.io/LockLogin/getting-started.html</id>
             <category term="First Time"/>
             <category term="API"/>
 
@@ -1385,8 +1385,8 @@ https://mydomain.com/modulename/Latest.jar</code></pre>
         <author>
             <name>KarmaDev</name>
         </author>
-        <link href="https://ims-network.github.io/locklogin/placeholderapi.html"/>
-        <id>https://ims-network.github.io/locklogin/placeholderapi.html</id>
+        <link href="https://ims-network.github.io/LockLogin/placeholderapi.html"/>
+        <id>https://ims-network.github.io/LockLogin/placeholderapi.html</id>
             <category term="Velocity"/>
             <category term="Spigot"/>
             <category term="First Time"/>

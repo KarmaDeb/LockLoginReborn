@@ -1,3 +1,3 @@
 User-agent: *
 Disallow:
-Sitemap: https://ims-network.github.io/locklogin/sitemap.xml
+Sitemap: https://ims-network.github.io/LockLogin/sitemap.xml
