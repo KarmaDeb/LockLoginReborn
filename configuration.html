@@ -1,0 +1,529 @@
+<!DOCTYPE html><html lang="en-us"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Configuration - LockLogine Docs</title><meta name="description" content="General Info Even though the configuration has comments to help you to understand what 'that' thing does, There's a wiki of the configuration to help&hellip;"><meta name="generator" content="Publii Open-Source CMS for Static Site"><meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)"><meta name="msapplication-navbutton-color" content="#000000"><meta name="apple-mobile-web-app-status-bar-style" content="#000000"><link rel="canonical" href="https://ims-network.github.io/locklogin/configuration.html"><link rel="amphtml" href="https://ims-network.github.io/locklogin/amp/configuration.html"><link rel="alternate" type="application/atom+xml" href="https://ims-network.github.io/locklogin/feed.xml"><link rel="alternate" type="application/json" href="https://ims-network.github.io/locklogin/feed.json"><meta property="og:title" content="Configuration"><meta property="og:image" content="https://ims-network.github.io/locklogin/media/website/LockLogin-Logo.png"><meta property="og:site_name" content="LockLogine Docs"><meta property="og:description" content="General Info Even though the configuration has comments to help you to understand what 'that' thing does, There's a wiki of the configuration to help&hellip;"><meta property="og:url" content="https://ims-network.github.io/locklogin/configuration.html"><meta property="og:type" content="article"><link rel="shortcut icon" href="https://ims-network.github.io/locklogin/media/website/LockLogin-Logo-2.png" type="image/png"><link rel="stylesheet" href="https://ims-network.github.io/locklogin/assets/css/style.css?v=0eaa060ff3ed5f42c9210d629317d64e"><link rel="stylesheet" href="https://ims-network.github.io/locklogin/assets/css/prism-dark.css?v=ac1b97069e7423ed339b744593278a6f"><script type="application/ld+json">{"@context":"http://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://ims-network.github.io/locklogin/configuration.html"},"headline":"Configuration","datePublished":"2022-08-23T15:36","dateModified":"2022-08-23T16:46","image":{"@type":"ImageObject","url":"https://ims-network.github.io/locklogin/media/website/LockLogin-Logo.png","height":800,"width":800},"description":"General Info Even though the configuration has comments to help you to understand what 'that' thing does, There's a wiki of the configuration to help&hellip;","author":{"@type":"Person","name":"thefourCraft","url":"https://ims-network.github.io/locklogin/authors/thefourcraft/"},"publisher":{"@type":"Organization","name":"KarmaDev","logo":{"@type":"ImageObject","url":"https://ims-network.github.io/locklogin/media/website/LockLogin-Logo.png","height":800,"width":800}}}</script><link rel="stylesheet" href="https://ims-network.github.io/locklogin/media/plugins/docSearch/docsearch.min.css"><style>:root {--docsearch-primary-color:#3499A2;}.DocSearch-Button{background:transparent;border:1px solid #d6d8d9;box-shadow:none;height:43px;margin-left:0;width:100%;transform:none}.DocSearch-Button:hover,.DocSearch-Button:active,.DocSearch-Button:focus{box-shadow:var(--docsearch-searchbox-shadow);transform:none}</style></head><body><header class="header" id="js-header"><a class="logo" href="https://ims-network.github.io/locklogin/"><img src="https://ims-network.github.io/locklogin/media/website/LockLogin-Logo.png" alt="LockLogine Docs" width="800" height="800"></a><nav class="navbar js-navbar"><button class="navbar__toggle js-toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="navbar__toggle-box"><span class="navbar__toggle-inner">Menu</span></span></button><ul class="navbar__menu"><li><a href="https://ims-network.github.io/locklogin/" target="_self">Test</a></li></ul></nav><a href="https://github.com/KarmaConfigs/LockLoginReborn" class="btn btn--outline btn--icon github" aria-label="Github" title="Github"><svg height="22" width="22"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#github"></use></svg> Github</a></header><main><div class="container container--with-sidebar"><div class="sidebar js-sidebar"><div class="sidebar__search"><div id="docsearch"></div></div><nav class="sidebar__menu"><ul class="js-sidebar-menu"><li class="has-submenu"><span>🔩 Installation</span><ul><li><a href="https://ims-network.github.io/locklogin/first-installation.html">🤔 First Installation</a></li><li><a href="https://ims-network.github.io/locklogin/bungeecord-setup.html">💻BungeeCord Installation</a></li><li><a href="https://ims-network.github.io/locklogin/plugin-configuration.html">🧮MultiBungee Installation</a></li></ul></li><li class="has-submenu"><span>🧬API</span><ul><li><a href="https://ims-network.github.io/locklogin/getting-started.html">🧐 Getting Started</a></li><li><a href="https://ims-network.github.io/locklogin/how-to-create-a-module.html">➕ Creating Modules</a></li><li><a href="https://ims-network.github.io/locklogin/api-events.html">🎉 Creating Events</a></li><li><a href="https://ims-network.github.io/locklogin/api-events-2.html">🛒 Events List</a></li><li><a href="https://ims-network.github.io/locklogin/commands-api.html">🧨 Creating Commands</a></li><li><a href="https://ims-network.github.io/locklogin/module-player.html">👤 Player Module</a></li><li><a href="https://ims-network.github.io/locklogin/account-manager.html">➰ Account Manger</a></li><li><a href="https://ims-network.github.io/locklogin/api-card.html">💫 API Cards</a></li><li><a href="https://ims-network.github.io/locklogin/web-api.html">🌐 Web API</a></li></ul></li></ul></nav></div><div class="content content--center"><article class="post"><h1>Configuration</h1><div class="post__entry"><h2 id="mcetoc_1gb5a8j9t22p">General Info</h2><p>Even though the configuration has comments to help you to understand what 'that' thing does, There's a wiki of the configuration to help you understand it a bit more.<br><br>The default configuration can be found in <code>./plugins/LockLogin</code></p><h2 id="mcetoc_1gb5a8j9t22q">Config Breakdown</h2><p>This configuration assumes that you are reading the config file from top to bottom</p><div class="post__toc"><h3>Table of Contents</h3><ul><li><a href="#mcetoc_1gb5a8j9t22p">General Info</a></li><li><a href="#mcetoc_1gb5a8j9t22q">Config Breakdown</a><ul><li><a href="#mcetoc_1gb5a8j9t22r">Server Name</a></li><li><a href="#mcetoc_1gb5a8j9t22s">BungeeMotd</a></li><li><a href="#mcetoc_1gb5a8j9t22t">PanelKey</a></li><li><a href="#mcetoc_1gb5a8j9t22u">Register Configuration</a><ul><li><a href="#mcetoc_1gb5a8j9t22v">Login BossBar</a></li><li><a href="#mcetoc_1gb5a8j9t230">Login Blind</a></li><li><a href="#mcetoc_1gb5a8j9t231">Login TimeOut</a></li><li><a href="#mcetoc_1gb5a8j9t232">Register Max</a></li><li><a href="#mcetoc_1gb5a8j9t232">Sessions Enabled</a></li><li><a href="#mcetoc_1gb5a8j9t232">Sessions Time</a></li><li><a href="#mcetoc_1gb5a8j9t232">IP Health Check</a></li><li><a href="#mcetoc_1gb5a8j9t232">UUID Validator</a></li></ul></li><li><a href="#mcetoc_1gb5a8j9t22u">Hide Non-Logged</a></li><li><a href="#mcetoc_1gb5c380v2aj">Message Interval</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Registration</a></li><li><a href="#mcetoc_1gb5a8j9t232">Logging</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Security Configuration</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Captcha Enabled</a></li><li><a href="#mcetoc_1gb5a8j9t232">Captcha Difficulty - Length</a></li><li><a href="#mcetoc_1gb5a8j9t232">Captcha Difficulty - Letters</a></li><li><a href="#mcetoc_1gb5a8j9t232">Captcha Strikethrough</a></li><li><a href="#mcetoc_1gb5a8j9t232">Captcha Random</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Encryption</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Encryption Options</a><ul><li><a href="#mcetoc_1gb5cuqap2fk">SHA512</a></li><li><a href="#mcetoc_1gb5cuqap2fl">SHA256</a></li><li><a href="#mcetoc_1gb5cuqap2fm">BCrypt</a></li><li><a href="#mcetoc_1gb5e6f4u2lk">Argon2i &amp; Argon2id</a></li></ul></li><li><a href="#mcetoc_1gb5a8j9t232">Passwords</a></li><li><a href="#mcetoc_1gb5a8j9t232">Pins</a></li><li><a href="#mcetoc_1gb5a8j9t232">Encrypt</a></li><li><a href="#mcetoc_1gb5a8j9t232">VirtualID</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Block Unsafe Passwords</a></li><li><a href="#mcetoc_1gb5c380v2ak">Brute Force</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Tries</a></li><li><a href="#mcetoc_1gb5a8j9t232">Block Time</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Allow Same IP</a></li><li><a href="#mcetoc_1gb5c380v2ak">Pin</a></li><li><a href="#mcetoc_1gb5c380v2ak">2FA</a></li><li><a href="#mcetoc_1gb5c380v2ak">Updater</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Channel</a></li><li><a href="#mcetoc_1gb5a8j9t232">Check</a></li><li><a href="#mcetoc_1gb5a8j9t232">Check Time</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Spawn</a><ul><li><a href="#mcetoc_1gb5a8j9t232">Manage</a></li><li><a href="#mcetoc_1gb5a8j9t232">Take Back</a></li><li><a href="#mcetoc_1gb5a8j9t232">Spawn Distance</a></li></ul></li><li><a href="#mcetoc_1gb5c380v2ak">Clear Chat</a></li><li><a href="#mcetoc_1gb5c380v2ak">Check Names</a></li><li><a href="#mcetoc_1gb5c380v2ak">Enforce Name Check</a></li><li><a href="#mcetoc_1gb5c380v2ak">Name Check Protocol</a></li><li><a href="#mcetoc_1gb5c380v2ak">Lang</a></li><li><a href="#mcetoc_1gb5c380v2ak">Module Prefix</a></li></ul></li></ul></div><h3 id="mcetoc_1gb5a8j9t22r">Server Name</h3><p>The <code>ServerName</code> option is used by some messages and will be used by the plugin when an action is performed from the console.<br>For example, when deleting a client account, the client will see how he removed his account, in case the console did, the user will see the <code>ServerName</code> value, instead of SERVER or CONSOLE.<br><strong>Default: </strong><em>undefined</em> <br><strong>Type:</strong> text</p><h3 id="mcetoc_1gb5a8j9t22s">BungeeMotd</h3><p>BungeeMotd manages if the plugin changes the MOTD and how. For example, if this option is enabled and the plugin is starting, MOTD will be replaced with a message like "The server is starting".<br>Or if the server is in BungeeCord mode and someone pings directly on the server, the MOTD will be replaced with "This server is being protected by LockLogin<br><strong>Default: </strong>Enabled<br><strong>Type:</strong> true/false</p><h3 id="mcetoc_1gb5a8j9t22t">PanelKey</h3><p>A panel key is a non-integrated option that manages the panel connection key for the LockLogin web. In the future, LockLogin will be able to be managed from a web panel so server owners can manage the player accounts in a really easy way<br><strong>Default: </strong><em>undefined</em> <br><strong>Type:</strong> text</p><h3 id="mcetoc_1gb5a8j9t22u">Register Configuration</h3><p>This Section will break down the registration configuration. </p><h4 id="mcetoc_1gb5a8j9t22v">Login BossBar</h4><p>This will toggle the boss bar for non-authenticated players.<br>When true a boss bar will be shown to the player, telling him how much time he has to authenticate, the boss bar health is relative to the time the player has.<br><strong>Default: </strong>Enabled<br><strong>Type:</strong> true/false</p><h4 id="mcetoc_1gb5a8j9t230">Login Blind</h4><p>When true, a blind effect will be applied to the player<br><strong>Default: </strong>Disabled<br><strong>Type:</strong> true/false</p><h4 id="mcetoc_1gb5a8j9t231">Login TimeOut</h4><p>This will specify how much time the player has to login or register, when the time reaches 0, the player will be kicked<br><strong>Default: </strong>60<br><strong>Type:</strong> seconds</p><h4 id="mcetoc_1gb5a8j9t232">Register Max</h4><p>The maximum number of accounts that can be per IP, I recommend leaving this in 0, and manage manually these type of things, as there's a chance a player someday receives an IP that has been used before by another player.<br>See <a href="https://github.com/KarmaConfigs/LockLoginReborn/wiki/Commands-and-permissions">commands and permissions</a> to view the command to lookup a player's alt accounts.<br><strong>Default: </strong>2<br><strong>Type:</strong> accounts</p><h4 id="mcetoc_1gb5a8j9t232">Sessions Enabled</h4><p>Enable the possibility for the user to enable persistent sessions on his account. See <a href="https://github.com/KarmaConfigs/LockLoginReborn/wiki/Commands-and-permissions">commands and permissions</a> to view the command that allows the player to do that.<br><strong>Default: </strong>Disabled<br><strong>Type:</strong> true/false</p><h4 id="mcetoc_1gb5a8j9t232">Sessions Time</h4><p>The session's lifetime, How long can a player log out and then come back without needing to register again.<br><strong>Default: </strong>5<br><strong>Type:</strong> minutes</p><h4 id="mcetoc_1gb5a8j9t232">IP Health Check</h4><p>This option manages if the plugin should scan player IPs to ensure if they are proxied or not and if they are server safe as Minecraft nor spigot does that by default<br><strong>Default: </strong>Enabled<br><strong>Type:</strong> true/false</p><h4 id="mcetoc_1gb5a8j9t232">UUID Validator</h4><p>This option manages if the plugin should scan player UUIDs.<br>This is a method to block UUID spoofers and avoid your server to be hacked<br><strong>Default: </strong>Enabled <br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5a8j9t22u">Hide Non-Logged</h3><p>Experimental feature ( not recommended to enable ).<br>This will hide a non-authenticated player from all the authenticated players and the other non-authenticated players, and will also hide all the players from the non-authenticated player.<br><strong>Default: </strong>Disabled<strong> </strong><br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2aj">Message Interval</h3><p>Plugin Messages</p><h4 id="mcetoc_1gb5a8j9t232">Registration</h4><p>The interval the register message will be sent<br>must be minor to the Register Time Out value<br><strong>Default: </strong>5<br><strong>Type: </strong>seconds</p><h4 id="mcetoc_1gb5a8j9t232">Logging</h4><p>The interval at the login message will be sent<br>Must be minor to the Login Time Out value<br><strong>Default: </strong>5<br><strong>Type: </strong>seconds</p><h3 id="mcetoc_1gb5c380v2ak">Security Configuration</h3><p>This section is about the security elements of the plugin, you must use the right configuration to protect your server network</p><h4 id="mcetoc_1gb5a8j9t232">Captcha Enabled</h4><p>Enable or disable the captcha feature, I recommend this for servers who receive constantly bot attacks, LockLogin won't create the player account until the player has verified his captcha.</p><p class="msg msg--highlight"><strong><span style="color: #000000;">⛔Warning</span></strong><br>Disabling this may stop bots from joining your server it's guaranteed 100%.<br>For the safety of your server leave this enabled.</p><p><strong>Default: </strong>Enabled<br><strong>Type:</strong> true/false</p><h4 id="mcetoc_1gb5a8j9t232">Captcha Difficulty - Length</h4><p>The captcha code length<br><strong>Default: </strong>8<br><strong>Type: </strong>characters</p><h4 id="mcetoc_1gb5a8j9t232">Captcha Difficulty - Letters</h4><p>Include letters into the captcha, instead of generating an only-numbers captcha code<br><strong>Default: </strong>Enabled <br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">Captcha Strikethrough</h4><p>Will Apply a strikethrough effect to the captcha code, to make it difficult to read<br><em><span style="text-decoration: line-through;">This is a strikethrough effect </span></em><br><strong>Default: </strong>Enabled <br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">Captcha Random</h4><p>Will Apply the strikethrough effect to random letters/numbers, instead of all the captcha code, believe it or not, while this option is true the captcha is more difficult<br><em>This<span style="text-decoration: line-through;"> is a</span> </em>strikethrough<em><span style="text-decoration: line-through;"> effect </span></em><br><strong>Default: </strong>Enabled <br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Encryption</h3><p>Protect user passwords from a leak, by using encryption you increase server security</p><h4 id="mcetoc_1gb5a8j9t232">Encryption Options</h4><h5 id="mcetoc_1gb5cuqap2fk"><span class="pl-c">SHA512</span></h5><p>SHA-512, or Secure Hash Algorithm 512, is a hashing algorithm used to convert the text of any length into a fixed-size string.<br>Each output produces an SHA-512 length of 512 bits (64 bytes).<br>This algorithm is commonly used for email addresses hashing, password hashing, and digital record verification.<br>SHA-512 is also used in blockchain technology, with the most notable example being the BitShares network.<br><a href="https://komodoplatform.com/en/academy/sha-512/" target="_blank" rel="noopener noreferrer" class="btn btn--outline">Continue Reading </a></p><h5 id="mcetoc_1gb5cuqap2fl"><span class="pl-c">SHA256</span></h5><p>The SHA-256 algorithm is one flavor of SHA-2 (Secure Hash Algorithm 2), which was created by the National Security Agency in 2001 as a successor to SHA-1. SHA-256 is a patented cryptographic hash function that outputs a value that is 256 bits long. <a href="https://komodoplatform.com/en/academy/sha-512/" target="_blank" rel="noopener noreferrer"></a><a href="https://www.n-able.com/blog/sha-256-encryption" target="_blank" rel="noopener noreferrer" class="btn btn--outline">Continue Reading </a></p><h5 id="mcetoc_1gb5cuqap2fm"><span class="pl-c">BCrypt<br></span></h5><p>bcrypt allows building a password security platform that can evolve alongside hardware technology to guard against the threats that the future may bring, such as attackers having the computing power to crack passwords twice as fast. Let's learn about the design and specifications that make bcrypt a cryptographic security standard.<br><a href="https://auth0.com/blog/hashing-in-action-understanding-bcrypt/" target="_blank" rel="noopener noreferrer" class="btn btn--outline">Continue Reading </a></p><h5 id="mcetoc_1gb5e6f4u2lk"><span class="pl-c">Argon2i &amp; </span><span class="pl-c">Argon2id</span></h5><p><strong>Argon2</strong> is a cryptographic algorithm that allows you to store your entries safely. <br><strong>It is dedicated to password encryption</strong> and doesn’t have any uses apart from that.<br>It’s a modern algorithm that allows you to choose which protection you want to apply, be it resistance to GPU attacks, side-channel attacks, or even both. <br><a href="https://www.boldare.com/blog/how-to-improve-user-password-security-with-argon2/" target="_blank" rel="noopener noreferrer" class="btn btn--outline">Continue Reading </a></p><h4 id="mcetoc_1gb5a8j9t232">Passwords</h4><p>This will tell the plugin which one of the supported algorithms to use when hashing a password, the plugin will update the player password hash automatically every time this option is changed<br><strong>Default: </strong>SHA512<br><strong>Type: </strong>text</p><h4 id="mcetoc_1gb5a8j9t232">Pins</h4><p>This will tell the plugin which one of the supported algorithms to use when hashing a pin, or 2fa scratch codes<br><strong>Default: </strong>SHA512<br><strong>Type: </strong>text</p><h4 id="mcetoc_1gb5a8j9t232">Encrypt</h4><p>This option manages if the plugin should encrypt passwords in base64 too.<br>As base64 can be easily decrypted, this option is completely optional<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">VirtualID</h4><p>This option is an anti-Bruteforce option for your server.<br>It will hash the passwords with a server-unique virtual ID, so if someone steals your player accounts, he won't be able to brute-force them<br><strong>Default: </strong>Disabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Block Unsafe Passwords</h3><p>While this is true when a player tries to register or log in using an insecure password according to the plugin, he will be required to set the password again, or his registration will not be valid and he will have to register again.<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Brute Force</h3><p>In <a href="https://en.wikipedia.org/wiki/Cryptography" title="Cryptography">cryptography</a>, a <strong>brute-force attack</strong> consists of an attacker submitting many <a href="https://en.wikipedia.org/wiki/Password" title="Password">passwords</a> or <a href="https://en.wikipedia.org/wiki/Passphrase" title="Passphrase">passphrases</a> with the hope of eventually guessing correctly. - <a href="https://en.wikipedia.org/wiki/Brute-force_attack" target="_blank" rel="noopener noreferrer">Wikipedia </a></p><h4 id="mcetoc_1gb5a8j9t232">Tries</h4><p>The maximum amount of fails a player can commit for an invalid password login kick before being banned by LockLogin temporally.<br><strong>Default: </strong>3<br><strong>Type: </strong>attempts</p><h4 id="mcetoc_1gb5a8j9t232">Block Time</h4><p>The ban time<br><strong>Default: </strong>30<br><strong>Type: </strong>minutes</p><h3 id="mcetoc_1gb5c380v2ak">Allow Same IP</h3><p>This will tell the plugin how to react when a player joins the server, but he's already on the server. The plugin will deny the connection, but if this option is true, and the player who's trying to join has the same IP that the one who is on the server, the player session will be invalidated and the connection will be allowed.<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Pin</h3><p>Enable the pin system globally<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">2FA</h3><p>Enable the 2FA system globally <a href="https://www.youtube.com/watch?v=zcLxFQgCrnU" rel="nofollow">click here for more info</a><br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Updater</h3><p>How The Plugins Manges Updates</p><h4 id="mcetoc_1gb5a8j9t232">Channel</h4><p>The update channel the plugin will use when searching for updates,<br>available channels are:<br>SNAPSHOT -&gt; RC<br>RELEASE_CANDIDATE -&gt; RELEASE<br><strong>Default: </strong>RELEASE <br><strong>Type: </strong>text</p><h4 id="mcetoc_1gb5a8j9t232">Check</h4><p>Toggle the constant update check of the plugin, when false, the version check will be only performed when the plugin starts.<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">Check Time</h4><p>The version check interval<br><strong>Default: </strong>10<br><strong>Type: </strong>minutes</p><h3 id="mcetoc_1gb5c380v2ak">Spawn</h3><p>Configure Login/Registration Spawn </p><h4 id="mcetoc_1gb5a8j9t232">Manage</h4><p>Allows the plugin to send the player to a defined location when he joins.<br>See <a href="https://github.com/KarmaConfigs/LockLoginReborn/wiki/Commands-and-permissions">commands and permissions</a> to see how to set the spawn location.<br><strong>Default: </strong>Disabled<br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">Take Back</h4><p>Sends the player to his last location after logging in or registering.  <br><strong>Default: </strong>Disabled<br><strong>Type: </strong>true/false</p><h4 id="mcetoc_1gb5a8j9t232">Spawn Distance</h4><p>The distance between spawn point and player in where the player's last location won't be stored<br><strong>Default: </strong>30<br><strong>Type: </strong>blocks</p><h3 id="mcetoc_1gb5c380v2ak">Clear Chat</h3><p>Clear the player chat when he joins the server.<br><strong>Default: </strong>Disabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Check Names</h3><p>Check the player names, respecting Mojang's name criteria.<br>3-16 characters, only _ as a special character allowed<br><strong>Default: </strong>Enabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Enforce Name Check</h3><p>Makes the name checker also check if there's a player with<br>a similar name has already been registered<br><strong>Default: </strong>Disabled<br><strong>Type: </strong>true/false</p><h3 id="mcetoc_1gb5c380v2ak">Name Check Protocol</h3><p>The plugin uses internal protocols to perform the name check.<br>This option forces the plugin to use one of them<br><strong>Default: </strong>2<br><strong>Type: </strong>number</p><h3 id="mcetoc_1gb5c380v2ak">Lang</h3><p>Sets the plugin language, the currently available official language are: English, Spanish, French, and German<br>The country code can be also used as the language ( Lang: en_EN; Lang: es_ES... ). The community language file must start with messages_, for example, messages_enchantingTable.yml, then in the configuration:<br>Lang: 'enchanting table'<br><strong>Default: </strong>en_EN <br><strong>Type:</strong> text</p><h3 id="mcetoc_1gb5c380v2ak">Module Prefix</h3><p>This will set the modules command prefix, by default it's $ ( for example $helpme )<br><strong>Default: </strong>$<br><strong>Type:</strong> text</p><footer><div class="post__footer"><dl class="post__meta"><dt>Created:</dt><dd><time datetime="2022-08-23T15:36">23/08/2022</time></dd><dt>Updated:</dt><dd><time datetime="2022-08-23T16:46">23/08/2022</time></dd><dt>Author:</dt><dd><a href="https://ims-network.github.io/locklogin/authors/thefourcraft/" rel="post.author" title="thefourCraft">thefourCraft</a></dd></dl><div class="post__share"><button class="post__share-button" aria-label="Share"><svg width="32" height="32"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#share"></use></svg></button><div class="post__share-popup"><a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html" class="js-share facebook" title="Share with Facebook" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#facebook"/></svg> Facebook </a><a href="https://pinterest.com/pin/create/button/?url=https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html&amp;media=undefined&amp;description=Configuration" class="js-share pinterest" title="Share with Pinterest" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#pinterest"/></svg> Pinterest </a><a href="https://mix.com/add?url=https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html" class="js-share mix" title="Share with Mix" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#mix"/></svg> Mix </a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html" class="js-share linkedin" title="Share with LinkedIn" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#linkedin"/></svg> LinkedIn </a><a href="https://buffer.com/add?text=Configuration&amp;url=https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html" class="js-share buffer" title="Share with Buffer" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#buffer"/></svg> Buffer </a><a href="https://api.whatsapp.com/send?text=Configuration https%3A%2F%2Fims-network.github.io%2Flocklogin%2Fconfiguration.html" class="js-share whatsapp" title="Share with WhatsApp" rel="nofollow noopener noreferrer"><svg class="icon" aria-hidden="true" focusable="false"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#whatsapp"/></svg> WhatsApp</a></div></div><dl class="post__tag"><dt>Tags:</dt><dd><a href="https://ims-network.github.io/locklogin/tags/bungeecord/" title="BungeeCord">BungeeCord</a></dd><dd><a href="https://ims-network.github.io/locklogin/tags/configuration/" title="Configuration">Configuration</a></dd><dd><a href="https://ims-network.github.io/locklogin/tags/first-time/" title="First Time">First Time</a></dd><dd><a href="https://ims-network.github.io/locklogin/tags/spigot/" title="Spigot">Spigot</a></dd><dd><a href="https://ims-network.github.io/locklogin/tags/velocity/" title="Velocity">Velocity</a></dd></dl></div><nav><ul class="post__nav"><li class="post__nav-prev">Prev: <a href="https://ims-network.github.io/locklogin/velocity-setup.html" rel="prev" title="Velocity Setup">Velocity Setup</a></li><li class="post__nav-next">Next: <a href="https://ims-network.github.io/locklogin/commands-and-permissions.html" rel="next" title="Commands &amp; Permissions">Commands &amp; Permissions</a></li></ul></nav></footer></div></article></div></div></main><footer class="footer"><div><a class="footer__logo" href="https://ims-network.github.io/locklogin/"><img src="https://ims-network.github.io/locklogin/media/website/LockLogin-Logo.png" alt="LockLogine Docs"></a><ul class="footer__nav"><li><a href="https://backup.karmadev.es/2k22panel/">LockLogin Panel</a></li><li><a href="https://github.com/KarmaConfigs">GitHub</a></li><li><a href="https://www.patreon.com/karmaconfigs">Patron</a></li><li><a href="https://discord.com/invite/jRFfsdxnJR">Support</a></li></ul></div><div><div class="footer__copy">All Rights Are Reserved To KarmaDev</div><div class="footer__social"><a href="https://www.youtube.com/channel/UCe4jnsmkyN5V1bEd2Cr3fxQ" aria-label="Youtube"><svg class="icon"><use xlink:href="https://ims-network.github.io/locklogin/assets/svg/svg-map.svg#youtube"/></svg></a></div></div></footer><div class="newsletter-popup" data-show-on-scroll="800px" data-show-after-time="5000ms"><button class="btn white newsletter-popup__close">&times;</button><h3>Subscribe</h3><p>Get the latest news, updates and more delivered directly to your email inbox</p><form>...</form></div><script>window.publiiThemeMenuConfig = {    
+        mobileMenuMode: 'sidebar',
+        animationSpeed: 300,
+        submenuWidth: 'auto',
+        doubleClickTime: 500,
+        mobileMenuExpandableSubmenus: true
+   };</script><script defer="defer" src="https://ims-network.github.io/locklogin/assets/js/scripts.min.js?v=4e6cf1839e76dc1bb4cf5df8b29781e3"></script><script>var images = document.querySelectorAll('img[loading]');
+
+        for (var i = 0; i < images.length; i++) {
+            if (images[i].complete) {
+                images[i].classList.add('is-loaded');
+            } else {
+                images[i].addEventListener('load', function () {
+                    this.classList.add('is-loaded');
+                }, false);
+            }
+        }</script><script defer="defer" src="https://ims-network.github.io/locklogin/assets/js/prism.js?v=3645000e29522b54a91ff782f1c2eb95"></script><script defer="defer" src="https://ims-network.github.io/locklogin/assets/js/prism-line-numbers.min.js?v=13275d3ac10d7028cf6a6f5da276f68c"></script><script defer="defer" src="https://ims-network.github.io/locklogin/assets/js/clipboard.min.js?v=ad98572d415d2f2452845a6068a913c0"></script><script defer="defer" src="https://ims-network.github.io/locklogin/assets/js/prism-copy-to-clipboard.min.js?v=57b50bd6f44169b9bab177133c984653"></script><script src="https://ims-network.github.io/locklogin/media/plugins/docSearch/docsearch.min.js"></script><script type="text/javascript">docsearch({
+				container: '#docsearch',
+				appId: '',
+				indexName: '',
+				apiKey: '',
+				debug: false
+			});</script><div class="pcb" data-behaviour="badge" data-behaviour-link="#cookie-settings" data-revision="1" data-config-ttl="90" data-debug-mode="false"><div role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="pcb-title" aria-describedby="pcb-txt" class="pcb__banner"><div class="pcb__inner"><div id="pcb-title" role="heading" class="pcb__title">This website uses cookies</div><div id="pcb-txt" class="pcb__txt">Select which cookies to opt-in to via the checkboxes below; our website uses cookies to examine site traffic and user activity while on our site, for marketing, and to provide social media functionality. <a href="#not-specified">More details...</a></div><div class="pcb__buttons"><button type="button" class="pcb__btn pcb__btn--link pcb__btn--configure" aria-haspopup="dialog">Manage preferences</button> <button type="button" class="pcb__btn pcb__btn--reject">Reject</button> <button type="button" class="pcb__btn pcb__btn--solid pcb__btn--accept">Accept all</button></div></div></div><div class="pcb__popup" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="pcb-popup-title"><div class="pcb__popup__wrapper"><div class="pcb__inner pcb__popup__inner"><div class="pcb__popup__heading"><div id="pcb-popup-title" role="heading" class="pcb__title">Cookie settings</div><button class="pcb__popup__close" aria-label="Close"></button></div><div class="pcb__popup__content"><div class="pcb__txt pcb__popup__txt">We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies. <a href="#not-specified">More details...</a></div><ul class="pcb__groups"><li class="pcb__group"><details><summary class="pcb__group__title no-desc">Required</summary></details><div class="pcb__popup__switch is-checked"><input type="checkbox" data-group-name="" id="pcb-group-0" checked="checked"> <label for="pcb-group-0">Required</label></div></li></ul></div><div class="pcb__buttons pcb__popup__buttons"><button type="button" class="pcb__btn pcb__btn--solid pcb__btn--accept">Accept all</button> <button type="button" class="pcb__btn pcb__btn--reject">Reject all</button> <button type="button" class="pcb__btn pcb__btn--save">Save settings</button></div></div></div></div><div class="pcb__overlay" aria-hidden="true"></div><button class="pcb__badge" aria-label="Cookie Policy" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="40" height="40" viewBox="0 0 23 23" fill="currentColor"><path d="M21.41 12.71c-.08-.01-.15 0-.22 0h-.03c-.03 0-.05 0-.08.01-.07 0-.13.01-.19.04-.52.21-1.44.19-2.02-.22-.44-.31-.65-.83-.62-1.53a.758.758 0 0 0-.27-.61.73.73 0 0 0-.65-.14c-1.98.51-3.49.23-4.26-.78-.82-1.08-.73-2.89.24-4.49.14-.23.14-.52 0-.75a.756.756 0 0 0-.67-.36c-.64.03-1.11-.1-1.31-.35-.19-.26-.13-.71-.01-1.29.04-.18.06-.38.03-.59-.05-.4-.4-.7-.81-.66C5.1 1.54 1 6.04 1 11.48 1 17.28 5.75 22 11.6 22c5.02 0 9.39-3.54 10.39-8.42.08-.4-.18-.78-.58-.87Zm-9.81 7.82c-5.03 0-9.12-4.06-9.12-9.06 0-4.34 3.05-8 7.25-8.86-.08.7.05 1.33.42 1.81.24.32.66.67 1.38.84-.76 1.86-.65 3.78.36 5.11.61.81 2.03 2 4.95 1.51.18.96.71 1.54 1.18 1.87.62.43 1.38.62 2.1.62.05 0 .09 0 .13-.01-1.23 3.64-4.7 6.18-8.64 6.18ZM13 17c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1Zm5.29-12.3a.99.99 0 0 1-.29-.71c0-.55.45-.99 1-.99a1 1 0 0 1 .71.3c.19.19.29.44.29.71 0 .55-.45.99-1 .99a1 1 0 0 1-.71-.3ZM9 13.5c0 .83-.67 1.5-1.5 1.5S6 14.33 6 13.5 6.67 12 7.5 12s1.5.67 1.5 1.5Zm3.25.81a.744.744 0 0 1-.06-1.05c.28-.32.75-.34 1.05-.06.31.28.33.75.05 1.06-.15.16-.35.25-.56.25-.18 0-.36-.06-.5-.19ZM8.68 7.26c.41.37.44 1 .07 1.41-.2.22-.47.33-.75.33a.96.96 0 0 1-.67-.26c-.41-.37-.44-1-.07-1.41.37-.42 1-.45 1.41-.08Zm11.48 1.88c.18-.19.52-.19.7 0 .05.04.09.1.11.16.03.06.04.12.04.19 0 .13-.05.26-.15.35-.09.1-.22.15-.35.15s-.26-.05-.35-.15a.355.355 0 0 1-.11-.16.433.433 0 0 1-.04-.19c0-.13.05-.26.15-.35Zm-4.93-1.86a.75.75 0 1 1 1.059-1.06.75.75 0 0 1-1.059 1.06Z"/></svg></button></div><script>(function(win) {
+    if (!document.querySelector('.pcb')) {
+        return;
+    }
+
+    var cbConfig = {
+        behaviour: document.querySelector('.pcb').getAttribute('data-behaviour'),
+        behaviourLink: document.querySelector('.pcb').getAttribute('data-behaviour-link'),
+        revision: document.querySelector('.pcb').getAttribute('data-revision'),
+        configTTL: parseInt(document.querySelector('.pcb').getAttribute('data-config-ttl'), 10),
+        debugMode: document.querySelector('.pcb').getAttribute('data-debug-mode') === 'true',
+        initialState: null,
+        previouslyAccepted: []
+    };
+
+    var cbUI = {
+        wrapper: document.querySelector('.pcb'),
+        banner: {
+            element: null,
+            btnAccept: null,
+            btnReject: null,
+            btnConfigure: null
+        },
+        popup: {
+            element: null,
+            btnClose: null,
+            btnSave: null,
+            btnAccept: null,
+            btnReject: null,
+            checkboxes: null,
+        },
+        overlay: null,
+        badge: null,
+        blockedScripts: document.querySelectorAll('script[type^="gdpr-blocker/"]'),
+        triggerLinks: cbConfig.behaviourLink ? document.querySelectorAll('a[href*="' + cbConfig.behaviourLink + '"]') : null
+    };
+
+    function initUI () {
+        // setup banner elements
+        cbUI.banner.element = cbUI.wrapper.querySelector('.pcb__banner');
+        cbUI.banner.btnAccept = cbUI.banner.element.querySelector('.pcb__btn--accept');
+        cbUI.banner.btnReject = cbUI.banner.element.querySelector('.pcb__btn--reject');
+        cbUI.banner.btnConfigure = cbUI.banner.element.querySelector('.pcb__btn--configure');
+
+        // setup popup elements
+        if (cbUI.wrapper.querySelector('.pcb__popup')) {
+            cbUI.popup.element = cbUI.wrapper.querySelector('.pcb__popup');
+            cbUI.popup.btnClose = cbUI.wrapper.querySelector('.pcb__popup__close');
+            cbUI.popup.btnSave = cbUI.popup.element.querySelector('.pcb__btn--save');
+            cbUI.popup.btnAccept = cbUI.popup.element.querySelector('.pcb__btn--accept');
+            cbUI.popup.btnReject = cbUI.popup.element.querySelector('.pcb__btn--reject');
+            cbUI.popup.checkboxes = cbUI.popup.element.querySelector('input[type="checkbox"]');
+            // setup overlay
+            cbUI.overlay = cbUI.wrapper.querySelector('.pcb__overlay');
+        }
+
+        cbUI.badge = cbUI.wrapper.querySelector('.pcb__badge');
+
+        if (cbConfig.behaviour.indexOf('link') > -1) {
+            for (var i = 0; i < cbUI.triggerLinks.length; i++) {
+                cbUI.triggerLinks[i].addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showBannerOrPopup();
+                });
+            }
+        }
+    }
+
+    function initState () {
+        var lsKeyName = getConfigName();
+        var currentConfig = localStorage.getItem(lsKeyName);
+        var configIsFresh = checkIfConfigIsFresh();
+
+        if (!configIsFresh || currentConfig === null) {
+            if (cbConfig.debugMode) {
+                console.log('🍪 Config not found, or configuration expired');
+            }
+
+            showBanner();
+        } else if (typeof currentConfig === 'string') {
+            if (cbConfig.debugMode) {
+                console.log('🍪 Config founded');
+            }
+
+            showBadge();
+
+            if (cbUI.popup.element) {
+                var allowedGroups = currentConfig.split(',');
+                var checkedCheckboxes = cbUI.popup.element.querySelectorAll('input[type="checkbox"]:checked');
+
+                for (var j = 0; j < checkedCheckboxes.length; j++) {
+                    var name = checkedCheckboxes[j].getAttribute('data-group-name');
+
+                    if (name && name !== '-' && allowedGroups.indexOf(name) === -1) {
+                        checkedCheckboxes[j].checked = false;
+                    }
+                }
+
+                for (var i = 0; i < allowedGroups.length; i++) {
+                    var checkbox = cbUI.popup.element.querySelector('input[type="checkbox"][data-group-name="' + allowedGroups[i] + '"]');
+
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+
+                    allowCookieGroup(allowedGroups[i]);
+                }
+            }
+        }
+
+        setTimeout(function () {
+            cbConfig.initialState = getInitialStateOfConsents();
+        }, 0);
+    }
+
+    function checkIfConfigIsFresh () {
+        var lastConfigSave = localStorage.getItem('publii-gdpr-cookies-config-save-date');
+
+        if (lastConfigSave === null) {
+            return false;
+        }
+
+        lastConfigSave = parseInt(lastConfigSave, 10);
+
+        if (lastConfigSave === 0) {
+            return true;
+        }
+
+        if (+new Date() - lastConfigSave < cbConfig.configTTL * 24 * 60 * 60 * 1000) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function initBannerEvents () {
+        cbUI.banner.btnAccept.addEventListener('click', function (e) {
+            e.preventDefault();
+            acceptAllCookies('banner');
+            showBadge();
+        }, false);
+
+        if (cbUI.banner.btnReject) {
+            cbUI.banner.btnReject.addEventListener('click', function (e) {
+                e.preventDefault();
+                rejectAllCookies();
+                showBadge();
+            }, false);
+        }
+
+        if (cbUI.banner.btnConfigure) {
+            cbUI.banner.btnConfigure.addEventListener('click', function (e) {
+                e.preventDefault();
+                hideBanner();
+                showAdvancedPopup();
+                showBadge();
+            }, false);
+        }
+    }
+
+    function initPopupEvents () {
+        if (!cbUI.popup.element) {
+            return;
+        }
+
+        cbUI.overlay.addEventListener('click', function (e) {
+            hideAdvancedPopup();
+        }, false);
+
+        cbUI.popup.element.addEventListener('click', function (e) {
+            e.stopPropagation();
+        }, false);
+
+        cbUI.popup.btnAccept.addEventListener('click', function (e) {
+            e.preventDefault();
+            acceptAllCookies('popup');
+        }, false);
+
+        cbUI.popup.btnReject.addEventListener('click', function (e) {
+            e.preventDefault();
+            rejectAllCookies();
+        }, false);
+
+        cbUI.popup.btnSave.addEventListener('click', function (e) {
+            e.preventDefault();
+            saveConfiguration();
+        }, false);
+
+        cbUI.popup.btnClose.addEventListener('click', function (e) {
+            e.preventDefault();
+            hideAdvancedPopup();
+        }, false);
+    }
+
+    function initBadgeEvents () {
+        if (!cbUI.badge) {
+            return;
+        }
+
+        cbUI.badge.addEventListener('click', function (e) {
+            showBannerOrPopup();
+        }, false);
+    }
+
+    initUI();
+    initState();
+    initBannerEvents();
+    initPopupEvents();
+    initBadgeEvents();
+
+    /**
+     * API
+     */
+    function addScript (src, inline) {
+        var newScript = document.createElement('script');
+
+        if (src) {
+            newScript.setAttribute('src', src);
+        }
+
+        if (inline) {
+            newScript.text = inline;
+        }
+
+        document.body.appendChild(newScript);
+    }
+
+    function allowCookieGroup (allowedGroup) {
+        var scripts = document.querySelectorAll('script[type="gdpr-blocker/' + allowedGroup + '"]');
+        cbConfig.previouslyAccepted.push(allowedGroup);
+    
+        for (var j = 0; j < scripts.length; j++) {
+            addScript(scripts[j].src, scripts[j].text);
+        }
+
+        var groupEvent = new Event('publii-cookie-banner-unblock-' + allowedGroup);
+        document.body.dispatchEvent(groupEvent);
+        unlockEmbeds(allowedGroup);
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 Allowed group: ' + allowedGroup);
+        }
+    }
+
+    function showBannerOrPopup () {
+        if (cbUI.popup.element) {
+            showAdvancedPopup();
+        } else {
+            showBanner();
+        }
+    }
+
+    function showAdvancedPopup () {
+        cbUI.popup.element.classList.add('is-visible');
+        cbUI.overlay.classList.add('is-visible');
+        cbUI.popup.element.setAttribute('aria-hidden', 'false');
+        cbUI.overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideAdvancedPopup () {
+        cbUI.popup.element.classList.remove('is-visible');
+        cbUI.overlay.classList.remove('is-visible');
+        cbUI.popup.element.setAttribute('aria-hidden', 'true');
+        cbUI.overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function showBanner () {
+        cbUI.banner.element.classList.add('is-visible');
+        cbUI.banner.element.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideBanner () {
+        cbUI.banner.element.classList.remove('is-visible');
+        cbUI.banner.element.setAttribute('aria-hidden', 'true');
+    }
+
+    function showBadge () {
+        if (!cbUI.badge) {
+            return;
+        }
+
+        cbUI.badge.classList.add('is-visible');
+        cbUI.badge.setAttribute('aria-hidden', 'false');
+    }
+
+    function getConfigName () {
+        var lsKeyName = 'publii-gdpr-allowed-cookies';
+
+        if (cbConfig.revision) {
+            lsKeyName = lsKeyName + '-v' + parseInt(cbConfig.revision, 10);
+        }
+
+        return lsKeyName;
+    }
+
+    function storeConfiguration (allowedGroups) {
+        var lsKeyName = getConfigName();
+        var dataToStore = allowedGroups.join(',');
+        localStorage.setItem(lsKeyName, dataToStore);
+
+        if (cbConfig.configTTL === 0) {
+            localStorage.setItem('publii-gdpr-cookies-config-save-date', 0);
+
+            if (cbConfig.debugMode) {
+                console.log('🍪 Store never expiring configuration');
+            }
+        } else {
+            localStorage.setItem('publii-gdpr-cookies-config-save-date', +new Date());
+        }
+    }
+
+    function getInitialStateOfConsents () {
+        if (!cbUI.popup.element) {
+            return [];
+        }
+
+        var checkedGroups = cbUI.popup.element.querySelectorAll('input[type="checkbox"]:checked');
+        var groups = [];
+
+        for (var i = 0; i < checkedGroups.length; i++) {
+            var allowedGroup = checkedGroups[i].getAttribute('data-group-name');
+
+            if (allowedGroup !== '') {
+                groups.push(allowedGroup);
+            }
+        }
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 Initial state: ' + groups.join(', '));
+        }
+
+        return groups;
+    }
+
+    function getCurrentStateOfConsents () {
+        if (!cbUI.popup.element) {
+            return [];
+        }
+
+        var checkedGroups = cbUI.popup.element.querySelectorAll('input[type="checkbox"]:checked');
+        var groups = [];
+
+        for (var i = 0; i < checkedGroups.length; i++) {
+            var allowedGroup = checkedGroups[i].getAttribute('data-group-name');
+
+            if (allowedGroup !== '') {
+                groups.push(allowedGroup);
+            }
+        }
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 State to save: ' + groups.join(', '));
+        }
+
+        return groups;
+    }
+
+    function getAllGroups () {
+        if (!cbUI.popup.element) {
+            return [];
+        }
+
+        var checkedGroups = cbUI.popup.element.querySelectorAll('input[type="checkbox"]');
+        var groups = [];
+
+        for (var i = 0; i < checkedGroups.length; i++) {
+            var allowedGroup = checkedGroups[i].getAttribute('data-group-name');
+
+            if (allowedGroup !== '') {
+                groups.push(allowedGroup);
+            }
+        }
+
+        return groups;
+    }
+
+    function acceptAllCookies (source) {
+        var groupsToAccept = getAllGroups();
+        storeConfiguration(groupsToAccept);
+
+        for (var i = 0; i < groupsToAccept.length; i++) {
+            var group = groupsToAccept[i];
+
+            if (cbConfig.initialState.indexOf(group) > -1 || cbConfig.previouslyAccepted.indexOf(group) > -1) {
+                if (cbConfig.debugMode) {
+                    console.log('🍪 Skip previously activated group: ' + group);
+                }
+
+                continue;
+            }
+
+            allowCookieGroup(group);
+        }
+
+        if (cbUI.popup.element) {
+            var checkboxesToCheck = cbUI.popup.element.querySelectorAll('input[type="checkbox"]');
+
+            for (var j = 0; j < checkboxesToCheck.length; j++) {
+                checkboxesToCheck[j].checked = true;
+            }
+        }
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 Accept all cookies: ', groupsToAccept.join(', '));
+        }
+
+        if (source === 'popup') {
+            hideAdvancedPopup();
+        } else if (source === 'banner') {
+            hideBanner();
+        }
+    }
+
+    function rejectAllCookies () {
+        if (cbConfig.debugMode) {
+            console.log('🍪 Reject all cookies');
+        }
+
+        storeConfiguration([]);
+        setTimeout(function () {
+            window.location.reload();
+        }, 100);
+    }
+
+    function saveConfiguration () {
+        var groupsToAccept = getCurrentStateOfConsents();
+        storeConfiguration(groupsToAccept);
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 Save new config: ', groupsToAccept.join(', '));
+        }
+
+        if (reloadIsNeeded(groupsToAccept)) {
+            setTimeout(function () {
+                window.location.reload();
+            }, 100);
+            return;
+        }
+
+        for (var i = 0; i < groupsToAccept.length; i++) {
+            var group = groupsToAccept[i];
+
+            if (cbConfig.initialState.indexOf(group) > -1 || cbConfig.previouslyAccepted.indexOf(group) > -1) {
+                if (cbConfig.debugMode) {
+                    console.log('🍪 Skip previously activated group: ' + group);
+                }
+
+                continue;
+            }
+
+            allowCookieGroup(group);
+        }
+
+        hideAdvancedPopup();
+    }
+
+    function reloadIsNeeded (groupsToAccept) {
+        // check if user rejected consent for initial groups
+        var initialGroups = cbConfig.initialState;
+        var previouslyAcceptedGroups = cbConfig.previouslyAccepted;
+        var groupsToCheck = initialGroups.concat(previouslyAcceptedGroups);
+
+        for (var i = 0; i < groupsToCheck.length; i++) {
+            var groupToCheck = groupsToCheck[i];
+
+            if (groupsToAccept.indexOf(groupToCheck) === -1) {
+                if (cbConfig.debugMode) {
+                    console.log('🍪 Reload is needed due lack of: ', groupToCheck);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function unlockEmbeds (cookieGroup) {
+        var iframesToUnlock = document.querySelectorAll('.pec-wrapper[data-consent-group-id="' + cookieGroup + '"]');
+
+        for (var i = 0; i < iframesToUnlock.length; i++) {
+            var iframeWrapper = iframesToUnlock[i];
+            iframeWrapper.querySelector('.pec-overlay').classList.remove('is-active');
+            iframeWrapper.querySelector('.pec-overlay').setAttribute('aria-hidden', 'true');
+            var iframe = iframeWrapper.querySelector('iframe');
+            iframe.setAttribute('src', iframe.getAttribute('data-consent-src'));
+        }
+    }
+
+    win.publiiEmbedConsentGiven = function (cookieGroup) {
+        // it will unlock embeds
+        allowCookieGroup(cookieGroup);
+
+        var checkbox = cbUI.popup.element.querySelector('input[type="checkbox"][data-group-name="' + cookieGroup + '"]');
+
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+
+        var groupsToAccept = getCurrentStateOfConsents();
+        storeConfiguration(groupsToAccept);
+
+        if (cbConfig.debugMode) {
+            console.log('🍪 Save new config: ', groupsToAccept.join(', '));
+        }
+    }
+})(window);</script></body></html>

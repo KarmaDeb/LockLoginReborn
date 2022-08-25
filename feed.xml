@@ -1,0 +1,1455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>LockLogine Docs</title>
+    <link href="https://ims-network.github.io/locklogin/feed.xml" rel="self" />
+    <link href="https://ims-network.github.io/locklogin" />
+    <updated>2022-08-23T17:55:49+03:00</updated>
+    <author>
+        <name>KarmaDev</name>
+    </author>
+    <id>https://ims-network.github.io/locklogin</id>
+
+    <entry>
+        <title>Web API</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/web-api.html"/>
+        <id>https://ims-network.github.io/locklogin/web-api.html</id>
+            <category term="Web API"/>
+            <category term="Module"/>
+            <category term="Events"/>
+            <category term="Commands"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:55:49+03:00</updated>
+            <summary>
+                <![CDATA[
+                    Request version Legacy Snapshot Release candidate Release Fetch changelog Fetch modules
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <h3 class="align-center"><a href="https://karmaconfigs.ml/locklogin/version" rel="nofollow" class="btn">Request version</a></h3>
+<h3 class="align-center"><br><a href="https://karmaconfigs.ml/locklogin/version?channel=legacy" rel="nofollow" class="btn btn--yellow">Legacy</a></h3>
+<h3 class="align-center"><br><a href="https://karmaconfigs.ml/locklogin/version?channel=snapshot" rel="nofollow" class="btn btn--green">Snapshot</a></h3>
+<h3 class="align-center"><br><a href="https://karmaconfigs.ml/locklogin/version?channel=rc" rel="nofollow" class="btn">Release candidate</a></h3>
+<h3 class="align-center"><br><a href="https://karmaconfigs.ml/locklogin/version?channel=release" rel="nofollow" class="btn btn--green">Release</a></h3>
+<h3 class="align-center"><a href="https://karmaconfigs.ml/locklogin/version?display=changelog" rel="nofollow" class="btn btn--outline">Fetch changelog</a></h3>
+<h3 class="align-center"><br><a href="https://karmaconfigs.ml/locklogin/api/?modules=all" rel="nofollow" class="btn btn--outline">Fetch modules</a></h3>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>API Card</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/api-card.html"/>
+        <id>https://ims-network.github.io/locklogin/api-card.html</id>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:43:59+03:00</updated>
+            <summary>
+                <![CDATA[
+                    As of LockLogin 1.13.16, you can implement API cards. These cards contain information to communicate the plugin and your module. For example, you can create&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>As of LockLogin 1.13.16, you can implement API cards. These cards contain information to communicate the plugin and your module.</p>
+<p>For example, you can create (in your module) a card named 'logged', and in the plugin, consume that card and perform an action over the card container. I know you did not understand anything, so... let me explain to you what I am talking about</p>
+<h1>In your module</h1>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">TeleportCard</span> <span class="pl-k">extends</span> <span class="pl-smi">APICard</span>&lt;<span class="pl-smi">ModulePlayer</span>&gt; {
+    
+    <span class="pl-k">private</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span>;
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Initialize the teleport card</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param module the module owning this card</span>
+<span class="pl-c">     * @param client the client managed in this card</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">TeleportCard</span>(<span class="pl-k">final</span> <span class="pl-smi">PluginModule</span> <span class="pl-s1">module</span>, <span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">client</span>) {
+        <span class="pl-en">super</span>(<span class="pl-s1">module</span>, <span class="pl-s">"teleport"</span>);
+        <span class="pl-s1">player</span> = <span class="pl-s1">client</span>;
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Update the card object</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param update the update value</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">protected</span> <span class="pl-k">final</span> <span class="pl-smi">void</span> <span class="pl-en">update</span>(<span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">update</span>) {
+        <span class="pl-k">if</span> (<span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getServer</span>().<span class="pl-en">isValid</span>(<span class="pl-s1">update</span>)) {
+            <span class="pl-s1">player</span> = <span class="pl-s1">update</span>;
+        }
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the card value</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the card value</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-en">get</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">player</span>;
+    }
+}</code></pre>
+</div>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-s1">Listener</span> <span class="pl-s1">implement</span> <span class="pl-smi">EventListener</span> {
+
+    <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">PluginModule</span> <span class="pl-s1">module</span>;
+
+    <span class="pl-k">public</span> <span class="pl-smi">Listener</span>(<span class="pl-k">final</span> <span class="pl-smi">PluginModule</span> <span class="pl-s1">owner</span>) {
+        <span class="pl-s1">module</span> = <span class="pl-s1">owner</span>;
+    }
+ 
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">onAuth</span>(<span class="pl-smi">UserAuthenticateEvent</span> <span class="pl-s1">e</span>) {
+        <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">e</span>.<span class="pl-en">getPlayer</span>();
+        <span class="pl-smi">TeleportCard</span> <span class="pl-s1">card</span> = <span class="pl-k">new</span> <span class="pl-smi">TeleportCard</span>(<span class="pl-s1">module</span>, <span class="pl-s1">player</span>);
+
+        <span class="pl-s1">module</span>.<span class="pl-en">queueCard</span>(<span class="pl-s1">card</span>);
+    }
+}<br></code></pre>
+</div>
+<h1>In your plugin</h1>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> <span class="pl-k">extends</span> <span class="pl-smi">JavaPlugin</span> {
+    
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">onEnable</span>() {
+        <span class="pl-c1">APICard</span>.<span class="pl-en">addCardListener</span>(<span class="pl-k">new</span> <span class="pl-smi">CardAdapter</span>() {
+            <span class="pl-c">/**</span>
+<span class="pl-c">             * When a card has been completely queued</span>
+<span class="pl-c">             *</span>
+<span class="pl-c">             * @param event the card queue event wrapper</span>
+<span class="pl-c">             */</span>
+            <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+            <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">cardPostQueued</span>(<span class="pl-smi">CardPostQueueEvent</span> <span class="pl-s1">event</span>) {
+                <span class="pl-c">//The APICard owner module</span>
+                <span class="pl-smi">PluginModule</span> <span class="pl-s1">module</span> = <span class="pl-s1">event</span>.<span class="pl-en">getModule</span>();
+                <span class="pl-c">//Where the APICard is stored, it's usually the same as 'getModule'</span>
+                <span class="pl-smi">PluginModule</span> <span class="pl-s1">container</span> = <span class="pl-s1">event</span>.<span class="pl-en">getContainer</span>();
+
+                <span class="pl-c">//The APICard name identifier</span>
+                <span class="pl-smi">String</span> <span class="pl-s1">identifier</span> = <span class="pl-s1">event</span>.<span class="pl-en">getIdentifier</span>();
+                
+                <span class="pl-k">if</span> (<span class="pl-s1">container</span>.<span class="pl-en">consumeCard</span>(<span class="pl-s1">module</span>, <span class="pl-s1">identifier</span>)) {
+                    <span class="pl-c">//Make the module consume the card and remove it from the queue, so it can</span>
+                    <span class="pl-c">//be loaded using the getCard method</span>
+                    
+                    <span class="pl-smi">APICard</span>&lt;<span class="pl-smi">ModulePlayer</span>&gt; <span class="pl-s1">card</span> = <span class="pl-s1">container</span>.<span class="pl-en">getCard</span>(<span class="pl-s1">module</span>, <span class="pl-s1">identifier</span>);
+                    
+                    <span class="pl-smi">UUID</span> <span class="pl-s1">id</span> = <span class="pl-s1">card</span>.<span class="pl-en">get</span>().<span class="pl-en">getUUID</span>();
+                    <span class="pl-smi">Player</span> <span class="pl-s1">player</span> = <span class="pl-en">getServer</span>().<span class="pl-en">getPlayer</span>(<span class="pl-s1">id</span>);
+                    
+                    <span class="pl-s1">player</span>.<span class="pl-en">teleport</span>(<span class="pl-c">/* somewhere */</span>);
+                }
+            }
+        });
+    }
+}</code></pre>
+</div>
+<p>Please note in the previous example the plugin only listens when a card is queued completely. But the correct way to read cards is using PluginModule#consumeCard(String) method and then using the PluginModule#getCard(String) method. Consuming a card means that the card will be removed from the queue cards and put to a temporal field to be accessed using the get card method. Not doing that could cause errors and high memory usage.</p>
+<p>A correct way of listening to plugin ABC cards would be this</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">while</span> (<span class="pl-c1">true</span>) {
+    <span class="pl-k">if</span> (<span class="pl-s1">module</span>.<span class="pl-en">consumeCard</span>(<span class="pl-s">"teleport"</span>)) {
+        <span class="pl-smi">APICard</span>&lt;<span class="pl-smi">ModulePlayer</span>&gt; <span class="pl-s1">card</span> = <span class="pl-s1">module</span>.<span class="pl-en">getCard</span>(<span class="pl-s">"teleport"</span>);
+
+        <span class="pl-c">//Do whatever you want</span>
+    }
+}</code></pre>
+</div>
+<p>Or this:</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-smi">String</span>[] <span class="pl-s1">identifiers</span> = <span class="pl-k">new</span> <span class="pl-smi">String</span>[]{<span class="pl-s">"teleport"</span>, <span class="pl-s">"another_example"</span>}
+
+<span class="pl-c">//Inside an async task</span>
+<span class="pl-k">while</span> (<span class="pl-c1">true</span>) {
+    <span class="pl-k">for</span> (<span class="pl-smi">String</span> <span class="pl-s1">str</span> : <span class="pl-s1">identifiers</span>) {
+        <span class="pl-s1">module</span>.<span class="pl-en">consumeCard</span>(<span class="pl-s1">str</span>);
+    }
+}
+<span class="pl-c">//Outside the async task</span>
+
+<span class="pl-c1">APICard</span>.<span class="pl-en">addCardListener</span>(<span class="pl-k">new</span> <span class="pl-smi">CardAdapter</span>() {
+  <span class="pl-c">/**</span>
+<span class="pl-c">   * When a card has been completely queued</span>
+<span class="pl-c">   *</span>
+<span class="pl-c">   * @param event the card queue event wrapper</span>
+<span class="pl-c">   */</span>
+  <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+  <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">cardPostQueued</span>(<span class="pl-smi">CardConsumedEvent</span> <span class="pl-s1">event</span>) {
+    <span class="pl-c">//The APICard owner module</span>
+    <span class="pl-smi">PluginModule</span> <span class="pl-s1">module</span> = <span class="pl-s1">event</span>.<span class="pl-en">getModule</span>();
+    <span class="pl-c">//Where the APICard is stored, it's usually the same as 'getModule'</span>
+    <span class="pl-smi">PluginModule</span> <span class="pl-s1">container</span> = <span class="pl-s1">event</span>.<span class="pl-en">getContainer</span>();
+
+    <span class="pl-c">//The APICard name identifier</span>
+    <span class="pl-smi">String</span> <span class="pl-s1">identifier</span> = <span class="pl-s1">event</span>.<span class="pl-en">getIdentifier</span>();
+
+    <span class="pl-smi">APICard</span> &lt; <span class="pl-smi">ModulePlayer</span> &gt; <span class="pl-s1">card</span> = <span class="pl-s1">container</span>.<span class="pl-en">getCard</span>(<span class="pl-s1">module</span>, <span class="pl-s1">identifier</span>);
+
+    <span class="pl-smi">UUID</span> <span class="pl-s1">id</span> = <span class="pl-s1">card</span>.<span class="pl-en">get</span>().<span class="pl-en">getUUID</span>();
+    <span class="pl-smi">Player</span> <span class="pl-s1">player</span> = <span class="pl-en">getServer</span>().<span class="pl-en">getPlayer</span>(<span class="pl-s1">id</span>);
+
+    <span class="pl-s1">player</span>.<span class="pl-en">teleport</span>( <span class="pl-c">/* somewhere */</span> );
+  }
+});</code></pre>
+</div>
+<p>or you could even use the provided card event handler like this:</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-c">/**</span>
+<span class="pl-c"> * When a card has been completely queued</span>
+<span class="pl-c"> *</span>
+<span class="pl-c"> * @param event the card queue event wrapper</span>
+<span class="pl-c"> */</span>
+<span class="pl-c1">@</span><span class="pl-c1">Override</span>
+<span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-s1">cardPostQueued</span>(<span class="pl-smi">CardPostQueueEvent</span> <span class="pl-s1">event</span>) {
+    <span class="pl-smi">PluginModule</span> <span class="pl-s1">container</span> = <span class="pl-s1">event</span>.<span class="pl-en">getContainer</span>();
+    <span class="pl-s1">container</span>.<span class="pl-en">consumeCard</span>(<span class="pl-s1">identifier</span>);
+}</code></pre>
+</div>
+<p>By default LockLogin provides you with theese APICards;</p>
+<table style="width: 100%;" role="table">
+<thead>
+<tr>
+<th style="width: 23.5378%;"><strong>Card</strong></th>
+<th style="width: 30.5138%;"><strong>Type</strong></th>
+<th style="width: 45.9484%;"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="width: 23.5378%;">ClientCard</td>
+<td style="width: 30.5138%;">ModulePlayer</td>
+<td style="width: 45.9484%;">This card can be used by any plugin and its module to act as a player and this action is always under the same conditions</td>
+</tr>
+<tr>
+<td style="width: 23.5378%;">MultiQueueCard</td>
+<td style="width: 30.5138%;">Set as APICard</td>
+<td style="width: 45.9484%;">This card can be used when you need to send more than one API card containing more than one type of data in a single queue. I recommend always creating a class wrapper specified for this, but if you don't want to, here's the option</td>
+</tr>
+<tr>
+<td style="width: 23.5378%;">QueueCard</td>
+<td style="width: 30.5138%;">Any object this</td>
+<td style="width: 45.9484%;">This card can be used always, it can contain any kind of object, including class wrappers of data</td>
+</tr>
+</tbody>
+</table>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>Account manager</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/account-manager.html"/>
+        <id>https://ims-network.github.io/locklogin/account-manager.html</id>
+            <category term="Module"/>
+            <category term="Events"/>
+            <category term="Configuration"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:40:01+03:00</updated>
+            <summary>
+                <![CDATA[
+                    You can create your account manager or interact with the current one, using just the LockLogin API First, create a class that extends AccountManager, for&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>You can create your account manager or interact with the current one, using just the LockLogin API</p>
+<h2>Creating own account manager</h2>
+<p>First, create a class that extends AccountManager, for correct work reasons, you must provide 3 constructors and <strong>should</strong> provide another one, which is optional but highly recommended</p>
+<p>This is just an example, you don't need to make use of KarmaYamlManager or even use files, you could use JSON, MySQL, or anything meanwhile it extends AccountManager</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">MyAccountManager</span> <span class="pl-k">extends</span> <span class="pl-smi">AccountManager</span> {
+
+    <span class="pl-c">//When creating a module you must use KarmaAPI</span>
+    <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">KarmaYamlManager</span> <span class="pl-s1">account</span>;
+    <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">File</span> <span class="pl-s1">file</span>;
+
+    <span class="pl-c">//Required constructor</span>
+    <span class="pl-k">public</span> <span class="pl-smi">AccountManager</span>() {
+        <span class="pl-s1">account</span> = <span class="pl-c1">null</span>;
+        <span class="pl-s1">file</span> = <span class="pl-c1">null</span>;
+    }
+
+    <span class="pl-c">/*</span>
+<span class="pl-c">    * Required constructor</span>
+<span class="pl-c">    *</span>
+<span class="pl-c">    * LockLoginAPI is compatible with bukkit/bungee/velocity API, you can use it</span>
+<span class="pl-c">    * in your modules</span>
+<span class="pl-c">    */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">AccountManager</span>({<span class="pl-s1">OfflinePlayer</span>-<span class="pl-s1">ProxyPlayer</span>-[<span class="pl-s1">Velocity</span>]<span class="pl-s1">Player</span>} <span class="pl-s1">player</span>) {
+        <span class="pl-s1">account</span> = <span class="pl-c">/*module object*/</span>.<span class="pl-en">loadFile</span>(<span class="pl-s1">player</span>.<span class="pl-en">getUniqueId</span>().<span class="pl-en">toString</span>().<span class="pl-en">replace</span>(<span class="pl-s">"-"</span>, <span class="pl-s">""</span>), <span class="pl-s">"accounts"</span>);
+        <span class="pl-s1">file</span> = (<span class="pl-smi">File</span>) <span class="pl-s1">account</span>.<span class="pl-en">getSourceRoot</span>().<span class="pl-en">getSource</span>();
+    }
+
+    <span class="pl-c">//Required constructor</span>
+    <span class="pl-k">public</span> <span class="pl-s1">AccountManager</span>(<span class="pl-smi">AccountID</span> <span class="pl-s1">id</span>) {
+        <span class="pl-s1">account</span> = <span class="pl-c">/*module object*/</span>.<span class="pl-en">loadFile</span>(<span class="pl-s1">id</span>.<span class="pl-en">getId</span>().<span class="pl-en">replace</span>(<span class="pl-s">"-"</span>, <span class="pl-s">""</span>), <span class="pl-s">"accounts"</span>);
+        <span class="pl-s1">file</span> = (<span class="pl-smi">File</span>) <span class="pl-s1">account</span>.<span class="pl-en">getSourceRoot</span>().<span class="pl-en">getSource</span>();
+    }
+
+    <span class="pl-c">//Recommended constructor</span>
+    <span class="pl-k">public</span> <span class="pl-s1">AccountManager</span>(<span class="pl-smi">File</span> <span class="pl-s1">file</span>) {
+        <span class="pl-s1">account</span> = <span class="pl-k">new</span> <span class="pl-smi">KarmaYamlManager</span>(<span class="pl-s1">file</span>);
+        <span class="pl-smi">this</span>.<span class="pl-s1">file</span> = <span class="pl-s1">file</span>;
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Check if the file exists</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the file exists</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-s1">exists</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Tries to create the account</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the account could be created</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-en">create</span>() {
+       
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Tries to remove the account</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param issuer the account removal issuer</span>
+<span class="pl-c">     * @return if the account could be removed</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-en">remove</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">issuer</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account id</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param id the account id</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">saveUUID</span>(<span class="pl-k">final</span> <span class="pl-smi">AccountID</span> <span class="pl-s1">id</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account 2FA status</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param status the account 2FA status</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">set2FA</span>(<span class="pl-k">final</span> <span class="pl-smi">boolean</span> <span class="pl-s1">status</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Import the values from the specified account manager</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param account the account</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">protected</span> <span class="pl-smi">void</span> <span class="pl-en">importFrom</span>(<span class="pl-k">final</span> <span class="pl-smi">AccountManager</span> <span class="pl-s1">account</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account id</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account id</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">AccountID</span> <span class="pl-en">getUUID</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account name</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account name</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getName</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account name</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param name the account name</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setName</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">name</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account password</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param password the account password</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setPassword</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">password</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account password unsafely</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param password the account password</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setUnsafePassword</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">password</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account password</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account password</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getPassword</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get if the account is registered</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the account is registered</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-en">isRegistered</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account google auth token</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param token the account google auth</span>
+<span class="pl-c">     *              token</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setGAuth</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">token</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account unsafe google auth token</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param token the account google auth token</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setUnsafeGAuth</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">token</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account google auth token</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account google auth</span>
+<span class="pl-c">     * token</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getGAuth</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account pin</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param pin the account pin</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setPin</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">pin</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Save the account unsafe pin</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param pin the account pin</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setUnsafePin</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">pin</span>) {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account pin</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account pin</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getPin</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get if the account has a pin</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the account has a pin</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-en">hasPin</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Check if the account has 2FA</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the account has 2FA</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">boolean</span> <span class="pl-en">has2FA</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the account creation time</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the account created time</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">Instant</span> <span class="pl-en">getCreationTime</span>() {
+        
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Get a list of accounts</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return a list of all the</span>
+<span class="pl-c">     * Available accounts</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">public</span> <span class="pl-smi">Set</span>&lt;<span class="pl-smi">AccountManager</span>&gt; <span class="pl-en">getAccounts</span>() {
+        <span class="pl-smi">Set</span>&lt;<span class="pl-smi">AccountManager</span>&gt; <span class="pl-s1">managers</span> = <span class="pl-k">new</span> <span class="pl-smi">HashSet</span>&lt;&gt;();
+
+        <span class="pl-smi">Path</span> <span class="pl-s1">accounts</span> = <span class="pl-c">/*module object*/</span>.<span class="pl-en">getDataPath</span>().<span class="pl-en">resolve</span>(<span class="pl-s">"accounts"</span>);
+        <span class="pl-s1">Files</span>.<span class="pl-en">list</span>(<span class="pl-s1">accounts</span>).<span class="pl-en">forEach</span>(<span class="pl-s1">file</span> -&gt; <span class="pl-s1">managers</span>.<span class="pl-en">add</span>(<span class="pl-k">new</span> <span class="pl-smi">MyAccountManager</span>(<span class="pl-s1">file</span>.<span class="pl-en">toFile</span>())));
+
+        <span class="pl-k">return</span> <span class="pl-s1">managers</span>;
+    }
+}</code></pre>
+</div>
+<h3>After creating the account manager</h3>
+<p>You must register that account manager as the current account system provider</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> <span class="pl-k">extends</span> <span class="pl-smi">PluginModule</span> {
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module enable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">enable</span>() {
+        <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">setAccountsManager</span>(<span class="pl-smi">MyAccountManager</span>.<span class="pl-s1">class</span>);
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module disable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">disable</span>() {
+        <span class="pl-smi">AccountManager</span> <span class="pl-s1">default</span> = <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getDefaultAccountManager</span>(<span class="pl-k">new</span> <span class="pl-smi">Class</span>[<span class="pl-c1">0</span>]);
+        <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">setAccountsManager</span>(<span class="pl-s1">default</span>.<span class="pl-en">getClass</span>());
+    }
+}</code></pre>
+<h3>Interacting with the current account manager</h3>
+<p>You can interact with the current account manager by retrieving it from a player, or using CurrentPlatform provided by LockLogin</p>
+<h4>By player</h4>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-smi">AccountManager</span> <span class="pl-s1">retrieve</span>(<span class="pl-k">final</span> <span class="pl-smi">UUID</span> <span class="pl-s1">id</span>) {
+    <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getServer</span>().<span class="pl-en">getPlayer</span>(<span class="pl-s1">id</span>);
+    <span class="pl-k">return</span> <span class="pl-s1">player</span>.<span class="pl-en">getAccount</span>();
+}
+
+<span class="pl-k">public</span> <span class="pl-smi">AccountManager</span> <span class="pl-s1">retrieve</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">name</span>) {
+    <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getServer</span>().<span class="pl-en">getPlayer</span>(<span class="pl-s1">name</span>);
+    <span class="pl-k">return</span> <span class="pl-s1">player</span>.<span class="pl-en">getAccount</span>();
+}</code></pre>
+<h4>By CurrentPlatform</h4>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-smi">AccountManager</span> <span class="pl-s1">retrieve</span>(<span class="pl-k">final</span> <span class="pl-smi">UUID</span> <span class="pl-s1">id</span>) {
+    <span class="pl-smi">AccountManager</span> <span class="pl-s1">manager</span> = <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getAccountManager</span>(<span class="pl-k">new</span> <span class="pl-smi">Class</span>[]{<span class="pl-smi">AccountID</span>.<span class="pl-s1">class</span>}, <span class="pl-s1">AccountId</span>.<span class="pl-en">fromUUID</span>(<span class="pl-s1">id</span>));
+}
+
+<span class="pl-k">public</span> <span class="pl-smi">AccountManager</span> <span class="pl-s1">retrieve</span>(<span class="pl-k">final</span> <span class="pl-smi">String</span> <span class="pl-s1">name</span>) {
+    <span class="pl-smi">AccountManager</span> <span class="pl-s1">invalid</span> = <span class="pl-s1">CurrentPlatform</span>.<span class="pl-en">getAccountManager</span>(<span class="pl-k">new</span> <span class="pl-smi">Class</span>[<span class="pl-c1">0</span>]);
+    <span class="pl-k">for</span> (<span class="pl-smi">AccountManager</span> <span class="pl-s1">manager</span> : <span class="pl-s1">invalid</span>.<span class="pl-en">getAccounts</span>()) {
+        <span class="pl-k">if</span> (<span class="pl-s1">manager</span>.<span class="pl-en">getName</span>().<span class="pl-en">equalsIgnoreCase</span>(<span class="pl-s1">name</span>)) {
+            <span class="pl-k">return</span> <span class="pl-s1">manager</span>;
+        }
+    }
+    
+    <span class="pl-k">return</span> <span class="pl-c1">null</span>;
+}</code></pre>
+</div>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>Module Player</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/module-player.html"/>
+        <id>https://ims-network.github.io/locklogin/module-player.html</id>
+            <category term="Module"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:36:12+03:00</updated>
+            <summary>
+                <![CDATA[
+                    LockLoginAPI doesn't have a "Player" object, but a ModulePlayer you can interact with. ModulePlayer is an object that allows you to retrieve player info from&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>LockLoginAPI doesn't have a "Player" object, but a ModulePlayer you can interact with.</p>
+<h2>What is a ModulePlayer</h2>
+<p>ModulePlayer is an object that allows you to retrieve player info from a LockLogin module, without using bukkit/velocity/bungeecord API.</p>
+<p>ModulePlayer allows you to:</p>
+<ul>
+<li>Retrieve player name</li>
+<li>Retrieve player UUID</li>
+<li>Retrieve player LockLogin session</li>
+<li>Retrieve player LockLogin account</li>
+<li>Retrieve player IP address</li>
+<li>Retrieve player bukkit/velocity/bungeecord player object</li>
+<li>Retrieve a player object of bukkit/velocity/bungeecord API ( as object )</li>
+<li>Retrieve if the player is playing in the server</li>
+<li>Send a message to the player</li>
+<li>Send an actionbar to the player</li>
+<li>Send a title/subtitle to the player</li>
+<li>Send a kick request for the player</li>
+<li>Send a login request for the player</li>
+<li>Send an unlogin request for the player</li>
+</ul>
+<h3>LockLogin session</h3>
+<p>By default, LockLogin provides a session manager ( which can be changed by any module ).</p>
+<h3>But what does that session do?</h3>
+<p>LockLogin session manages if the player:</p>
+<ul>
+<li>Is logged</li>
+<li>Is temp-logged
+<ul>
+<li>2FA logged</li>
+<li>Pin logged</li>
+</ul>
+</li>
+<li>Is captcha logged</li>
+<li>Is Bungee/Velocity verified ( Bungee Hack protection )</li>
+<li>Retrieve player captcha</li>
+</ul>
+<p>Also, allows you to manage:</p>
+<ul>
+<li>Player login status</li>
+<li>Player temp-login status
+<ul>
+<li>2FA login</li>
+<li>Pin login</li>
+</ul>
+</li>
+<li>Player captcha login status</li>
+<li>Bungee/Velocity verification status ( Bungee Hack protection )</li>
+</ul>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-s1">onJoin</span>(<span class="pl-smi">UserPostJoinEvent</span> <span class="pl-s1">e</span>) {
+    <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">e</span>.<span class="pl-en">getPlayer</span>();
+    <span class="pl-smi">ClientSession</span> <span class="pl-s1">session</span> = <span class="pl-s1">player</span>.<span class="pl-en">getSession</span>();
+
+    <span class="pl-s1">session</span>.<span class="pl-en">setCaptchaLogged</span>(<span class="pl-c1">true</span>);
+    <span class="pl-s1">player</span>.<span class="pl-en">sendActionBar</span>(<span class="pl-s">"&amp;aWelcome &amp;7"</span> + <span class="pl-s1">player</span>.<span class="pl-en">getName</span>());
+}</code></pre>
+</div>
+<h3>LockLogin account</h3>
+<p>LockLogin account allows you to manage the player account</p>
+<ul>
+<li>Player stored name</li>
+<li>Player stored UUID</li>
+<li>Player password</li>
+<li>Player 2FA token</li>
+<li>Player pin</li>
+<li>Player account creation date</li>
+<li>Retrieve if player is registered</li>
+<li>Retrieve if player has 2fa</li>
+<li>Retrieve if player has pin</li>
+</ul>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-s1">onJoin</span>(<span class="pl-smi">UserPostJoinEvent</span> <span class="pl-s1">e</span>) {
+    <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">e</span>.<span class="pl-en">getPlayer</span>();
+    <span class="pl-smi">ClientSession</span> <span class="pl-s1">session</span> = <span class="pl-s1">player</span>.<span class="pl-en">getSession</span>();
+    <span class="pl-smi">AccountManager</span> <span class="pl-s1">account</span> = <span class="pl-s1">player</span>.<span class="pl-en">getAccount</span>();
+
+    <span class="pl-s1">session</span>.<span class="pl-en">setCaptchaLogged</span>(<span class="pl-c1">true</span>);
+    <span class="pl-k">if</span> (<span class="pl-s1">account</span>.<span class="pl-en">isRegistered</span>()) {
+        <span class="pl-s1">player</span>.<span class="pl-en">sendActionBar</span>(<span class="pl-s">"&amp;aWelcome &amp;7"</span> + <span class="pl-s1">player</span>.<span class="pl-en">getName</span>());
+    } <span class="pl-k">else</span> {
+        <span class="pl-s1">player</span>.<span class="pl-en">sendActionBar</span>(<span class="pl-s">"&amp;bHi &amp;7"</span> + <span class="pl-s1">player</span>.<span class="pl-en">getName</span>() + <span class="pl-s">"&amp;b. Welcome to MyServer!"</span>);
+    }
+}</code></pre>
+</div>
+<p> </p>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>Commands API</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/commands-api.html"/>
+        <id>https://ims-network.github.io/locklogin/commands-api.html</id>
+            <category term="Commands"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:33:30+03:00</updated>
+            <summary>
+                <![CDATA[
+                    LockLoginAPI commands allows you to create your own command managed by LockLogin. This command will be visible only by LockLogin. First of all, you should&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>LockLoginAPI commands allows you to create your own command managed by LockLogin. This command will be visible only by LockLogin.</p>
+<h2>Getting started</h2>
+<p>First of all, you should create a class that extends Command object</p>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">MyCommand</span> <span class="pl-k">extends</span> <span class="pl-smi">Command</span> {
+
+    <span class="pl-k">public</span> <span class="pl-smi">MyCommand</span>() {
+        <span class="pl-en">super</span>(<span class="pl-s">"My command description"</span>, <span class="pl-s">"label1"</span>, <span class="pl-s">"alias1"</span>, <span class="pl-s">"alias2"</span> <span class="pl-c">/*You can add an infinite number of alias*/</span>);
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Process the command when</span>
+<span class="pl-c">     * its fired</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param arg        the used argument</span>
+<span class="pl-c">     * @param sender     the command sender</span>
+<span class="pl-c">     * @param parameters the command parameters</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">processCommand</span>(<span class="pl-smi">String</span> <span class="pl-s1">arg</span>, <span class="pl-smi">ModuleSender</span> <span class="pl-s1">sender</span>, <span class="pl-smi">String</span>... <span class="pl-s1">parameters</span>) {
+        <span class="pl-k">if</span> (<span class="pl-s1">parameters</span>.<span class="pl-s1">length</span> == <span class="pl-c1">0</span>) {
+            <span class="pl-s1">sender</span>.<span class="pl-en">sendMessage</span>(<span class="pl-s">"&amp;cPlease provide an argument"</span>);
+        } <span class="pl-k">else</span> {
+            <span class="pl-s1">sender</span>.<span class="pl-en">sendMessage</span>(<span class="pl-s">"&amp;bHello "</span> + <span class="pl-s1">parameters</span>[<span class="pl-c1">0</span>]);
+        }
+    }
+}</code></pre>
+<h2>Registering the command</h2>
+<p>Obviously, the command won't work by just creating the command class, you must register in your ModulePlugin class</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> <span class="pl-k">extends</span> <span class="pl-smi">PluginModule</span> {
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module enable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">enable</span>() {
+        <span class="pl-en">getPlugin</span>().<span class="pl-en">registerCommand</span>(<span class="pl-k">new</span> <span class="pl-smi">MyCommand</span>());
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module disable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">disable</span>() {
+        <span class="pl-en">getPlugin</span>().<span class="pl-en">unregisterCommand</span>(<span class="pl-k">new</span> <span class="pl-smi">MyCommand</span>());
+    }
+}</code></pre>
+</div>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>API Events</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/api-events-2.html"/>
+        <id>https://ims-network.github.io/locklogin/api-events-2.html</id>
+            <category term="Events"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:25:17+03:00</updated>
+            <summary>
+                <![CDATA[
+                    The plugin events are divided into 3 categories: Each category contains what its name says, plugins, and user-related events. Plugin events Event Description Methods MigrationRequestEvent&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>The plugin events are divided into 3 categories:</p>
+<div class="post__toc">
+<h3>Table of Contents</h3>
+<ul>
+<li><a href="#mcetoc_1gb5h4pr63a3">Plugin events</a></li>
+<li><a href="#mcetoc_1gb5ha4hp3c1">Server Events</a></li>
+<li><a href="#mcetoc_1gb5ha4hp3c2">Client Events</a></li>
+</ul>
+</div>
+<p>Each category contains what its name says, plugins, and user-related events.</p>
+<h1 id="mcetoc_1gb5h4pr63a3">Plugin events</h1>
+<table style="width: 137.464%; height: 784.468px;" role="table">
+<thead>
+<tr style="height: 50.3594px;">
+<th style="width: 28.8382%; height: 50.3594px;"><strong>Event</strong></th>
+<th style="width: 40.8714%; height: 50.3594px;"><strong>Description</strong></th>
+<th style="width: 30.2905%; height: 50.3594px;"><strong>Methods</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr style="height: 107.953px;">
+<td style="width: 28.8382%; height: 107.953px;">MigrationRequestEvent</td>
+<td style="width: 40.8714%; height: 107.953px;">This event is fired when the plugin<br>starts to migrate an account from an<br>AccountManager to another one</td>
+<td style="width: 30.2905%; height: 107.953px;">#getSource<br>#getTarget</td>
+</tr>
+<tr style="height: 107.953px;">
+<td style="width: 28.8382%; height: 107.953px;">ModuleStatusChangeEvent</td>
+<td style="width: 40.8714%; height: 107.953px;">This event is fired when a module changes<br>his status to loaded or unloaded</td>
+<td style="width: 30.2905%; height: 107.953px;">#getStatus<br>#getModule<br>#getLoader</td>
+</tr>
+<tr style="height: 194.344px;">
+<td style="width: 28.8382%; height: 194.344px;">PluginIpValidationEvent</td>
+<td style="width: 40.8714%; height: 194.344px;">This event is fired when the plugin validates the IP in these cases:<br>- The IP pinged server<br>- The IP is valid<br>- The IP is not from a known proxy</td>
+<td style="width: 30.2905%; height: 194.344px;">#setHandled(PluginModule, ValidationResult, Boolean, String)<br>#getHandleOwner<br>#getProcess<br>#getResult</td>
+</tr>
+<tr style="height: 107.953px;">
+<td style="width: 28.8382%; height: 107.953px;">PluginProcessCommandEvent</td>
+<td style="width: 40.8714%; height: 107.953px;">This event is fired when the plugin process<br>a module command</td>
+<td style="width: 30.2905%; height: 107.953px;">#getArgument<br>#getParameters<br>#getSender</td>
+</tr>
+<tr style="height: 107.953px;">
+<td style="width: 28.8382%; height: 107.953px;">PluginStatusChangeEvent</td>
+<td style="width: 40.8714%; height: 107.953px;">This event is fired when the plugin changes<br>his status to loaded, unloaded, reload_start,<br>reload_end or update_start, update_end</td>
+<td style="width: 30.2905%; height: 107.953px;">#getStatus</td>
+</tr>
+<tr style="height: 107.953px;">
+<td style="width: 28.8382%; height: 107.953px;">UpdateRequestEvent</td>
+<td style="width: 40.8714%; height: 107.953px;">This event is fired when the plugin requests<br>to update himself</td>
+<td style="width: 30.2905%; height: 107.953px;">#getSender<br>#canPerformUnsafeUpdate ( deprecated )</td>
+</tr>
+</tbody>
+</table>
+<h1 id="mcetoc_1gb5ha4hp3c1">Server Events</h1>
+<table style="width: 136.752%;" role="table">
+<thead>
+<tr>
+<th style="width: 27.633%;"><strong>Event</strong></th>
+<th style="width: 44.7295%;"><strong>Description</strong></th>
+<th style="width: 27.6375%;"><strong>Methods</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="width: 27.633%;">ModuleServerMessageEvent</td>
+<td style="width: 44.7295%;">This event (inherits from ServerSendMessageEvent) is fired when a module sends a message to the console</td>
+<td style="width: 27.6375%;">#setReplace(Integer, Object)<br>#addReplacement(Object)<br>#getModule<br>#getReplacesAmount<br>#getReplaces<br>#getReplace(Integer)<br>#setMessage(String)<br>#getMessage</td>
+</tr>
+<tr>
+<td style="width: 27.633%;">ServerSendMessageEvent</td>
+<td style="width: 44.7295%;">This event is not fired as it's currently fired from an abstract object, but this event is fired when a module sender sends a message to the console</td>
+<td style="width: 27.6375%;">#setMessage(String)<br>#getMessage</td>
+</tr>
+</tbody>
+</table>
+<h1 id="mcetoc_1gb5ha4hp3c2">Client Events</h1>
+<table style="width: 136.182%;" role="table">
+<thead>
+<tr>
+<th style="width: 25.3403%;"><strong>Event</strong></th>
+<th style="width: 47.435%;"><strong>Description</strong></th>
+<th style="width: 27.2247%;"><strong>Methods</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="width: 25.3403%;">AccountCloseEvent</td>
+<td style="width: 47.435%;">This event is fired when an account is closed but the player stills in the game</td>
+<td style="width: 27.2247%;">#getPlayer<br>#getIssuer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">AccountCreatedEvent</td>
+<td style="width: 47.435%;">This event is fired when an account is created</td>
+<td style="width: 27.2247%;">#getPlayer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">AccountRemovedEvent</td>
+<td style="width: 47.435%;">This event is fired when an account is removed</td>
+<td style="width: 27.2247%;">#getRemovedAccount<br>#getIssuer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">SessionInitializationEvent</td>
+<td style="width: 47.435%;">This event is fired when the plugin initializes<br>a client session</td>
+<td style="width: 27.2247%;">#getPlayer<br>#getSession</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserAuthenticateEvent</td>
+<td style="width: 47.435%;">This event is fired when a player tries authenticate<br>his credentials:<br>- Register<br>- Login<br>- Pin<br>- 2FA</td>
+<td style="width: 27.2247%;">#getPlayer<br>#getAuthType<br>#getAuthResult<br>#getAuthMessage</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserHookEvent</td>
+<td style="width: 47.435%;">This event is fired when a player is hooked by the plugin.<br><br>This event is fired before his session is created, but is<br>recognized by LockLogin as an humman valid player</td>
+<td style="width: 27.2247%;">#getPlayer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserJoinEvent</td>
+<td style="width: 47.435%;">This event is fired when a player joins the server, before validating<br>he's secure and is valid for the server</td>
+<td style="width: 27.2247%;">#getIp<br>#getAccountId<br>#getName</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserPostJoinEvent</td>
+<td style="width: 47.435%;">This event is fire when the player account has been completely initialized<br>and has been secure-verified by the plugin for the server and is secure to manipulate<br>him</td>
+<td style="width: 27.2247%;">#getPlayer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserPreJoinEvent</td>
+<td style="width: 47.435%;">This event is fired before the player joins the server, and before is even recognized as player<br>by the server</td>
+<td style="width: 27.2247%;">#getIp<br>#getAccountId<br>#getName</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserQuitEvent</td>
+<td style="width: 47.435%;">This event is fired when a player leaves the server, independent of the reason, if a player<br>is not longer in the server, this event will be fired</td>
+<td style="width: 27.2247%;">#getPlayer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">UserUnHookEvent</td>
+<td style="width: 47.435%;">This event is fired when a player is unhooked from the plugin, but not necessarily because he<br>left the server</td>
+<td style="width: 27.2247%;">#getPlayer</td>
+</tr>
+<tr>
+<td style="width: 25.3403%;">VelocityGameProfileEvent</td>
+<td style="width: 47.435%;">This event is fired only in Velocity, and its fired when Velocity requests the client game profile, containing UUID, Skin properties etc...</td>
+<td style="width: 27.2247%;"> </td>
+</tr>
+</tbody>
+</table>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>Creating Events</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/api-events.html"/>
+        <id>https://ims-network.github.io/locklogin/api-events.html</id>
+            <category term="Events"/>
+            <category term="Configuration"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:30:41+03:00</updated>
+            <summary>
+                <![CDATA[
+                    Introduction The LockLogin API has some events to make it easier for you to listen for when something happens, anyway, you can create your event&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <h2 id="mcetoc_1gb5hg09d3ic">Introduction</h2>
+<p>The LockLogin API has some events to make it easier for you to listen for when something happens, anyway, you can create your event and offer it as API so more modules can use your events. <br>It's relatively funny how similar this is to the bukkit API right? I made it so it will be easier for developers to use my API. Let's start</p>
+<div class="post__toc">
+<h3>Table of Contents</h3>
+<ul>
+<li><a href="#mcetoc_1gb5hg09d3ic">Introduction</a>
+<ul>
+<li><a href="#mcetoc_1gb5hg09d3id">Creating my first event</a>
+<ul>
+<li><a href="#mcetoc_1gb5hg09d3ie">Step One</a></li>
+<li><a href="#mcetoc_1gb5hg09d3if">Step two</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#mcetoc_1gb5hg09d3ig">Registering an event listener</a>
+<ul>
+<li><a href="#mcetoc_1gb5hg09d3ih">After creating the EventListener</a></li>
+</ul>
+</li>
+<li><a href="#mcetoc_1gb5hg09d3ii">Full Event List</a></li>
+<li><a href="#mcetoc_1gb5hg09d3ij">Handling events</a>
+<ul>
+<li><a href="#mcetoc_1gb5hg09d3ik">What is handling an event in LockLogin</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h3 id="mcetoc_1gb5hg09d3id">Creating my first event</h3>
+<p>The only thing you will need is basic knowledge of java, nothing more.</p>
+<h4 id="mcetoc_1gb5hg09d3ie">Step One</h4>
+<p>Create a class with the name of the event, which extends eu.locklogin.api.module.plugin.api.event.util.Event</p>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">ClientFastAuthEvent</span> <span class="pl-k">extends</span> <span class="pl-smi">Event</span> {
+     
+     <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">Object</span> <span class="pl-s1">eventObj</span>;
+     <span class="pl-k">private</span> <span class="pl-smi">boolean</span> <span class="pl-s1">handled</span> = <span class="pl-c1">false</span>;
+     
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Initialize the event</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * If your event is called from another</span>
+<span class="pl-c">     * event, please make use of the "getEvent()"</span>
+<span class="pl-c">     * method, so external APIs can use it to reflect</span>
+<span class="pl-c">     * into the original event. Otherwise, parse eventOwner</span>
+<span class="pl-c">     * as null.</span>
+<span class="pl-c">     */</span>
+     <span class="pl-k">public</span> <span class="pl-smi">ClientFastAuthEvent</span>(<span class="pl-k">final</span> <span class="pl-smi">Object</span> <span class="pl-s1">eventOwner</span>) {
+         <span class="pl-s1">eventObj</span> = <span class="pl-s1">eventOwner</span>;
+     }
+     
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Check if the event has been handled</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the event has been handled</span>
+<span class="pl-c">     */</span>
+     <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+     <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">boolean</span> <span class="pl-en">isHandled</span>() {
+         <span class="pl-k">return</span> <span class="pl-s1">handled</span>;
+     }
+
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Set the event handle status</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param status the handle status</span>
+<span class="pl-c">     */</span>
+     <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+     <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">void</span> <span class="pl-en">setHandled</span>(<span class="pl-smi">boolean</span> <span class="pl-s1">status</span>) {
+         <span class="pl-s1">handled</span> = <span class="pl-s1">status</span>;
+     }
+     
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the event instance</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the event instance</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-c1">@</span><span class="pl-c1">Nullable</span> <span class="pl-smi">Object</span> <span class="pl-en">getEvent</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">eventObj</span>;
+    }
+}</code></pre>
+<h4 id="mcetoc_1gb5hg09d3if">Step two</h4>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">ClientFastAuthEvent</span> <span class="pl-k">extends</span> <span class="pl-smi">Event</span> {
+     
+     <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">Object</span> <span class="pl-s1">eventObj</span>;
+     <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">client</span>;
+     <span class="pl-k">private</span> <span class="pl-smi">boolean</span> <span class="pl-s1">handled</span> = <span class="pl-c1">false</span>;
+     
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Initialize the event</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * If your event is called from another</span>
+<span class="pl-c">     * event, please make use of the "getEvent()"</span>
+<span class="pl-c">     * method, so external APIs can use it to reflect</span>
+<span class="pl-c">     * into the original event. Otherwise, parse eventOwner</span>
+<span class="pl-c">     * as null.</span>
+<span class="pl-c">     */</span>
+     <span class="pl-k">public</span> <span class="pl-smi">ClientFastAuthEvent</span>(<span class="pl-k">final</span> <span class="pl-smi">Object</span> <span class="pl-s1">eventOwner</span>, <span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span>) {
+         <span class="pl-s1">eventObj</span> = <span class="pl-s1">eventOwner</span>;
+         <span class="pl-s1">client</span> = <span class="pl-s1">player</span>;
+         <span class="pl-s1">command</span> = <span class="pl-s1">cmd</span>;
+     }
+     
+     <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">ModulePlayer</span> <span class="pl-en">getPlayer</span>() {
+         <span class="pl-k">return</span> <span class="pl-s1">player</span>;
+     }
+
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Check if the event has been handled</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return if the event has been handled</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">boolean</span> <span class="pl-en">isHandled</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">handled</span>;
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * Set the event handle status</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @param status the handle status</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">void</span> <span class="pl-en">setHandled</span>(<span class="pl-smi">boolean</span> <span class="pl-s1">status</span>) {
+        <span class="pl-s1">handled</span> = <span class="pl-s1">status</span>;
+    }
+ 
+     <span class="pl-c">/**</span>
+<span class="pl-c">     * Get the event instance</span>
+<span class="pl-c">     *</span>
+<span class="pl-c">     * @return the event instance</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-c1">@</span><span class="pl-c1">Nullable</span> <span class="pl-smi">Object</span> <span class="pl-en">getEvent</span>() {
+         <span class="pl-k">return</span> <span class="pl-s1">eventObj</span>;
+    }
+}</code></pre>
+<h2 id="mcetoc_1gb5hg09d3ig">Registering an event listener</h2>
+<p>You can also listen to other LockLogin events or module events by creating an EventListener</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">JoinListener</span> <span class="pl-k">implements</span> <span class="pl-smi">EventListener</span> {
+
+    <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-k">static</span> <span class="pl-smi">Map</span>&lt;<span class="pl-smi">String</span>, <span class="pl-smi">BPremiumUtils</span>&gt; <span class="pl-s1">utilMap</span> = <span class="pl-k">new</span> <span class="pl-smi">HashMap</span>&lt;&gt;();
+
+    <span class="pl-c1">@</span><span class="pl-c1">ModuleEventHandler</span>(<span class="pl-s1">priority</span> = <span class="pl-smi">ModuleEventHandler</span>.<span class="pl-s1">Priority</span>.<span class="pl-c1">LAST</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">onJoin</span>(<span class="pl-smi">UserPreJoinEvent</span> <span class="pl-s1">e</span>){
+        <span class="pl-smi">ModulePlayer</span> <span class="pl-s1">player</span> = <span class="pl-s1">e</span>.<span class="pl-en">getPlayer</span>();
+        <span class="pl-smi">MyConfigurationObject</span> <span class="pl-s1">configuration</span> = <span class="pl-k">new</span> <span class="pl-smi">MyConfigurationObject</span>();
+        <span class="pl-k">if</span> (<span class="pl-s1">configuration</span>.<span class="pl-en">hasFastLogin</span>(<span class="pl-s1">player</span>.<span class="pl-en">getUUID</span>())) {
+            <span class="pl-smi">ClientFastAuthEvent</span> <span class="pl-s1">event</span> = <span class="pl-k">new</span> <span class="pl-smi">ClientFastAuthEvent</span>(<span class="pl-s1">e</span>, <span class="pl-s1">player</span>);
+            <span class="pl-s1">ModulePlugin</span>.<span class="pl-en">callEvent</span>(<span class="pl-s1">event</span>);
+
+            <span class="pl-k">if</span> (!<span class="pl-s1">event</span>.<span class="pl-en">isHandled</span>()) {
+               <span class="pl-s1">player</span>.<span class="pl-en">requestLogin</span>();
+            }
+        }
+    }
+}</code></pre>
+<h3 id="mcetoc_1gb5hg09d3ih">After creating the EventListener</h3>
+<pre><code class="language-java"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> <span class="pl-k">extends</span> <span class="pl-smi">PluginModule</span> {
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module enable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">enable</span>() {
+        <span class="pl-en">getPlugin</span>().<span class="pl-en">registerListener</span>(<span class="pl-k">new</span> <span class="pl-smi">JoinListener</span>());
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module disable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">disable</span>() {
+        <span class="pl-en">getPlugin</span>().<span class="pl-en">unregisterListener</span>(<span class="pl-k">new</span> <span class="pl-smi">JoinListener</span>());
+    }
+}</code></pre>
+<h2 id="mcetoc_1gb5hg09d3ii">Full Event List</h2>
+<p><a href="https://ims-network.github.io/locklogin/api-events-2.html" class="btn btn--white">Click Me</a></p>
+<h2 id="mcetoc_1gb5hg09d3ij">Handling events</h2>
+<p>When using the API, you may have noticed there're 3 extra methods, in all the event objects, which are</p>
+<div class="highlight highlight-source-java notranslate position-relative overflow-auto">
+<pre><code class="language-java"><span class="pl-s1">Event</span>.<span class="pl-en">isHandleable</span>() <span class="pl-c">//Returns if the event can be handled</span>
+<span class="pl-s1">Event</span>.<span class="pl-en">isHandled</span>() <span class="pl-c">//Returns if the event is handled</span>
+<span class="pl-s1">Event</span>.<span class="pl-en">getHandleReason</span>() <span class="pl-c">// Returns the event handle reason</span>
+<span class="pl-s1">Event</span>.<span class="pl-en">setHandled</span>(<span class="pl-s1">Boolean</span>, <span class="pl-s1">String</span>) <span class="pl-c">// Set the event handle status and reason</span>
+<span class="pl-s1">Event</span>.<span class="pl-en">getEvent</span>() <span class="pl-c">// Get the event parent event, this can be another LockLogin event, bukkit event, bungee event, or even velocity event</span></code></pre>
+</div>
+<h3 id="mcetoc_1gb5hg09d3ik">What is handling an event in LockLogin</h3>
+<p>Handling an event in LockLogin means you have taken the event and you've done some action on it or some of its recipients.</p>
+<p>For example, UserJoinEvent. By handling this event, the client would be kicked with the handle reason. Why? Handling an event is like stopping it to keep going, and stopping joining an event means stopping client connection requests.</p>
+<p>But not all events can be handled, there's a list of which events can be handled.</p>
+<table role="table">
+<thead>
+<tr>
+<th><strong>Plugin events</strong></th>
+<th> </th>
+<th><strong>Server events</strong></th>
+<th> </th>
+<th><strong>Client events</strong></th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MigrationRequestEvent</td>
+<td>❌</td>
+<td>ModuleServerMessageEvent</td>
+<td>✅</td>
+<td>AccountCloseEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>ModuleStatusChangeEvent</td>
+<td>❌</td>
+<td>ServerSendMessageEvent</td>
+<td>✅</td>
+<td>AccountCreatedEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>PluginIpValidationEvent</td>
+<td>✅</td>
+<td> </td>
+<td>❓</td>
+<td>AccountRemovedEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>PluginProcessCommandEvent</td>
+<td>✅</td>
+<td> </td>
+<td>❓</td>
+<td>SessionInitializationEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>PluginStatusChangeEvent</td>
+<td>❌</td>
+<td> </td>
+<td>❓</td>
+<td>UserAuthenticateEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>UpdateRequestEvent</td>
+<td>❌</td>
+<td> </td>
+<td>❓</td>
+<td>UserHookEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>UserJoinEvent</td>
+<td>✅</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>UserPostJoinEvent</td>
+<td>✅</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>UserPreJoinEvent</td>
+<td>✅</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>UserQuitEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>UserUnHookEvent</td>
+<td>❌</td>
+</tr>
+<tr>
+<td> </td>
+<td>❓</td>
+<td> </td>
+<td>❓</td>
+<td>VelocityGameProfileEvent</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+</div>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>How To Create A Module</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/how-to-create-a-module.html"/>
+        <id>https://ims-network.github.io/locklogin/how-to-create-a-module.html</id>
+            <category term="Module"/>
+            <category term="Configuration"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:31:30+03:00</updated>
+            <summary>
+                <![CDATA[
+                    Creating your first module First, create a main class that extends PluginModule. package com.mymodule.bukkit; import eu.locklogin.api.common.injector.loader.JarInJarClassLoader; import eu.locklogin.api.common.injector.loader.LoaderBootstrap; import eu.locklogin.api.module.PluginModule; public class Main extends PluginModule&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <h2>Creating your first module</h2>
+<p>First, create a main class that extends PluginModule.</p>
+<pre><code class="language-java"><span class="pl-k">package</span> <span class="pl-s1">com</span>.<span class="pl-s1">mymodule</span>.<span class="pl-s1">bukkit</span>;
+
+<span class="pl-k">import</span> <span class="pl-s1">eu</span>.<span class="pl-s1">locklogin</span>.<span class="pl-s1">api</span>.<span class="pl-s1">common</span>.<span class="pl-s1">injector</span>.<span class="pl-s1">loader</span>.<span class="pl-s1">JarInJarClassLoader</span>;
+<span class="pl-k">import</span> <span class="pl-s1">eu</span>.<span class="pl-s1">locklogin</span>.<span class="pl-s1">api</span>.<span class="pl-s1">common</span>.<span class="pl-s1">injector</span>.<span class="pl-s1">loader</span>.<span class="pl-s1">LoaderBootstrap</span>;
+<span class="pl-k">import</span> <span class="pl-s1">eu</span>.<span class="pl-s1">locklogin</span>.<span class="pl-s1">api</span>.<span class="pl-s1">module</span>.<span class="pl-s1">PluginModule</span>;
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> <span class="pl-k">extends</span> <span class="pl-smi">PluginModule</span> {
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module enable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">enable</span>() {
+        <span class="pl-c">//Do something</span>
+    }
+
+    <span class="pl-c">/**</span>
+<span class="pl-c">     * On module disable logic</span>
+<span class="pl-c">     */</span>
+    <span class="pl-c1">@</span><span class="pl-c1">Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">disable</span>() {
+        <span class="pl-c">//Do something</span>
+    }
+}</code></pre>
+<h3>Module.yml</h3>
+<p>Before compiling and using the module, you will need to set up a module.yml so LockLogin can read it and use the module.yml information to load your module.</p>
+<p>The module.yml looks like this:</p>
+<pre><code class="language-java"><span class="pl-ent">name</span>: <span class="pl-s">ModuleName</span>
+<span class="pl-ent">version</span>: <span class="pl-s">ModuleVersion</span>
+<span class="pl-ent">description</span>:
+  - <span class="pl-s"><span class="pl-pds">"</span>This is the module<span class="pl-pds">"</span></span>
+  - <span class="pl-s"><span class="pl-pds">"</span>description, it can be a string<span class="pl-pds">"</span></span>
+  - <span class="pl-s"><span class="pl-pds">"</span>an array or even a list<span class="pl-pds">"</span></span>
+<span class="pl-ent">load</span>: <span class="pl-s">PREPLUGIN </span><span class="pl-c">#You can also use POSTPLUGIN</span>
+<span class="pl-ent">author</span>: <span class="pl-s">ModuleAuthor</span>
+<span class="pl-ent">update_url</span>: <span class="pl-s"><span class="pl-pds">"</span>https://mydomain.com/modulename/<span class="pl-pds">"</span></span> <span class="pl-c">#There must exist a latest.txt file</span>
+<span class="pl-ent">loader_bukkit</span>: <span class="pl-s">path.to.my.main.class.for.bukkit.extending.PluginModule</span>
+<span class="pl-ent">loader_bungee</span>: <span class="pl-s">path.to.my.main.class.for.bungee.extending.PluginModule</span>
+<span class="pl-ent">loader_velocity</span>: </code><span class="pl-s"><code class="language-java">path.to.my.main.class.for.velocity.extending.PluginModule</code><br></span></pre>
+<h3>latest.txt format</h3>
+<pre class="notranslate"><code class="language-javascript">1.0.0
+https://mydomain.com/modulename/Latest.jar</code></pre>
+<p>LockLogin API has more features, but it will be better for you to check <a href="https://karmaconfigs.ml/docs" rel="nofollow">javadocs</a></p>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>API - Getting Started</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/getting-started.html"/>
+        <id>https://ims-network.github.io/locklogin/getting-started.html</id>
+            <category term="First Time"/>
+            <category term="API"/>
+
+        <updated>2022-08-23T17:11:32+03:00</updated>
+            <summary>
+                <![CDATA[
+                    Interdiction The LockLogin API is simple and robust. Allows you to create modules and compatibility with other plugins Before knowing how to start with a&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <h2>Interdiction</h2>
+<p>The LockLogin API is simple and robust. <br>Allows you to create modules and compatibility with other plugins</p>
+<p>Before knowing how to start with a LockLogin module, you must know how the API work. As in the other plugins, there's a method, you call it and it does things, the difference between LockLogin and these plugin's APIs, is that LockLogin doesn't want a plugin to use its API, why? security.</p>
+<p>So the only way to interact with LockLogin is by creating a module, otherwise, you won't be able to interact with it.</p>
+<h2>How to import API</h2>
+<p>As almost all the plugins in spigotmc, LockLogin has an API, a little bit hard to start with, but it will be familiar for you as it is very similar to bukkit/bungee API.</p>
+<p>To start, add the dependency to your pom.xml or Gradle, the dependency is hosted at the maven repo, most of the IDEs already search in that repository by default, so you don't have to add it to your repositories</p>
+<p><strong>API</strong><br><img loading="lazy" src="https://camo.githubusercontent.com/267ea60286bc1b8b64e2e5fcea778a3346cf75e8cc3435d6b338498e36a51bc4/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f65752e6c6f636b6c6f67696e2f4c6f636b4c6f67696e2d4150492f62616467652e7376673f7374796c653d666c61742d737175617265" data-is-external-image="true"  alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/eu.locklogin/LockLogin-API/badge.svg?style=flat-square"><br><strong>COMMONS</strong><br><img loading="lazy" src="https://camo.githubusercontent.com/653f7c53976108b80d99d57822c5e77b1853eeb2ecf65914ccfb81d8f738e609/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f65752e6c6f636b6c6f67696e2f4c6f636b4c6f67696e2d636f6d6d6f6e2f62616467652e7376673f7374796c653d666c61742d737175617265" data-is-external-image="true"  alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/eu.locklogin/LockLogin-common/badge.svg?style=flat-square"></p>
+<h3>Maven</h3>
+<pre>&lt;<span class="pl-ent">dependencies</span>&gt;
+    &lt;<span class="pl-ent">dependency</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;eu.locklogin&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;LockLogin-API&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">version</span>&gt;{api-version}&lt;/<span class="pl-ent">version</span>&gt;
+        &lt;<span class="pl-ent">scope</span>&gt;provided&lt;/<span class="pl-ent">scope</span>&gt;
+    &lt;/<span class="pl-ent">dependency</span>&gt;
+    <span class="pl-c">&lt;!-- OPTIONAL --&gt;</span>
+    &lt;<span class="pl-ent">dependency</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;eu.locklogin&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;LockLogin-common&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">version</span>&gt;{common-version}&lt;/<span class="pl-ent">version</span>&gt;
+        &lt;<span class="pl-ent">scope</span>&gt;provided&lt;/<span class="pl-ent">scope</span>&gt;
+    &lt;/<span class="pl-ent">dependency</span>&gt;
+&lt;/<span class="pl-ent">dependencies</span>&gt;</pre>
+<h3>Gradle</h3>
+<div class="application-main " data-commit-hovercards-enabled="" data-discussion-hovercards-enabled="" data-issue-and-pr-hovercards-enabled="">
+<div class=""><main id="js-repo-pjax-container" data-pjax-container="">
+<div id="repo-content-pjax-container" class="repository-content ">
+<div id="wiki-wrapper" class="clearfix container-xl px-3 px-md-4 px-lg-5 mt-4 page">
+<div id="wiki-content" class="mt-4">
+<div class="Layout Layout--flowRow-until-md Layout--sidebarPosition-end Layout--sidebarPosition-flowRow-end" data-view-component="true">
+<div class="Layout-main" data-view-component="true">
+<div id="wiki-body" class="gollum-markdown-content">
+<div class="markdown-body">
+<div class="highlight highlight-source-groovy-gradle notranslate position-relative overflow-auto">
+<pre><span class="pl-en">dependencies</span> {
+    compile <span class="pl-s"><span class="pl-pds">"</span>eu.locklogin:LockLogin-API:{api-version}<span class="pl-pds">"</span></span>
+    
+    <span class="pl-c">//OPTIONAL</span>
+    compile <span class="pl-s"><span class="pl-pds">"</span>eu.locklogin:LockLogin-common:{common-version}<span class="pl-pds">"</span></span>
+}</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main></div>
+</div>
+            ]]>
+        </content>
+    </entry>
+    <entry>
+        <title>PlaceholderAPI</title>
+        <author>
+            <name>KarmaDev</name>
+        </author>
+        <link href="https://ims-network.github.io/locklogin/placeholderapi.html"/>
+        <id>https://ims-network.github.io/locklogin/placeholderapi.html</id>
+            <category term="Velocity"/>
+            <category term="Spigot"/>
+            <category term="First Time"/>
+            <category term="BungeeCord"/>
+
+        <updated>2022-08-23T17:01:08+03:00</updated>
+            <summary>
+                <![CDATA[
+                    Since the version after legacy LockLogin ( 1.1.0.9 ), LockLogin has PlaceholderAPI support. Prefix Variable Description Complete locklogin logged Returns the amount of logged players&hellip;
+                ]]>
+            </summary>
+        <content type="html">
+            <![CDATA[
+                <p>Since the version after legacy LockLogin ( 1.1.0.9 ), <br>LockLogin has PlaceholderAPI support.</p>
+<table style="width: 100%;" role="table">
+<thead>
+<tr>
+<th style="width: 14.8359%;">Prefix</th>
+<th style="width: 18.117%;">Variable</th>
+<th style="width: 32.8103%;">Description</th>
+<th style="width: 34.2368%;">Complete</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">logged</td>
+<td style="width: 32.8103%;">Returns the amount of logged players</td>
+<td style="width: 34.2368%;">%locklogin_logged%</td>
+</tr>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">registered</td>
+<td style="width: 32.8103%;">Returns the amount of registered players</td>
+<td style="width: 34.2368%;">%locklogin_registered%</td>
+</tr>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">islogged</td>
+<td style="width: 32.8103%;">Returns if the player is completely logged</td>
+<td style="width: 34.2368%;">%locklogin_islogged%</td>
+</tr>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">isregistered</td>
+<td style="width: 32.8103%;">Returns if the player is registered</td>
+<td style="width: 34.2368%;">%locklogin_isregistered%</td>
+</tr>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">creation</td>
+<td style="width: 32.8103%;">Returns the creation date of the player account</td>
+<td style="width: 34.2368%;">%locklogin_creation%</td>
+</tr>
+<tr>
+<td style="width: 14.8359%;">locklogin</td>
+<td style="width: 18.117%;">age</td>
+<td style="width: 32.8103%;">Returns the player account age since he registered</td>
+<td style="width: 34.2368%;">%locklogin_age%</td>
+</tr>
+</tbody>
+</table>
+            ]]>
+        </content>
+    </entry>
+</feed>

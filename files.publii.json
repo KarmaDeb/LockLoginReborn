@@ -1,0 +1,727 @@
+[
+    {
+        "path": "404.html",
+        "type": "file",
+        "md5": "c8aaecfbc3b80727b514049ca3d58695"
+    },
+    {
+        "path": "account-manager.html",
+        "type": "file",
+        "md5": "d1b0ce907adb40a41306ec6e5c17cf48"
+    },
+    {
+        "path": "amp",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/account-manager.html",
+        "type": "file",
+        "md5": "cb483293ce62ff08010cf85a9e7d7201"
+    },
+    {
+        "path": "/amp/api-card.html",
+        "type": "file",
+        "md5": "b2b65bbcc093c2aa325c9d97ddf22756"
+    },
+    {
+        "path": "/amp/api-events-2.html",
+        "type": "file",
+        "md5": "fb7bdc67cfe562a29bde1e6da6e8d535"
+    },
+    {
+        "path": "/amp/api-events.html",
+        "type": "file",
+        "md5": "049da946cb93e9b229cd990a654a709b"
+    },
+    {
+        "path": "amp/authors",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "amp/authors/karmadev",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/authors/karmadev/index.html",
+        "type": "file",
+        "md5": "52458fe8eb02921488a8abfafe69b883"
+    },
+    {
+        "path": "amp/authors/thefourcraft",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/authors/thefourcraft/index.html",
+        "type": "file",
+        "md5": "fdb284194e568276ffb8d37d4da005c7"
+    },
+    {
+        "path": "/amp/bungeecord-setup.html",
+        "type": "file",
+        "md5": "aebcbf74946958b09b343999a3eeddc1"
+    },
+    {
+        "path": "/amp/commands-and-permissions.html",
+        "type": "file",
+        "md5": "1b333be033a1deaf8162e0c757aa9b2d"
+    },
+    {
+        "path": "/amp/commands-api.html",
+        "type": "file",
+        "md5": "2a31b1921f7385676a6d76b26f093b65"
+    },
+    {
+        "path": "/amp/configuration.html",
+        "type": "file",
+        "md5": "807b4fada4c2f591cff6ff4bab267bb8"
+    },
+    {
+        "path": "/amp/first-installation.html",
+        "type": "file",
+        "md5": "31bddd000bed44f387c9d86e26c5779a"
+    },
+    {
+        "path": "/amp/getting-started.html",
+        "type": "file",
+        "md5": "40a40cef519bf50daa88f3cd39011c4a"
+    },
+    {
+        "path": "/amp/how-to-create-a-module.html",
+        "type": "file",
+        "md5": "a02fad7123dfade78a880dae0f9de3a4"
+    },
+    {
+        "path": "/amp/index.html",
+        "type": "file",
+        "md5": "1a646f1944dd4982f8d7b032521139df"
+    },
+    {
+        "path": "/amp/module-player.html",
+        "type": "file",
+        "md5": "a1aeeaf5d8778f4bc25daa145383d3e0"
+    },
+    {
+        "path": "amp/page",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "amp/page/2",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/page/2/index.html",
+        "type": "file",
+        "md5": "f72bc4d94e755534c43c325d78e0f629"
+    },
+    {
+        "path": "/amp/placeholderapi.html",
+        "type": "file",
+        "md5": "ef3f11574c2ea00a457ce82971381706"
+    },
+    {
+        "path": "/amp/plugin-configuration.html",
+        "type": "file",
+        "md5": "fc09098d194afffc0f6c8f241eca7e9f"
+    },
+    {
+        "path": "amp/tags",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "amp/tags/api",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/api/index.html",
+        "type": "file",
+        "md5": "84e7189b817347fa6a25b9642bee98a3"
+    },
+    {
+        "path": "amp/tags/bungeecord",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/bungeecord/index.html",
+        "type": "file",
+        "md5": "1d6c12feebe9c52ee2dfe3b814d954e3"
+    },
+    {
+        "path": "amp/tags/commands",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/commands/index.html",
+        "type": "file",
+        "md5": "3150eb1c2eca61c416d9690396e4525b"
+    },
+    {
+        "path": "amp/tags/configuration",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/configuration/index.html",
+        "type": "file",
+        "md5": "69d093155bbf013875946fb0cbf4fa49"
+    },
+    {
+        "path": "amp/tags/events",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/events/index.html",
+        "type": "file",
+        "md5": "085daf77c5b6abd47926e020ba98c46d"
+    },
+    {
+        "path": "amp/tags/first-time",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/first-time/index.html",
+        "type": "file",
+        "md5": "25dac0fc3f8d736ed5e7f1bbc9ed4365"
+    },
+    {
+        "path": "amp/tags/module",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/module/index.html",
+        "type": "file",
+        "md5": "0595f0c24714887c96c14707a5ce261f"
+    },
+    {
+        "path": "amp/tags/spigot",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/spigot/index.html",
+        "type": "file",
+        "md5": "bf9721f7d6b5c045643f9517bcf39b9f"
+    },
+    {
+        "path": "amp/tags/velocity",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/velocity/index.html",
+        "type": "file",
+        "md5": "0be18ae30eb08a1f88fa7c410e0ef74b"
+    },
+    {
+        "path": "amp/tags/web-api",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/amp/tags/web-api/index.html",
+        "type": "file",
+        "md5": "0ad5b2aec128063fc2d2b8615352ce97"
+    },
+    {
+        "path": "/amp/velocity-setup.html",
+        "type": "file",
+        "md5": "20de7e1d2b29a87a9d717a0ac5285fbc"
+    },
+    {
+        "path": "/amp/web-api.html",
+        "type": "file",
+        "md5": "b27767866a341b692475d1cb80cbfc3b"
+    },
+    {
+        "path": "api-card.html",
+        "type": "file",
+        "md5": "9b5957acb9026600ae41e29a0b747d1d"
+    },
+    {
+        "path": "api-events-2.html",
+        "type": "file",
+        "md5": "5db2b27a14041009452d1231bcc593db"
+    },
+    {
+        "path": "api-events.html",
+        "type": "file",
+        "md5": "a1fef19f0a540a34c48e435f4de37be4"
+    },
+    {
+        "path": "assets",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "assets/css",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/css/editor.css",
+        "type": "file",
+        "md5": "bad16ac702821ff636cebcca513bdc6d"
+    },
+    {
+        "path": "/assets/css/main.css",
+        "type": "file",
+        "md5": "297375859d514f6a9b013c13c1e59eb5"
+    },
+    {
+        "path": "/assets/css/photoswipe.css",
+        "type": "file",
+        "md5": "58cff2621499ea4991c2685d7ff92200"
+    },
+    {
+        "path": "/assets/css/prism-dark.css",
+        "type": "file",
+        "md5": "ac1b97069e7423ed339b744593278a6f"
+    },
+    {
+        "path": "/assets/css/prism-default.css",
+        "type": "file",
+        "md5": "9744853d64d710edcae61a3d59a17ee2"
+    },
+    {
+        "path": "/assets/css/prism-original.css",
+        "type": "file",
+        "md5": "8e39bda621bd1b6539e922224d50de9b"
+    },
+    {
+        "path": "/assets/css/style.css",
+        "type": "file",
+        "md5": "0eaa060ff3ed5f42c9210d629317d64e"
+    },
+    {
+        "path": "assets/dynamic",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "assets/js",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/js/clipboard.min.js",
+        "type": "file",
+        "md5": "ad98572d415d2f2452845a6068a913c0"
+    },
+    {
+        "path": "/assets/js/photoswipe-ui-default.min.js",
+        "type": "file",
+        "md5": "d067f0883540b1ddda0e2c9ad1b14260"
+    },
+    {
+        "path": "/assets/js/photoswipe.min.js",
+        "type": "file",
+        "md5": "017385b552f7e0d979e2e2fe6f324015"
+    },
+    {
+        "path": "/assets/js/prism-copy-to-clipboard.js",
+        "type": "file",
+        "md5": "9d8b8576549dd6480658fbbe16847fe7"
+    },
+    {
+        "path": "/assets/js/prism-copy-to-clipboard.min.js",
+        "type": "file",
+        "md5": "57b50bd6f44169b9bab177133c984653"
+    },
+    {
+        "path": "/assets/js/prism-line-numbers.js",
+        "type": "file",
+        "md5": "53c0c9d229876ce895a66b69512fb91a"
+    },
+    {
+        "path": "/assets/js/prism-line-numbers.min.js",
+        "type": "file",
+        "md5": "13275d3ac10d7028cf6a6f5da276f68c"
+    },
+    {
+        "path": "/assets/js/prism.js",
+        "type": "file",
+        "md5": "3645000e29522b54a91ff782f1c2eb95"
+    },
+    {
+        "path": "/assets/js/quicklink.umd.js",
+        "type": "file",
+        "md5": "81fe10ee7d67aefb93d57a5af679039d"
+    },
+    {
+        "path": "/assets/js/scripts.js",
+        "type": "file",
+        "md5": "b015f5c06cd97d1ae6c96607c2b5aafd"
+    },
+    {
+        "path": "/assets/js/scripts.min.js",
+        "type": "file",
+        "md5": "4e6cf1839e76dc1bb4cf5df8b29781e3"
+    },
+    {
+        "path": "/assets/js/svg-fix.js",
+        "type": "file",
+        "md5": "7c0d2bb7276904b382e80bf2d85e8a96"
+    },
+    {
+        "path": "/assets/js/svg-map.js",
+        "type": "file",
+        "md5": "4a4a795294f784cb4c3eff207609e294"
+    },
+    {
+        "path": "assets/svg",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/svg/gallery-icons-dark.svg",
+        "type": "file",
+        "md5": "0c70735af58190b563b2940b7a07007a"
+    },
+    {
+        "path": "/assets/svg/gallery-icons-light.svg",
+        "type": "file",
+        "md5": "0bb1f41e2e459d23628833c37d8532f0"
+    },
+    {
+        "path": "/assets/svg/star.svg",
+        "type": "file",
+        "md5": "b3036f31fb36a24bd671aaa44ecbcb5e"
+    },
+    {
+        "path": "/assets/svg/svg-map.svg",
+        "type": "file",
+        "md5": "14a9a74e7445d2ecba923553efa95134"
+    },
+    {
+        "path": "authors",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "authors/karmadev",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/authors/karmadev/index.html",
+        "type": "file",
+        "md5": "94c7c4fdb54b5deacef736db4d51a7f6"
+    },
+    {
+        "path": "authors/thefourcraft",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/authors/thefourcraft/index.html",
+        "type": "file",
+        "md5": "f765a0f9d13aa3458899c44b09b3ee14"
+    },
+    {
+        "path": "bungeecord-setup.html",
+        "type": "file",
+        "md5": "4db333d3df58340034c683905d69e7ff"
+    },
+    {
+        "path": "commands-and-permissions.html",
+        "type": "file",
+        "md5": "ac8cc37fd32b5ba599ebc45f43e00205"
+    },
+    {
+        "path": "commands-api.html",
+        "type": "file",
+        "md5": "b115350a6076edd75f983023aaa57b04"
+    },
+    {
+        "path": "configuration.html",
+        "type": "file",
+        "md5": "b98300fea20cdc24d1c0a87a25f79260"
+    },
+    {
+        "path": "feed.json",
+        "type": "file",
+        "md5": "787866fd91f3e2365742d56a0945beb7"
+    },
+    {
+        "path": "feed.xml",
+        "type": "file",
+        "md5": "97b1a13cd3d916553d1fd12491a8a32f"
+    },
+    {
+        "path": "first-installation.html",
+        "type": "file",
+        "md5": "38e2bb1d354952ed8e62bfa1feb9f029"
+    },
+    {
+        "path": "getting-started.html",
+        "type": "file",
+        "md5": "5a18457ef1c6df910ca8f9763e451ca4"
+    },
+    {
+        "path": "how-to-create-a-module.html",
+        "type": "file",
+        "md5": "10280da52f4ca34cb3111b5360731f4e"
+    },
+    {
+        "path": "index.html",
+        "type": "file",
+        "md5": "c66bf2d28a81624701e7baa5d73aab73"
+    },
+    {
+        "path": "media",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/plugins",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/plugins/docSearch",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/plugins/docSearch/docsearch.min.css",
+        "type": "file",
+        "md5": "5f509c0dccaf0aaffb9fc8c0b9e1351c"
+    },
+    {
+        "path": "/media/plugins/docSearch/docsearch.min.js",
+        "type": "file",
+        "md5": "d59ba9b8392f352d8127a805b3df99b9"
+    },
+    {
+        "path": "media/website",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/website/8eaa9d4bcba44092cc312a364deec0ca.png",
+        "type": "file",
+        "md5": "afd4c42d4807434b50b0d47b2bf344a5"
+    },
+    {
+        "path": "/media/website/LockLogin-Logo-2.png",
+        "type": "file",
+        "md5": "316ead42ef7b514e239cf7c136505122"
+    },
+    {
+        "path": "/media/website/LockLogin-Logo-3.png",
+        "type": "file",
+        "md5": "316ead42ef7b514e239cf7c136505122"
+    },
+    {
+        "path": "/media/website/LockLogin-Logo.png",
+        "type": "file",
+        "md5": "316ead42ef7b514e239cf7c136505122"
+    },
+    {
+        "path": "media/website/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/website/responsive/8eaa9d4bcba44092cc312a364deec0ca-xs.png",
+        "type": "file",
+        "md5": "a475c4fe9045b55dcb48a2b198597252"
+    },
+    {
+        "path": "/media/website/responsive/LockLogin-Logo-2-xs.png",
+        "type": "file",
+        "md5": "5c7ffb9583eb7946acc0876fb7da0251"
+    },
+    {
+        "path": "/media/website/responsive/LockLogin-Logo-3-xs.png",
+        "type": "file",
+        "md5": "5c7ffb9583eb7946acc0876fb7da0251"
+    },
+    {
+        "path": "/media/website/responsive/LockLogin-Logo-xs.png",
+        "type": "file",
+        "md5": "5c7ffb9583eb7946acc0876fb7da0251"
+    },
+    {
+        "path": "module-player.html",
+        "type": "file",
+        "md5": "eefd8cb2c5c902abbe73f270d79e1e99"
+    },
+    {
+        "path": "page",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "page/2",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/page/2/index.html",
+        "type": "file",
+        "md5": "ecde72bde6465da7bac0020f5776e26c"
+    },
+    {
+        "path": "placeholderapi.html",
+        "type": "file",
+        "md5": "0ffceef01d06b2be36b96e38f21634ad"
+    },
+    {
+        "path": "plugin-configuration.html",
+        "type": "file",
+        "md5": "9c51ebfe572fc95c0b54d0ae6d10d23c"
+    },
+    {
+        "path": "robots.txt",
+        "type": "file",
+        "md5": "ef5a3e43f612236dac4fe6451fd153fb"
+    },
+    {
+        "path": "search.html",
+        "type": "file",
+        "md5": "d58c23ae5f62d1d015ee8cd8a89b5852"
+    },
+    {
+        "path": "sitemap.xml",
+        "type": "file",
+        "md5": "467d4a40f9bd77fba1ab8e424c466038"
+    },
+    {
+        "path": "sitemap.xsl",
+        "type": "file",
+        "md5": "03c2f9a7fdcc46ff05c435907614a0b8"
+    },
+    {
+        "path": "tags",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "tags/api",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/api/index.html",
+        "type": "file",
+        "md5": "3f348a4254c48ee7908bc84194a1d627"
+    },
+    {
+        "path": "tags/bungeecord",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/bungeecord/index.html",
+        "type": "file",
+        "md5": "120d7b89a8033039924cc4ff4d1173d2"
+    },
+    {
+        "path": "tags/commands",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/commands/index.html",
+        "type": "file",
+        "md5": "52ae2da88ad9ad1591b37cb170ff8f19"
+    },
+    {
+        "path": "tags/configuration",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/configuration/index.html",
+        "type": "file",
+        "md5": "b359ee32a522c6f94df14c3abc62e590"
+    },
+    {
+        "path": "tags/events",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/events/index.html",
+        "type": "file",
+        "md5": "b9964d0ce2623997f7007055609ee3b3"
+    },
+    {
+        "path": "tags/first-time",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/first-time/index.html",
+        "type": "file",
+        "md5": "d4ac880a985d407275f38820f0d254b0"
+    },
+    {
+        "path": "/tags/index.html",
+        "type": "file",
+        "md5": "913e090954cf43b1d1e80647e2e9fcb9"
+    },
+    {
+        "path": "tags/module",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/module/index.html",
+        "type": "file",
+        "md5": "44511eb8f5fdf23ab48671bbb7bbf493"
+    },
+    {
+        "path": "tags/spigot",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/spigot/index.html",
+        "type": "file",
+        "md5": "64feacf9961f7fc1ae4ed29a9cd6135e"
+    },
+    {
+        "path": "tags/velocity",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/velocity/index.html",
+        "type": "file",
+        "md5": "194e83482cec64fd38b32190e086d1b9"
+    },
+    {
+        "path": "tags/web-api",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/tags/web-api/index.html",
+        "type": "file",
+        "md5": "3a43eed82d4cb0913e7e5301479caa90"
+    },
+    {
+        "path": "velocity-setup.html",
+        "type": "file",
+        "md5": "b0bd1ce69335d5803a87e6e4a4ba9a4a"
+    },
+    {
+        "path": "web-api.html",
+        "type": "file",
+        "md5": "56a0f0a7ec9774f057e6ae2976962fad"
+    }
+]
