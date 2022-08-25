@@ -3,7 +3,7 @@
  */
 
 
-.ordered-list {
+ .ordered-list {
     counter-reset: listCounter;
 }
 
@@ -48,12 +48,12 @@
 }
 
 .msg--highlight {
-    background-color: #fdfaf1;
-    border-color: #e2ac4f;
+    background-color: #5b523a;
+    border-color: #ffa200;
 }
 
 .msg--info {
-    background: rgba(45, 97, 201, 0.03);
+    background: rgba(36, 98, 223, 0.03);
     border-color: #2d61c9;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .msg--warning {
-    background: #fff3f3;
+    background: #141212;
     border-color: #c06367;
     color: #a94442;
 }
