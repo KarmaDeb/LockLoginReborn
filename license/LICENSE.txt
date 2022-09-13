@@ -1,0 +1,58 @@
+This project is protected under RD GPL and GNU GPL 2.1
+
+What is RD GPL?
+
+RD GPL ( RD General Plugin License ) is a license created on January 2020 to protect GSA/RedDo resources
+from copy & paste into not-allowed projects. This is because some of our resources contains code that took hours or even months to
+make or work. With the idea of protecting our time, the RD GPL license was created. This is not a public license, and only RedDo
+members are able to use it. As there are a lot of "RD" groups, we will provide our discord link as "group identifier". Any member
+of that discord group with the role CEO or Developer can use RD GPL license freely on their projects.
+
+
+Conditions
+
+Before starting with the conditions, we must clarify when this license is applied. If specified in
+README.*, the license will be applied to the whole code, otherwise, if it's not specified in README.* or it doens't exist, any class
+/file/method with "Private GSA code" will be under this license. If specified in README.* and anyway, also specified separately in
+the class/file/method with the "Private GSA code" comment, this will be also under GSA GPL license.
+If the comment is not
+literally "Private GSA code", but similar ( like "private gsa code", "gsa code" ) or contains it. Will be also took as "Private GSA
+code" and the class/file/method will be also under GSA GPL license.
+
+
+- By decompiling or opening a RedDo protected project/resource/object you are automatically accepting RD
+GPL therms and conditions.
+
+- To use any class/file/method protected by RedDo, you must ask permission to use it, in our discord
+providing a valid email address.
+
+- If the license gets updated, you are forced to accept new conditions or cancel the permission to use it.
+You will be notified by email. If you decline, you won't be able to use the private GSA code anymore until you ask again for
+permission.
+
+
+- Using any class/file/method protected by RedDo, will require a link to the original author project or site.
+
+
+- Modifying RedDo protected code is completely forbbiden, even with the correspondent access, this will not
+be tolerated. In case you modify/use private RedDo code without a valid license, legal actions will be taken. If you have a valid
+license, that license will be revoked. You can suggest a code change, without modifying the original one, but the code you suggest
+to change/add will be also under GSA license even it doesn't has the private GSA comment.
+
+
+- Before publishing a resource that contains private RedDo code, will require a request to the RedDo code
+author.
+
+- Using a project that contains RedDo code without a valid license and without RedDo approvation, is
+forbbiden. If you found one, please stop using it, notify the project author and report it to our discord.
+
+
+Warranty Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
