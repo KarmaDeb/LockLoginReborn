@@ -26,6 +26,7 @@ import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
@@ -263,19 +264,21 @@ public final class User {
             if (session.isValid()) {
                 if (session.isLogged() && session.isTempLogged()) {
                     if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
-                        List<ServerInfo> lobbies = proxy.lobbyServers(ServerInfo.class);
-                        if (lobbies.size() > index) {
-                            ServerInfo lInfo = lobbies.get(index);
-                            player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
-                                if (error != null || result == ServerConnectRequest.Result.FAIL) {
-                                    checkServer(index + 1);
+                        if (!hasPermission(PluginPermissions.join_limbo())) {
+                            List<ServerInfo> lobbies = proxy.lobbyServers(ServerInfo.class);
+                            if (lobbies.size() > index) {
+                                ServerInfo lInfo = lobbies.get(index);
+                                player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                                    if (error != null || result == ServerConnectRequest.Result.FAIL) {
+                                        checkServer(index + 1);
 
-                                    if (error != null) {
-                                        logger.scheduleLog(Level.GRAVE, error);
+                                        if (error != null) {
+                                            logger.scheduleLog(Level.GRAVE, error);
+                                        }
+                                        logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
                                     }
-                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
-                                }
-                            }).build());
+                                }).build());
+                            }
                         }
                     }
                 } else {

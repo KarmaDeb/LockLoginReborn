@@ -45,7 +45,7 @@ public final class AccountNameDatabase {
             for (String key : nameDatabase.getKeys()) {
                 KarmaElement value = nameDatabase.get(key);
                 if (value.isArray() && value.getArray().contains(nm)) {
-                    ids.add(UUID.fromString(key));
+                    ids.add(UUID.fromString(key.replaceFirst("main\\.", "")));
                 }
             }
 

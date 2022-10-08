@@ -267,7 +267,7 @@ public final class Manager {
                         if (instance instanceof BungeeLikeCommand) {
                             BungeeLikeCommand executor = (BungeeLikeCommand) instance;
                             plugin.getServer().getCommandManager().register(command, (SimpleCommand) invocation -> executor.execute(invocation.source(), invocation.arguments()), executor.getAliasses());
-                            registered.add("/" + command);
+                            registered.add("/" + command.toLowerCase());
                         } else {
                             unregistered.add(command);
                         }
@@ -297,6 +297,30 @@ public final class Manager {
                 console.send(properties.getProperty("plugin_error_disabling", "Disabling plugin due an internal error"), Level.INFO);
             }
         }
+
+        console.send("");
+        console.send("");
+        console.send("");
+        int size = 10;
+        String character = "*";
+        try {
+            size = Integer.parseInt(properties.getProperty("ascii_art_size", "10"));
+            character = properties.getProperty("ascii_art_character", "*").substring(0, 1);
+        } catch (Throwable ignored) {
+        }
+
+        console.send("&c-------------------------------------------------------");
+        System.out.println();
+        artGen.print(StringUtils.toAnyOsColor("&e"), "WARNING", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
+        System.out.println();
+        console.send("&7LockLogin will be dropping support for Velocity in the future versions. (UNKNOWN DATE)");
+        console.send("&7Consider switching to BungeeCord or any other server compatible with");
+        console.send("&7BungeeCord plugins. Please note the plugin data can be transferred from");
+        console.send("&7Velocity to BungeeCord without any problem, just by copying the LockLogin");
+        console.send("&7folder and pasting it to the BungeeCord plugins folder.");
+        System.out.println();
+        console.send("&eDO NOT EXPECT MORE BUG FIXES IN VELOCITY. THANKS FOR USING LOCKLOGIN!");
+        console.send("&c-------------------------------------------------------");
     }
 
     /**

@@ -110,6 +110,22 @@ public final class ModuleServer {
     }
 
     /**
+     * Get if a player is online
+     *
+     * @param id the player id
+     * @return if the player is online
+     */
+    public boolean isOnline(final UUID id) {
+        Collection<ModulePlayer> players = getOnlinePlayers();
+        for (ModulePlayer player : players) {
+            if (player.getUUID().equals(id))
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Get a player by its name
      *
      * @param name the player name

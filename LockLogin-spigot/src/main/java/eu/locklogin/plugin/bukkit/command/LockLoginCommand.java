@@ -33,10 +33,7 @@ import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.logging.web.WebLog;
-import ml.karmaconfigs.api.common.utils.logging.web.WebTarget;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.url.helper.Post;
 import ml.karmaconfigs.api.common.version.VersionUpdater;
 import ml.karmaconfigs.api.common.version.util.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -47,7 +44,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,39 +85,7 @@ public final class LockLoginCommand implements CommandExecutor {
                         switch (args[0].toLowerCase()) {
                             case "log":
                                 if (user.hasPermission(PluginPermissions.web_log())) {
-                                    WebLog wl = new WebLog(plugin);
-                                    plugin.console().send("Uploading log to mclo.gs, please wait.", Level.INFO);
-
-                                    wl.upload(WebTarget.MCLO_GS, Post.newPost())
-                                            .whenComplete((r, e) -> {
-                                                if (e != null || r == null) {
-                                                    if (e != null) {
-                                                        user.send(messages.prefix() + "&5Failed to upload log due to rate limit.");
-                                                    } else {
-                                                        user.send(messages.prefix() + "&5An unknown error occurred while uploading the log.");
-                                                    }
-                                                } else {
-                                                    URL pretty = r.getPretty();
-                                                    URL raw = r.getRaw();
-
-                                                    if (pretty != null || raw != null) {
-                                                        user.send(messages.prefix() + "&dLog has been uploaded successfully");
-                                                        user.send("");
-                                                        user.send("&3----------------------------------");
-                                                        user.send("");
-                                                        if (pretty != null) {
-                                                            user.send("&dLog link: &7" + pretty);
-                                                        }
-                                                        if (raw != null) {
-                                                            user.send("&dRaw log link: &7" + raw);
-                                                        }
-                                                        user.send("");
-                                                        user.send("&3----------------------------------");
-                                                    } else {
-                                                        user.send(messages.prefix() + "&5An unknown error occurred while uploading the log.");
-                                                    }
-                                                }
-                                            });
+                                    user.send(messages.prefix() + "&cFeature temporally disabled");
                                 } else {
                                     user.send(messages.prefix() + messages.permissionError(PluginPermissions.web_log()));
                                 }
@@ -317,39 +281,7 @@ public final class LockLoginCommand implements CommandExecutor {
                     case 1:
                         switch (args[0].toLowerCase()) {
                             case "log":
-                                WebLog wl = new WebLog(plugin);
-                                plugin.console().send("Uploading log to mclo.gs, please wait.", Level.INFO);
-
-                                wl.upload(WebTarget.MCLO_GS, Post.newPost())
-                                        .whenComplete((r, e) -> {
-                                            if (e != null || r == null) {
-                                                if (e != null) {
-                                                    plugin.console().send("Failed to upload log due to rate limit.", Level.WARNING);
-                                                } else {
-                                                    plugin.console().send("An unknown error occurred while uploading the log.", Level.GRAVE);
-                                                }
-                                            } else {
-                                                URL pretty = r.getPretty();
-                                                URL raw = r.getRaw();
-
-                                                if (pretty != null || raw != null) {
-                                                    plugin.console().send("Log has been uploaded successfully", Level.INFO);
-                                                    plugin.console().send("");
-                                                    plugin.console().send("&3----------------------------------");
-                                                    plugin.console().send("");
-                                                    if (pretty != null) {
-                                                        plugin.console().send("&dLog link: &7{0}", pretty);
-                                                    }
-                                                    if (raw != null) {
-                                                        plugin.console().send("&dRaw log link: &7{0}", raw);
-                                                    }
-                                                    plugin.console().send("");
-                                                    plugin.console().send("&3----------------------------------");
-                                                } else {
-                                                    plugin.console().send("An unknown error occurred while uploading the log.", Level.GRAVE);
-                                                }
-                                            }
-                                        });
+                                plugin.console().send("Feature temporally disabled", Level.INFO);
                                 break;
                             case "reload":
                                 FileReloader.reload(null);

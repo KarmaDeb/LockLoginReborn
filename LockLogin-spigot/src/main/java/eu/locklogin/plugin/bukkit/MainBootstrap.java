@@ -87,15 +87,6 @@ public class MainBootstrap {
         STFetcher fetcher = new STFetcher();
         fetcher.check();
 
-        /*
-        I think KarmaAPI default's prefix is better
-
-        console.getData().setOkPrefix("&aOk &e>> &7");
-        console.getData().setInfoPrefix("&7Info &e>> &7");
-        console.getData().setWarnPrefix("&6Warning &e>> &7");
-        console.getData().setGravePrefix("&4Grave &e>> &7");
-        */
-
         Consumer<MessageSender> onMessage = messageSender -> {
             if (messageSender.getSender() instanceof ModulePlayer) {
                 ModulePlayer mp = (ModulePlayer) messageSender.getSender();

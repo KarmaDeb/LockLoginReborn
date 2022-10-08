@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 public class Main extends KarmaPlugin {
 
     public Main(final ProxyServer server, final PluginContainer plugin) {
-        super(server, plugin, false);
+        super(plugin, false);
         CurrentPlatform.setPlatform(Platform.VELOCITY);
         CurrentPlatform.setMain(VelocityPlugin.class);
 
@@ -97,11 +97,6 @@ public class Main extends KarmaPlugin {
                 DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, DataSender.PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
             }
         });
-
-        console().getData().setOkPrefix("&aOk &e>> &7");
-        console().getData().setInfoPrefix("&7Info &e>> &7");
-        console().getData().setWarnPrefix("&6Warning &e>> &7");
-        console().getData().setGravePrefix("&4Grave &e>> &7");
 
         Consumer<MessageSender> onMessage = messageSender -> {
             if (messageSender.getSender() instanceof ModulePlayer) {

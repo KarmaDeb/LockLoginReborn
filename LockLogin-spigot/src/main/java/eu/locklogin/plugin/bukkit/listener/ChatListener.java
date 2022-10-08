@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bukkit.listener;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.security.client.CredentialsHolder;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
@@ -32,6 +33,7 @@ import org.bukkit.event.server.ServerCommandEvent;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
@@ -83,16 +85,16 @@ public final class ChatListener implements Listener {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
+        String command = getCommand(e.getMessage());
+        String[] arguments = getArguments(e.getMessage());
+
         if (session.isValid()) {
             if (!session.isLogged()) {
-                String command = getCommand(e.getMessage());
                 e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && AllowedCommand.notAllowed(command));
 
                 return;
             } else {
                 if (!session.isTempLogged() && user.getManager().has2FA()) {
-                    String command = getCommand(e.getMessage());
-
                     if (!command.equals("2fa")) {
                         e.setCancelled(true);
                         user.send(messages.prefix() + messages.gAuthenticate());
@@ -159,25 +161,42 @@ public final class ChatListener implements Listener {
      * @param cmd the cmd
      * @return a command ignoring ":" prefix
      */
-    private String getCommand(String cmd) {
-        if (cmd.contains(":")) {
+    private String getCommand(final String cmd) {
+        String tmpCmd = cmd;
+
+        if (tmpCmd.contains(":")) {
             try {
-                String[] cmdData = cmd.split(":");
+                String[] cmdData = tmpCmd.split(":");
 
                 if (cmdData[0] != null && !cmdData[0].isEmpty()) {
                     if (cmdData[1] != null && !cmdData[1].isEmpty()) {
-                        return cmdData[1];
+                        tmpCmd = cmdData[1];
                     }
                 }
             } catch (Throwable ignored) {
             }
-            return cmd.split(" ")[0].replace("/", "");
-        } else {
-            if (cmd.contains(" ")) {
-                return cmd.split(" ")[0].replace("/", "");
-            } else {
-                return cmd.replace("/", "");
-            }
         }
+
+        if (tmpCmd.contains(" ")) {
+            return tmpCmd.split(" ")[0].replace("/", "");
+        } else {
+            return tmpCmd.replace("/", "");
+        }
+    }
+
+    /**
+     * Get the main command from the cmd
+     * even if it has :
+     *
+     * @param cmd the cmd
+     * @return a command ignoring ":" prefix
+     */
+    private String[] getArguments(String cmd) {
+        if (cmd.contains(" ")) {
+            String[] cmdData = cmd.split(" ");
+            return Arrays.copyOfRange(cmdData, 1, cmdData.length);
+        }
+
+        return new String[0];
     }
 }

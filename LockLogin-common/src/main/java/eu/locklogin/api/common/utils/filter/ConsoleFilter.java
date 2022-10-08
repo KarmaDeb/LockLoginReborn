@@ -9,7 +9,6 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.message.Message;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,13 +33,18 @@ public class ConsoleFilter implements Filter {
     static {
         for (CommandData command : ModulePlugin.getCommandsData()) {
             if (command.getOwner().isSensitive()) {
-                SENSITIVE_COMMANDS.addAll(Arrays.asList(command.getArguments()));
+                for (String arg : command.getArguments())
+                    addSensitiveCommand("$" + arg.toLowerCase());
             }
         }
     }
 
     public ConsoleFilter(final Set<String> commands) {
         SENSITIVE_COMMANDS.addAll(commands);
+    }
+
+    public static void addSensitiveCommand(final String command) {
+        SENSITIVE_COMMANDS.add(command.toLowerCase());
     }
 
     /**
@@ -52,10 +56,9 @@ public class ConsoleFilter implements Filter {
      */
     private boolean isSensitiveMessage(String msg) {
         if (msg == null) return false;
-
         msg = msg.toLowerCase();
 
-        return SENSITIVE_COMMANDS.stream().anyMatch(msg::contains);
+        return (msg.contains("issued server command") || msg.contains("issued command") || msg.contains("ran command")) && SENSITIVE_COMMANDS.stream().anyMatch(msg::contains);
     }
 
     public final Result filter(LogEvent record) {

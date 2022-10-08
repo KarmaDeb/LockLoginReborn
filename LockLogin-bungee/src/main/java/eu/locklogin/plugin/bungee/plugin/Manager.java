@@ -271,7 +271,7 @@ public final class Manager {
                         if (instance instanceof Command) {
                             Command executor = (Command) instance;
                             plugin.getProxy().getPluginManager().registerCommand(plugin, executor);
-                            registered.add("/" + command);
+                            registered.add("/" + command.toLowerCase());
                         } else {
                             unregistered.add(command);
                         }

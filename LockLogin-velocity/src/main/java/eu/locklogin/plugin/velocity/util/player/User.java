@@ -28,6 +28,7 @@ import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
@@ -269,18 +270,20 @@ public final class User {
             if (session.isValid()) {
                 if (session.isLogged() && session.isTempLogged()) {
                     if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
-                        if (lobbies.size() > index) {
-                            RegisteredServer lInfo = lobbies.get(index);
-                            player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
-                                if (error != null || !result.isSuccessful()) {
-                                    checkServer(index + 1);
+                        if (!hasPermission(PluginPermissions.join_limbo())) {
+                            if (lobbies.size() > index) {
+                                RegisteredServer lInfo = lobbies.get(index);
+                                player.createConnectionRequest(lInfo).connect().whenComplete((result, error) -> {
+                                    if (error != null || !result.isSuccessful()) {
+                                        checkServer(index + 1);
 
-                                    if (error != null) {
-                                        logger.scheduleLog(Level.GRAVE, error);
+                                        if (error != null) {
+                                            logger.scheduleLog(Level.GRAVE, error);
+                                        }
+                                        logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getServerInfo().getName());
                                     }
-                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getServerInfo().getName());
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 } else {

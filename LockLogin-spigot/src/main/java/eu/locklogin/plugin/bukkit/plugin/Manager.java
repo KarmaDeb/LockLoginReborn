@@ -284,7 +284,7 @@ public final class Manager {
                     if (config.isBungeeCord() && !bungee) {
                         registered.add("/" + command);
                         for (String alias : pluginCMD.getAliases())
-                            registered.add("/" + alias);
+                            registered.add("/" + alias.toLowerCase());
                         continue;
                     }
 
@@ -295,9 +295,9 @@ public final class Manager {
                         pluginCMD.setExecutor(executor);
                         pluginCMD.setAliases(aliases);
 
-                        registered.add("/" + command);
+                        registered.add("/" + command.toLowerCase());
                         for (String alias : pluginCMD.getAliases())
-                            registered.add("/" + alias);
+                            registered.add("/" + alias.toLowerCase());
                     }
                 } catch (Throwable ex) {
                     ex.printStackTrace();

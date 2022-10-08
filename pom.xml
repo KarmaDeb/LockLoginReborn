@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.31</version>
+    <version>1.13.33</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -177,7 +177,7 @@
         <repository>
             <id>internal.repo</id>
             <name>Internal repo</name>
-            <url>file:///home/staging/locklogin/in</url>
+            <url>file:D:/Users/hetol/IdeaProjects/staging/locklogin/in</url>
         </repository>
     </distributionManagement>
 
