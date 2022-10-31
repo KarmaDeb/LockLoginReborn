@@ -1,4 +1,4 @@
-[![CI](https://github.com/softwaremill/maven-badges/actions/workflows/ci.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analasy.yml)
+[![CI](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml)
 
 # LockLoginReborn
  LockLogin source code...
