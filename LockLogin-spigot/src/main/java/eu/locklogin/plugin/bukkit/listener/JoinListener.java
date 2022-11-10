@@ -14,14 +14,18 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
@@ -36,8 +40,10 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -288,7 +294,7 @@ public final class JoinListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onLogin(PlayerLoginEvent e) {
+    public @SuppressWarnings("UnstableApiUsage") void onLogin(PlayerLoginEvent e) {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
 

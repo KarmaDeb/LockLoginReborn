@@ -45,6 +45,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public class MainBootstrap {
 
@@ -233,14 +234,14 @@ public class MainBootstrap {
 
         Manager.initialize();
 
-        if (moduleFiles != null) {
+        /*if (moduleFiles != null) {
             List<File> files = Arrays.asList(moduleFiles);
             Iterator<File> iterator = files.iterator();
             do {
                 File file = iterator.next();
                 LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
             } while (iterator.hasNext());
-        }
+        }*/
     }
 
     public void disable() {

@@ -119,6 +119,11 @@ public enum DataType {
     REGISTER,
 
     /**
+     * Searching for a BungeeCord server
+     */
+    SEARCH,
+
+    /**
      * Remove proxy id
      */
     REMOVE,

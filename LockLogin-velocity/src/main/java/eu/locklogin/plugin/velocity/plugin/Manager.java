@@ -313,7 +313,7 @@ public final class Manager {
         System.out.println();
         artGen.print(StringUtils.toAnyOsColor("&e"), "WARNING", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         System.out.println();
-        console.send("&7LockLogin will be dropping support for Velocity in the future versions. (UNKNOWN DATE)");
+        console.send("&7LockLogin will be dropping support for Velocity in the future versions. (01/01/2023)");
         console.send("&7Consider switching to BungeeCord or any other server compatible with");
         console.send("&7BungeeCord plugins. Please note the plugin data can be transferred from");
         console.send("&7Velocity to BungeeCord without any problem, just by copying the LockLogin");

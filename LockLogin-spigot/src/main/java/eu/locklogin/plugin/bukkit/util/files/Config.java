@@ -22,10 +22,13 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
+import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 import ml.karmaconfigs.api.common.utils.string.RandomString;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.string.util.TextContent;
 import ml.karmaconfigs.api.common.utils.string.util.TextType;
+import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,6 +40,8 @@ public final class Config extends PluginConfiguration {
 
     private final static File cfg_file = new File(plugin.getDataFolder(), "config.yml");
     private static KarmaYamlManager cfg = null;
+
+    private static boolean advised = false;
 
     /**
      * Initialize configuration
@@ -64,26 +69,41 @@ public final class Config extends PluginConfiguration {
     @Override
     public boolean isBungeeCord() {
         File force_bungee = new File(plugin.getDataFolder(), "force_bungee.yml");
+        File spigot_yml = new File(Bukkit.getWorldContainer(), "spigot.yml");
 
-        boolean bungeecord = false;
-        try {
-            bungeecord = plugin.getServer().spigot().getConfig().getBoolean("settings.bungeecord", false);
-        } catch (Throwable ignored) {
-        }
+        if (!spigot_yml.exists()) {
+            if (!advised) {
+                advised = true;
 
-        if (!bungeecord) {
-            try {
-                FileCopy copy = new FileCopy(plugin, "force_bungee.yml");
-                copy.copy(force_bungee);
-            } catch (Throwable ex) {
-                ex.printStackTrace();
+                plugin.console().send("Failed to locate file {0} which should contain bungeecord information. Using {1} instead.", Level.GRAVE,
+                        FileUtilities.getPrettyFile(spigot_yml),
+                        FileUtilities.getPrettyFile(force_bungee));
             }
 
-            KarmaYamlManager manager = new KarmaYamlManager(force_bungee);
-            bungeecord = manager.getBoolean("settings.bungeecord", false);
+            if (!force_bungee.exists()) {
+                FileCopy copy = new FileCopy(plugin, "force_bungee.yml");
+                try {
+                    copy.copy(force_bungee);
+                } catch (Throwable ignored) {}
+            }
+
+            KarmaYamlManager yaml = new KarmaYamlManager(force_bungee);
+            if (!yaml.isSet("settings.bungeecord")) {
+                yaml.set("settings.bungeecord", false);
+                yaml.save(force_bungee);
+                return false;
+            }
+
+            return yaml.getBoolean("settings.bungeecord");
+        } else {
+            if (advised) {
+                plugin.console().send("Found {0} containing bungeecord information. Using it", Level.OK, FileUtilities.getPrettyFile(spigot_yml));
+                advised = false;
+            }
         }
 
-        return bungeecord;
+        KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
+        return yaml.getBoolean("settings.bungeecord", false);
     }
 
     @Override

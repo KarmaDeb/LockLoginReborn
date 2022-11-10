@@ -90,7 +90,7 @@ public final class ChatListener implements Listener {
 
         if (session.isValid()) {
             if (!session.isLogged()) {
-                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && AllowedCommand.notAllowed(command));
+                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !command.equalsIgnoreCase("panic") && AllowedCommand.notAllowed(command));
 
                 return;
             } else {

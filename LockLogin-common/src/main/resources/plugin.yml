@@ -55,6 +55,8 @@ commands:
     description: The command that allows a player to login into his account
     aliases:
       - log
+  panic:
+    description: The command that allows a player to authenticate his panic token
   pin:
     description: The command that allows a player to manage his pin
   2fa:

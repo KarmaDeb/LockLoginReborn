@@ -706,11 +706,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPanic(@Nullable String token) {
-        CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
-        HashType hash = HashType.pickRandom();
-
-        manager.set("panic", new KarmaObject(util.hash(hash, true)));
-        manager.save();
+        CryptoFactory factory = CryptoFactory.getBuilder().withToken(token).withPassword(token).unsafe();
+        HashType detected = factory.getTokenHash();
+        if (detected.equals(HashType.NONE) || detected.equals(HashType.UNKNOWN)) {
+            manager.set("panic", new KarmaObject(factory.hash(HashType.pickRandom(), true)));
+            manager.save();
+        } else {
+            manager.set("panic", new KarmaObject(token));
+            manager.save();
+        }
     }
 
     /**

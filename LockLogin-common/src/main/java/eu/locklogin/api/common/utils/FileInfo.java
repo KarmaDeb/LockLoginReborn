@@ -2,14 +2,15 @@ package eu.locklogin.api.common.utils;
 
 import eu.locklogin.api.util.enums.UpdateChannel;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.utils.url.HttpUtil;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 

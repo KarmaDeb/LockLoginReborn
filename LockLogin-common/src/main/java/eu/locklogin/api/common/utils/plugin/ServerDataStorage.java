@@ -85,4 +85,15 @@ public final class ServerDataStorage {
     public static boolean needsProxyKnowledge(final String server) {
         return !proxy_registered.contains(server);
     }
+
+    /**
+     * Get if the server knows about the proxy
+     * instance and is registered
+     *
+     * @param server the server
+     * @return if the server has proxy knowledge
+     */
+    public static boolean hasProxyKnowledge(final String server) {
+        return key_registered.contains(server) && proxy_registered.contains(server);
+    }
 }

@@ -41,19 +41,26 @@ import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import net.md_5.bungee.api.chat.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "account")
 public class AccountCommand implements CommandExecutor {
+
+    private final static Map<String, String> confirmation = new ConcurrentHashMap<>();
 
     /**
      * Executes the given command, returning its success.
@@ -249,6 +256,16 @@ public class AccountCommand implements CommandExecutor {
                                                     if (account.isLocked()) {
                                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                                     } else {
+                                                        if (!manager.getPanic().isEmpty()) {
+                                                            String stored = confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                            if (stored == null || !stored.equalsIgnoreCase(target)) {
+                                                                user.send(messages.prefix() + "Client has a panic token, this won't be removed even after removing the client account. Run the command again to proceed anyway");
+                                                                confirmation.put(player.getUniqueId().toString(), stored);
+                                                                return;
+                                                            }
+                                                        }
+
+                                                        confirmation.remove(player.getUniqueId().toString());
                                                         manager.setUnsafePassword("");
                                                         manager.setUnsafePin("");
                                                         manager.setUnsafeGAuth("");
@@ -290,6 +307,16 @@ public class AccountCommand implements CommandExecutor {
                                     if (password.equals(confirmation)) {
                                         CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate(Validation.ALL)) {
+                                            if (!manager.getPanic().isEmpty()) {
+                                                String stored = this.confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
+                                                    user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
+                                                    this.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
+                                                    return false;
+                                                }
+                                            }
+
+                                            this.confirmation.remove(player.getUniqueId().toString());
                                             user.send(messages.prefix() + messages.accountRemoved());
                                             manager.remove(player.getName());
 
@@ -368,7 +395,26 @@ public class AccountCommand implements CommandExecutor {
                             } else {
                                 user.send(messages.prefix() + messages.panicAlready());
                             }*/
-                            user.send(messages.prefix() + "&5TODO");
+                            //user.send(messages.prefix() + "&5TODO"); Fuck it, I'll make it local temporally
+                            AccountManager manager = user.getManager();
+                            if (manager.getPanic().isEmpty()) {
+                                String password = TokenGenerator.generateLiteral(32);
+
+                                user.send(messages.panicRequested());
+                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &c" + password));
+                                try {
+                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
+                                } catch (Throwable ex) {
+                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
+                                }
+                                component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
+                                user.send(component);
+
+                                manager.setPanic(password);
+                            } else {
+                                user.send(messages.prefix() + messages.panicAlready());
+                            }
+                            break;
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;
@@ -449,7 +495,7 @@ public class AccountCommand implements CommandExecutor {
                             String target = args[1];
                             AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
-                                    Player online = plugin.getServer().getPlayer(target);
+                                    Player online = plugin.getServer().getPlayer(nsr.getUniqueId());
                                     OfflineClient offline = new OfflineClient(target);
 
                                     AccountManager manager = offline.getAccount();
@@ -458,6 +504,17 @@ public class AccountCommand implements CommandExecutor {
                                         if (account.isLocked()) {
                                             console.send(messages.prefix() + messages.neverPlayer(target));
                                         } else {
+                                            if (!manager.getPanic().isEmpty()) {
+                                                String stored = confirmation.getOrDefault(config.serverName(), null);
+                                                if (stored == null || !stored.equalsIgnoreCase(target)) {
+                                                    console.send(messages.prefix() + "&cClient has a panic token, this won't be removed even after removing the client account. Run the command again to proceed anyway");
+                                                    confirmation.put(config.serverName(), target);
+
+                                                    return;
+                                                }
+                                            }
+
+                                            confirmation.remove(config.serverName());
                                             manager.setUnsafePassword("");
                                             manager.setUnsafePin("");
                                             manager.setUnsafeGAuth("");

@@ -131,4 +131,13 @@ public final class BungeeDataStorager {
     public void setLoggedAccounts(final int amount) {
         SessionDataContainer.setLogged(amount);
     }
+
+    /**
+     * Get if the server has proxy
+     *
+     * @return if the server has a proxy
+     */
+    public boolean needsProxy() {
+        return StringUtils.isNullOrEmpty(proxyKey);
+    }
 }

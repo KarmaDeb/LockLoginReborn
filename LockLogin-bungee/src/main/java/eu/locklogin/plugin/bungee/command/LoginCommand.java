@@ -107,6 +107,11 @@ public final class LoginCommand extends Command {
                                     if (ip != null)
                                         protection = new BruteForce(ip);
 
+                                    if (protection == null) {
+                                        user.send(messages.prefix() + "&cError 52");
+                                        return;
+                                    }
+
                                     CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                     if (utils.validate(Validation.ALL)) {
                                         if (!checker.isSecure()) {
@@ -170,8 +175,7 @@ public final class LoginCommand extends Command {
                                         }
 
                                         session.setLogged(true);
-                                        if (protection != null)
-                                            protection.success();
+                                        protection.success();
 
                                         user.restorePotionEffects();
 
@@ -196,25 +200,26 @@ public final class LoginCommand extends Command {
                                                 null);
                                         ModulePlugin.callEvent(event);
 
-                                        if (protection != null) {
-                                            protection.fail();
+                                        protection.fail();
 
-                                            BruteForceConfig bruteForce = config.bruteForceOptions();
-                                            LoginConfig loginConfig = config.loginOptions();
+                                        BruteForceConfig bruteForce = config.bruteForceOptions();
+                                        LoginConfig loginConfig = config.loginOptions();
 
-                                            if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
+                                        if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
+                                            if (StringUtils.isNullOrEmpty(manager.getPanic())) {
                                                 protection.block(bruteForce.getBlockTime());
-                                                user.kick(messages.ipBlocked(protection.getBlockLeft()));
                                             } else {
-                                                if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
-                                                    protection.success();
-                                                    user.kick(event.getAuthMessage());
-                                                } else {
-                                                    user.send(messages.prefix() + event.getAuthMessage());
-                                                }
+                                                protection.panic(player.getUniqueId());
                                             }
+
+                                            user.kick(messages.ipBlocked(protection.getBlockLeft()));
                                         } else {
-                                            user.send(messages.prefix() + event.getAuthMessage());
+                                            if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
+                                                protection.success();
+                                                user.kick(event.getAuthMessage());
+                                            } else {
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                            }
                                         }
                                     }
                                 } else {

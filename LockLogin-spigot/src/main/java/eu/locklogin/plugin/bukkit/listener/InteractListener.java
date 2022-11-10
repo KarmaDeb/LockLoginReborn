@@ -137,21 +137,4 @@ public class InteractListener implements Listener {
             }
         }
     }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public final void atEntityInteract(PlayerInteractAtEntityEvent e) {
-        if (!e.isCancelled()) {
-            Player player = e.getPlayer();
-            User user = new User(player);
-            ClientSession session = user.getSession();
-
-            if (user.isLockLoginUser()) {
-                if (session.isValid()) {
-                    e.setCancelled(!session.isCaptchaLogged() || !session.isLogged() || !session.isTempLogged());
-                } else {
-                    e.setCancelled(true);
-                }
-            }
-        }
-    }
 }

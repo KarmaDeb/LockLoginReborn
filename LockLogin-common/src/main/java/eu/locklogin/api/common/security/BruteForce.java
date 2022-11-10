@@ -21,8 +21,8 @@ import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * LockLogin brute force protection
@@ -32,6 +32,8 @@ public final class BruteForce {
     private final static KarmaSource plugin = APISource.loadProvider("LockLogin");
     private final static Map<InetAddress, Integer> tries = new HashMap<>();
     private final static Map<InetAddress, Long> block_time = new HashMap<>();
+
+    private final static Set<UUID> panicking = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final InetAddress ip;
 
@@ -81,6 +83,24 @@ public final class BruteForce {
     }
 
     /**
+     * Set the account in panic mode
+     *
+     * @param id the account id
+     */
+    public void panic(final UUID id) {
+        panicking.add(id);
+    }
+
+    /**
+     * Remove the account from panic mode
+     *
+     * @param id the account id
+     */
+    public void unPanic(final UUID id) {
+        panicking.remove(id);
+    }
+
+    /**
      * Get the failed login tries the uuid has
      *
      * @return the failed login tries the account has
@@ -105,5 +125,15 @@ public final class BruteForce {
      */
     public boolean isBlocked() {
         return block_time.getOrDefault(ip, 0L) > 1L;
+    }
+
+    /**
+     * Get if the account is panicking
+     *
+     * @param id the account id
+     * @return if the account is in panic mode
+     */
+    public boolean isPanicking(final UUID id) {
+        return panicking.contains(id);
     }
 }

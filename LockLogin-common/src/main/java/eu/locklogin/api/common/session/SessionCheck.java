@@ -2,6 +2,7 @@ package eu.locklogin.api.common.session;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
@@ -15,14 +16,15 @@ import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class SessionCheck<T> implements Runnable {
 
-    private final static Set<UUID> under_check = new HashSet<>();
-    private final static Set<UUID> cancel_queue = new HashSet<>();
+    private final static Set<UUID> under_check = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<UUID> cancel_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<UUID> restart_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final ModulePlayer player;
     private final KarmaSource source;
     private final BossProvider<T> boss;
@@ -61,7 +63,9 @@ public final class SessionCheck<T> implements Runnable {
             PluginMessages messages = CurrentPlatform.getMessages();
             SessionKeeper keeper = new SessionKeeper(player);
 
-            if (keeper.hasSession() && keeper.isOwner(player.getAddress()) && config.enableSessions()) {
+            BruteForce protection = new BruteForce(player.getAddress());
+
+            if (!protection.isPanicking(player.getUUID()) && keeper.hasSession() && keeper.isOwner(player.getAddress()) && config.enableSessions()) {
                 player.requestLogin();
 
                 if (onEnd != null)
@@ -76,7 +80,12 @@ public final class SessionCheck<T> implements Runnable {
                 int tmp_time = config.registerOptions().timeOut();
                 if (player.getAccount().isRegistered()) {
                     tmp_time = config.loginOptions().timeOut();
-                    player.sendMessage(messages.prefix() + messages.login());
+                    if (protection.isPanicking(player.getUUID())) {
+                        player.sendMessage(messages.prefix() + messages.panicLogin());
+                        boss.update(messages.panicLogin(), true);
+                    } else {
+                        player.sendMessage(messages.prefix() + messages.login());
+                    }
 
                     if (config.loginOptions().hasBossBar())
                         boss.displayTime(tmp_time);
@@ -110,15 +119,27 @@ public final class SessionCheck<T> implements Runnable {
                                 }
 
                                 if (manager.isRegistered()) {
-                                    boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                    if (protection.isPanicking(player.getUUID())) {
+                                        boss.update(messages.panicLogin(), false);
+                                    } else {
+                                        boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                    }
                                 } else {
                                     boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
                                 }
                             }
 
                             if (manager.isRegistered()) {
-                                if (!StringUtils.isNullOrEmpty(messages.loginTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.loginSubtitle(timer_time)))
-                                    player.sendTitle(messages.loginTitle(timer_time), messages.loginSubtitle(timer_time), 0, 5, 0);
+                                String title = messages.loginTitle(timer_time);
+                                String subtitle = messages.loginSubtitle(timer_time);
+                                if (protection.isPanicking(player.getUUID())) {
+                                    title = messages.panicTitle();
+                                    subtitle = messages.panicSubtitle();
+                                }
+
+                                if (!StringUtils.isNullOrEmpty(title) || !StringUtils.isNullOrEmpty(subtitle)) {
+                                    player.sendTitle(title, subtitle, 0, 5, 0);
+                                }
                             } else {
                                 if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
                                     player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
@@ -133,33 +154,43 @@ public final class SessionCheck<T> implements Runnable {
                         keeper.destroy();
                     }
                 }).endAction(() -> {
-                    if (onEnd != null)
-                        onEnd.run();
+                    if (restart_queue.contains(player.getUUID())) {
+                        restart_queue.remove(player.getUUID());
+                        run();
+                    } else {
+                        if (onEnd != null)
+                            onEnd.run();
 
-                    if (boss != null)
-                        boss.cancel();
+                        if (boss != null)
+                            boss.cancel();
 
-                    ClientSession session = player.getSession();
+                        ClientSession session = player.getSession();
 
-                    if (!session.isLogged())
-                        player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+                        if (!session.isLogged())
+                            player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
 
-                    under_check.remove(player.getUUID());
-                    keeper.destroy();
+                        under_check.remove(player.getUUID());
+                        keeper.destroy();
+                    }
                 }).cancelAction((cancelTime) -> {
-                    if (onEnd != null)
-                        onEnd.run();
+                    if (restart_queue.contains(player.getUUID())) {
+                        restart_queue.remove(player.getUUID());
+                        run();
+                    } else {
+                        if (onEnd != null)
+                            onEnd.run();
 
-                    if (boss != null)
-                        boss.cancel();
+                        if (boss != null)
+                            boss.cancel();
 
-                    ClientSession session = player.getSession();
+                        ClientSession session = player.getSession();
 
-                    if (!session.isLogged())
-                        player.requestKick((manager.isRegistered() ? messages.loginTimeOut() : messages.registerTimeOut()));
+                        if (!session.isLogged())
+                            player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
 
-                    under_check.remove(player.getUUID());
-                    keeper.destroy();
+                        under_check.remove(player.getUUID());
+                        keeper.destroy();
+                    }
                 });
 
                 timer.start();
@@ -182,12 +213,18 @@ public final class SessionCheck<T> implements Runnable {
         if (manager.isRegistered())
             time = config.loginOptions().getMessageInterval();
 
+        BruteForce protection = new BruteForce(player.getAddress());
+
         SimpleScheduler timer = new SourceScheduler(source, time, SchedulerUnit.SECOND, true);
         timer.restartAction(() -> {
             if (under_check.contains(player.getUUID())) {
                 if (!session.isLogged()) {
                     if (manager.isRegistered()) {
-                        player.sendMessage(messages.prefix() + messages.login());
+                        if (protection.isPanicking(player.getUUID())) {
+                            player.sendMessage(messages.prefix() + messages.panicLogin());
+                        } else {
+                            player.sendMessage(messages.prefix() + messages.login());
+                        }
                     } else {
                         player.sendMessage(messages.prefix() + messages.register());
                     }
@@ -204,6 +241,14 @@ public final class SessionCheck<T> implements Runnable {
      */
     public void cancelCheck() {
         cancel_queue.add(player.getUUID());
+    }
+
+    /**
+     * Restart the player checker
+     */
+    public void restart() {
+        cancel_queue.add(player.getUUID());
+        restart_queue.add(player.getUUID());
     }
 
     /**

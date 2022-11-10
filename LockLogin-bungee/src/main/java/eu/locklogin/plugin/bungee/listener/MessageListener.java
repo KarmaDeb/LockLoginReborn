@@ -35,7 +35,9 @@ import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -46,6 +48,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.ACCESS_CHANNEL;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @SuppressWarnings("UnstableApiUsage")

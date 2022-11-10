@@ -46,6 +46,7 @@ public @interface SystemCommand {
                     GoogleAuthCommand.class,
                     LockLoginCommand.class,
                     LoginCommand.class,
+                    PanicCommand.class,
                     PinCommand.class,
                     PlayerInfoCommand.class,
                     RegisterCommand.class};

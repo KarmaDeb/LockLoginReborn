@@ -4,6 +4,8 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
+import ml.karmaconfigs.api.bukkit.server.BukkitServer;
+import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
@@ -125,12 +127,23 @@ public class Button {
     public static ItemStack getNumber(final int number) {
         if (!numbers.containsKey(number)) {
             ItemStack stack = getRandomItemStack();
-            try {
-                stack = getSkull(getNumberProperties(number));
-            } catch (Throwable ignore) {
+
+            ItemMeta stackMeta;
+            if (BukkitServer.isOver(Version.v1_7_10)) {
+                try {
+                    stack = getSkull(getNumberProperties(number));
+                } catch (Throwable ignore) {
+                }
+
+                stackMeta = stack.getItemMeta();
+                assert stackMeta != null;
+            } else {
+                stack = new ItemStack(Material.getMaterial("SKULL_ITEM"), 1, (short) 3);
+                stackMeta = stack.getItemMeta();
+
+
             }
-            ItemMeta stackMeta = stack.getItemMeta();
-            assert stackMeta != null;
+
 
             KarmaKeyArray def = new KarmaKeyArray();
             def.add("0", new KarmaObject("&b0"), false);
@@ -288,21 +301,33 @@ public class Button {
 
             SkullMeta headMeta = (SkullMeta) head.getItemMeta();
 
-            Class<?> gameProfile = Class.forName("com.mojang.authlib.GameProfile");
-            Constructor<?> profileConstructor = gameProfile.getConstructor(UUID.class, String.class);
-            Object profile = profileConstructor.newInstance(UUID.randomUUID(), null);
+            Class<?> gameProfile = null;
+            try {
+                gameProfile = Class.forName("com.mojang.authlib.GameProfile");
+            } catch (Throwable ex) {
+                try {
+                    gameProfile = Class.forName("net.minecraft.util.com.mojang.authlib.GameProfile"); //mojang, wtf?
+                } catch (Throwable ignored) {}
+            }
 
-            Object propmap = ReflectionUtil.invokeMethod(gameProfile, profile, "getProperties");
-            ReflectionUtil.invokeMethod(propmap, "clear");
-            ReflectionUtil.invokeMethod(propmap.getClass(), propmap, "put", new Class[]{Object.class, Object.class}, "textures", properties);
+            if (gameProfile != null) {
+                Constructor<?> profileConstructor = gameProfile.getConstructor(UUID.class, String.class);
+                Object profile = profileConstructor.newInstance(UUID.randomUUID(), null);
 
-            Field profileField;
-            assert headMeta != null;
-            profileField = headMeta.getClass().getDeclaredField("profile");
-            profileField.setAccessible(true);
-            profileField.set(headMeta, profile);
-            head.setItemMeta(headMeta);
-            return head;
+                Object propmap = ReflectionUtil.invokeMethod(gameProfile, profile, "getProperties");
+                ReflectionUtil.invokeMethod(propmap, "clear");
+                ReflectionUtil.invokeMethod(propmap.getClass(), propmap, "put", new Class[]{Object.class, Object.class}, "textures", properties);
+
+                Field profileField;
+                assert headMeta != null;
+                profileField = headMeta.getClass().getDeclaredField("profile");
+                profileField.setAccessible(true);
+                profileField.set(headMeta, profile);
+                head.setItemMeta(headMeta);
+                return head;
+            } else {
+                plugin.console().send("Failed to create textured skull");
+            }
         } catch (Throwable e) {
             e.printStackTrace();
         }

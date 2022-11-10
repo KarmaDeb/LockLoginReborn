@@ -38,7 +38,6 @@ public final class Main extends KarmaPlugin {
         ChecksumTables tables = new ChecksumTables();
         tables.checkTables();
 
-        System.out.println("Finished initializing LockLogin BungeeCord!");
         plugin = new MainBootstrap(this);
     }
 

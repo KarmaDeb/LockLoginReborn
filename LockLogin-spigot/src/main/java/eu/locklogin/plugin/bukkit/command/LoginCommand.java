@@ -103,85 +103,96 @@ public final class LoginCommand implements CommandExecutor {
                                         if (player.getAddress() != null)
                                             protection = new BruteForce(player.getAddress().getAddress());
 
-                                        CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                        if (utils.validate(Validation.ALL)) {
-                                            if (!checker.isSecure()) {
-                                                user.send(messages.prefix() + messages.loginInsecure());
+                                        if (protection == null) {
+                                            user.send(messages.prefix() + "&cError 52");
+                                            return;
+                                        }
 
-                                                if (config.blockUnsafePasswords()) {
-                                                    manager.setPassword(null);
+                                        if (protection.isPanicking(player.getUniqueId())) {
+                                            user.send(messages.prefix() + messages.panicLogin());
+                                        } else {
+                                            CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            if (utils.validate(Validation.ALL)) {
+                                                if (!checker.isSecure()) {
+                                                    user.send(messages.prefix() + messages.loginInsecure());
 
-                                                    user.getChecker().cancelCheck();
-                                                    SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-                                                    return;
-                                                }
-                                            }
+                                                    if (config.blockUnsafePasswords()) {
+                                                        manager.setPassword(null);
 
-                                            if (utils.needsRehash(config.passwordEncryption())) {
-                                                //Set the player password again to update his hash
-                                                manager.setPassword(password);
-                                                logger.scheduleLog(Level.INFO, "Updated password hash of {0} from {1} to {2}",
-                                                        StringUtils.stripColor(player.getDisplayName()),
-                                                        utils.getTokenHash().name(),
-                                                        config.passwordEncryption().name());
-                                            }
-
-                                            if (!manager.has2FA() && !manager.hasPin()) {
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, user.getModule(), messages.logged(), null);
-                                                ModulePlugin.callEvent(event);
-
-                                                user.setTempSpectator(false);
-
-                                                session.set2FALogged(true);
-                                                session.setPinLogged(true);
-
-                                                if (config.takeBack()) {
-                                                    LastLocation location = new LastLocation(player);
-                                                    location.teleport();
+                                                        user.getChecker().cancelCheck();
+                                                        SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+                                                        return;
+                                                    }
                                                 }
 
-                                                user.send(messages.prefix() + event.getAuthMessage());
-                                            } else {
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, user.getModule(), messages.logged(), null);
-                                                ModulePlugin.callEvent(event);
+                                                if (utils.needsRehash(config.passwordEncryption())) {
+                                                    //Set the player password again to update his hash
+                                                    manager.setPassword(password);
+                                                    logger.scheduleLog(Level.INFO, "Updated password hash of {0} from {1} to {2}",
+                                                            StringUtils.stripColor(player.getDisplayName()),
+                                                            utils.getTokenHash().name(),
+                                                            config.passwordEncryption().name());
+                                                }
 
-                                                if (manager.hasPin()) {
-                                                    session.setPinLogged(false);
+                                                if (!manager.has2FA() && !manager.hasPin()) {
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, user.getModule(), messages.logged(), null);
+                                                    ModulePlugin.callEvent(event);
 
-                                                    PinInventory pin = new PinInventory(player);
-                                                    pin.open();
-                                                } else {
+                                                    user.setTempSpectator(false);
+
+                                                    session.set2FALogged(true);
+                                                    session.setPinLogged(true);
+
+                                                    if (config.takeBack()) {
+                                                        LastLocation location = new LastLocation(player);
+                                                        location.teleport();
+                                                    }
+
                                                     user.send(messages.prefix() + event.getAuthMessage());
-                                                    user.send(messages.prefix() + messages.gAuthInstructions());
-                                                }
-                                            }
+                                                } else {
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, user.getModule(), messages.logged(), null);
+                                                    ModulePlugin.callEvent(event);
 
-                                            session.setLogged(true);
-                                            if (protection != null)
+                                                    if (manager.hasPin()) {
+                                                        session.setPinLogged(false);
+
+                                                        PinInventory pin = new PinInventory(player);
+                                                        pin.open();
+                                                    } else {
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                        user.send(messages.prefix() + messages.gAuthInstructions());
+                                                    }
+                                                }
+
+                                                session.setLogged(true);
                                                 protection.success();
 
-                                            if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
-                                                trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
-                                            }
+                                                if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
+                                                    trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
+                                                }
 
-                                            if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
-                                                user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
-                                                user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &5&lTHIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
-                                            }
-                                        } else {
-                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
-                                            ModulePlugin.callEvent(event);
+                                                if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
+                                                    user.send("&cIMPORTANT!", "&7Virtual ID is disabled!", 0, 10, 0);
+                                                    user.send(messages.prefix() + "&dVirtual ID is disabled, this can be a security risk for everyone. Enable it in config (VirtualID: true) to dismiss this message. &5&lTHIS MESSAGE CAN BE ONLY SEEN BY ADMINISTRATORS");
+                                                }
+                                            } else {
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
+                                                ModulePlugin.callEvent(event);
 
-                                            if (protection != null) {
                                                 protection.fail();
 
                                                 BruteForceConfig bruteForce = config.bruteForceOptions();
                                                 LoginConfig loginConfig = config.loginOptions();
 
                                                 if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
-                                                    protection.block(bruteForce.getBlockTime());
-                                                    user.kick(messages.ipBlocked(protection.getBlockLeft()));
+                                                    if (StringUtils.isNullOrEmpty(manager.getPanic())) {
+                                                        protection.block(bruteForce.getBlockTime());
+                                                    } else {
+                                                        protection.panic(player.getUniqueId());
+                                                    }
+
+                                                    user.kick(messages.panicMode());
                                                 } else {
                                                     if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
                                                         protection.success();
@@ -190,8 +201,6 @@ public final class LoginCommand implements CommandExecutor {
                                                         user.send(messages.prefix() + event.getAuthMessage());
                                                     }
                                                 }
-                                            } else {
-                                                user.send(messages.prefix() + event.getAuthMessage());
                                             }
                                         }
                                     } else {

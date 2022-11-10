@@ -57,6 +57,8 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
+import ml.karmaconfigs.api.bukkit.server.BukkitServer;
+import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -423,6 +425,11 @@ public final class Manager {
         plugin.getServer().getPluginManager().registerEvents(other, plugin);
         plugin.getServer().getPluginManager().registerEvents(inventory, plugin);
         plugin.getServer().getPluginManager().registerEvents(interact, plugin);
+
+        if (BukkitServer.isOver(Version.v1_7_10)) {
+            Listener interact_new = new InteractListenerNew();
+            plugin.getServer().getPluginManager().registerEvents(interact_new, plugin);
+        }
     }
 
     /**

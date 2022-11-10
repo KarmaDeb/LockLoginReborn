@@ -41,21 +41,26 @@ import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "account")
 public class AccountCommand extends Command {
+
+    private final static Map<String, String> confirmation = new ConcurrentHashMap<>();
 
     /**
      * Construct a new command with no permissions or aliases.
@@ -249,6 +254,16 @@ public class AccountCommand extends Command {
                                                     if (account.isLocked()) {
                                                         user.send(messages.prefix() + messages.neverPlayer(target));
                                                     } else {
+                                                        if (!manager.getPanic().isEmpty()) {
+                                                            String stored = confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                            if (stored == null || !stored.equalsIgnoreCase(target)) {
+                                                                user.send(messages.prefix() + "Client has a panic token, this won't be removed even after removing the client account. Run the command again to proceed anyway");
+                                                                confirmation.put(player.getUniqueId().toString(), stored);
+                                                                return;
+                                                            }
+                                                        }
+
+                                                        confirmation.remove(player.getUniqueId().toString());
                                                         manager.setUnsafePassword("");
                                                         manager.setUnsafePin("");
                                                         manager.setUnsafeGAuth("");
@@ -294,6 +309,16 @@ public class AccountCommand extends Command {
                                     if (password.equals(confirmation)) {
                                         CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate(Validation.ALL)) {
+                                            if (!manager.getPanic().isEmpty()) {
+                                                String stored = this.confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
+                                                    user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
+                                                    this.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
+                                                    return;
+                                                }
+                                            }
+
+                                            this.confirmation.remove(player.getUniqueId().toString());
                                             user.send(messages.prefix() + messages.accountRemoved());
                                             manager.remove(player.getName());
 
@@ -392,6 +417,39 @@ public class AccountCommand extends Command {
                                 user.send(messages.prefix() + messages.sessionServerDisabled());
                             }
                             break;
+                        case "protect":
+                            /*
+                            TODO: I must implement LockLogin web panel into this. ( I MUST ALSO END THE PANEL TOO. I HAVE TO DO MANY THINGS NOW )
+
+                            AccountManager manager = user.getManager();
+                            if (StringUtils.isNullOrEmpty(manager.getPanic())) {
+                                String token = TokenGenerator.generateLiteral(32);
+
+                                user.send(messages.panicRequested());
+
+                            } else {
+                                user.send(messages.prefix() + messages.panicAlready());
+                            }*/
+                            //user.send(messages.prefix() + "&5TODO"); Fuck it, I'll make it local temporally
+                            AccountManager manager = user.getManager();
+                            if (manager.getPanic().isEmpty()) {
+                                String password = TokenGenerator.generateLiteral(32);
+
+                                user.send(messages.panicRequested());
+                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &c" + password));
+                                try {
+                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
+                                } catch (Throwable ex) {
+                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
+                                }
+                                component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
+                                user.send(component);
+
+                                manager.setPanic(password);
+                            } else {
+                                user.send(messages.prefix() + messages.panicAlready());
+                            }
+                            break;
                         default:
                             user.send(messages.prefix() + messages.accountArguments());
                             break;
@@ -482,6 +540,17 @@ public class AccountCommand extends Command {
                                         if (account.isLocked()) {
                                             console.send(messages.prefix() + messages.neverPlayer(target));
                                         } else {
+                                            if (!manager.getPanic().isEmpty()) {
+                                                String stored = confirmation.getOrDefault(config.serverName(), null);
+                                                if (stored == null || !stored.equalsIgnoreCase(target)) {
+                                                    console.send(messages.prefix() + "&cClient has a panic token, this won't be removed even after removing the client account. Run the command again to proceed anyway");
+                                                    confirmation.put(config.serverName(), target);
+
+                                                    return;
+                                                }
+                                            }
+
+                                            confirmation.remove(config.serverName());
                                             manager.setUnsafePassword("");
                                             manager.setUnsafePin("");
                                             manager.setUnsafeGAuth("");

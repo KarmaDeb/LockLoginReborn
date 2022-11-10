@@ -70,7 +70,6 @@ public final class BungeeReceiver implements PluginMessageListener {
 
                                     if (!session.isValid()) {
                                         //Validate BungeeCord/Velocity session
-
                                         BungeeSender.validatePlayer(player);
                                         session.validate();
                                     }

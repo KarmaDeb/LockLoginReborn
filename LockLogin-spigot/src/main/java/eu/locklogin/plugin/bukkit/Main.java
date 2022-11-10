@@ -18,6 +18,10 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
+import eu.locklogin.plugin.bukkit.listener.JoinListener;
+import eu.locklogin.plugin.bukkit.plugin.Manager;
+import eu.locklogin.plugin.bukkit.util.files.Config;
+import eu.locklogin.plugin.bukkit.util.files.Message;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 
 import java.net.URL;

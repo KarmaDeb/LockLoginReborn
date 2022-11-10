@@ -66,7 +66,7 @@ public final class JavaModuleVersion {
         LateScheduler<VersionFetchResult> result = new AsyncLateScheduler<>();
 
         OfflineResult backup = new OfflineResult(module);
-        APISource.loadProvider("LockLogin").async().queue(() -> {
+        APISource.loadProvider("LockLogin").async().queue("update_fetch", () -> {
             if (updater != null) {
                 if (recently_cached.contains(module)) {
                     updater.get().whenComplete((getResult, error) -> {

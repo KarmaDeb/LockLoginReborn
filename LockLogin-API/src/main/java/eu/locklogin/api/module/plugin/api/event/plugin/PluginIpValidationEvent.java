@@ -167,7 +167,7 @@ public final class PluginIpValidationEvent extends Event {
     /**
      * Ip validation process
      */
-    public enum ValidationProcess {
+    public static enum ValidationProcess {
         /**
          * Server ping process
          */
@@ -185,7 +185,7 @@ public final class PluginIpValidationEvent extends Event {
     /**
      * Ip validation result
      */
-    public enum ValidationResult {
+    public static enum ValidationResult {
         /**
          * Validation is success ( IP is valid )
          */
