@@ -1,0 +1,238 @@
+#LockLogin message file
+#----------------------------------
+#Translation: Hebrew (Community Language)
+#Editor: IMS - Network <https://ims-network.org>
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates ( this means
+#   this language will be translated by the author when a new
+#   message is added )
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+
+#Plugin prefix
+Prefix: '&eמערכת אבטחה&f>> '
+
+#Permission error message
+PermissionError: '&5&oאין לך גישה {permission}'
+
+#BungeeCord proxy message
+BungeeProxy: '&5&oנא להתחבר מהשרת הראשי!'
+
+#Inventories messages
+PinTitle: '&8&lמערכת האבטחה נעיצה'
+AltTitle: '&8&lחיפוש חשבונות חלופיים'
+InfoTitle: '&8&lמידע מאורגן על שחקן'
+Next: '&eהבא'
+Back: '&eהקודם'
+
+#Session messages - Manager
+PlayerNotVerified: '&5&oאי אפשר להילחם ב {player} השחקן הזה לא נכנס\נרשם עוד לשרת'
+AlreadyPlaying: '&5&oהשחקן הזה כבר משחק בשרת'
+PlayerInfoUsage: '&5&oפקודות השלמה למערכת שחקנים: &e<player|players>&7, &e<@[alias]>'
+ConnectionError: '&5&oהשחקן {player} לא מחובר'
+LookUpUsage: '&5&oנא לעשות /account alts <player>'
+AltFound: '&5&oלשחקן {player} יש {alts} משתמשים חלופיים, הקלידו /account alts {player} בשביל עוד מידע'
+NeverPlayed: '&5&oהשחקן {player} לא שיחק אף פעם בשרת הזה'
+TargetAccessError: '&5&oהשחקן {player} לא נכנס או רשום במערכת'
+IncorrectPassword: '&5&oהסיסמה שגויה, נא לנסות שוב!'
+Captcha: '&7קוד הביטחון שלך הוא: &e{captcha}'
+InvalidCaptcha: '&5&oהקוד שהוכנס שגוי, נא לנסות שוב'
+SessionServerDisabled: '&5&oמערכת סשנים מבוטלת בשרת הזה'
+SessionEnabled: '&dהפעלתם מערכת סשנים למשתמש שלכם'
+SessionDisabled: '&5&oמערכת סשנים כבוייה למשתמש שלכם'
+
+#Session messages - Register
+Register: '&5&oנא לעשו /register <password> <password> <captcha>'
+KarmaRegister: '&5&oבבקשה לעשות /register <password> <captcha> <email>'
+RegisterBar: '{color}יש לך &f{time}{color} שניות להירשם'
+Registered: '&dההרשמה בוצעה בהצלחה, ברוכים הבאים'
+AlreadyRegistered: '&5&oהמשתמש שלך כבר רשום!'
+RegisterError: '&5&oהסיסמאות לא תואמות'
+PasswordInsecure: '&5&oהסיסמה שצויינה היא לא בטוחה!'
+RegisterOut: '&5&oלקח לך יותר מידי זמן להירשם'
+RegisterTitle: '&7יש לך'
+RegisterSubtitle: '&b{time} &7שניות להירשם'
+MaxRegisters:
+  - '{ServerName}'
+  - ''
+  - '&5הגעתם למקסימות חשבונות נוספים המותרים בשרת הזה'
+  - ''
+  - '&5במידה ומדובר בשגיאה, מוזמנים ליצור איתנו קשר'
+  - '&7https://discordexample.gg'
+
+#Session messages - Login
+Login: '&5&oנא לעשות /login <password> <captcha>'
+LoginBar: '{color}יש לך &f{time}{color} בשביל להיכנס'
+Logged: '&dברוכים השבים, שלום &f{player}'
+AlreadyLogged: '&5&oאתם כבר נכנסתם לשרת!'
+LoginInsecure: '&5&oהסיסמה שלכם הוגדרה כלא בטוחה בבקשה לשנות אותה'
+LoginOut: '&5&oלקח לך יותר מידי זמן להיכנס'
+LoginTitle: '&7יש לך'
+LoginSubtitle: '&b{time} &7בשביל להיכנס'
+
+#Session messages - Pin
+PinUsages: '&5&oפקודות השלמה למערכת קוד: &e<setup>&7, &e<remove>&7, &e<change>'
+PinSet: '&dהקוד הוגדר בהצלחה'
+PinResetted: '&5&oהקוד הוסר, המשתמש שלך פחות בטוח עכשיו'
+PinChanged: '&dהקוד שונה בהצלחה'
+AlreadyPin: '&5&oכבר הגדרתם את הקוד שלכם!'
+NoPin: '&5&oאין לכם קוד במערכת!'
+SetPin: '&5&oנא לעשות /pin setup <pin>'
+ResetPin: '&5&oנא לעשות /pin remove <pin>'
+ChangePin: '&5&oנא לעשות /pin change <pin> <new pin>'
+PinDisabled: '&5&oמערכת הקודים מבוטלת בשרת הזה'
+PinLength: '&5&oהקוד חייב להכיל ארבע ספרות לפחות'
+IncorrectPin: '&5&oהקוד שגוי, נא לנסות שוב!'
+
+#Session messages - 2FA
+2FaUsages: '&5&oפקודות השלמה למערכת אדוש: &e<setup>&7, &e<remove>&7, &e<2fa code>'
+2FaSetupUsage: '&5&oנא לעשות &f/2fa setup <password>'
+2FaRemoveUsage: '&5&oנא לעשות &f/2fa remove <password> <2fa code>'
+2FaAuthenticate: '&5&oנא לעשות &f/2fa to start playing'
+2FaLogged: '&dכניסה בעזרת מערכת אדוש הושלמה'
+2FaAlreadyLogged: '&5&oכבר נכנסתם בעזרת מערכת אדוש.'
+2FaIncorrect: '&5&oקוד אדוש שגוי'
+2FaAlready: '&5&oכבר הגדרתם למשתמש שלכם מערכת אדוש!'
+2FaToggleError: '&5&oשגיאה בתהליך הכניסה בעזרת אדוש ( סיסמה/קוד שגוי)'
+Disabled2FA: '&5&o2FA disabled, your account is now less secure'
+Enabled2FA: '&d2FA enabled, your account is secure again'
+2FaAccountDisabled: '&5&o2FA is disabled in your account'
+2FAServerDisabled: '&5&o2FA is currently disabled in this server'
+2FaLocked: '&5&oThis server wants you to have 2FA enabled'
+2FAScratchCodes:
+  - '&7Hey! &b{player}&7, these are your recovery codes,'
+  - '&7make sure to not lose them as this will be the last'
+  - '&7time you see them:'
+2FaInstructions:
+  - '&fHow to authenticate using the google authenticator?'
+  - '&71 - Click ''{message}'''
+  - '&72 - Download Google Authenticator app'
+  - '&73 - Tap on ''+'' inside the app'
+  - '&74 - Tap on ''Scan a QR code'''
+  - '&75 - Scan the QR code shown in screen ( step #1 )'
+  - '&77 - Search for {account} in Google Auth app'
+  - '&78 - Type /2fa <code shown in app> or <scratch code>'
+2FaLink: '&bClick here to get your 2FA QR code'
+
+#Session messages - Brute force
+PanicLogin: '&5&oנא לעשות &f/panic <token>'
+PanicTitle: '&cPANIC MODE'
+PanicSubtitle: '&cRUN &4/panic <token>'
+PanicMode: '&5&oThe account entered in panic mode, you have 1 token login try before being IP-blocked'
+PanicDisabled: '&5&oThe server is not protected against brute force attacks'
+PanicAlready: '&dYou already have a brute force token, your account is secure'
+PanicUnsafeUsage: '&dTo disable panic token you must run /account unsafe <password> <token> [pin] [2fa]'
+PanicNowUnsafe:
+  - '&eLockLogin'
+  - ''
+  - '&dYou''ve disabled your panic token, this will'
+  - '&dmake your account vulnerable to distributed'
+  - '&dbrute force attacks. Panic token will require a token'
+  - '&donce an specified amount of failed login attempts are done'
+  - '&din your account instead of asking the password, please'
+  - '&dtoggle it now using /account protect!'
+PanicRequested:
+  - '&eLockLogin'
+  - ''
+  - '&dWe generated a panic token for you'
+  - '&dplease store that token in a safe'
+  - '&dplace and make sure no one knows about'
+  - '&dit'
+PanicEnabled:
+  - '&eLockLogin'
+  - ''
+  - '&dThe server is protected against'
+  - '&dbrute force using LockLogin token'
+  - '&dprotection. To start with that protection'
+  - '&dyou must run /account protect and store the'
+  - '&dgenerated token, and login with it when the'
+  - '&dserver asks you for it'
+TokenLink: '&bClick to reveal the token'
+
+#Session messages - Account management
+AccountArguments: '&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>'
+Change: '&5&oנא לעשות &f/account change <password> <new password>'
+ChangeSame: '&5&oYour password can''t be the same as old!'
+ChangeDone: '&dYour password has changed!'
+AccountUnlock: '&5&oנא לעשות &f/account unlock <player>'
+AccountUnlocked: '&dAccount of {player} has been unlocked'
+AccountNotLocked: '&5&oAccount of {player} is not locked!'
+Close: '&5&oנא לעשות &f/account close [player]'
+Closed: '&5&oSession closed, re-login now!'
+ForceClose: '&5&oYour session have been closed by an admin, login again'
+ForceCloseAdmin: '&dSession of {player} closed'
+Remove: '&5&oנא לעשות &f/account remove <password|player> [password]'
+RemoveAccountMatch: '&5&oThe provided passwords does not match'
+AccountRemoved: '&5&oYour account have been deleted'
+ForcedAccountRemoval:
+  - '{ServerName}'
+  - ''
+  - '&5Your account has been removed by'
+  - '&5an administrator ( &7{player}&5 )'
+  - '&5and has been blocked temporally'
+  - '&5to avoid data lost, until a staff member'
+  - '&5unlocks it'
+  - ''
+  - '&5If you didn''t call this action, please'
+  - '&5report this action at: &7https://discordexample.gg'
+ForcedAccountRemovalAdmin: '&dAccount of {player} removed, don''t forget to run /account unlock {player}!'
+
+#Spawn utilities ( includes take back )
+SpawnSet: '&dThe login spawn location have been set'
+LocationsReset: '&dAll last locations have been reset'
+LocationReset: '&dLast location of {player} has been reset'
+LocationsFixed: '&dAll last locations have been fixed'
+LocationFixed: '&dLocation of {player} has been fixed'
+ResetLastLocUsage: '&5&oנא לעשות &f/locations [player|@all|@me] <remove|fix>'
+
+#Alias messages
+AliasArguments: '&5&oValid alias sub-arguments: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [player(s)]'
+AliasCreated: '&dAlias {alias} created successfully'
+AliasDestroyed: '&5&oAlias {alias} has been destroyed'
+AliasExists: '&5&oAlias {alias} already exists!'
+AliasNotFound: '&5&oCouldn''t find any alias called {alias}'
+AddedPlayer: '&dAdded {player} to {alias}'
+RemovedPlayer: '&dRemoved {player} from {alias}'
+PlayerNotIn: '&5&o{player} is not in {alias}!'
+PlayerAlreadyIn: '&5&o{player} is already in {alias}!'
+
+#Security messages
+IpBlocked:
+  - '{ServerName}'
+  - ''
+  - '&5LockLogin systems have detected an'
+  - '&5unusual traffic on your IP and has been blocked'
+  - '&f{time} {time_format}'
+IllegalName:
+  - '{ServerName}'
+  - ''
+  - '&5Your name can''t contain:'
+  - '{chars}'
+SimilarName:
+  - '{ServerName}'
+  - ''
+  - '&5Your name is similar to an'
+  - '&5already registered one'
+  - '&7{player}'
+MultipleNames:
+  - '&5We found more than one UUID assigned to'
+  - '&d{player}&5, so you can''t use it to fetch data.'
+  - ''
+  - '&5But you can try with his other names:&d {players}'
+UUIDFetchError:
+  - '{ServerName}'
+  - ''
+  - '&5Something went wrong while fetching your UUID'
+  - '&5with client name...'
+IpProxyError:
+  - '{ServerName}'
+  - ''
+  - '&5Your IP address seems a bit suspicious'
+  - '&5If you think this is an error, please contact'
+  - '&5the staff at: &7https://discordexample.gg'
