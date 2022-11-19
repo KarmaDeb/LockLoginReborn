@@ -123,7 +123,7 @@ public final class User {
                         plugin.getPluginLoader().disablePlugin(plugin);
                         throw new IllegalStateException("Cannot initialize user with a null session manager");
                     } else {
-                        session.initialize();
+                        session.initialize(ClientSession.DEFAULT);
 
                         InetSocketAddress ip = player.getAddress();
 
@@ -228,23 +228,41 @@ public final class User {
                 LoginConfig login = config.loginOptions();
 
                 if (login.blindEffect()) {
-                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (login.timeOut() + 4), 5, false, false);
-                    if (login.nauseaEffect()) {
-                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (login.timeOut() + 4), 5, false, false);
-                        apply.add(nausea);
+                    try {
+                        PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (login.timeOut() + 4), 5, false, false);
+                        if (login.nauseaEffect()) {
+                            PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (login.timeOut() + 4), 5, false, false);
+                            apply.add(nausea);
+                        }
+                        apply.add(blind);
+                    } catch (Throwable ex) {
+                        PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (login.timeOut() + 4), 5, false);
+                        if (login.nauseaEffect()) {
+                            PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (login.timeOut() + 4), 5, false);
+                            apply.add(nausea);
+                        }
+                        apply.add(blind);
                     }
-                    apply.add(blind);
                 }
             } else {
                 RegisterConfig register = config.registerOptions();
 
                 if (register.blindEffect()) {
-                    PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (register.timeOut() + 4), 5, false, false);
-                    if (register.nauseaEffect()) {
-                        PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (register.timeOut() + 4), 5, false, false);
-                        apply.add(nausea);
+                    try {
+                        PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (register.timeOut() + 4), 5, false, false);
+                        if (register.nauseaEffect()) {
+                            PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (register.timeOut() + 4), 5, false, false);
+                            apply.add(nausea);
+                        }
+                        apply.add(blind);
+                    } catch (Throwable ex) {
+                        PotionEffect blind = new PotionEffect(PotionEffectType.BLINDNESS, 20 * (register.timeOut() + 4), 5, false);
+                        if (register.nauseaEffect()) {
+                            PotionEffect nausea = new PotionEffect(PotionEffectType.CONFUSION, 20 * (register.timeOut() + 4), 5, false);
+                            apply.add(nausea);
+                        }
+                        apply.add(blind);
                     }
-                    apply.add(blind);
                 }
             }
 

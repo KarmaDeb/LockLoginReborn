@@ -35,9 +35,7 @@ import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -48,7 +46,6 @@ import java.util.Base64;
 import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.ACCESS_CHANNEL;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -91,8 +88,6 @@ public final class MessageListener implements Listener {
 
                                                 if (session.isValid()) {
                                                     if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
-
                                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                                 (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
                                                                 user.getModule(),
@@ -111,6 +106,8 @@ public final class MessageListener implements Listener {
 
                                                             user.checkServer(0);
                                                         }
+
+                                                        DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
                                                     } else {
                                                         if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
                                                             DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player).addTextData("close").build());
@@ -132,6 +129,18 @@ public final class MessageListener implements Listener {
                                                                 DataSender.send(player, gauth);
 
                                                                 user.checkServer(0);
+                                                            }
+                                                        } else {
+                                                            if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
+                                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                                        UserAuthenticateEvent.Result.ERROR,
+                                                                        user.getModule(),
+                                                                        "", null);
+                                                                ModulePlugin.callEvent(event);
+
+                                                                if (!event.getAuthMessage().isEmpty()) {
+                                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                                }
                                                             }
                                                         }
                                                     }

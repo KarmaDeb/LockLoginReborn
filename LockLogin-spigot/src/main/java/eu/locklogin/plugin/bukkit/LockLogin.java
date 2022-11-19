@@ -73,7 +73,7 @@ public interface LockLogin {
             logger.scheduleLog(Level.INFO, "Failed to schedule async task with identifier {0}. It will run without any special thread configuration!", target.getTaskId());
 
             console.send("Failed to perform task {0}");
-            action.run();
+            plugin.sync().queue(target.getTaskName(), action);
         }
     }
 
@@ -83,7 +83,9 @@ public interface LockLogin {
         } catch (Throwable ex) {
             logger.scheduleLog(Level.GRAVE, ex);
             logger.scheduleLog(Level.INFO, "Failed to schedule async task with identifier {0}. It will run sync!", target.getTaskId());
-            action.run();
+
+            console.send("Failed to perform task {0}");
+            plugin.async().queue(target.getTaskName(), action);
         }
     }
 }

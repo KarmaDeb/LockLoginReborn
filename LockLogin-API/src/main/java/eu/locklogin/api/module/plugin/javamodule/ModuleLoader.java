@@ -275,7 +275,11 @@ public final class ModuleLoader {
                                     PluginModule module = null;
                                     try {
                                         module = module_class.getDeclaredConstructor().newInstance();
-                                    } catch (InvocationTargetException ignored) {
+                                    } catch (InvocationTargetException ex) {
+                                        source.logger().scheduleLog(Level.GRAVE, ex);
+                                        source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
+
+                                        source.console().send("Failed to load module {0}. More info has been stored in plugins/LockLogin/logs/", Level.GRAVE, name);
                                     }
                                     if (module != null && !isLoaded(module)) {
                                         module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());

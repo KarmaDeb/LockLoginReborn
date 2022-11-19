@@ -35,6 +35,10 @@ public enum Lang {
      */
     CHINESE_SIMPLIFIED,
     /**
+     * LockLogin Hebrew language
+     */
+    HEBREW,
+    /**
      * LockLogin community language
      */
     COMMUNITY;
@@ -55,6 +59,8 @@ public enum Lang {
                 return "French";
             case CHINESE_SIMPLIFIED:
                 return "Chinese ( Simplified )";
+            case HEBREW:
+                return "Hebrew";
             case COMMUNITY:
             default:
                 return "Community ( " + communityLang + " )";
@@ -77,6 +83,8 @@ public enum Lang {
                 return "fr_FR";
             case CHINESE_SIMPLIFIED:
                 return "zh_CN";
+            case HEBREW:
+                return "he_IL";
             case COMMUNITY:
             default:
                 return "community_" + communityLang;

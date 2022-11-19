@@ -61,10 +61,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
-import net.md_5.bungee.api.event.LoginEvent;
-import net.md_5.bungee.api.event.PreLoginEvent;
-import net.md_5.bungee.api.event.ProxyPingEvent;
-import net.md_5.bungee.api.event.ServerSwitchEvent;
+import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
@@ -85,24 +82,28 @@ import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 public final class JoinListener implements Listener {
 
-    private final static Set<UUID> switch_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final static Set<UUID> switch_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
-    private final static ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
-    private final static PluginMessages messages = CurrentPlatform.getMessages();
+    private final PluginConfiguration config = CurrentPlatform.getConfiguration();
+    private final ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+    private final PluginMessages messages = CurrentPlatform.getMessages();
 
-    private static final String IPV4_REGEX =
+    private final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
-    private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
+    private final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
+
+    private final PlayerPool pool;
 
     /**
      * Initialize the join listener
      */
     public JoinListener() {
-        PlayerPool.whenValid((player) -> {
+        pool = new PlayerPool("playerJoinQueue");
+
+        pool.whenValid((player) -> {
             User user = new User(player);
 
             if (!switch_pool.contains(player.getUniqueId())) {
@@ -246,6 +247,8 @@ public final class JoinListener implements Listener {
                     user.kick(StringUtils.toColor(messages.ipProxyError()));
                 }
             } else {
+                switch_pool.remove(player.getUniqueId());
+
                 MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
                 DataSender.send(player, validation);
 
@@ -267,6 +270,8 @@ public final class JoinListener implements Listener {
                 user.checkServer(0);
             }
         });
+
+        pool.startCheckTask();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -309,6 +314,8 @@ public final class JoinListener implements Listener {
             }
 
             if (!ipEvent.isHandled()) {
+                QuitListener.tmp_clients.remove(gen_uuid);
+
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
                         if (!e.isCancelled()) {
@@ -453,14 +460,14 @@ public final class JoinListener implements Listener {
             if (event.isHandled()) {
                 e.setCancelled(true);
                 e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(event.getHandleReason())));
-                PlayerPool.delPlayer(e.getConnection().getUniqueId());
+                pool.delPlayer(e.getConnection().getUniqueId());
             } else {
                 if (tar_uuid != connection.getUniqueId()) {
                     //Making sure we update UUID for premium plugins which change UUIDs
                     tar_uuid = connection.getUniqueId();
                 }
 
-                PlayerPool.addPlayer(tar_uuid);
+                pool.addPlayer(tar_uuid);
             }
         }
     }
@@ -491,7 +498,7 @@ public final class JoinListener implements Listener {
         if (CurrentPlatform.getServer().isOnline(player.getUniqueId())) {
             switch_pool.add(player.getUniqueId());
         }
-        PlayerPool.addPlayer(player.getUniqueId());
+        pool.addPlayer(player.getUniqueId());
     }
 
     /**
