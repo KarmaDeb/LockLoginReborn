@@ -604,6 +604,7 @@ public final class Manager {
 
                     SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
                         user.restorePotionEffects();
+
                         bar.setMessage("");
                         bar.stop();
                     });

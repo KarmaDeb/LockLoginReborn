@@ -21,6 +21,7 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
@@ -102,6 +103,8 @@ public final class PanicCommand implements CommandExecutor {
 
                                         if (factory.validate(Validation.ALL)) {
                                             protection.unPanic(player.getUniqueId());
+                                            protection.success();
+
                                             session.set2FALogged(true);
                                             session.setPinLogged(true);
                                             session.setCaptchaLogged(true);

@@ -1,5 +1,9 @@
 package eu.locklogin.api.module.plugin.javamodule.server;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import eu.locklogin.api.common.utils.plugin.MessageQueue;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,10 +106,17 @@ public final class TargetServer implements Iterable<ModulePlayer> {
     /**
      * Send data to the server
      *
+     * @param sender the module that is sending the message
      * @param data the data
      */
-    public void sendMessage(final byte[] data) {
+    @SuppressWarnings("UnstableApiUsage")
+    public void sendMessage(final PluginModule sender, final byte[] data) {
+        ByteArrayDataOutput modified_out = ByteStreams.newDataOutput();
+        modified_out.writeUTF(sender.getID().toString());
+        modified_out.write(data); //Not sure if this would work...
 
+        MessageQueue queue = new MessageQueue(this);
+        queue.add(modified_out.toByteArray());
     }
 
     /**

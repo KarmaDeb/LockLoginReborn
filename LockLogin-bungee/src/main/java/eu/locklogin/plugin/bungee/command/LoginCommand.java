@@ -208,11 +208,11 @@ public final class LoginCommand extends Command {
                                         if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
                                             if (StringUtils.isNullOrEmpty(manager.getPanic())) {
                                                 protection.block(bruteForce.getBlockTime());
+                                                user.kick(messages.ipBlocked(protection.getBlockLeft()));
                                             } else {
                                                 protection.panic(player.getUniqueId());
+                                                user.kick(messages.panicMode());
                                             }
-
-                                            user.kick(messages.ipBlocked(protection.getBlockLeft()));
                                         } else {
                                             if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
                                                 protection.success();

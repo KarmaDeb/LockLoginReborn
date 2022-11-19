@@ -15,7 +15,7 @@ import org.bstats.velocity.Metrics;
 @Plugin(
         id = "locklogin",
         name = "LockLogin",
-        version = "1.13.34",
+        version = "1.13.37", //Will be also updating version. But not implementing new features/bug fixes
         authors = {"KarmaDev"},
         description =
                 "LockLogin is an advanced login plugin, one of the most secure available, with tons of features. " +

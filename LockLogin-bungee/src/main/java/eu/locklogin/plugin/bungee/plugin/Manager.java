@@ -57,7 +57,6 @@ import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
-import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
@@ -122,7 +121,6 @@ public final class Manager {
         PlayerAccount.migrateV1();
         PlayerAccount.migrateV2();
         PlayerAccount.migrateV3();
-        PlayerPool.startCheckTask();
 
         setupFiles();
         TokenGen.generate(CurrentPlatform.getProxyConfiguration().proxyKey());

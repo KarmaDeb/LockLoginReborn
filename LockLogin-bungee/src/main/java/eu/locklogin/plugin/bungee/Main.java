@@ -19,6 +19,7 @@ import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bungee.KarmaPlugin;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ProxyServer;
 
 import java.net.URL;
@@ -32,7 +33,14 @@ public final class Main extends KarmaPlugin {
 
     public Main() throws Throwable {
         super(false);
-        CurrentPlatform.setPlatform(Platform.BUNGEE);
+        try {
+            Class.forName("com.imaginarycode.minecraft.redisbungee.RedisBungee");
+            CurrentPlatform.setPlatform(Platform.REDIS);
+            console().send("RedisBungeecord has been detected. This is an experimental feature, please be DO NOT USE on a high production server", Level.WARNING);
+        } catch (Throwable ex) {
+            CurrentPlatform.setPlatform(Platform.BUNGEE);
+        }
+
         CurrentPlatform.setMain(Main.class);
 
         ChecksumTables tables = new ChecksumTables();

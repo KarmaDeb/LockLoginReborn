@@ -188,11 +188,11 @@ public final class LoginCommand implements CommandExecutor {
                                                 if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
                                                     if (StringUtils.isNullOrEmpty(manager.getPanic())) {
                                                         protection.block(bruteForce.getBlockTime());
+                                                        user.kick(messages.ipBlocked(bruteForce.getBlockTime()));
                                                     } else {
                                                         protection.panic(player.getUniqueId());
+                                                        user.kick(messages.panicMode());
                                                     }
-
-                                                    user.kick(messages.panicMode());
                                                 } else {
                                                     if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
                                                         protection.success();

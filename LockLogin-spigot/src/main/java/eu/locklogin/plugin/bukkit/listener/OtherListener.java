@@ -14,9 +14,13 @@ package eu.locklogin.plugin.bukkit.listener;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
+import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -121,6 +125,23 @@ public final class OtherListener implements Listener {
                                 e.setCancelled(true);
                             } else {
                                 e.setCancelled(to.getLocation().getY() > from.getLocation().getY());
+                            }
+
+                            if (session.isLogged()) {
+                                PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+                                if (configuration.isBungeeCord()) {
+                                    BungeeDataStorager storager = new BungeeDataStorager();
+                                    if (storager.needsPinConfirmation(player)) {
+                                        PinInventory inventory = new PinInventory(player);
+                                        inventory.open();
+                                    }
+                                } else {
+                                    AccountManager manager = user.getManager();
+                                    if (manager.hasPin() && !session.isPinLogged()) {
+                                        PinInventory inventory = new PinInventory(player);
+                                        inventory.open();
+                                    }
+                                }
                             }
                         }
                     }
