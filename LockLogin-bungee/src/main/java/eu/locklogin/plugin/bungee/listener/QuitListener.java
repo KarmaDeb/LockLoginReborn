@@ -37,13 +37,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class QuitListener implements Listener {
 
-    private final static Set<UUID> kicked = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<UUID> kicked = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    static final Set<UUID> tmp_clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuit(PlayerDisconnectEvent e) {
         ProxiedPlayer player = e.getPlayer();
         if (!kicked.contains(player.getUniqueId())) {
             if (!player.isConnected()) {
+                tmp_clients.remove(player.getUniqueId());
+
                 User user = new User(player);
                 if (user.getChecker().isUnderCheck()) {
                     user.getChecker().cancelCheck();
@@ -72,6 +75,8 @@ public final class QuitListener implements Listener {
 
                 Event event = new UserQuitEvent(user.getModule(), e);
                 ModulePlugin.callEvent(event);
+
+                JoinListener.switch_pool.remove(player.getUniqueId());
             }
         } else {
             kicked.remove(player.getUniqueId());
@@ -84,6 +89,7 @@ public final class QuitListener implements Listener {
 
         if (!player.isConnected()) {
             kicked.add(player.getUniqueId());
+            tmp_clients.remove(player.getUniqueId());
 
             User user = new User(player);
             if (user.getChecker().isUnderCheck()) {
@@ -106,6 +112,8 @@ public final class QuitListener implements Listener {
 
             Event event = new UserQuitEvent(user.getModule(), e);
             ModulePlugin.callEvent(event);
+
+            JoinListener.switch_pool.remove(player.getUniqueId());
         }
     }
 }

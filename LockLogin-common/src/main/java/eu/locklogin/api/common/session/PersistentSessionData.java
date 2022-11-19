@@ -22,12 +22,14 @@ import ml.karmaconfigs.api.common.karma.APISource;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * LockLogin persistent session data
@@ -48,6 +50,9 @@ public final class PersistentSessionData {
      */
     public PersistentSessionData(final AccountID uuid) {
         id = uuid;
+
+        if (!sessions.exists())
+            sessions.create();
     }
 
     /**
@@ -95,7 +100,6 @@ public final class PersistentSessionData {
 
             if (element.isArray()) {
                 KarmaArray array = element.getArray();
-
                 KarmaObject d = new KarmaObject(id.getId());
 
                 if (array.contains(d)) {
@@ -108,37 +112,12 @@ public final class PersistentSessionData {
                 sessions.set("persistent", array);
                 sessions.save();
             }
-        }
+        } else {
+            KarmaArray array = new KarmaArray();
+            array.add(new KarmaObject(id.getId()));
 
-        return result;
-    }
-
-    /**
-     * Toggle the account panic mode
-     *
-     * @return the account panic mode
-     */
-    public boolean togglePanic() {
-        boolean result = false;
-
-        if (sessions.isSet("panic")) {
-            KarmaElement element = sessions.get("panic");
-
-            if (element.isArray()) {
-                KarmaArray array = element.getArray();
-
-                KarmaObject d = new KarmaObject(id.getId());
-
-                if (array.contains(d)) {
-                    array.remove(d);
-                } else {
-                    array.add(d);
-                    result = true;
-                }
-
-                sessions.set("panic", array);
-                sessions.save();
-            }
+            sessions.set("persistent", array);
+            return sessions.save();
         }
 
         return result;
@@ -163,20 +142,51 @@ public final class PersistentSessionData {
     }
 
     /**
-     * Get if the user account is panicking
+     * Set the current session id
      *
-     * @return if the user account is panicking
+     * @param session_id the new session id
+     * @return the session id
      */
-    public boolean isPanicking() {
-        if (sessions.isSet("panic")) {
-            KarmaElement element = sessions.get("panic");
+    public boolean setSessionId(final AccountID session_id) {
+        KarmaKeyArray map = new KarmaKeyArray();
+        if (sessions.isSet("sessions")) {
+            KarmaElement element = sessions.get("sessions");
+            if (element.isKeyArray())
+                map = element.getKeyArray();
+        }
 
-            if (element.isArray()) {
-                KarmaArray array = element.getArray();
-                return array.contains(new KarmaObject(id.getId()));
+        map.add(id.getId(), new KarmaObject(session_id.getId()), true);
+        sessions.set("sessions", map);
+        return sessions.save();
+    }
+
+    /**
+     * Get the client current session name
+     *
+     * @return the client session name
+     */
+    public AccountID sessionId() {
+        if (sessions.isSet("sessions")) {
+            KarmaElement element = sessions.get("sessions");
+
+            if (element.isKeyArray()) {
+                KarmaKeyArray map = element.getKeyArray();
+
+                for (String key : map.getKeys()) {
+                    if (key.equals(id.getId())) {
+                        KarmaElement valueElement = map.get(key);
+                        if (valueElement.isObject()) {
+                            KarmaObject object = valueElement.getObjet();
+                            if (object.isString()) {
+                                String value = object.getString();
+                                return AccountID.fromUUID(UUID.nameUUIDFromBytes(("LockLoginAccount: " + value).getBytes()));
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        return false;
+        return id;
     }
 }

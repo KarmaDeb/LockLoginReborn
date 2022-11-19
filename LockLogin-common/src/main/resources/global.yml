@@ -13,30 +13,30 @@ project_urls:
   ml:
     karmaconfigs:
       safe: true
-      target: "/locklogin/"
-      checksum: "checksum/{0}/checksum.lldb"
-      version: "version/"
-      dependency: "repository/{0}/"
-      update: "version/{0}/LockLogin.jar"
+      target: "/locklogin"
+      checksum: "/checksum/{0}/checksum.lldb"
+      version: "/version/"
+      dependency: "-repository/{0}/"
+      update: "/version/{0}/LockLogin.jar"
       alternative:
         - "backup"
     karmarepo:
       safe: true
-      target: "/locklogin/"
-      checksum: "checksum/{0}/checksum.lldb"
-      version: "version/"
-      dependency: "repository/{0}/"
-      update: "version/{0}/LockLogin.jar"
+      target: "/locklogin"
+      checksum: "/checksum/{0}/checksum.lldb"
+      version: "/version/"
+      dependency: "-repository/{0}/"
+      update: "/version/{0}/LockLogin.jar"
       alternative:
         - "backup"
   es:
     karmadev:
       safe: true
-      target: "/locklogin/"
-      checksum: "checksum/{0}/checksum.lldb"
-      version: "version/"
-      dependency: "repository/{0}/"
-      update: "version/{0}/LockLogin.jar"
+      target: "/locklogin"
+      checksum: "/checksum/{0}/checksum.lldb"
+      version: "/version/"
+      dependency: "-repository/{0}/"
+      update: "/version/{0}/LockLogin.jar"
       alternative:
         - "backup"
   io:

@@ -17,12 +17,17 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
@@ -37,6 +42,7 @@ import java.net.SocketAddress;
 import java.util.List;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @SystemCommand(command = "panic")
 public final class PanicCommand extends Command {
@@ -106,6 +112,8 @@ public final class PanicCommand extends Command {
 
                                     if (factory.validate(Validation.ALL)) {
                                         protection.unPanic(player.getUniqueId());
+                                        protection.success();
+
                                         session.set2FALogged(true);
                                         session.setPinLogged(true);
                                         session.setCaptchaLogged(true);
@@ -124,6 +132,27 @@ public final class PanicCommand extends Command {
                                         user.send(component);
 
                                         manager.setPanic(password);
+
+                                        protection.success();
+
+                                        user.restorePotionEffects();
+
+                                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
+
+                                        DataSender.send(player, pin);
+                                        DataSender.send(player, gauth);
+                                        DataSender.send(player, login);
+
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                                                UserAuthenticateEvent.Result.SUCCESS,
+                                                user.getModule(),
+                                                messages.logged(),
+                                                null);
+                                        ModulePlugin.callEvent(event);
+
+                                        user.checkServer(0);
                                     } else {
                                         protection.block(config.bruteForceOptions().getBlockTime());
                                         user.kick(messages.ipBlocked(protection.getBlockLeft()));

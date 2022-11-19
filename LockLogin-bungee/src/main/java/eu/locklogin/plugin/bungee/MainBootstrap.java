@@ -67,21 +67,23 @@ public class MainBootstrap {
 
     public void enable() {
         for (Dependency pluginDependency : Dependency.values()) {
-            PluginDependency dependency = pluginDependency.getAsDependency();
+            if (!pluginDependency.equals(Dependency.APACHE_COMMONS)) {
+                PluginDependency dependency = pluginDependency.getAsDependency();
 
-            if (FileInfo.showChecksums(null)) {
-                console.send("&7----------------------");
-                console.send("");
-                console.send("&bDependency: &3{0}", dependency.getName());
-                console.send("&bType&8/&eCurrent&8/&aFetched");
-                console.send("&bAdler32 &8- {0} &8- &a{1}", dependency.getAdlerCheck(), ChecksumTables.getAdler(dependency));
-                console.send("&bCRC32 &8- {0} &8- &a{1}", dependency.getCRCCheck(), ChecksumTables.getCRC(dependency));
-                console.send("");
-                console.send("&7----------------------");
+                if (FileInfo.showChecksums(null)) {
+                    console.send("&7----------------------");
+                    console.send("");
+                    console.send("&bDependency: &3{0}", dependency.getName());
+                    console.send("&bType&8/&eCurrent&8/&aFetched");
+                    console.send("&bAdler32 &8- {0} &8- &a{1}", dependency.getAdlerCheck(), ChecksumTables.getAdler(dependency));
+                    console.send("&bCRC32 &8- {0} &8- &a{1}", dependency.getCRCCheck(), ChecksumTables.getCRC(dependency));
+                    console.send("");
+                    console.send("&7----------------------");
+                }
+
+                JarManager manager = new JarManager(dependency);
+                manager.process(false);
             }
-
-            JarManager manager = new JarManager(dependency);
-            manager.process(false);
         }
         JarManager.downloadAll();
         DependencyManager.loadDependencies();
@@ -98,15 +100,6 @@ public class MainBootstrap {
                     DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
                 }
             });
-
-            /*
-            I think KarmaAPI default's prefix is better
-
-            console.getData().setOkPrefix("&aOk &e>> &7");
-            console.getData().setInfoPrefix("&7Info &e>> &7");
-            console.getData().setWarnPrefix("&6Warning &e>> &7");
-            console.getData().setGravePrefix("&4Grave &e>> &7");
-             */
 
             Consumer<MessageSender> onMessage = messageSender -> {
                 if (messageSender.getSender() instanceof ModulePlayer) {
@@ -268,10 +261,6 @@ public class MainBootstrap {
             Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
             ModulePlugin.callEvent(event);
 
-            AllowedCommand.scan();
-
-            Manager.initialize();
-
             if (moduleFiles != null) {
                 List<File> files = Arrays.asList(moduleFiles);
                 Iterator<File> iterator = files.iterator();
@@ -280,6 +269,9 @@ public class MainBootstrap {
                     LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
                 } while (iterator.hasNext());
             }
+
+            AllowedCommand.scan();
+            Manager.initialize();
         });
     }
 

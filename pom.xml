@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.34</version>
+    <version>1.13.37</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -50,9 +50,9 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.manager>v7</project.manager>
         <!-- This is more efficient than having checksum per version -->
-        <project.checksum>v2</project.checksum>
+        <project.checksum>v3</project.checksum>
         <!-- Now using my own repository host, let's goooo -->
-        <project.repository>v1</project.repository>
+        <project.repository>v2</project.repository>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.properties.version>1.0.4</project.properties.version>
         <project.name>LockLogin</project.name>

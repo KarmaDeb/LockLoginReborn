@@ -318,7 +318,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
      *
      * @param page the page
      */
-    public final void openPage(int page) {
+    public void openPage(int page) {
         player.openInventory(pages.get(page));
         playerPage.put(player.getUniqueId(), page);
     }
@@ -328,7 +328,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
      *
      * @return a integer
      */
-    public final int getPlayerPage() {
+    public int getPlayerPage() {
         if (player != null) {
             if (playerPage.get(player.getUniqueId()) != null) {
                 return playerPage.get(player.getUniqueId());
@@ -346,7 +346,7 @@ public final class PlayersInfoInventory implements InventoryHolder {
      * @return an integer
      */
 
-    public final int getPages() {
+    public int getPages() {
         return pages.size();
     }
 

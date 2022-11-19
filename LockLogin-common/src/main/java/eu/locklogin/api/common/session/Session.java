@@ -14,6 +14,7 @@ package eu.locklogin.api.common.session;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -28,6 +29,8 @@ import java.time.Instant;
  * LockLogin default session manager
  */
 public final class Session extends ClientSession {
+
+    private AccountID name;
 
     private Instant initialized;
 
@@ -44,9 +47,16 @@ public final class Session extends ClientSession {
 
     /**
      * Initialize the session
+     * <p>
+     * In this process, the captcha an instant
+     * are generated, with boolean values ( all
+     * should be false by default)
+     *
+     * @param ss_name the session name
      */
     @Override
-    public void initialize() {
+    public void initialize(final AccountID ss_name) {
+        name = ss_name;
         initialized = Instant.now();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -80,6 +90,16 @@ public final class Session extends ClientSession {
     @Override
     public void invalidate() {
         bungee_verified = false;
+    }
+
+    /**
+     * Get the session name
+     *
+     * @return the session name
+     */
+    @Override
+    public AccountID getName() {
+        return name;
     }
 
     /**

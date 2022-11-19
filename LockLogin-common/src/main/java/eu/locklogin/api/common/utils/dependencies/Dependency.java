@@ -41,11 +41,11 @@ public enum Dependency {
     /**
      * LockLogin dependency
      */
-    GSON,
-    /**
-     * LockLogin dependency
-     */
     REMOTE,
+    /**
+     * LockLogin 1.7.10 dependency
+     */
+    APACHE_COMMONS,
     /**
      * LockLogin dependency
      */
@@ -59,8 +59,6 @@ public enum Dependency {
      */
     @NotNull
     public PluginDependency getAsDependency() {
-        //I should create a repository for LockLogin dependencies, this is not a good practice
-
         switch (this) {
             case GOOGLE_AUTHENTICATOR:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "GoogleAuthenticator.jar"), true);
@@ -70,10 +68,10 @@ public enum Dependency {
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Log4jWeb.jar"), true);
             case GUAVA:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Guava.jar"), true);
-            case GSON:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Gson.jar"), true);
             case REMOTE:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "RemoteMessaging.jar"), true);
+            case APACHE_COMMONS:
+                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "ApacheCommons.jar"), true);
             case MANAGER:
             default:
                 String version = FileInfo.getManagerVersion(null);
@@ -91,10 +89,10 @@ public enum Dependency {
                 return "Log4j Web";
             case GUAVA:
                 return "Google Guava";
-            case GSON:
-                return "Google Gson";
             case REMOTE:
                 return "Remote Messaging";
+            case APACHE_COMMONS:
+                return "Apache Commons";
             case MANAGER:
             default:
                 return "LockLoginManager";

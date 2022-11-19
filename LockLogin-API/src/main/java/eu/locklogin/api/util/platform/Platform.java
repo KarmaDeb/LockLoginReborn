@@ -28,6 +28,12 @@ public enum Platform {
     BUNGEE,
     /**
      * Velocity platform
+     * @deprecated Support dropped
      */
-    VELOCITY
+    @Deprecated
+    VELOCITY,
+    /**
+     * RedisBungeecord platform
+     */
+    REDIS
 }

@@ -25,6 +25,8 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.bukkit.server.BukkitServer;
+import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -78,7 +80,14 @@ public class MainBootstrap {
             }
 
             JarManager manager = new JarManager(dependency);
-            manager.process(false);
+            if (pluginDependency.equals(Dependency.APACHE_COMMONS)) {
+                if (BukkitServer.isUnder(Version.v1_8)) {
+                    manager.process(false);
+                    console.send("Apache Commons will be downloaded because your server version is too low. Please consider updating to at least 1.8", Level.GRAVE);
+                }
+            } else {
+                manager.process(false);
+            }
         }
         JarManager.downloadAll();
         DependencyManager.loadDependencies();
@@ -230,18 +239,17 @@ public class MainBootstrap {
         Event event = new PluginStatusChangeEvent(PluginStatusChangeEvent.Status.LOAD, null);
         ModulePlugin.callEvent(event);
 
-        AllowedCommand.scan();
-
-        Manager.initialize();
-
-        /*if (moduleFiles != null) {
+        if (moduleFiles != null) {
             List<File> files = Arrays.asList(moduleFiles);
             Iterator<File> iterator = files.iterator();
             do {
                 File file = iterator.next();
                 LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
             } while (iterator.hasNext());
-        }*/
+        }
+
+        AllowedCommand.scan();
+        Manager.initialize();
     }
 
     public void disable() {

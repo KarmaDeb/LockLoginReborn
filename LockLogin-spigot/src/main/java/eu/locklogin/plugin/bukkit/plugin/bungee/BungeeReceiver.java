@@ -8,6 +8,7 @@ import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
@@ -22,6 +23,7 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,18 +131,27 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     switch (pin_sub.toLowerCase()) {
                                         case "open":
                                             if (!session.isPinLogged()) {
-                                                PinInventory pin = new PinInventory(player);
-                                                pin.open();
+                                                plugin.sync().queue("open_pin", () -> {
+                                                    PinInventory pin = new PinInventory(player);
+                                                    pin.open();
+                                                });
                                             }
+
                                             storager.setPinConfirmation(player, true);
                                             break;
                                         case "close":
-                                            if (player.getOpenInventory().getTopInventory().getHolder() instanceof PinInventory) {
-                                                PinInventory inventory = new PinInventory(player);
-                                                inventory.close();
-                                            }
-                                            session.setPinLogged(true);
-                                            storager.setPinConfirmation(player, false);
+                                            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                                session.setPinLogged(true);
+                                                storager.setPinConfirmation(player, false);
+
+                                                InventoryView view = player.getOpenInventory();
+                                                PluginMessages messages = CurrentPlatform.getMessages();
+
+                                                if (StringUtils.stripColor(view.getTitle()).equals(StringUtils.stripColor(messages.pinTitle()))) {
+                                                    PinInventory inventory = new PinInventory(player);
+                                                    inventory.close();
+                                                }
+                                            });
                                             break;
                                         default:
                                             logger.scheduleLog(Level.GRAVE, "Unknown pin sub channel: " + pin_sub);

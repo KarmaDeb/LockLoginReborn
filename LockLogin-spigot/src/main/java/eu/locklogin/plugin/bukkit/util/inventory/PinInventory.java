@@ -18,6 +18,7 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -26,10 +27,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -44,10 +43,11 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
  */
 public final class PinInventory implements InventoryHolder {
 
-    private final static HashMap<Player, String> input = new HashMap<>();
-    private final static Map<UUID, PinInventory> inventories = new HashMap<>();
-    private final Player player;
+    private final static Map<UUID, String> input = new ConcurrentHashMap<>();
+    private final static Map<UUID, PinInventory> inventories = new ConcurrentHashMap<>();
     private final Inventory inventory;
+
+    private Player player;
 
     /**
      * Initialize the pin inventory for
@@ -56,9 +56,10 @@ public final class PinInventory implements InventoryHolder {
      * @param _player the player
      */
     public PinInventory(final Player _player) {
-        if (!inventories.containsKey(_player.getUniqueId())) {
-            player = _player;
+        player = _player;
+        PinInventory stored = inventories.getOrDefault(_player.getUniqueId(), null);
 
+        if (stored == null) {
             PluginMessages messages = CurrentPlatform.getMessages();
 
             String title = StringUtils.toColor(messages.pinTitle());
@@ -68,8 +69,12 @@ public final class PinInventory implements InventoryHolder {
             inventory = plugin.getServer().createInventory(this, 45, title);
             inventories.put(_player.getUniqueId(), this);
         } else {
-            player = inventories.get(_player.getUniqueId()).player;
-            inventory = inventories.get(_player.getUniqueId()).inventory;
+            if (!stored.player.equals(player)) {
+                stored.player = player;
+                inventories.put(_player.getUniqueId(), stored); //No really need for that, but we will do it anyway
+            }
+
+            inventory = stored.inventory;
         }
     }
 
@@ -106,7 +111,7 @@ public final class PinInventory implements InventoryHolder {
     @NotNull
     @Override
     public Inventory getInventory() {
-        return inventory;
+        return inventories.getOrDefault(player.getUniqueId(), this).inventory;
     }
 
     /**
@@ -114,8 +119,13 @@ public final class PinInventory implements InventoryHolder {
      */
     public synchronized void open() {
         trySync(TaskTarget.INVENTORY, () -> {
-            makeInventory();
-            player.openInventory(inventory);
+            InventoryView view = player.getOpenInventory();
+            PluginMessages messages = CurrentPlatform.getMessages();
+
+            if (!StringUtils.toColor(view.getTitle()).equals(StringUtils.toColor(messages.pinTitle()))) {
+                makeInventory();
+                player.openInventory(inventory);
+            }
         });
     }
 
@@ -123,12 +133,9 @@ public final class PinInventory implements InventoryHolder {
      * Close the inventory to the player
      */
     public void close() {
-        if (player != null && player.isOnline()) {
-            player.getInventory();
-            player.closeInventory();
-
-            inventories.remove(player.getUniqueId());
-        }
+        inventories.remove(player.getUniqueId());
+        List<HumanEntity> cloned = new ArrayList<>(inventory.getViewers()); //Prevent concurrent modifications
+        cloned.forEach(HumanEntity::closeInventory);
     }
 
     /**
@@ -143,9 +150,9 @@ public final class PinInventory implements InventoryHolder {
         PluginMessages messages = CurrentPlatform.getMessages();
 
         if (session.isValid()) {
-            if (!input.getOrDefault(player, "/-/-/-/").contains("/")) {
+            if (!input.getOrDefault(player.getUniqueId(), "/-/-/-/").contains("/")) {
                 if (!config.isBungeeCord()) {
-                    String pin = input.get(player).replaceAll("-", "");
+                    String pin = input.get(player.getUniqueId()).replaceAll("-", "");
 
                     CryptoFactory utils = CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build();
                     if (utils.validate(Validation.ALL)) {
@@ -202,13 +209,14 @@ public final class PinInventory implements InventoryHolder {
                         user.send(messages.prefix() + event.getAuthMessage());
                     }
 
-                    input.put(player, "/-/-/-/");
+                    input.put(player.getUniqueId(), "/-/-/-/");
                     updateInput();
                 } else {
-                    String pinText = input.get(player).replaceAll("-", "");
+                    String pinText = input.get(player.getUniqueId()).replaceAll("-", "");
                     BungeeSender.sendPinInput(player, pinText);
 
-                    input.put(player, "/-/-/-/");
+                    input.put(player.getUniqueId(), "/-/-/-/");
+                    updateInput();
                 }
             } else {
                 user.send(messages.prefix() + messages.pinLength());
@@ -225,7 +233,7 @@ public final class PinInventory implements InventoryHolder {
     public void eraseInput() {
         String finalNew = "/-/-/-/";
 
-        String[] current = input.getOrDefault(player, "/-/-/-/").split("-");
+        String[] current = input.getOrDefault(player.getUniqueId(), "/-/-/-/").split("-");
         String first = current[0];
         String second = current[1];
         String third = current[2];
@@ -247,8 +255,7 @@ public final class PinInventory implements InventoryHolder {
             }
         }
 
-        input.put(player, finalNew);
-
+        input.put(player.getUniqueId(), finalNew);
         updateInput();
     }
 
@@ -256,13 +263,7 @@ public final class PinInventory implements InventoryHolder {
      * Update the player inventory input
      */
     public void updateInput() {
-        InventoryView open = player.getOpenInventory();
-        Inventory target = open.getTopInventory();
-
-        if (!(target.getHolder() instanceof PinInventory)) target = open.getBottomInventory();
-        if (target.getHolder() instanceof PinInventory) {
-            target.setItem(25, getInput());
-        }
+        inventory.setItem(25, getInput());
     }
 
     /**
@@ -276,7 +277,7 @@ public final class PinInventory implements InventoryHolder {
         ItemMeta paperMeta = paper.getItemMeta();
         assert paperMeta != null;
 
-        paperMeta.setDisplayName(StringUtils.toColor("&c" + input.getOrDefault(player, "/-/-/-/")));
+        paperMeta.setDisplayName(StringUtils.toColor("&c" + input.getOrDefault(player.getUniqueId(), "/-/-/-/")));
 
         paper.setItemMeta(paperMeta);
 
@@ -291,8 +292,8 @@ public final class PinInventory implements InventoryHolder {
     public void addInput(final String newInput) {
         String finalNew;
 
-        if (input.getOrDefault(player, "/-/-/-/").contains("/")) {
-            String[] current = input.getOrDefault(player, "/-/-/-/").split("-");
+        if (input.getOrDefault(player.getUniqueId(), "/-/-/-/").contains("/")) {
+            String[] current = input.getOrDefault(player.getUniqueId(), "/-/-/-/").split("-");
             String first = current[0];
             String second = current[1];
             String third = current[2];
@@ -312,7 +313,7 @@ public final class PinInventory implements InventoryHolder {
                 }
             }
 
-            input.put(player, finalNew);
+            input.put(player.getUniqueId(), finalNew);
         }
     }
 
