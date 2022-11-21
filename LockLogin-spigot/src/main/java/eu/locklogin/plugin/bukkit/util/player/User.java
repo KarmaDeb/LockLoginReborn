@@ -15,6 +15,7 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
+import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -123,7 +124,7 @@ public final class User {
                         plugin.getPluginLoader().disablePlugin(plugin);
                         throw new IllegalStateException("Cannot initialize user with a null session manager");
                     } else {
-                        session.initialize(ClientSession.DEFAULT);
+                        session.initialize();
 
                         InetSocketAddress ip = player.getAddress();
 

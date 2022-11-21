@@ -21,13 +21,12 @@ import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 /**
  * Client visor class.
- *
+ * <p>
  * NOTE: 10/05/22 - 01:28
  * HOPE THIS UPDATE WORKS, I DON'T KNOW HOW MANY TIMES
  * I'VE UPDATED THIS CODE AND STILL GIVING BUGS. PLEASE
@@ -37,7 +36,6 @@ import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 public final class ClientVisor {
 
     private final Player player;
-    private final Map<UUID, Set<UUID>> locklogin_vanished = new HashMap<>();
 
     /**
      * Initialize the client visor
@@ -82,15 +80,25 @@ public final class ClientVisor {
                         User tmp = new User(online);
                         ClientSession tmpSession = tmp.getSession();
 
+                        //If the other player is logged in, and the current player is also logged in, we will now show the client
                         if (tmpSession.isLogged() && tmpSession.isTempLogged()) {
                             show(online, player);
                             show(player, online);
+                        } else {
+                            //Otherwise, if the non logged player can see the logged player or vice versa, we will hide them
+                            if (online.canSee(player)) {
+                                hide(online, player);
+                            }
+                            if (player.canSee(online)) {
+                                hide(player, online);
+                            }
                         }
                     }
                 });
 
                 scheduler.cancel();
             } else {
+                //Simple, hide client from everyone, and everyone from the client
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     for (Player online : plugin.getServer().getOnlinePlayers()) {
                         if (player.canSee(online)) {
@@ -113,6 +121,7 @@ public final class ClientVisor {
      * next time he joins the server.
      */
     public void forceView() {
+        //Force everyone to see the player, usually called when the client disconnects to prevent bugs
         for (Player online : plugin.getServer().getOnlinePlayers()) {
             show(online, player);
             show(player, online);
@@ -126,17 +135,10 @@ public final class ClientVisor {
      * @param target the target player
      */
     private void hide(final Player origin, final Player target) {
-        if (!canSee(origin, target)) {
-            try {
-                origin.hidePlayer(target);
-            } catch (Throwable ex) {
-                origin.hidePlayer(plugin, target);
-            }
-
-            Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
-            vanished.add(target.getUniqueId());
-
-            locklogin_vanished.put(origin.getUniqueId(), vanished);
+        try {
+            origin.hidePlayer(target);
+        } catch (Throwable ex) {
+            origin.hidePlayer(plugin, target);
         }
     }
 
@@ -147,30 +149,11 @@ public final class ClientVisor {
      * @param target the target player
      */
     private void show(final Player origin, final Player target) {
-        if (canSee(origin, target)) {
-            try {
-                origin.showPlayer(target);
-            } catch (Throwable ex) {
-                //Thanks spigot :)
-                origin.showPlayer(plugin, target);
-            }
-
-            Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
-            vanished.remove(target.getUniqueId());
-
-            locklogin_vanished.put(origin.getUniqueId(), vanished);
+        try {
+            origin.showPlayer(target);
+        } catch (Throwable ex) {
+            //Thanks spigot :)
+            origin.showPlayer(plugin, target);
         }
-    }
-
-    /**
-     * Get if the player can see the target player
-     *
-     * @param origin the player
-     * @param target the target player
-     * @return if the player can see the target
-     */
-    private boolean canSee(final Player origin, final Player target) {
-        Set<UUID> vanished = locklogin_vanished.getOrDefault(origin.getUniqueId(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
-        return !vanished.contains(target.getUniqueId());
     }
 }

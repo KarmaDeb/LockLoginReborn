@@ -28,6 +28,7 @@ import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.plugin.bukkit.util.player.UserDatabase;
+import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import org.bukkit.entity.Player;
@@ -37,6 +38,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -52,11 +55,13 @@ public final class QuitListener implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
         if (!kicked.contains(player.getUniqueId())) {
+            User user = new User(player);
+            ClientSession session = user.getSession();
+
             LateScheduler<Event> result = new AsyncLateScheduler<>();
 
             tryAsync(TaskTarget.EVENT, () -> {
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
-                User user = new User(player);
 
                 if (!config.isBungeeCord()) {
                     if (user.getChecker().isUnderCheck()) {
@@ -78,7 +83,6 @@ public final class QuitListener implements Listener {
                             last_loc.save();
                         }
 
-                        ClientSession session = user.getSession();
                         session.invalidate();
                         session.setLogged(false);
                         session.setPinLogged(false);
@@ -99,8 +103,6 @@ public final class QuitListener implements Listener {
                 } else {
                     //This is exactly the same as done with "DataType.QUIT" in BungeeListener but in a "safe" mode
                     if (user.isLockLoginUser()) {
-                        ClientSession session = user.getSession();
-
                         //Last location will be always saved since if the server
                         //owner wants to enable it, it would be good to see
                         //the player last location has been stored to avoid

@@ -96,6 +96,7 @@ public final class PluginPermissions {
         permission.addChildren(new AdvancedPermission("locklogin.account.close", PermissionDefault.FALSE, true));
         permission.addChildren(new AdvancedPermission("locklogin.account.remove", PermissionDefault.FALSE, true));
         permission.addChildren(new AdvancedPermission("locklogin.account.unlock", PermissionDefault.FALSE, true));
+        permission.addParent(new AdvancedPermission("locklogin.account.switch", PermissionDefault.OP, false));
 
         return permission;
     }
@@ -117,6 +118,13 @@ public final class PluginPermissions {
     public static PermissionObject account_unlock() {
         PermissionObject permission = new AdvancedPermission("locklogin.account.unlock", PermissionDefault.FALSE, true);
         permission.addParent(new AdvancedPermission("locklogin.account.unlock"));
+
+        return permission;
+    }
+
+    public static PermissionObject session_switch() {
+        PermissionObject permission = new AdvancedPermission("locklogin.account.switch", PermissionDefault.OP, false);
+        permission.addParent(new AdvancedPermission("locklogin.account"));
 
         return permission;
     }

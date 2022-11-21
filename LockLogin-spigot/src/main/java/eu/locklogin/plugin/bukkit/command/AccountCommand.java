@@ -50,7 +50,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,7 +86,7 @@ public class AccountCommand implements CommandExecutor {
                 if (args.length == 0) {
                     user.send(messages.prefix() + messages.accountArguments());
                 } else {
-                    ClientSession session;
+                    ClientSession session = user.getSession();
                     switch (args[0].toLowerCase()) {
                         case "change":
                             if (args.length == 3) {
@@ -140,6 +139,9 @@ public class AccountCommand implements CommandExecutor {
                             } else {
                                 user.send(messages.prefix() + messages.change());
                             }
+                            break;
+                        case "sync":
+                            //TODO: Synchronize player account with an account in the panel
                             break;
                         case "unlock":
                             if (user.hasPermission(PluginPermissions.account_unlock())) {
@@ -308,15 +310,15 @@ public class AccountCommand implements CommandExecutor {
                                         CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                         if (util.validate(Validation.ALL)) {
                                             if (!manager.getPanic().isEmpty()) {
-                                                String stored = this.confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                String stored = AccountCommand.confirmation.getOrDefault(player.getUniqueId().toString(), null);
                                                 if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
                                                     user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
-                                                    this.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
+                                                    AccountCommand.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
                                                     return false;
                                                 }
                                             }
 
-                                            this.confirmation.remove(player.getUniqueId().toString());
+                                            AccountCommand.confirmation.remove(player.getUniqueId().toString());
                                             user.send(messages.prefix() + messages.accountRemoved());
                                             manager.remove(player.getName());
 

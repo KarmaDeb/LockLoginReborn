@@ -16,6 +16,7 @@ package eu.locklogin.api.common.session;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.APISource;
@@ -139,54 +140,5 @@ public final class PersistentSessionData {
         }
 
         return false;
-    }
-
-    /**
-     * Set the current session id
-     *
-     * @param session_id the new session id
-     * @return the session id
-     */
-    public boolean setSessionId(final AccountID session_id) {
-        KarmaKeyArray map = new KarmaKeyArray();
-        if (sessions.isSet("sessions")) {
-            KarmaElement element = sessions.get("sessions");
-            if (element.isKeyArray())
-                map = element.getKeyArray();
-        }
-
-        map.add(id.getId(), new KarmaObject(session_id.getId()), true);
-        sessions.set("sessions", map);
-        return sessions.save();
-    }
-
-    /**
-     * Get the client current session name
-     *
-     * @return the client session name
-     */
-    public AccountID sessionId() {
-        if (sessions.isSet("sessions")) {
-            KarmaElement element = sessions.get("sessions");
-
-            if (element.isKeyArray()) {
-                KarmaKeyArray map = element.getKeyArray();
-
-                for (String key : map.getKeys()) {
-                    if (key.equals(id.getId())) {
-                        KarmaElement valueElement = map.get(key);
-                        if (valueElement.isObject()) {
-                            KarmaObject object = valueElement.getObjet();
-                            if (object.isString()) {
-                                String value = object.getString();
-                                return AccountID.fromUUID(UUID.nameUUIDFromBytes(("LockLoginAccount: " + value).getBytes()));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return id;
     }
 }

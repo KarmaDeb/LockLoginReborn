@@ -61,7 +61,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                     ClientSession session = user.getSession();
                     PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-
                     switch (channel.toLowerCase()) {
                         case "ll:account":
                             switch (sub) {
