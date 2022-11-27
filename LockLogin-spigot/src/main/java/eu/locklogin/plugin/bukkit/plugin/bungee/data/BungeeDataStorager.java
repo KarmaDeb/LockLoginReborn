@@ -74,9 +74,11 @@ public final class BungeeDataStorager {
     public String getServerName() {
         if (!StringUtils.isNullOrEmpty(serverName)) {
             return serverName;
-        } else {
+        }/* else {
             return TokenGen.requestNode();
-        }
+        }*/
+
+        return StringUtils.generateString().create();
     }
 
     /**

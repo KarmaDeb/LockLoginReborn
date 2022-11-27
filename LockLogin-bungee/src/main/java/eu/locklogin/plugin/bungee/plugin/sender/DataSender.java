@@ -13,10 +13,12 @@ package eu.locklogin.plugin.bungee.plugin.sender;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
+import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.HashType;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
@@ -45,6 +47,9 @@ public final class DataSender {
     private final static Set<MessagePool> auto_data_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final static SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
+
+    @SuppressWarnings("FieldMayBeFinal")
+    private static String com = "";
 
     /**
      * Initialize the data sender
@@ -141,14 +146,14 @@ public final class DataSender {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                            String token = TokenGen.request("local_token", proxy.proxyKey());
+                            /*String token = TokenGen.request("local_token", proxy.proxyKey());
                             if (token == null) {
                                 TokenGen.generate(proxy.proxyKey());
                                 token = TokenGen.request("local_token", proxy.proxyKey());
                                 assert token != null;
-                            }
+                            }*/
 
-                            output.writeUTF(token);
+                            output.writeUTF(com);
                             output.writeUTF(proxy.getProxyID().toString());
                             output.writeUTF(DataType.LISTENER.name().toLowerCase());
                             output.writeUTF(channel);
@@ -205,19 +210,19 @@ public final class DataSender {
          */
         MessageDataBuilder(final DataType data, final ProxiedPlayer owner) {
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
-            String token = TokenGen.request("local_token", proxy.proxyKey());
+            /*String token = TokenGen.request("local_token", proxy.proxyKey());
             if (token == null) {
                 TokenGen.generate(proxy.proxyKey());
                 token = TokenGen.request("local_token", proxy.proxyKey());
                 assert token != null;
-            }
+            }*/
 
             if (owner != null) {
                 output.writeUTF(owner.getUniqueId().toString());
             } else {
                 output.writeUTF(UUID.randomUUID().toString());
             }
-            output.writeUTF(token);
+            output.writeUTF(com);
             output.writeUTF(proxy.getProxyID().toString());
             output.writeUTF(data.name().toLowerCase());
         }
@@ -271,6 +276,17 @@ public final class DataSender {
         }
 
         /**
+         * Add other message to the final data
+         *
+         * @param data the message
+         * @return this instance
+         */
+        public final MessageDataBuilder writeOther(final byte[] data) {
+            output.write(data);
+            return this;
+        }
+
+        /**
          * Build the message
          *
          * @return the built message data
@@ -316,5 +332,15 @@ public final class DataSender {
         public final String getChannel() {
             return channel;
         }
+    }
+
+    /**
+     * Validate the com hash
+     *
+     * @param hash the communication hash
+     * @return if the com has is valid
+     */
+    public static boolean validate(final String hash) {
+        return CryptoFactory.getBuilder().withPassword(com).withToken(hash).build().validate(Validation.ALL);
     }
 }

@@ -2,7 +2,6 @@ package eu.locklogin.api.module.plugin.javamodule.server;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +24,8 @@ public final class TargetServer implements Iterable<ModulePlayer> {
 
     @SuppressWarnings("FieldMayBeFinal")
     private static BiConsumer<String, Set<ModulePlayer>> onPlayers = null;
+    @SuppressWarnings("FieldMayBeFinal")
+    private static MessageQue que = null;
 
     /**
      * LockLogin module server
@@ -111,12 +112,13 @@ public final class TargetServer implements Iterable<ModulePlayer> {
      */
     @SuppressWarnings("UnstableApiUsage")
     public void sendMessage(final PluginModule sender, final byte[] data) {
-        ByteArrayDataOutput modified_out = ByteStreams.newDataOutput();
-        modified_out.writeUTF(sender.getID().toString());
-        modified_out.write(data); //Not sure if this would work...
+        if (que != null) {
+            ByteArrayDataOutput modified_out = ByteStreams.newDataOutput();
+            modified_out.writeUTF(sender.getID().toString());
+            modified_out.write(data); //Not sure if this would work...
 
-        MessageQueue queue = new MessageQueue(this);
-        queue.add(modified_out.toByteArray());
+            que.add(modified_out.toByteArray());
+        }
     }
 
     /**

@@ -5,8 +5,10 @@ import com.google.common.io.ByteStreams;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.encryption.CryptoFactory;
+import eu.locklogin.api.encryption.HashType;
+import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -27,7 +29,6 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,6 +38,8 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 public final class BungeeReceiver implements PluginMessageListener {
 
     private static final Map<String, AccountManager> accounts = new ConcurrentHashMap<>();
+
+    static String proxy_com = "";
 
     /**
      * Initialize the bungee receiver
@@ -51,7 +54,8 @@ public final class BungeeReceiver implements PluginMessageListener {
 
                 boolean canRead = true;
                 if (!channel.equalsIgnoreCase("ll:access")) {
-                    canRead = TokenGen.matches(token, id.toString(), storager.getServerName());
+                    canRead = /*TokenGen.matches(token, id.toString(), storager.getServerName())*/ CryptoFactory
+                            .getBuilder().withPassword(token).withToken(proxy_com).build().validate(Validation.ALL);
                 }
 
                 if (canRead) {
@@ -280,6 +284,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     if (storager.isProxyKey(proxyKey)) {
                                         storager.setServerName(serverName);
                                         storager.setProxyKey(proxyKey);
+                                        proxy_com = CryptoFactory.getBuilder().withPassword(token).unsafe().hash(HashType.pickRandom(), true);
                                         BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());
                                     } else {
                                         BungeeSender.sendProxyStatus(player, "invalid", sub.name().toLowerCase());
@@ -288,9 +293,8 @@ public final class BungeeReceiver implements PluginMessageListener {
                                     break;
                                 case REGISTER:
                                     if (storager.isProxyKey(proxyKey)) {
-                                        TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), id.toString(), serverName, Instant.parse(input.readUTF()));
-                                        TokenGen.assignDefaultNodeName(serverName);
-
+                                        /*TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), id.toString(), serverName, Instant.parse(input.readUTF()));
+                                        TokenGen.assignDefaultNodeName(serverName);*/
                                         BungeeSender.sendProxyStatus(player, id.toString(), sub.name().toLowerCase());
                                     } else {
                                         BungeeSender.sendProxyStatus(player, "invalid", sub.name().toLowerCase());

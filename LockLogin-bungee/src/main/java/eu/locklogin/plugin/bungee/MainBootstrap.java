@@ -9,6 +9,7 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
+import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.module.LoadRule;
@@ -46,10 +47,10 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.bungee.LockLogin.console;
-import static eu.locklogin.plugin.bungee.LockLogin.plugin;
+import static eu.locklogin.plugin.bungee.LockLogin.*;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.PLUGIN_CHANNEL;
+import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.MessageData;
 
 public class MainBootstrap {
 
@@ -273,6 +274,28 @@ public class MainBootstrap {
             AllowedCommand.scan();
             Manager.initialize();
         });
+
+        SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
+        scheduler.restartAction(() -> {
+            for (TargetServer server : CurrentPlatform.getServer().getServers()) {
+                MessageQueue queue = fetchQueue(server);
+                byte[] data = queue.previewMessage();
+
+                if (data != null) {
+                    data = queue.nextMessage();
+
+                    for (ModulePlayer player : server.getOnlinePlayers()) {
+                        if (player.isPlaying()) {
+                            if (data != null) {
+                                MessageData message = DataSender.getBuilder(DataType.LISTENER, "ll:plugin", null).writeOther(data).build();
+                                DataSender.send((ProxiedPlayer) player.getPlayer(), message);
+                                queue.nextMessage();
+                            }
+                        }
+                    }
+                }
+            }
+        }).start();
     }
 
     public void disable() {

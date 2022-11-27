@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.37</version>
+        <version>1.13.38</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -159,7 +159,7 @@
         <dependency>
             <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-velocity</artifactId>
-            <version>${project.version}</version>
+            <version>1.13.37</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>

@@ -154,7 +154,7 @@ public final class JoinListener {
                                     if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
                                         DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                                                 .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                                                .addTextData(TokenGen.expiration("local_token").toString())
+                                                //.addTextData(TokenGen.expiration("local_token").toString())
                                                 .build());
                                     }
                                 }
@@ -467,7 +467,7 @@ public final class JoinListener {
                 if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
                     DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
                             .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                            .addTextData(TokenGen.expiration("local_token").toString())
+                            //.addTextData(TokenGen.expiration("local_token").toString())
                             .build());
                 }
             }

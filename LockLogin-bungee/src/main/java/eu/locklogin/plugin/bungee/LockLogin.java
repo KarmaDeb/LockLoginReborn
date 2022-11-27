@@ -16,9 +16,11 @@ package eu.locklogin.plugin.bungee;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
+import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.utils.version.VersionID;
 import eu.locklogin.api.file.plugin.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.Console;
 import ml.karmaconfigs.api.common.karma.APISource;
@@ -31,32 +33,46 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Files;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public interface LockLogin {
+public class LockLogin {
 
-    Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
+    private final static Map<String, MessageQueue> queues = new ConcurrentHashMap<>();
 
-    Console console = APISource.loadProvider("LockLogin").console();
+    public static Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
 
-    String name = plugin.name();
-    String update = FileInfo.getUpdateName(null);
+    public static Console console = APISource.loadProvider("LockLogin").console();
 
-    VersionID versionID = new VersionID(plugin.version(), update).generate();
+    public static String name = plugin.name();
+    public static String update = FileInfo.getUpdateName(null);
 
-    String version = versionID.getVersionID();
+    public static MessageQueue fetchQueue(final TargetServer server) {
+        MessageQueue stored = queues.getOrDefault(server.getName(), null);
+        if (stored == null) {
+            stored = new MessageQueue(server);
+            queues.put(server.getName(), stored);
+        }
 
-    File lockloginFile = new File(Main.class.getProtectionDomain()
+        return stored;
+    }
+
+    public static VersionID versionID = new VersionID(plugin.version(), update).generate();
+
+    public static String version = versionID.getVersionID();
+
+    public static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " "));
 
-    KarmaLogger logger = CurrentPlatform.getLogger();
+    public static KarmaLogger logger = CurrentPlatform.getLogger();
 
-    PluginProperties properties = new PluginProperties();
+    public static PluginProperties properties = new PluginProperties();
 
-    ASCIIArtGenerator artGen = new ASCIIArtGenerator();
+    public static ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
-    static ModuleLoader getLoader() {
+    public static ModuleLoader getLoader() {
         File modulesFolder = new File(plugin.getDataFolder() + File.separator + "plugin", "modules");
 
         if (!modulesFolder.exists())
@@ -69,7 +85,7 @@ public interface LockLogin {
     }
 
     @Nullable
-    static InetAddress getIp(final SocketAddress connection) {
+    public static InetAddress getIp(final SocketAddress connection) {
         try {
             InetSocketAddress address = (InetSocketAddress) connection;
             return address.getAddress();
@@ -79,7 +95,7 @@ public interface LockLogin {
     }
 
     @Nullable
-    static InetSocketAddress getSocketIp(final SocketAddress connection) {
+    public static InetSocketAddress getSocketIp(final SocketAddress connection) {
         try {
             return (InetSocketAddress) connection;
         } catch (Throwable ex) {

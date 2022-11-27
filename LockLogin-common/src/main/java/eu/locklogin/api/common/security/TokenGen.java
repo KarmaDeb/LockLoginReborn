@@ -14,6 +14,7 @@ import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.security.token.TokenStorage;
 import ml.karmaconfigs.api.common.utils.security.token.exception.TokenExpiredException;
 import ml.karmaconfigs.api.common.utils.security.token.exception.TokenIncorrectPasswordException;
+import ml.karmaconfigs.api.common.utils.security.token.exception.TokenInvalidConfigurationException;
 import ml.karmaconfigs.api.common.utils.security.token.exception.TokenNotFoundException;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
@@ -24,6 +25,11 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.UUID;
 
+/**
+ * @deprecated We are going back, when the communication used a single token. When we restart our network, we
+ * will store the key in cache, so it will be loaded after the server restart
+ */
+@Deprecated
 public final class TokenGen {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
@@ -77,11 +83,7 @@ public final class TokenGen {
         boolean generate = false;
         try {
             String token = storage.load(find("local_token"), password);
-            if (token != null) {
-                lockLogin.console().send("Loaded and verified communication token", Level.INFO);
-            } else {
-                generate = true;
-            }
+            lockLogin.console().send("Loaded and verified communication token", Level.INFO);
         } catch (TokenNotFoundException ex) {
             lockLogin.console().send("Communication token could not be found, LockLogin will try to generate one", Level.WARNING);
             generate = true;
@@ -95,6 +97,10 @@ public final class TokenGen {
             PathUtilities.destroy(tokenFile);
 
             lockLogin.console().send("Communication token has corrupted authentication data. Restart your server to fix it", Level.GRAVE);
+        } catch (TokenInvalidConfigurationException ex) {
+            storage.destroy(find("local_token"), password);
+            generate = true;
+            lockLogin.console().send("Communication token is corrupted and a new one has been generated.", Level.GRAVE);
         }
 
         if (generate) {

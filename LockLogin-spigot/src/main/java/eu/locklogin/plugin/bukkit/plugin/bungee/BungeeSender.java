@@ -26,8 +26,6 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
-
 @SuppressWarnings("UnstableApiUsage")
 public final class BungeeSender {
 
@@ -44,20 +42,20 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("local_token", plugin.getServer().getName());
+            /*String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
                 token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
-            }
+            }*/
 
-            output.writeUTF(token);
+            output.writeUTF(BungeeReceiver.proxy_com);
             output.writeUTF(storager.getServerName());
             output.writeUTF(sub);
             output.writeUTF(id);
-            if (sub.equalsIgnoreCase("register")) {
+            /*if (sub.equalsIgnoreCase("register")) {
                 output.writeUTF(TokenGen.expiration("local_token").toString());
-            }
+            }*/
 
             recipient.sendPluginMessage(LockLogin.plugin, "ll:access", output.toByteArray());
         } catch (Throwable ex) {
@@ -76,14 +74,14 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("local_token", plugin.getServer().getName());
+            /*String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
                 token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
-            }
+            }*/
 
-            output.writeUTF(token);
+            output.writeUTF(BungeeReceiver.proxy_com);
             output.writeUTF(storager.getServerName());
             output.writeUTF("join");
             output.writeUTF(player.getUniqueId().toString());
@@ -110,14 +108,14 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("local_token", plugin.getServer().getName());
+            /*String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
                 token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
-            }
+            }*/
 
-            output.writeUTF(token);
+            output.writeUTF(BungeeReceiver.proxy_com);
             output.writeUTF(storager.getServerName());
             output.writeUTF("pin");
             output.writeUTF(player.getUniqueId().toString());
@@ -142,14 +140,14 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("local_token", plugin.getServer().getName());
+            /*String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
                 token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
-            }
+            }*/
 
-            output.writeUTF(token);
+            output.writeUTF(BungeeReceiver.proxy_com);
             output.writeUTF(storager.getServerName());
             output.writeUTF(DataType.PLAYER.name().toLowerCase());
             output.writeUTF(id);
@@ -174,14 +172,14 @@ public final class BungeeSender {
         try {
             BungeeDataStorager storager = new BungeeDataStorager();
 
-            String token = TokenGen.request("local_token", plugin.getServer().getName());
+           /*String token = TokenGen.request("local_token", plugin.getServer().getName());
             if (token == null) {
                 TokenGen.generate(plugin.getServer().getName());
                 token = TokenGen.request("local_token", plugin.getServer().getName());
                 assert token != null;
-            }
+            }*/
 
-            output.writeUTF(token);
+            output.writeUTF(BungeeReceiver.proxy_com);
             output.writeUTF(storager.getServerName());
             output.writeUTF(DataType.LISTENER.name().toLowerCase());
             output.writeUTF(channel);
