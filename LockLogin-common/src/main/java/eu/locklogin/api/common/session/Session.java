@@ -30,8 +30,6 @@ import java.time.Instant;
  */
 public final class Session extends ClientSession {
 
-    private AccountID name;
-
     private Instant initialized;
 
     private String captcha = "";
@@ -51,12 +49,9 @@ public final class Session extends ClientSession {
      * In this process, the captcha an instant
      * are generated, with boolean values ( all
      * should be false by default)
-     *
-     * @param ss_name the session name
      */
     @Override
-    public void initialize(final AccountID ss_name) {
-        name = ss_name;
+    public void initialize() {
         initialized = Instant.now();
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -90,16 +85,6 @@ public final class Session extends ClientSession {
     @Override
     public void invalidate() {
         bungee_verified = false;
-    }
-
-    /**
-     * Get the session name
-     *
-     * @return the session name
-     */
-    @Override
-    public AccountID getName() {
-        return name;
     }
 
     /**
@@ -223,4 +208,3 @@ public final class Session extends ClientSession {
         return captcha;
     }
 }
-

@@ -18,7 +18,6 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
@@ -30,19 +29,25 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
-import java.time.Instant;
-import java.util.Base64;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
@@ -52,12 +57,14 @@ import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER
 public final class MessageListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
+    @SuppressWarnings("unchecked")
     public void onMessageReceive(PluginMessageEvent e) {
         if (!e.isCancelled()) {
             try {
                 if (e.getTag().equalsIgnoreCase("ll:access") || e.getTag().equalsIgnoreCase("ll:plugin") || e.getTag().equalsIgnoreCase("ll:account")) {
                     PluginMessages messages = CurrentPlatform.getMessages();
                     ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+                    Server server = (Server) e.getSender();
 
                     ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
 
@@ -66,7 +73,7 @@ public final class MessageListener implements Listener {
 
                     boolean canRead = true;
                     if (!e.getTag().equalsIgnoreCase("ll:access")) {
-                        canRead = TokenGen.matches(token, name, proxy.proxyKey());
+                        canRead = /*TokenGen.matches(token, name, proxy.proxyKey())*/ DataSender.validate(token);
                     }
 
                     if (canRead) {
@@ -207,9 +214,29 @@ public final class MessageListener implements Listener {
                                 switch (sub) {
                                     case KEY:
                                         if (!id.equalsIgnoreCase("invalid")) {
-                                            if (ServerDataStorage.needsRegister(name)) {
-                                                console.send("Registered proxy key into server {0}", Level.INFO, name);
-                                                ServerDataStorage.setKeyRegistered(name);
+                                            TargetServerStorage storage = new TargetServerStorage(name);
+                                            //storage.save(TokenGen.find(name));
+
+                                            InetAddress address = getIp(server.getSocketAddress());
+                                            InetSocketAddress socket = getSocketIp(server.getSocketAddress());
+
+                                            if (address != null && socket != null) {
+                                                TargetServer target_server = new TargetServer(name, /*TokenGen.find(name)*/ UUID.randomUUID(), address, socket.getPort(), true);
+                                                TargetServer stored = CurrentPlatform.getServer().getServer(name);
+
+                                                Field f =  ModuleServer.class.getDeclaredField("servers");
+                                                f.setAccessible(true);
+                                                Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
+                                                if (stored != null) {
+                                                    //Remove from stored servers
+                                                    stored_set.remove(stored);
+                                                }
+                                                stored_set.add(target_server);
+
+                                                if (ServerDataStorage.needsRegister(name)) {
+                                                    console.send("Registered proxy key into server {0}", Level.INFO, name);
+                                                    ServerDataStorage.setKeyRegistered(name);
+                                                }
                                             }
                                         } else {
                                             console.send("Failed to set proxy key in {0}", Level.GRAVE, name);
@@ -224,7 +251,7 @@ public final class MessageListener implements Listener {
                                                     ServerDataStorage.setProxyRegistered(name);
                                                     DataSender.updateDataPool(name);
 
-                                                    TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
+                                                    //TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
                                                 }
                                             } else {
                                                 e.setCancelled(true);
@@ -241,6 +268,16 @@ public final class MessageListener implements Listener {
                                                 if (!ServerDataStorage.needsProxyKnowledge(name)) {
                                                     console.send("Removed ths proxy from server {0}", Level.INFO, name);
                                                     ServerDataStorage.removeProxyRegistered(name);
+                                                }
+
+                                                TargetServer stored = CurrentPlatform.getServer().getServer(name);
+
+                                                Field f =  ModuleServer.class.getDeclaredField("servers");
+                                                f.setAccessible(true);
+                                                Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
+                                                if (stored != null) {
+                                                    //Remove from stored servers
+                                                    stored_set.remove(stored);
                                                 }
                                             } else {
                                                 ServerDataStorage.removeKeyRegistered(name);

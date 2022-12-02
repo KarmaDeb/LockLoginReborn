@@ -14,6 +14,8 @@ package eu.locklogin.api.account;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -29,10 +31,8 @@ public abstract class ClientSession implements Serializable {
      * In this process, the captcha an instant
      * are generated, with boolean values ( all
      * should be false by default)
-     *
-     * @param sessionId the session id
      */
-    public abstract void initialize(final AccountID sessionId);
+    public abstract void initialize();
 
     /**
      * Validate the session
@@ -44,12 +44,6 @@ public abstract class ClientSession implements Serializable {
      */
     public abstract void invalidate();
 
-    /**
-     * Get the session id
-     *
-     * @return the session id
-     */
-    public abstract AccountID getName();
 
     /**
      * Get the session initialization
@@ -136,5 +130,5 @@ public abstract class ClientSession implements Serializable {
      */
     public abstract String getCaptcha();
 
-    public static final AccountID DEFAULT = AccountID.fromUUID(UUID.nameUUIDFromBytes(("Default").getBytes()));
+    
 }
