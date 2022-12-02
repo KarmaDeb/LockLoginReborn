@@ -91,7 +91,8 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
     public Class<? extends AccountID> getType() {
         return AccountID.class;
     }
-        /**
+
+    /**
      * Indicates whether some other object is "equal to" this one.
      * <p>
      * The {@code equals} method implements an equivalence relation
@@ -137,7 +138,6 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      * @see #hashCode()
      * @see HashMap
      */
-    
     @Override
     public boolean equals(final Object obj) {
         if (obj instanceof UUID) {

@@ -26,6 +26,7 @@ depend:
 softdepend:
   - AnotherBarelyCodedKarmaPlugin
   - PlaceholderAPI
+  - ProtocolLib
 
 
 

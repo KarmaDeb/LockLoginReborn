@@ -44,7 +44,6 @@ public abstract class ClientSession implements Serializable {
      */
     public abstract void invalidate();
 
-
     /**
      * Get the session initialization
      *
@@ -129,6 +128,4 @@ public abstract class ClientSession implements Serializable {
      * @return the session captcha
      */
     public abstract String getCaptcha();
-
-    
 }

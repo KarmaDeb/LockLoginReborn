@@ -93,6 +93,8 @@ Login:
 
 #Toggle plugin sessions system.
 #
+# MultiSession -> Allows multiple sessions for a single player
+# Enabled -> Allow players to enable persistent sessions
 # Time -> The time (in minutes) an account
 #         will be valid ( 0 = 59 seconds )
 #
@@ -102,6 +104,7 @@ Login:
 #valid LockLogin pin configured, otherwise
 #it won't work
 Sessions:
+  MultiSession: false
   Enabled: false
   Time: 5
 

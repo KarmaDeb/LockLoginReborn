@@ -122,7 +122,7 @@ public final class Manager {
         PlayerPool.startCheckTask();
 
         setupFiles();
-        TokenGen.generate(CurrentPlatform.getProxyConfiguration().proxyKey());
+        //TokenGen.generate(CurrentPlatform.getProxyConfiguration().proxyKey());
         registerCommands();
         registerListeners();
 
@@ -584,7 +584,7 @@ public final class Manager {
                             if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
                                 DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player)
                                         .addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName())
-                                        .addTextData(TokenGen.expiration("local_token").toString())
+                                        //.addTextData(TokenGen.expiration("local_token").toString())
                                         .build());
                             }
                         }

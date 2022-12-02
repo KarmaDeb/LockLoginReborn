@@ -120,7 +120,7 @@ public final class Manager {
         MessagePool.startCheckTask();
 
         setupFiles();
-        TokenGen.generate(plugin.getServer().getName());
+        //TokenGen.generate(plugin.getServer().getName());
         registerCommands();
         registerListeners();
 

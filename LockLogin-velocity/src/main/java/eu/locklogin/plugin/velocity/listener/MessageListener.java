@@ -67,9 +67,9 @@ public final class MessageListener {
                     String name = input.readUTF();
 
                     boolean canRead = true;
-                    if (!identifier.equalsIgnoreCase("ll:access")) {
+                    /*if (!identifier.equalsIgnoreCase("ll:access")) {
                         canRead = TokenGen.matches(token, name, proxy.proxyKey());
-                    }
+                    }*/
 
                     if (canRead) {
                         DataType sub = DataType.valueOf(input.readUTF().toUpperCase());
@@ -204,7 +204,7 @@ public final class MessageListener {
                                                     ServerDataStorage.setProxyRegistered(name);
                                                     DataSender.updateDataPool(name);
 
-                                                    TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
+                                                    //TokenGen.assign(new String(Base64.getUrlEncoder().encode(token.getBytes())), name, proxy.proxyKey(), Instant.parse(input.readUTF()));
                                                 }
                                             } else {
                                                 e.setResult(PluginMessageEvent.ForwardResult.handled());

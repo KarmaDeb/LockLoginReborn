@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.37</version>
+    <version>1.13.38</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -186,7 +186,7 @@
         <module>locklogin-common</module>
         <module>locklogin-spigot</module>
         <module>locklogin-bungee</module>
-        <module>locklogin-velocity</module>
+        <!--<module>locklogin-velocity</module>-->
         <module>LockLogin-bundle</module>
         <module>LockLogin-manager</module>
     </modules>

@@ -122,7 +122,7 @@ public final class User {
                     if (session == null) {
                         throw new IllegalStateException("Cannot initialize user with a null session manager");
                     } else {
-                        session.initialize(ClientSession.DEFAULT);
+                        session.initialize();
 
                         ModulePlayer modulePlayer = new ModulePlayer(
                                 player.getGameProfile().getName(),

@@ -18,7 +18,6 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
@@ -149,14 +148,14 @@ public final class DataSender {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                            String token = TokenGen.request("local_token", proxy.proxyKey());
+                            /*String token = TokenGen.request("local_token", proxy.proxyKey());
                             if (token == null) {
                                 TokenGen.generate(proxy.proxyKey());
                                 token = TokenGen.request("local_token", proxy.proxyKey());
                                 assert token != null;
-                            }
+                            }*/
 
-                            output.writeUTF(token);
+                            output.writeUTF("token");
                             output.writeUTF(proxy.getProxyID().toString());
                             output.writeUTF(DataType.LISTENER.name().toLowerCase());
                             output.writeUTF(channel);
@@ -214,19 +213,19 @@ public final class DataSender {
         MessageDataBuilder(final DataType data, final Player owner) throws IllegalArgumentException {
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            String token = TokenGen.request("local_token", proxy.proxyKey());
+            /*String token = TokenGen.request("local_token", proxy.proxyKey());
             if (token == null) {
                 TokenGen.generate(proxy.proxyKey());
                 token = TokenGen.request("local_token", proxy.proxyKey());
                 assert token != null;
-            }
+            }*/
 
             if (owner != null) {
                 output.writeUTF(owner.getGameProfile().getId().toString());
             } else {
                 output.writeUTF(UUID.randomUUID().toString());
             }
-            output.writeUTF(token);
+            output.writeUTF("token");
             output.writeUTF(proxy.getProxyID().toString());
             output.writeUTF(data.name().toLowerCase());
         }
