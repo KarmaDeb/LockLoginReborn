@@ -36,8 +36,8 @@
 
 # LockLogin 🔒
 The Best Security Plugin On The Market!\
-[![CI](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml)<br>
-[![CI](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/dependency-review.yml/)<br>
+[![CI](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/codacy-analysis.yml)
+[![CI](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/KarmaConfigs/LockLoginReborn/actions/workflows/dependency-review.yml/)
 ![Known Vulnerabilities](https://snyk.io/test/github/IMS-Network/LockLogin/badge.svg)
 </div>
 ## About
