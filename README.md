@@ -43,7 +43,7 @@ The Best Security Plugin On The Market!\
 
 
 ## About
-Welcome To The Open Source Code For The LockLogin Security System, LockLogin has more then 35K downloads on SpigotMC!
-[Please take a look at the license before using the source code, legal actions could be performed if you break any condition](http://karmaconfigs.ml/license/).
+Welcome To The Open Source Code For The LockLogin Security System, LockLogin has more then 35K downloads on SpigotMC!\
+Because the plugin is Open Source [Please take a look at the license before using the source code, legal actions could be performed if you break any condition](http://karmaconfigs.ml/license/).
  
 
