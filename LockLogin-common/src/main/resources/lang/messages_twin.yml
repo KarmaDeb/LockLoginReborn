@@ -20,7 +20,7 @@
 Prefix: "[lang]LockLogin.Prefix[/lang]"
 
 #Permission error message
-PermissionError: "&5&oYou do not have the permission {permission}"
+PermissionError: "[lang]LockLogin.PermissionError[args][arg]{permission}[/arg][/args][/lang]"
 
 #BungeeCord proxy message
 BungeeProxy: "[lang]LockLogin.BungeeProxy[/lang]"
@@ -51,7 +51,7 @@ SessionDisabled: "&5&oDisabled persistent session for your account"
 #Session messages - Register
 Register: "&5&oPlease, use /register <password> <password> <captcha>"
 KarmaRegister: "&5&oPlease, use /register <password> <captcha> <email>"
-RegisterBar: "{color}You have &7{time}{color} to register"
+RegisterBar: "[lang]LockLogin.RegisterBar[args][arg]{color}[/arg][arg]{time}[/arg][arg]{color}[/arg][/args][/lang]"
 Registered: "&dRegister completed, thank for playing"
 AlreadyRegistered: "&5&oYou are already registered!"
 RegisterError: "&5&oThe provided passwords does not match!"
