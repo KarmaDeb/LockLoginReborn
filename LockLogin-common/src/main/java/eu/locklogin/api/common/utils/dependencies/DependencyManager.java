@@ -1,8 +1,8 @@
 /*
  * This file is part of LuckPerms, licensed under the MIT License.
  *
- *  Copyright (c) lucko (Luck) <luck@lucko.me>
- *  Copyright (c) contributors
+ *  Copyright (eu.c) lucko (Luck) <luck@lucko.me>
+ *  Copyright (eu.c) contributors
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal

@@ -164,7 +164,7 @@ AccountRemoved: "&5&o你的账户已删除"
 ForcedAccountRemoval:
   - "{ServerName}"
   - ""
-  - "&c你的账户已被管理员（&7{player}&c）删除"
+  - "&c你的账户已被管理员（&7{player}&eu.c）删除"
   - "&c并且暂时封禁来避免数据丢失，"
   - "&c直到有工作人员打开它"
   - ""

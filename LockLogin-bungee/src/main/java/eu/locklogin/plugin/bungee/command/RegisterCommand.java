@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -25,8 +26,9 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -37,7 +39,6 @@ import net.md_5.bungee.api.plugin.Command;
 import java.util.List;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
 
 @SystemCommand(command = "register", aliases = {"reg"})
 public final class RegisterCommand extends Command {
@@ -121,8 +122,9 @@ public final class RegisterCommand extends Command {
 
                                         user.restorePotionEffects();
 
-                                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                        /*DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
+                                                .addProperty("pin", false).build();
                                         DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
                                         DataSender.send(player, login);
@@ -130,7 +132,24 @@ public final class RegisterCommand extends Command {
                                         if (session.isPinLogged())
                                             DataSender.send(player, pin);
                                         if (session.is2FALogged())
-                                            DataSender.send(player, gauth);
+                                            DataSender.send(player, gauth);*/
+
+                                        if (session.isPinLogged()) {
+                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                    .insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId())
+                                                            .getInstance().build());
+                                        }
+
+                                        if (session.is2FALogged()) {
+                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
+                                                            .addProperty("player", player.getUniqueId())
+                                                            .addProperty("pin", false).getInstance().build());
+                                        }
+
+                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
+                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
 
                                         user.checkServer(0);
 
@@ -159,7 +178,10 @@ public final class RegisterCommand extends Command {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("register " + password + " " + confirmation);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                                        //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
+                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

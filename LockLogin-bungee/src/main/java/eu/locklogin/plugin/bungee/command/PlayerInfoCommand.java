@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
@@ -26,9 +27,10 @@ import eu.locklogin.api.file.plugin.Alias;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -103,12 +105,23 @@ public final class PlayerInfoCommand extends Command {
                                                 for (AccountManager account : accounts) {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player)
+                                                            .addProperty("account", StringUtils.serialize(account)).build());*/
+                                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                            .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                                    .addProperty("account", StringUtils.serialize(account))
+                                                                    .getInstance().build());
                                                     sent++;
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
-                                                DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                                /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                        .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                                                .addProperty("player", player.getUniqueId())
+                                                                .addProperty("player_info", parser.toString())
+                                                                .getInstance().build());
                                             } else {
                                                 user.send(messages.prefix() + messages.aliasNotFound(name));
                                             }
@@ -126,23 +139,41 @@ public final class PlayerInfoCommand extends Command {
                                                     for (AccountManager account : accounts) {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                                .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                                        .addProperty("account", StringUtils.serialize(account))
+                                                                        .getInstance().build());
                                                         sent++;
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                            .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                                                    .addProperty("player", player.getUniqueId())
+                                                                    .addProperty("player_info", parser.toString())
+                                                                    .getInstance().build());
                                                 case "persistent":
                                                     accounts = PersistentSessionData.getPersistentAccounts();
                                                     for (AccountManager account : accounts) {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                                .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                                        .addProperty("account", StringUtils.serialize(account))
+                                                                        .getInstance().build());
                                                         sent++;
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                            .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                                                    .addProperty("player", player.getUniqueId())
+                                                                    .addProperty("player_info", parser.toString())
+                                                                    .getInstance().build());
                                                     break;
                                                 default:
                                                     String permission = StringUtils.replaceLast(name.replaceFirst("permission\\[", ""), "]", "");
@@ -159,12 +190,21 @@ public final class PlayerInfoCommand extends Command {
                                                     for (AccountManager account : accounts) {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                        DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                                .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                                        .addProperty("account", StringUtils.serialize(account))
+                                                                        .getInstance().build());
                                                         sent++;
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                            .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                                                    .addProperty("player", player.getUniqueId())
+                                                                    .addProperty("player_info", parser.toString())
+                                                                    .getInstance().build());
                                                     break;
                                             }
                                         }
@@ -182,12 +222,21 @@ public final class PlayerInfoCommand extends Command {
                                             for (AccountManager account : accounts) {
                                                 player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                        .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                                .addProperty("account", StringUtils.serialize(account))
+                                                                .getInstance().build());
                                                 sent++;
                                             }
 
                                             AccountParser parser = new AccountParser(accounts);
-                                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                                           /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                    .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                                            .addProperty("player", player.getUniqueId())
+                                                            .addProperty("player_info", parser.toString())
+                                                            .getInstance().build());
                                         } else {
                                             user.send(messages.prefix() + messages.aliasNotFound(name));
                                         }
@@ -258,12 +307,21 @@ public final class PlayerInfoCommand extends Command {
                             for (AccountManager account : accounts) {
                                 player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player).addTextData(StringUtils.serialize(account)).build());
+                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                        .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
+                                                .addProperty("account", StringUtils.serialize(account))
+                                                .getInstance().build());
                                 sent++;
                             }
 
                             AccountParser parser = new AccountParser(accounts);
-                            DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player).addTextData(parser.toString()).build());
+                            /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
+                                                        .addProperty("player_info", parser.toString()).build());*/
+                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                    .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
+                                            .addProperty("player", player.getUniqueId())
+                                            .addProperty("player_info", parser.toString())
+                                            .getInstance().build());
                             break;
                     }
                 } else {

@@ -29,31 +29,31 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.nio.file.Files;
 
-public interface LockLogin {
+public class LockLogin {
 
-    Main plugin = (Main) JavaPlugin.getProvidingPlugin(Main.class);
+    public static Main plugin = (Main) JavaPlugin.getProvidingPlugin(Main.class);
 
-    Console console = APISource.loadProvider("LockLogin").console();
+    public static Console console = APISource.loadProvider("LockLogin").console();
 
-    String name = plugin.name();
-    String update = FileInfo.getUpdateName(null);
+    public static String name = plugin.name();
+    public static String update = FileInfo.getUpdateName(null);
 
-    VersionID versionID = new VersionID(plugin.version(), update).generate();
+    public static VersionID versionID = new VersionID(plugin.version(), update).generate();
 
-    String version = versionID.getVersionID();
+    public static String version = versionID.getVersionID();
 
-    File lockloginFile = new File(Main.class.getProtectionDomain()
+    public static File lockloginFile = new File(Main.class.getProtectionDomain()
             .getCodeSource()
             .getLocation()
             .getPath().replaceAll("%20", " "));
 
-    KarmaLogger logger = CurrentPlatform.getLogger();
+    public static KarmaLogger logger = CurrentPlatform.getLogger();
 
-    PluginProperties properties = new PluginProperties();
+    public static PluginProperties properties = new PluginProperties();
 
-    ASCIIArtGenerator artGen = new ASCIIArtGenerator();
+    public static ASCIIArtGenerator artGen = new ASCIIArtGenerator();
 
-    static ModuleLoader getLoader() {
+    public static ModuleLoader getLoader() {
         File modulesFolder = new File(plugin.getDataFolder() + File.separator + "plugin", "modules");
 
         if (!modulesFolder.exists())
@@ -65,7 +65,7 @@ public interface LockLogin {
         return new ModuleLoader();
     }
 
-    static void trySync(final TaskTarget target, final Runnable action) {
+    public static void trySync(final TaskTarget target, final Runnable action) {
         try {
             plugin.getServer().getScheduler().runTask(plugin, action);
         } catch (Throwable ex) {
@@ -77,7 +77,7 @@ public interface LockLogin {
         }
     }
 
-    static void tryAsync(final TaskTarget target, final Runnable action) {
+    public static void tryAsync(final TaskTarget target, final Runnable action) {
         try {
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, action);
         } catch (Throwable ex) {
@@ -88,4 +88,6 @@ public interface LockLogin {
             plugin.async().queue(target.getTaskName(), action);
         }
     }
+
+
 }

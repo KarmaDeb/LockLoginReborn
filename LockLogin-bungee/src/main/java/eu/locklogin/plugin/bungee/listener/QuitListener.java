@@ -16,11 +16,13 @@ package eu.locklogin.plugin.bungee.listener;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.util.player.User;
 import eu.locklogin.plugin.bungee.util.player.UserDatabase;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -39,6 +41,12 @@ public final class QuitListener implements Listener {
 
     private final Set<UUID> kicked = Collections.newSetFromMap(new ConcurrentHashMap<>());
     static final Set<UUID> tmp_clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    private final JoinListener instance;
+
+    public QuitListener(final JoinListener l) {
+        instance = l;
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuit(PlayerDisconnectEvent e) {
@@ -76,7 +84,8 @@ public final class QuitListener implements Listener {
                 Event event = new UserQuitEvent(user.getModule(), e);
                 ModulePlugin.callEvent(event);
 
-                JoinListener.switch_pool.remove(player.getUniqueId());
+                instance.pool.delPlayer(player.getUniqueId());
+                instance.switch_pool.delPlayer(player.getUniqueId());
             }
         } else {
             kicked.remove(player.getUniqueId());
@@ -105,7 +114,10 @@ public final class QuitListener implements Listener {
             session.setPinLogged(false);
             session.set2FALogged(false);
 
-            DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
+            //DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
+            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                            .insert(DataMessage.newInstance(DataType.QUIT, Channel.ACCOUNT)
+                                    .addProperty("player", player.getUniqueId()).getInstance().build());
 
             user.removeSessionCheck();
             UserDatabase.removeUser(player);
@@ -113,7 +125,8 @@ public final class QuitListener implements Listener {
             Event event = new UserQuitEvent(user.getModule(), e);
             ModulePlugin.callEvent(event);
 
-            JoinListener.switch_pool.remove(player.getUniqueId());
+            instance.pool.delPlayer(player.getUniqueId());
+            instance.switch_pool.delPlayer(player.getUniqueId());
         }
     }
 }

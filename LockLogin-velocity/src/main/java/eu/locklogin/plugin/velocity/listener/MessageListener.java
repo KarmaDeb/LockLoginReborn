@@ -187,9 +187,9 @@ public final class MessageListener {
                                 switch (sub) {
                                     case KEY:
                                         if (!id.equalsIgnoreCase("invalid")) {
-                                            if (ServerDataStorage.needsRegister(name)) {
+                                            if (ServerDataStorage.needsProxyKnowledge(name)) {
                                                 console.send("Registered proxy key into server {0}", Level.INFO, name);
-                                                ServerDataStorage.setKeyRegistered(name);
+                                                ServerDataStorage.setProxyRegistered(name);
                                             }
                                         } else {
                                             console.send("Failed to set proxy key in {0}", Level.GRAVE, name);
@@ -221,7 +221,7 @@ public final class MessageListener {
                                                 console.send("Removed ths proxy from server {0}", Level.INFO, name);
                                                 ServerDataStorage.removeProxyRegistered(name);
                                             } else {
-                                                ServerDataStorage.removeKeyRegistered(name);
+                                                ServerDataStorage.removeProxyRegistered(name);
                                                 e.setResult(PluginMessageEvent.ForwardResult.handled());
                                             }
                                         } else {

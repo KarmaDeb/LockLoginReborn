@@ -309,7 +309,7 @@ public final class Manager {
         } catch (Throwable ignored) {
         }
 
-        console.send("&c-------------------------------------------------------");
+        console.send("&eu.c-------------------------------------------------------");
         System.out.println();
         artGen.print(StringUtils.toAnyOsColor("&e"), "WARNING", size, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, character);
         System.out.println();
@@ -320,7 +320,7 @@ public final class Manager {
         console.send("&7folder and pasting it to the BungeeCord plugins folder.");
         System.out.println();
         console.send("&eDO NOT EXPECT MORE BUG FIXES IN VELOCITY. THANKS FOR USING LOCKLOGIN!");
-        console.send("&c-------------------------------------------------------");
+        console.send("&eu.c-------------------------------------------------------");
     }
 
     /**
@@ -577,16 +577,11 @@ public final class Manager {
                         RegisteredServer info = connection.getServer();
                         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                        if (ServerDataStorage.needsRegister(info.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
-                            if (ServerDataStorage.needsRegister(info.getServerInfo().getName()))
-                                DataSender.send(info, DataSender.getBuilder(DataType.KEY, DataSender.ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
-
-                            if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
-                                DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player)
-                                        .addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName())
-                                        //.addTextData(TokenGen.expiration("local_token").toString())
-                                        .build());
-                            }
+                        if (ServerDataStorage.needsProxyKnowledge(info.getServerInfo().getName())) {
+                            DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, DataSender.ACCESS_CHANNEL, player)
+                                    .addTextData(proxy.proxyKey()).addTextData(info.getServerInfo().getName())
+                                    //.addTextData(TokenGen.expiration("local_token").toString())
+                                    .build());
                         }
                     }
 

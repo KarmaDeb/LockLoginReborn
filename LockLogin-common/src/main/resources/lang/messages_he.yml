@@ -123,7 +123,7 @@ Enabled2FA: '&dמערכת אדוש מופעלת המשתמש שלכם מוגן'
 #Session messages - Brute force
 PanicLogin: '&5&oנא לעשות &f/panic <token>'
 PanicTitle: '&cמצב חירום!'
-PanicSubtitle: '&4נא לעשות &c/panic <token>'
+PanicSubtitle: '&4נא לעשות &eu.c/panic <token>'
 PanicMode: '&5&oהמשתמש שלך נמצא במצב פאניקה, יש לכם נסיון אחד להכניס את האסימון לפני שתקבלו חסימת אייפי'
 PanicDisabled: '&5&oהשרת אינו מוגן מפני התקפות כוח'
 PanicAlready: '&dיש לך כבר אסימון למצב פאניקה, חשבונך מאובטח'

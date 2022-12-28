@@ -22,18 +22,7 @@ import java.util.Set;
  */
 public final class ServerDataStorage {
 
-    private static final Set<String> key_registered = new LinkedHashSet<>();
     private static final Set<String> proxy_registered = new LinkedHashSet<>();
-
-    /**
-     * Add a server name to the list of servers
-     * which already have proxy key
-     *
-     * @param server the server name
-     */
-    public static void setKeyRegistered(final String server) {
-        key_registered.add(server);
-    }
 
     /**
      * Add a server name to the list of servers
@@ -56,26 +45,6 @@ public final class ServerDataStorage {
     }
 
     /**
-     * Remove a server name to the list of servers
-     * which already have this proxy id
-     *
-     * @param server the server name
-     */
-    public static void removeKeyRegistered(final String server) {
-        key_registered.remove(server);
-    }
-
-    /**
-     * Get if the server needs to retrieve a proxy key
-     *
-     * @param server the server name
-     * @return if the server needs to know about the proxy key
-     */
-    public static boolean needsRegister(final String server) {
-        return !key_registered.contains(server);
-    }
-
-    /**
      * Get if the server needs to know about this proxy
      * instance
      *
@@ -84,16 +53,5 @@ public final class ServerDataStorage {
      */
     public static boolean needsProxyKnowledge(final String server) {
         return !proxy_registered.contains(server);
-    }
-
-    /**
-     * Get if the server knows about the proxy
-     * instance and is registered
-     *
-     * @param server the server
-     * @return if the server has proxy knowledge
-     */
-    public static boolean hasProxyKnowledge(final String server) {
-        return key_registered.contains(server) && proxy_registered.contains(server);
     }
 }

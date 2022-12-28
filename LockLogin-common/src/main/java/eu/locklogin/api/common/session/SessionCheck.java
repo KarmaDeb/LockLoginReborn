@@ -115,7 +115,7 @@ public final class SessionCheck<T> implements Runnable {
 
                                 if (timer_time == ((int) Math.round(((double) time / 3)))) {
                                     boss.color(BossColor.RED);
-                                    BAR_COLOR = "&c";
+                                    BAR_COLOR = "&eu.c";
                                 }
 
                                 if (manager.isRegistered()) {

@@ -78,7 +78,7 @@ public final class DataSender {
             try {
                 ServerInfo info = server.getServerInfo();
 
-                if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
+                if (ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
                     Set<MessagePool> pool = data_pool.getOrDefault(info.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
                     pool.add(new MessagePool(server.getServer(), data));
 
@@ -106,7 +106,7 @@ public final class DataSender {
         try {
             ServerInfo info = server.getServerInfo();
 
-            if (ServerDataStorage.needsRegister(info.getName()) && ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
+            if (ServerDataStorage.needsProxyKnowledge(info.getName()) && !data.getChannel().getName().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 Set<MessagePool> pool = data_pool.getOrDefault(info.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
                 pool.add(new MessagePool(server, data));
 
@@ -144,7 +144,7 @@ public final class DataSender {
                     if (!server_sents.contains(info.getName().toLowerCase())) {
                         server_sents.add(info.getName().toLowerCase());
 
-                        if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                        if (!ServerDataStorage.needsProxyKnowledge(info.getName())) {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 

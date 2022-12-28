@@ -17,7 +17,6 @@ package eu.locklogin.plugin.bukkit.plugin;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -32,6 +31,8 @@ import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
+import eu.locklogin.api.common.web.services.LockLoginSocket;
+import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -149,23 +150,6 @@ public final class Manager {
             console.send("Virtual ID ( disabled by default) is disabled. You should enable it to enforce you clients security against database leaks", Level.GRAVE);
         }
 
-        if (config.isBungeeCord()) {
-            Messenger messenger = plugin.getServer().getMessenger();
-            BungeeReceiver receiver = new BungeeReceiver();
-
-            PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
-            messenger.registerOutgoingPluginChannel(plugin, "ll:account");
-            PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
-            PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
-            messenger.registerOutgoingPluginChannel(plugin, "ll:access");
-
-            if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
-                console.send("Registered plugin message listeners", Level.OK);
-            } else {
-                console.send("Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
-            }
-        }
-
         AccountManager manager = CurrentPlatform.getAccountManager(eu.locklogin.api.util.enums.Manager.CUSTOM, null);
         if (manager != null) {
             Set<AccountManager> accounts = manager.getAccounts();
@@ -209,6 +193,66 @@ public final class Manager {
         }, 20 * 10);
 
         initialized = true;
+
+        console.send("Connecting to LockLogin web services (statistics and bungee communication), please wait...", Level.INFO);
+        SocketClient socket = new LockLoginSocket();
+        /*Socket sk = socket.client();
+        sk.connect();
+
+        long timeout = TimeUnit.SECONDS.toMillis(30);
+        synchronized (Thread.currentThread()) {
+            while (!sk.connected() || timeout >= 0) {
+                timeout--;
+            }
+        }
+
+        if (sk.connected()) {
+            console.send("Connected successfully to LockLogin web services. Statistics will be used, and an alternative BungeeCord communication will be used for the servers compatible with it", Level.OK);
+            JsonObject json = new JsonObject();
+            json.addProperty("platform", CurrentPlatform.getPlatform().name());
+            json.addProperty("license", UUID.nameUUIDFromBytes("".getBytes()).toString());
+            json.addProperty("bungeecord", config.isBungeeCord());
+
+            Gson gson = new GsonBuilder().create();
+            sk.emit("hello", json, (Ack) (response) -> {
+                JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
+
+                if (r.has("message")) {
+                    initialized = true;
+                    console.send("Failed to authenticate bukkit instance ({0})", Level.GRAVE, r.get("message").getAsString());
+                } else {
+                    console.send("Successfully authenticated bukkit instance", Level.INFO);
+                    String secret_code = r.get("secret").getAsString();
+
+                    try {
+                        JarManager.changeField(BungeeReceiver.class, "secret", secret_code);
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+
+                    if (!initialized) {
+                        initialized = true;
+                    } else {
+                        console.send("LockLogin web services returned a late response (after more than 1 minute), switching from alternative communication to LockLogin web services communication", Level.INFO);
+                    }
+                }
+            });
+
+            SimpleScheduler scheduler = new SourceScheduler(plugin, 60, SchedulerUnit.SECOND, false).multiThreading(true);
+            scheduler.endAction(() -> {
+                if (!initialized) {
+                    initialized = true;
+                    console.send("The server has been marked as initialized as the LockLogin web services didn't give a connection response. Using alternative communications", Level.WARNING);
+                }
+            });
+            scheduler.start();
+        } else {
+            initialized = true;
+            console.send("There was an error while trying to connect to LockLogin web services. Statistics and alternative communications won't be used", Level.GRAVE);
+        }*/
+
+        if (config.isBungeeCord())
+            registerBungee(socket);
     }
 
     public static void terminate() {
@@ -254,6 +298,23 @@ public final class Manager {
         console.send("&eversion:&6 {0}", version);
         console.send(" ");
         console.send("&e-----------------------");
+    }
+
+    static void registerBungee(final SocketClient client) {
+        Messenger messenger = plugin.getServer().getMessenger();
+        BungeeReceiver receiver = new BungeeReceiver(client);
+
+        PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
+        messenger.registerOutgoingPluginChannel(plugin, "ll:account");
+        PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
+        PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
+        messenger.registerOutgoingPluginChannel(plugin, "ll:access");
+
+        if (registration_account.isValid() && registration_plugin.isValid() && access_plugin.isValid()) {
+            console.send("Registered plugin message listeners", Level.OK);
+        } else {
+            console.send("Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
+        }
     }
 
     /**
@@ -399,13 +460,17 @@ public final class Manager {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Metrics metrics = new Metrics(plugin, 6513);
 
-        metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
-        metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
-                .replace("true", "Clear chat")
-                .replace("false", "Don't clear chat")));
-        metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
-                .replace("true", "Sessions enabled")
-                .replace("false", "Sessions disabled")));
+        if (config.shareBStats()) {
+            metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
+            metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
+                    .replace("true", "Clear chat")
+                    .replace("false", "Don't clear chat")));
+            metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
+                    .replace("true", "Sessions enabled")
+                    .replace("false", "Sessions disabled")));
+        } else {
+            console.send("Metrics are disabled, please note this is an open source free project and we use metrics to know if the project is being active by users. If we don't see active users using this project, the project may reach the dead line meaning no more updates or support. We highly recommend to you to share statistics, as this won't share any information of your server but the country, os and some other information that may be util for us", Level.GRAVE);
+        }
     }
 
     /**

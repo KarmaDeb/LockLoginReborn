@@ -169,7 +169,7 @@ above, provided that you also meet all of these conditions:
     b) You must cause the files modified to carry prominent notices
     stating that you changed the files and the date of any change.
 
-    c) You must cause the whole of the work to be licensed at no
+    eu.c) You must cause the whole of the work to be licensed at no
     charge to all third parties under the terms of this License.
 
     d) If a facility in the modified Library refers to a function or a
@@ -303,7 +303,7 @@ of these things:
     the user installs one, as long as the modified version is
     interface-compatible with the version that the work was made with.
 
-    c) Accompany the work with a written offer, valid for at
+    eu.c) Accompany the work with a written offer, valid for at
     least three years, to give the same user the materials
     specified in Subsection 6a, above, for a charge no more
     than the cost of performing this distribution.

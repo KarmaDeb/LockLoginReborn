@@ -24,6 +24,24 @@ public abstract class PluginConfiguration {
     public abstract String serverName();
 
     /**
+     * Get if the plugin share statistics with bStats
+     *
+     * @return if the plugin will share his statistics
+     */
+    public boolean shareBStats() {
+        return true; //TODO: Make this method abstract
+    }
+
+    /**
+     * Get if the plugin share statistics with official server
+     *
+     * @return if the plugin will share statistics wil official web server
+     */
+    public boolean sharePlugin() {
+        return true; //TODO: Make this method abstract
+    }
+
+    /**
      * Get if the plugin should replace the server MOTD while in
      * bungeecord mode
      *

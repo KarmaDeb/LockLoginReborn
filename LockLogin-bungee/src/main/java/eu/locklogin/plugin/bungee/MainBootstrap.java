@@ -4,6 +4,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.AllowedCommand;
 import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
@@ -26,8 +27,8 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
@@ -48,9 +49,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.PLUGIN_CHANNEL;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.MessageData;
 
 public class MainBootstrap {
 
@@ -97,8 +95,13 @@ public class MainBootstrap {
         loader.getProxy().getScheduler().runAsync(loader, () -> {
             CurrentPlatform.setOnDataContainerUpdate(() -> {
                 for (ServerInfo server : plugin.getProxy().getServers().values()) {
-                    DataSender.send(server, DataSender.getBuilder(DataType.LOGGED, PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getLogged()).build());
-                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTERED, PLUGIN_CHANNEL, null).addIntData(SessionDataContainer.getRegistered()).build());
+                    BungeeSender.sender.queue(server.getName())
+                            .insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN)
+                                    .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
+
+                    BungeeSender.sender.queue(server.getName())
+                            .insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN)
+                                    .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
                 }
             });
 
@@ -168,13 +171,26 @@ public class MainBootstrap {
                         session.setPinLogged(true);
                         session.set2FALogged(true);
 
-                        DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                        /*DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
+                                .addProperty("pin", false).build();
                         DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
                         DataSender.send(player, login);
                         DataSender.send(player, pin);
-                        DataSender.send(player, gauth);
+                        DataSender.send(player, gauth);*/
+                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                .insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId())
+                                        .getInstance().build());
+
+                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
+                                        .addProperty("player", player.getUniqueId())
+                                        .addProperty("pin", false).getInstance().build());
+
+                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
+                                        .addProperty("player", player.getUniqueId()).getInstance().build());
 
                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
                                 UserAuthenticateEvent.Result.SUCCESS,
@@ -287,8 +303,12 @@ public class MainBootstrap {
                     for (ModulePlayer player : server.getOnlinePlayers()) {
                         if (player.isPlaying()) {
                             if (data != null) {
-                                MessageData message = DataSender.getBuilder(DataType.LISTENER, "ll:plugin", null).writeOther(data).build();
-                                DataSender.send((ProxiedPlayer) player.getPlayer(), message);
+                                /*MessageData message = DataSender.getBuilder(DataType.LISTENER, "ll:plugin", null).writeOther(data).build();
+                                DataSender.send((ProxiedPlayer) player.getPlayer(), message);*/
+                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player.getPlayer()))
+                                                .insert(DataMessage.newInstance(DataType.LISTENER, Channel.PLUGIN)
+                                                        .addProperty("other", new String(Base64.getEncoder().encode(data))).getInstance().build());
+
                                 queue.nextMessage();
                             }
                         }

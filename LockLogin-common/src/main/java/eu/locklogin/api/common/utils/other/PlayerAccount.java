@@ -93,7 +93,7 @@ public final class PlayerAccount extends AccountManager {
 
             ASCIIArtGenerator generator = new ASCIIArtGenerator();
             if (success) {
-                generator.print("&c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+                generator.print("&eu.c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
 
                 source.console().send("-------------------------------------------");
                 source.console().send("");
@@ -108,7 +108,7 @@ public final class PlayerAccount extends AccountManager {
                 source.console().send("");
                 source.console().send("-------------------------------------------");
             } else {
-                generator.print("&c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+                generator.print("&eu.c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
 
                 source.console().send("-------------------------------------------");
                 source.console().send("");

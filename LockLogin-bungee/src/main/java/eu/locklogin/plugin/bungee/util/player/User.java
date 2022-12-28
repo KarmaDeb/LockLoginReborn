@@ -15,15 +15,13 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
-import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.file.options.LoginConfig;
-import eu.locklogin.api.file.options.RegisterConfig;
 import eu.locklogin.api.module.plugin.api.event.user.SessionInitializationEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
@@ -32,7 +30,8 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.api.bungee.makeiteasy.BossMessage;
 import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
@@ -341,27 +340,29 @@ public final class User {
      */
     public synchronized void applySessionEffects() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        DataSender.MessageDataBuilder builder = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player);
-        if (getManager().isRegistered()) {
-            LoginConfig login = config.loginOptions();
+        /*DataSender.MessageDataBuilder builder = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player)
+                        .addProperty("effects", true);
 
-            builder.addBoolData(login.blindEffect());
-        } else {
-            RegisterConfig register = config.registerOptions();
+        DataSender.send(player, builder.build());*/
 
-            builder.addBoolData(register.blindEffect());
-        }
-
-        DataSender.send(player, builder.build());
+        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                .insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT)
+                        .addProperty("player", player.getUniqueId())
+                        .addProperty("effects", true).getInstance().build());
     }
 
     /**
      * Restore the player potion effects
      */
     public synchronized void restorePotionEffects() {
-        DataSender.MessageData data = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player)
-                .addBoolData(false).build();
-        DataSender.send(player, data);
+        /*DataSender.MessageData data = DataSender.getBuilder(DataType.EFFECTS, DataSender.CHANNEL_PLAYER, player)
+                .addProperty("effects", false).build();
+        DataSender.send(player, data);*/
+
+        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                .insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT)
+                        .addProperty("player", player.getUniqueId())
+                        .addProperty("effects", false).getInstance().build());
     }
 
     /**

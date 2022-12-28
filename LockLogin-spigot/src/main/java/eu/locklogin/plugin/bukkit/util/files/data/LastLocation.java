@@ -212,6 +212,24 @@ public final class LastLocation {
     }
 
     /**
+     * Save the player last location
+     * and fall distance
+     */
+    public void saveAt(final Location location) {
+        if (location != null && location.getWorld() != null) {
+            file.set("X", new KarmaObject(location.getX()));
+            file.set("Y", new KarmaObject(location.getY()));
+            file.set("Z", new KarmaObject(location.getZ()));
+            file.set("PITCH", new KarmaObject(location.getPitch()));
+            file.set("YAW", new KarmaObject(location.getYaw()));
+            file.set("WORLD", new KarmaObject(location.getWorld().getName()));
+            file.set("FALLING", new KarmaObject(0f));
+
+            file.save();
+        }
+    }
+
+    /**
      * Fix the player location
      */
     public void fix() {

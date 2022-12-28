@@ -164,7 +164,7 @@ ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cVotre compte a été supprimé par"
-  - "&cadministrateur (&7 {player} &c)"
+  - "&cadministrateur (&7 {player} &eu.c)"
   - "&cet a été bloqué dans le temps"
   - "&cpour éviter la perte de données, jusqu'à ce qu'un membre du personnel"
   - "&cdéverrouille"

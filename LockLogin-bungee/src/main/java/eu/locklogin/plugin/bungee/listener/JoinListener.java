@@ -17,12 +17,13 @@ package eu.locklogin.plugin.bungee.listener;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.communication.DataSender;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
@@ -40,9 +41,10 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.BungeeDataSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
-import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
@@ -70,19 +72,13 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.*;
 
 public final class JoinListener implements Listener {
-
-    final static Set<UUID> switch_pool = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final PluginConfiguration config = CurrentPlatform.getConfiguration();
     private final ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
@@ -95,183 +91,205 @@ public final class JoinListener implements Listener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
-    private final PlayerPool pool;
+    public final PlayerPool pool;
+    public final PlayerPool switch_pool;
 
     /**
      * Initialize the join listener
      */
     public JoinListener() {
         pool = new PlayerPool("playerJoinQueue");
+        switch_pool = new PlayerPool("playerSwitchQueue");
 
         pool.whenValid((player) -> {
             User user = new User(player);
 
-            if (!switch_pool.contains(player.getUniqueId())) {
-                InetSocketAddress ip = getSocketIp(player.getSocketAddress());
+            InetSocketAddress ip = getSocketIp(player.getSocketAddress());
 
-                if (ip != null) {
-                    ModulePlayer sender = new ModulePlayer(
-                            player.getName(),
-                            player.getUniqueId(),
-                            user.getSession(),
-                            user.getManager(),
-                            (player.getSocketAddress() == null ? null : ((InetSocketAddress) player.getSocketAddress()).getAddress())
-                    );
-                    //If bungee player objects changes module player also changes
-                    CurrentPlatform.connectPlayer(sender, player);
+            if (ip != null) {
+                ModulePlayer sender = new ModulePlayer(
+                        player.getName(),
+                        player.getUniqueId(),
+                        user.getSession(),
+                        user.getManager(),
+                        (player.getSocketAddress() == null ? null : ((InetSocketAddress) player.getSocketAddress()).getAddress())
+                );
+                //If bungee player objects changes module player also changes
+                CurrentPlatform.connectPlayer(sender, player);
 
-                    PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
-                    ProxyCheck proxyCheck = new ProxyCheck(ip);
-                    if (proxyCheck.isProxy()) {
-                        validationResult = PluginIpValidationEvent.ValidationResult.INVALID.withReason("IP has been detected as proxy");
+                PluginIpValidationEvent.ValidationResult validationResult = PluginIpValidationEvent.ValidationResult.SUCCESS.withReason("Plugin configuration tells to ignore proxy IPs");
+                ProxyCheck proxyCheck = new ProxyCheck(ip);
+                if (proxyCheck.isProxy()) {
+                    validationResult = PluginIpValidationEvent.ValidationResult.INVALID.withReason("IP has been detected as proxy");
+                }
+
+                PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip.getAddress(), PluginIpValidationEvent.ValidationProcess.PROXY_IP,
+                        validationResult,
+                        validationResult.getReason(), null);
+                ModulePlugin.callEvent(ipEvent);
+
+                if (ipEvent.getResult() != validationResult && ipEvent.getHandleOwner() == null) {
+                    try {
+                        Field f = ipEvent.getClass().getDeclaredField("validationResult");
+                        f.setAccessible(true);
+
+                        f.set(ipEvent, validationResult); //Deny changes from unknown sources
+                    } catch (Throwable ignored) {
                     }
+                }
 
-                    PluginIpValidationEvent ipEvent = new PluginIpValidationEvent(ip.getAddress(), PluginIpValidationEvent.ValidationProcess.PROXY_IP,
-                            validationResult,
-                            validationResult.getReason(), null);
-                    ModulePlugin.callEvent(ipEvent);
+                if (!ipEvent.isHandled()) {
+                    switch (ipEvent.getResult()) {
+                        case SUCCESS:
+                            Server server = player.getServer();
+                            if (server != null && server.getInfo() != null) {
+                                ServerInfo info = server.getInfo();
+                                ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-                    if (ipEvent.getResult() != validationResult && ipEvent.getHandleOwner() == null) {
-                        try {
-                            Field f = ipEvent.getClass().getDeclaredField("validationResult");
-                            f.setAccessible(true);
-
-                            f.set(ipEvent, validationResult); //Deny changes from unknown sources
-                        } catch (Throwable ignored) {
-                        }
-                    }
-
-                    if (!ipEvent.isHandled()) {
-                        switch (ipEvent.getResult()) {
-                            case SUCCESS:
-                                Server server = player.getServer();
-                                if (server != null) {
-                                    ServerInfo info = server.getInfo();
-                                    ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
-
-                                    if (ServerDataStorage.needsRegister(info.getName()) || ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                        if (ServerDataStorage.needsRegister(info.getName()))
-                                            DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
-
-                                        if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                            DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                                                    .addTextData(proxy.proxyKey()).addTextData(info.getName())
-                                                    //.addTextData(TokenGen.expiration("local_token").toString())
-                                                    .build());
-                                        }
+                                if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                                    DataSender s = BungeeSender.sender;
+                                    if (BungeeSender.useSocket) {
+                                        s = new BungeeDataSender();
                                     }
 
-                                    DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
-                                    DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addTextData(Config.manager.getConfiguration()).build());
+                                    s.queue(info.getName())
+                                            .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS)
+                                                    .addProperty("key", proxy.proxyKey())
+                                                    .addProperty("server", info.getName())
+                                                    .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
                                 }
+                            }
 
-                                CurrentPlatform.requestDataContainerUpdate();
+                            CurrentPlatform.requestDataContainerUpdate();
 
-                                MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-                                DataSender.send(player, validation);
+                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
+                                    .addProperty("player", player.getUniqueId())
+                                    .getInstance().build());
 
-                                user.applySessionEffects();
+                            user.applySessionEffects();
 
-                                if (config.clearChat()) {
-                                    for (int i = 0; i < 150; i++)
-                                        plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
-                                }
+                            if (config.clearChat()) {
+                                for (int i = 0; i < 150; i++)
+                                    plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                            }
 
-                                ClientSession session = user.getSession();
-                                AccountManager manager = user.getManager();
-                                session.validate();
+                            ClientSession session = user.getSession();
+                            AccountManager manager = user.getManager();
+                            session.validate();
 
-                                if (!config.captchaOptions().isEnabled())
-                                    session.setCaptchaLogged(true);
+                            if (!config.captchaOptions().isEnabled())
+                                session.setCaptchaLogged(true);
 
-                                SimpleScheduler tmp_timer = null;
-                                if (!session.isCaptchaLogged()) {
-                                    tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
-                                    tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
-                                }
+                            SimpleScheduler tmp_timer = null;
+                            if (!session.isCaptchaLogged()) {
+                                tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                                tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                            }
 
-                                MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                                        .addBoolData(session.isLogged())
-                                        .addBoolData(session.is2FALogged())
-                                        .addBoolData(session.isPinLogged())
-                                        .addBoolData(manager.isRegistered()).build();
-                                DataSender.send(player, join);
+                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(
+                                    DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT)
+                                            .addProperty("player", player.getUniqueId())
+                                            .addProperty("pass_login", session.isLogged())
+                                            .addProperty("2fa_login", session.is2FALogged())
+                                            .addProperty("pin_login", session.isPinLogged())
+                                            .addProperty("registered", manager.isRegistered())
+                                            .getInstance().build()
+                            );
 
-                                SimpleScheduler timer = tmp_timer;
-                                SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(() -> {
-                                    user.restorePotionEffects();
-                                    player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
+                            SimpleScheduler timer = tmp_timer;
+                            SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(() -> {
+                                user.restorePotionEffects();
+                                player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
 
-                                    if (timer != null)
-                                        timer.cancel();
-                                });
+                                if (timer != null)
+                                    timer.cancel();
+                            });
 
-                                plugin.getProxy().getScheduler().runAsync(plugin, check);
+                            plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                                DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                            //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(
+                                    DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
+                                            .addProperty("player", player.getUniqueId())
+                                            .getInstance().build()
+                            );
 
-                                if (!Proxy.isAuth(player.getServer().getInfo())) {
-                                    user.checkServer(0);
-                                }
+                            if (!Proxy.isAuth(player.getServer().getInfo())) {
+                                user.checkServer(0);
+                            }
 
-                                Event event = new UserPostJoinEvent(user.getModule(), null);
-                                ModulePlugin.callEvent(event);
+                            Event event = new UserPostJoinEvent(user.getModule(), null);
+                            ModulePlugin.callEvent(event);
 
-                                if (event.isHandled()) {
-                                    user.kick(event.getHandleReason());
-                                }
+                            if (event.isHandled()) {
+                                user.kick(event.getHandleReason());
+                            }
 
-                                if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
-                                    logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
-                                            ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
-                                }
-                                break;
-                            case INVALID:
-                            case ERROR:
-                            default:
-                                if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
-                                    logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
-                                            ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
-                                }
+                            if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
+                                logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                        ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                            }
+                            break;
+                        case INVALID:
+                        case ERROR:
+                        default:
+                            if (!ipEvent.getResult().equals(validationResult) && ipEvent.getHandleOwner() != null) {
+                                logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
+                                        ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                            }
 
-                                logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", StringUtils.stripColor(player.getDisplayName()), ipEvent.getResult().getReason());
-                                user.kick(StringUtils.toColor(
-                                        StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
-                                                ipEvent.getResult().getReason())));
-                                break;
-                        }
-                    } else {
-                        user.kick(StringUtils.toColor(ipEvent.getHandleReason()));
+                            logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", StringUtils.stripColor(player.getDisplayName()), ipEvent.getResult().getReason());
+                            user.kick(StringUtils.toColor(
+                                    StringUtils.formatString(messages.ipProxyError() + "\n\n{0}",
+                                            ipEvent.getResult().getReason())));
+                            break;
                     }
                 } else {
-                    user.kick(StringUtils.toColor(messages.ipProxyError()));
+                    user.kick(StringUtils.toColor(ipEvent.getHandleReason()));
                 }
             } else {
-                switch_pool.remove(player.getUniqueId());
-
-                MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-                DataSender.send(player, validation);
-
-                CurrentPlatform.requestDataContainerUpdate();
-
-                ClientSession session = user.getSession();
-                AccountManager manager = user.getManager();
-                session.validate();
-
-                MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                        .addBoolData(session.isLogged())
-                        .addBoolData(session.is2FALogged())
-                        .addBoolData(session.isPinLogged())
-                        .addBoolData(manager.isRegistered()).build();
-                DataSender.send(player, join);
-
-                DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
-
-                user.checkServer(0);
+                user.kick(StringUtils.toColor(messages.ipProxyError()));
             }
+        });
+        switch_pool.whenValid((player) -> {
+            User user = new User(player);
+
+            console.send("Switch client now valid: {0}", player.getUniqueId());
+            console.send("Switch client server: {0}", BungeeSender.serverFromPlayer(player));
+
+            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                    .insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
+                            .addProperty("player", player.getUniqueId()).getInstance().build());
+
+            CurrentPlatform.requestDataContainerUpdate();
+
+            ClientSession session = user.getSession();
+            AccountManager manager = user.getManager();
+            session.validate();
+
+            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                    .insert(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT)
+                            .addProperty("player", player.getUniqueId())
+                            .addProperty("pass_login", session.isLogged())
+                            .addProperty("2fa_login", session.is2FALogged())
+                            .addProperty("pin_logged", session.isPinLogged())
+                            .addProperty("registered", manager.isRegistered())
+                            .getInstance().build());
+
+            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                    .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
+                            .addProperty("player", player.getUniqueId()).getInstance().build());
+
+            user.checkServer(0);
         });
 
         pool.startCheckTask();
+        switch_pool.startCheckTask();
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onConnect(ServerConnectEvent e) {
+
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -477,28 +495,25 @@ public final class JoinListener implements Listener {
         ProxiedPlayer player = e.getPlayer();
 
         Server server = player.getServer();
-        if (server != null) {
+        if (server != null && server.getInfo() != null) {
             ServerInfo info = server.getInfo();
-            if (ServerDataStorage.needsRegister(info.getName()) || ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                if (ServerDataStorage.needsRegister(info.getName()))
-                    DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).build());
-
-                if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                    DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                            .addTextData(proxy.proxyKey()).addTextData(info.getName())
-                            //.addTextData(TokenGen.expiration("local_token").toString())
-                            .build());
+            if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                DataSender s = BungeeSender.sender;
+                if (BungeeSender.useSocket) {
+                    s = new BungeeDataSender();
                 }
-            }
 
-            DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
-            DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(info.getName()).addTextData(Config.manager.getConfiguration()).build());
+                s.queue(info.getName())
+                        .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS)
+                                .addProperty("key", proxy.proxyKey())
+                                .addProperty("server", info.getName())
+                                .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
+            }
         }
 
         if (CurrentPlatform.getServer().isOnline(player.getUniqueId())) {
-            switch_pool.add(player.getUniqueId());
+            switch_pool.addPlayer(player.getUniqueId());
         }
-        pool.addPlayer(player.getUniqueId());
     }
 
     /**

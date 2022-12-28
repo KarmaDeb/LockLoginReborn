@@ -18,6 +18,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.ScratchCodes;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
@@ -28,8 +29,9 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
@@ -195,7 +197,10 @@ public final class GoogleAuthCommand extends Command {
                                             ScratchCodes codes = new ScratchCodes(user.getManager().getUUID());
 
                                             if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
-                                                DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build());
+                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                        .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
+                                                                .addProperty("player", player.getUniqueId()).getInstance().build());
+                                                //DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build());
 
                                                 session.set2FALogged(true);
                                                 session.setPinLogged(true);

@@ -159,7 +159,7 @@
         <dependency>
             <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-velocity</artifactId>
-            <version>1.13.37</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>

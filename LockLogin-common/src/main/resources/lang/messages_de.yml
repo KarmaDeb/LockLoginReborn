@@ -140,7 +140,7 @@ ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cIhr Konto wurde entfernt von"
-  - "&cAdministrator (&7 {player} &c)"
+  - "&cAdministrator (&7 {player} &eu.c)"
   - "&cund wurde zeitlich blockiert"
   - "&cum Datenverlust zu vermeiden, bis zum Mitarbeiter"
   - "&centsperrt es"

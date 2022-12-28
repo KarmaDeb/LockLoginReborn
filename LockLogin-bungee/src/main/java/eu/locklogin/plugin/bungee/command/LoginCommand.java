@@ -19,6 +19,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.Password;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
@@ -30,8 +31,9 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
-import eu.locklogin.plugin.bungee.plugin.sender.DataSender;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.string.StringUtils;
@@ -43,8 +45,6 @@ import java.net.InetAddress;
 import java.util.List;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.CHANNEL_PLAYER;
-import static eu.locklogin.plugin.bungee.plugin.sender.DataSender.MessageData;
 
 @SystemCommand(command = "login", aliases = {"log"})
 public final class LoginCommand extends Command {
@@ -126,7 +126,8 @@ public final class LoginCommand extends Command {
                                             }
                                         }
 
-                                        MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                                        //MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
+                                        DataMessage login = DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId()).getInstance();
 
                                         if (utils.needsRehash(config.passwordEncryption())) {
                                             //Set the player password again to update his hash
@@ -145,11 +146,21 @@ public final class LoginCommand extends Command {
                                                     messages.logged(),
                                                     null);
                                             ModulePlugin.callEvent(event);
-                                            MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("close").build();
+                                            /*MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
+                                                    .addProperty("pin", false).build();
                                             MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
                                             DataSender.send(player, pin);
-                                            DataSender.send(player, gauth);
+                                            DataSender.send(player, gauth);*/
+
+                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
+                                                            .addProperty("player", player.getUniqueId())
+                                                            .addProperty("pin", false).getInstance().build());
+
+                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                            .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
+                                                                    .addProperty("player", player.getUniqueId()).getInstance().build());
 
                                             session.set2FALogged(true);
                                             session.setPinLogged(true);
@@ -167,7 +178,12 @@ public final class LoginCommand extends Command {
                                             if (manager.hasPin()) {
                                                 session.setPinLogged(false);
 
-                                                DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player).addTextData("open").build());
+                                                /*DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
+                                                        .addProperty("pin", true).build());*/
+                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                        .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
+                                                                .addProperty("player", player.getUniqueId())
+                                                                .addProperty("pin", true).getInstance().build());
                                             } else {
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                                 user.send(messages.prefix() + messages.gAuthInstructions());
@@ -179,7 +195,9 @@ public final class LoginCommand extends Command {
 
                                         user.restorePotionEffects();
 
-                                        DataSender.send(player, login);
+                                        //DataSender.send(player, login);
+                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                .insert(login.build());
 
                                         if (checkServer)
                                             user.checkServer(0);
@@ -239,7 +257,10 @@ public final class LoginCommand extends Command {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("login " + password);
-                                        DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                                        //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
+                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
+                                                .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
+                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

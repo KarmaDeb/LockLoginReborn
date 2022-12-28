@@ -58,6 +58,26 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin share statistics with bStats
+     *
+     * @return if the plugin will share his statistics
+     */
+    @Override
+    public boolean shareBStats() {
+        return true;
+    }
+
+    /**
+     * Get if the plugin share statistics with official server
+     *
+     * @return if the plugin will share statistics wil official web server
+     */
+    @Override
+    public boolean sharePlugin() {
+        return true;
+    }
+
+    /**
      * Get if the plugin should replace the server MOTD while in
      * bungeecord mode
      *

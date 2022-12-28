@@ -110,11 +110,13 @@ public enum DataType {
 
     /**
      * Send proxy id as owner
+     * @deprecated LockLogin does not use proxy ids for communication anymore
      */
+    @Deprecated
     KEY,
 
     /**
-     * Register proxy id
+     * Register proxy
      */
     REGISTER,
 
@@ -125,6 +127,8 @@ public enum DataType {
 
     /**
      * Remove proxy id
+     * @deprecated This is not being used actually
      */
+    @Deprecated
     REMOVE,
 }

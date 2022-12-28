@@ -36,6 +36,10 @@
                                     <pattern>com.github.games647.craftapi</pattern>
                                     <shadedPattern>ml.karmaconfigs.games647.craftapi</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>io.socket</pattern>
+                                    <shadedPattern>ml.karmaconfigs.io.socket</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -81,7 +85,7 @@
         <dependency>
             <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-velocity</artifactId>
-            <version>1.13.37</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>

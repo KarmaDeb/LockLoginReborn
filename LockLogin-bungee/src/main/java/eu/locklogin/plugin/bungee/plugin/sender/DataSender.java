@@ -13,11 +13,13 @@ package eu.locklogin.plugin.bungee.plugin.sender;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.MessagePool;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
-import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -35,8 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import static eu.locklogin.plugin.bungee.LockLogin.logger;
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
+/**
+ * @deprecated Please use the {@link eu.locklogin.plugin.bungee.BungeeSender wrapper} instead
+ */
 @SuppressWarnings("UnstableApiUsage")
-public final class DataSender {
+public @Deprecated class DataSender {
 
     public final static String CHANNEL_PLAYER = "ll:account";
     public final static String PLUGIN_CHANNEL = "ll:plugin";
@@ -50,6 +55,8 @@ public final class DataSender {
 
     @SuppressWarnings("FieldMayBeFinal")
     private static String com = "";
+    @SuppressWarnings("FieldMayBeFinal")
+    private static String secret = UUID.randomUUID().toString();
 
     /**
      * Initialize the data sender
@@ -64,8 +71,7 @@ public final class DataSender {
                     try {
                         server.sendData(data.getChannel(), data.getData().toByteArray());
                         auto_data_pool.remove(message);
-                    } catch (IllegalStateException ignored) {
-                    }
+                    } catch (IllegalStateException ignored) {}
                 }
             });
             scheduler.start();
@@ -80,7 +86,7 @@ public final class DataSender {
     public static void send(final ProxiedPlayer player, final MessageData data) {
         try {
             ServerInfo server = player.getServer().getInfo();
-            if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+            if (ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 Set<MessagePool> pool = data_pool.getOrDefault(server.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
                 pool.add(new MessagePool(server, data));
 
@@ -105,17 +111,13 @@ public final class DataSender {
      */
     public static void send(final ServerInfo server, final MessageData data) {
         try {
-            if (ServerDataStorage.needsRegister(server.getName()) && ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
+            if (ServerDataStorage.needsProxyKnowledge(server.getName()) && !data.getChannel().equalsIgnoreCase(ACCESS_CHANNEL)) {
                 Set<MessagePool> pool = data_pool.getOrDefault(server.getName(), Collections.newSetFromMap(new ConcurrentHashMap<>()));
-                pool.add(new MessagePool(server, data));
 
+                pool.add(new MessagePool(server, data));
                 data_pool.put(server.getName(), pool);
             } else {
-                try {
-                    server.sendData(data.getChannel(), data.getData().toByteArray());
-                } catch (IllegalStateException ex) {
-                    auto_data_pool.add(new MessagePool(server, data));
-                }
+                auto_data_pool.add(new MessagePool(server, data));
             }
         } catch (Throwable e) {
             logger.scheduleLog(Level.GRAVE, e);
@@ -142,7 +144,7 @@ public final class DataSender {
                     if (!server_sents.contains(info.getName().toLowerCase())) {
                         server_sents.add(info.getName().toLowerCase());
 
-                        if (!ServerDataStorage.needsRegister(info.getName()) && !ServerDataStorage.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
+                        if (!ServerDataStorage.needsProxyKnowledge(info.getName()) || channel.equalsIgnoreCase(ACCESS_CHANNEL)) {
                             ByteArrayDataOutput output = ByteStreams.newDataOutput();
                             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
@@ -197,9 +199,16 @@ public final class DataSender {
         return new MessageDataBuilder(type, owner).setChannel(channel);
     }
 
+    /**
+     * @deprecated Deprecated with the implementation of {@link eu.locklogin.api.common.communication.DataSender wrapper} and
+     * the new {@link eu.locklogin.plugin.bungee.com.message.DataMessage} builder with json support
+     *
+     * Sad because json support was never been officially released in this builder :eu.c
+     */
+    @Deprecated
     public static class MessageDataBuilder {
 
-        private final ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        private final JsonObject json = new JsonObject();
 
         private String channel = "";
 
@@ -217,14 +226,15 @@ public final class DataSender {
                 assert token != null;
             }*/
 
+            //output.writeBoolean(false); //Is this a socket message?
             if (owner != null) {
-                output.writeUTF(owner.getUniqueId().toString());
+                json.addProperty("player", owner.getUniqueId().toString());
             } else {
-                output.writeUTF(UUID.randomUUID().toString());
+                json.addProperty("player", UUID.randomUUID().toString());
             }
-            output.writeUTF(com);
-            output.writeUTF(proxy.getProxyID().toString());
-            output.writeUTF(data.name().toLowerCase());
+            json.addProperty("token", com);
+            json.addProperty("proxy", secret);
+            json.addProperty("data_type", data.name().toLowerCase());
         }
 
         /**
@@ -235,7 +245,6 @@ public final class DataSender {
          */
         public final MessageDataBuilder setChannel(final String name) {
             channel = name;
-
             return this;
         }
 
@@ -245,9 +254,8 @@ public final class DataSender {
          * @param data the data to add
          * @return this instance
          */
-        public final MessageDataBuilder addTextData(final String data) {
-            output.writeUTF(data);
-
+        public final MessageDataBuilder addProperty(final String name, final String data) {
+            json.addProperty(name, data);
             return this;
         }
 
@@ -257,9 +265,8 @@ public final class DataSender {
          * @param data the data to add
          * @return this instance
          */
-        public final MessageDataBuilder addBoolData(final boolean data) {
-            output.writeBoolean(data);
-
+        public final MessageDataBuilder addProperty(final String name, final boolean data) {
+            json.addProperty(name, data);
             return this;
         }
 
@@ -269,9 +276,8 @@ public final class DataSender {
          * @param data the data to add
          * @return this instance
          */
-        public final MessageDataBuilder addIntData(final int data) {
-            output.writeInt(data);
-
+        public final MessageDataBuilder addProperty(final String name, final int data) {
+            json.addProperty(name, data);
             return this;
         }
 
@@ -282,7 +288,7 @@ public final class DataSender {
          * @return this instance
          */
         public final MessageDataBuilder writeOther(final byte[] data) {
-            output.write(data);
+            //output.write(data);
             return this;
         }
 
@@ -294,6 +300,11 @@ public final class DataSender {
         public final MessageData build() throws IllegalStateException {
             if (channel.replaceAll("\\s", "").isEmpty())
                 throw new IllegalStateException("Tried to build message data with empty channel!");
+
+            ByteArrayDataOutput output = ByteStreams.newDataOutput();
+            Gson gson = new GsonBuilder().setLenient().create();
+            String data = gson.toJson(json);
+            output.writeUTF(data);
 
             return new MessageData(output, channel);
         }

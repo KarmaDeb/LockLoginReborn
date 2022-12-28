@@ -130,6 +130,26 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the plugin share statistics with bStats
+     *
+     * @return if the plugin will share his statistics
+     */
+    @Override
+    public boolean shareBStats() {
+        return cfg.getBoolean("Statistics.bStats", true);
+    }
+
+    /**
+     * Get if the plugin share statistics with official server
+     *
+     * @return if the plugin will share statistics wil official web server
+     */
+    @Override
+    public boolean sharePlugin() {
+        return cfg.getBoolean("Statistics.plugin", true);
+    }
+
+    /**
      * Get if the plugin should replace the server MOTD while in
      * bungeecord mode
      *
@@ -148,7 +168,7 @@ public final class Config extends PluginConfiguration {
      */
     @Override
     public String serverKey() {
-        return cfg.getString("ServerKey", CurrentPlatform.getServerHash());
+        return cfg.getString("ServerKey", "");
     }
 
     @Override

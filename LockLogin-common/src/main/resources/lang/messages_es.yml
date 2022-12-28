@@ -165,7 +165,7 @@ ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cTu cuenta ha sido eliminada por"
-  - "&cun administrador ( &7{player}&c )"
+  - "&cun administrador ( &7{player}&eu.c )"
   - "&cy ha sido bloqueada temporalmente"
   - "&cpara evitar que se pierdan tus datos"
   - "&chasta que un administrador la desbloquee"

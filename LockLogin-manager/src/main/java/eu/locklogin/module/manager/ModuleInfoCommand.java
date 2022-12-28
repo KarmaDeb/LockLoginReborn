@@ -32,10 +32,10 @@ public final class ModuleInfoCommand extends Command {
             sender.sendMessage("");
             sender.sendMessage("&7LockLogin plugin information");
             sender.sendMessage("");
-            sender.sendMessage("&bServer hash: &c" + CurrentPlatform.getServerHash());
+            sender.sendMessage("&bServer hash: &eu.c" + CurrentPlatform.getServerHash());
             sender.sendMessage("&bPanel status: &cNot terminated (https://panel.karmaconfigs.ml)");
-            sender.sendMessage("&bRegistered users: &c" + SessionDataContainer.getRegistered());
-            sender.sendMessage("&bLogged users: &c" + SessionDataContainer.getLogged());
+            sender.sendMessage("&bRegistered users: &eu.c" + SessionDataContainer.getRegistered());
+            sender.sendMessage("&bLogged users: &eu.c" + SessionDataContainer.getLogged());
             RemoteNotification rm = new RemoteNotification();
             if (parameters.length == 1) {
                 String param = parameters[0];
@@ -45,10 +45,10 @@ public final class ModuleInfoCommand extends Command {
             }
             Notification notification = rm.getNotification();
 
-            sender.sendMessage("&bLast notification level: &c" + notification.getLevel());
-            sender.sendMessage("&bLast notification: &c" + notification.getNotification());
-            sender.sendMessage("&bForce configuration: &c" + notification.forceConfig());
-            sender.sendMessage("&bForce proxy configuration: &c" + notification.forceProxy());
+            sender.sendMessage("&bLast notification level: &eu.c" + notification.getLevel());
+            sender.sendMessage("&bLast notification: &eu.c" + notification.getNotification());
+            sender.sendMessage("&bForce configuration: &eu.c" + notification.forceConfig());
+            sender.sendMessage("&bForce proxy configuration: &eu.c" + notification.forceProxy());
             sender.sendMessage("");
             sender.sendMessage("&d------------------------------");
         } else {

@@ -147,16 +147,11 @@ public final class JoinListener {
 
                                 RegisteredServer server = connection.getServer();
 
-                                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                                    if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
-                                        DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
-
-                                    if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                                        DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                                                .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                                                //.addTextData(TokenGen.expiration("local_token").toString())
-                                                .build());
-                                    }
+                                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
+                                            .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
+                                            //.addTextData(TokenGen.expiration("local_token").toString())
+                                            .build());
                                 }
                                 DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
                                 DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());
@@ -460,16 +455,11 @@ public final class JoinListener {
             RegisteredServer server = e.getServer();
             ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
-            if (ServerDataStorage.needsRegister(server.getServerInfo().getName()) || ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                if (ServerDataStorage.needsRegister(server.getServerInfo().getName()))
-                    DataSender.send(server, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addBoolData(proxy.multiBungee()).build());
-
-                if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
-                    DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                            .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
-                            //.addTextData(TokenGen.expiration("local_token").toString())
-                            .build());
-                }
+            if (ServerDataStorage.needsProxyKnowledge(server.getServerInfo().getName())) {
+                DataSender.send(server, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
+                        .addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName())
+                        //.addTextData(TokenGen.expiration("local_token").toString())
+                        .build());
             }
             DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(CurrentPlatform.getMessages().toString()).build());
             DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player).addTextData(proxy.proxyKey()).addTextData(server.getServerInfo().getName()).addTextData(Config.manager.getConfiguration()).build());

@@ -17,6 +17,7 @@ package eu.locklogin.api.util.platform;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.param.AccountConstructor;
+import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.libraries.sha.SHA512;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
@@ -74,6 +75,8 @@ public final class CurrentPlatform {
                                 .withType(TextType.RANDOM_SIZE)
                                 .withSize(64)
                 ).create()).getBytes(StandardCharsets.UTF_8)));
+
+                CryptoFactory factory = CryptoFactory.getBuilder().withPassword(tmp_hash).unsafe();
 
                 kf.set("hash", tmp_hash);
                 kf.save();

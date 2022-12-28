@@ -113,7 +113,7 @@ public final class PanicCommand implements CommandExecutor {
                                             String password = TokenGenerator.generateLiteral(32);
 
                                             user.send(messages.panicRequested());
-                                            TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &c" + password));
+                                            TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
                                             try {
                                                 component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
                                             } catch (Throwable ex) {
