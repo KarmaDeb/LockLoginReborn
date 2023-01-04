@@ -14,4 +14,4 @@ currently supported
 
 ## Reporting a Vulnerability
 
-To report issues, simply go to [GSA discord](https://discord.gg/jRFfsdxnJR) and open a ticket
+To report issues, simply go to [Karma Discord](https://discord.gg/jRFfsdxnJR) and open a ticket
