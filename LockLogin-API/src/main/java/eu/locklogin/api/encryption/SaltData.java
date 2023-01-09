@@ -1,9 +1,8 @@
 package eu.locklogin.api.encryption;
 
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-
-import java.io.File;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.source.APISource;
 
 /**
  * LockLogin salts data for DynamicBungeeAuth
@@ -11,7 +10,7 @@ import java.io.File;
  */
 public final class SaltData {
 
-    private final static KarmaFile file = new KarmaFile(new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "cache", "dba.salt"));
+    private final static KarmaMain file = new KarmaMain(APISource.loadProvider("LockLogin"), "dba.kf", "cache");
     private final String password;
 
     /**
@@ -28,8 +27,9 @@ public final class SaltData {
      *
      * @param salt the password salt
      */
-    public void assing(final String salt) {
-        file.set(password, salt);
+    @SuppressWarnings("unused")
+    public void assign(final String salt) {
+        file.set(password, KarmaElement.from(salt));
     }
 
     /**
@@ -38,6 +38,6 @@ public final class SaltData {
      * @return the password salt
      */
     public String getSalt() {
-        return file.getString(password, "");
+        return file.get(password, KarmaElement.from("")).getObjet().getString();
     }
 }

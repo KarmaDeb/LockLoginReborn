@@ -21,15 +21,17 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "panic")
+@SuppressWarnings("unused")
 public final class PanicCommand implements CommandExecutor {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -114,11 +117,7 @@ public final class PanicCommand implements CommandExecutor {
 
                                             user.send(messages.panicRequested());
                                             TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                            try {
-                                                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
-                                            } catch (Throwable ex) {
-                                                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
-                                            }
+                                            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
                                             component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
                                             user.send(component);
 

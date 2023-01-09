@@ -16,21 +16,18 @@ package eu.locklogin.api.common.session;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
 
 import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * LockLogin persistent session data
@@ -59,7 +56,7 @@ public final class PersistentSessionData {
     /**
      * Get a list of persistent accounts
      *
-     * @return a list of persistent accounts
+     * @return a set of persistent accounts
      */
     public static Set<AccountManager> getPersistentAccounts() {
         Set<AccountManager> accounts = new LinkedHashSet<>();

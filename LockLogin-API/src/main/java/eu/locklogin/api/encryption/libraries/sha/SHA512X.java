@@ -26,7 +26,6 @@ import java.security.NoSuchAlgorithmException;
  * <p>
  * This is used specially to add DynamicBungeeAuth compatibility
  */
-@SuppressWarnings("UnstableApiUsage")
 public final class SHA512X {
 
     private final String pwd;

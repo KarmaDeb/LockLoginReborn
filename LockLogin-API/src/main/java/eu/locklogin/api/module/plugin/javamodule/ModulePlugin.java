@@ -24,8 +24,9 @@ import eu.locklogin.api.module.plugin.api.event.util.EventListener;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Logger;
-import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.logger.KarmaLogger;
+import ml.karmaconfigs.api.common.logger.Logger;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.io.File;
@@ -38,7 +39,7 @@ import java.util.*;
 @SuppressWarnings("unused")
 public final class ModulePlugin {
 
-    private final static Logger logger = new Logger(APISource.loadProvider("LockLogin"));
+    private final static KarmaLogger logger = new Logger(APISource.loadProvider("LockLogin"));
 
     private final static Map<PluginModule, Set<EventListener>> module_listeners = new LinkedHashMap<>();
     private final static Map<PluginModule, Set<Command>> module_commands = new LinkedHashMap<>();

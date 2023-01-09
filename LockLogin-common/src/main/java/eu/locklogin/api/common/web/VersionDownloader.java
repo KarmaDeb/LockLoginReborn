@@ -12,19 +12,19 @@ package eu.locklogin.api.common.web;
  */
 
 import eu.locklogin.api.common.utils.FileInfo;
-import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.client.permission.PermissionDefault;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.client.permission.SimplePermission;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
 
 import java.io.File;
 import java.net.URL;

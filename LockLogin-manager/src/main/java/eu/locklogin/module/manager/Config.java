@@ -1,8 +1,9 @@
 package eu.locklogin.module.manager;
 
 import eu.locklogin.api.module.plugin.api.command.help.HelpPage;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.string.ListTransformation;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public final class Config {
                     .replace("{page}", String.valueOf(num))
                     .replace("{pages}", String.valueOf(HelpPage.getPages())) + "&r");
 
-        return StringUtils.listToString(parsed, false);
+        return StringUtils.listToString(parsed, ListTransformation.NEW_LINES);
     }
 
     public String getFooter(final int num) {
@@ -30,7 +31,7 @@ public final class Config {
                     .replace("{page}", String.valueOf(num))
                     .replace("{pages}", String.valueOf(HelpPage.getPages())) + "&r");
 
-        return StringUtils.listToString(parsed, false);
+        return StringUtils.listToString(parsed, ListTransformation.NEW_LINES);
     }
 
     public List<String> formatHelp(final HelpPage page) {

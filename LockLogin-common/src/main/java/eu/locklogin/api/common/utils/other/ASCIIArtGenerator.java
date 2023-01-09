@@ -14,8 +14,8 @@ package eu.locklogin.api.common.utils.other;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

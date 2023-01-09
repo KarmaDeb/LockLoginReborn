@@ -30,11 +30,14 @@ import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -44,6 +47,7 @@ import java.util.List;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "panic")
+@SuppressWarnings("unused")
 public final class PanicCommand extends Command {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
@@ -122,11 +126,7 @@ public final class PanicCommand extends Command {
 
                                         user.send(messages.panicRequested());
                                         TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                        try {
-                                            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
-                                        } catch (Throwable ex) {
-                                            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
-                                        }
+                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
                                         component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
                                         user.send(component);
 
@@ -135,15 +135,6 @@ public final class PanicCommand extends Command {
                                         protection.success();
 
                                         user.restorePotionEffects();
-
-                                        /*DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
-                                                .addProperty("pin", false).build();
-                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-
-                                        DataSender.send(player, pin);
-                                        DataSender.send(player, gauth);
-                                        DataSender.send(player, login);*/
 
                                         BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                 .insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId())

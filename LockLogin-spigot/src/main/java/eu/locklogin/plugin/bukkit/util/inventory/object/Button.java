@@ -10,8 +10,8 @@ import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -124,6 +124,7 @@ public class Button {
         return manager.createProperty("textures", value, signature);
     }
 
+    @SuppressWarnings("deprecation")
     public static ItemStack getNumber(final int number) {
         if (!numbers.containsKey(number)) {
             ItemStack stack = getRandomItemStack();
@@ -138,10 +139,8 @@ public class Button {
                 stackMeta = stack.getItemMeta();
                 assert stackMeta != null;
             } else {
-                stack = new ItemStack(Material.getMaterial("SKULL_ITEM"), 1, (short) 3);
+                stack = new ItemStack(Objects.requireNonNull(Material.getMaterial("SKULL_ITEM")), 1, (short) 3);
                 stackMeta = stack.getItemMeta();
-
-
             }
 
 
@@ -169,6 +168,7 @@ public class Button {
             } else {
                 n = k.get(String.valueOf(number)).getObjet();
             }
+            assert stackMeta != null;
 
             stackMeta.setDisplayName(StringUtils.toColor(n.getObjet().getString()));
             stack.setItemMeta(stackMeta);

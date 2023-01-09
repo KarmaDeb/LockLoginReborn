@@ -21,7 +21,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.console.ConsolePrefix;
 import eu.locklogin.api.module.plugin.javamodule.console.MessageLevel;
-import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
 import org.jetbrains.annotations.Nullable;
 
 /**

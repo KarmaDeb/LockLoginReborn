@@ -18,13 +18,13 @@ import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
 import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.utils.version.VersionID;
-import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.KarmaLogger;
+import ml.karmaconfigs.api.common.console.Console;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.logger.KarmaLogger;
 import net.md_5.bungee.api.ProxyServer;
 import org.jetbrains.annotations.Nullable;
 

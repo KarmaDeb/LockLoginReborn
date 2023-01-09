@@ -49,11 +49,11 @@ import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.md_5.bungee.api.ChatMessageType;
@@ -254,9 +254,6 @@ public final class JoinListener implements Listener {
         switch_pool.whenValid((player) -> {
             User user = new User(player);
 
-            console.send("Switch client now valid: {0}", player.getUniqueId());
-            console.send("Switch client server: {0}", BungeeSender.serverFromPlayer(player));
-
             BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                     .insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
                             .addProperty("player", player.getUniqueId()).getInstance().build());
@@ -272,7 +269,7 @@ public final class JoinListener implements Listener {
                             .addProperty("player", player.getUniqueId())
                             .addProperty("pass_login", session.isLogged())
                             .addProperty("2fa_login", session.is2FALogged())
-                            .addProperty("pin_logged", session.isPinLogged())
+                            .addProperty("pin_login", session.isPinLogged())
                             .addProperty("registered", manager.isRegistered())
                             .getInstance().build());
 

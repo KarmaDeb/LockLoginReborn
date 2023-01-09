@@ -14,26 +14,22 @@ package eu.locklogin.api.account;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
  * LockLogin LocalId memory
  * <p>
  * Originally created for Azuriom ID random UUID generation system.
- *
  * This system is now used to retrieve a player account file using its UUID
  * instead of his player variable
  */
@@ -51,18 +47,6 @@ public final class ClientRanID {
      * @param id the azuriom account id
      */
     public ClientRanID(final AccountID id) {
-        Path oldFile = source.getDataPath().resolve("data").resolve("azuriom").resolve("ids.lldb");
-        if (Files.exists(oldFile)) {
-            source.console().send("Found legacy client random ID storage ( azuriom/ids.lldb ). Starting migration to the new system", Level.INFO);
-
-            @SuppressWarnings("deprecation")
-            KarmaFile tmpMigration = new KarmaFile(oldFile);
-            tmpMigration.getKeys(false).forEach((key) -> idData.set(key.getPath().toLowerCase(), new KarmaObject(key.getValue().toString())));
-            idData.save();
-
-            tmpMigration.delete();
-        }
-
         uuid = id.getId();
     }
 

@@ -37,6 +37,7 @@ import static eu.locklogin.plugin.bungee.LockLogin.console;
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
 @SystemCommand(command = "pin")
+@SuppressWarnings("unused")
 public class PinCommand extends Command {
 
     /**
@@ -83,8 +84,6 @@ public class PinCommand extends Command {
 
                                             session.setPinLogged(false);
 
-                                            /*DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player)
-                                                    .addProperty("pin", true).build());*/
                                             BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
                                                                     .addProperty("player", player.getUniqueId())

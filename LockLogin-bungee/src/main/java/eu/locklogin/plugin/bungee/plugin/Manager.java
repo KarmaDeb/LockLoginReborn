@@ -72,17 +72,20 @@ import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
+import io.socket.client.Socket;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.HttpUtil;
+import ml.karmaconfigs.api.common.utils.url.Post;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
-import ml.karmaconfigs.api.common.version.VersionUpdater;
-import ml.karmaconfigs.api.common.version.util.VersionCheckType;
+import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
+import ml.karmaconfigs.api.common.version.updater.VersionCheckType;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -100,7 +103,6 @@ import org.jetbrains.annotations.ApiStatus;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.*;
@@ -137,8 +139,6 @@ public final class Manager {
 
         ProxyCheck.scan();
 
-        PlayerAccount.migrateV1();
-        PlayerAccount.migrateV2();
         PlayerAccount.migrateV3();
 
         setupFiles();
@@ -220,10 +220,11 @@ public final class Manager {
         if (config.getUpdaterOptions().isEnabled()) {
             scheduleVersionCheck();
         }
-        registerMetrics();
 
         scheduleAlertSystem();
         initPlayers();
+
+        registerMetrics();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
         Injector injector = new ModuleExecutorInjector();
@@ -292,7 +293,7 @@ public final class Manager {
         ConnectionManager c_Manager = new ConnectionManager(socket, pds);
 
         //TODO: Launch web services communication project. For now this will never connect
-        /*c_Manager.connect(5).whenComplete((tries_amount) -> {
+        c_Manager.connect(5).whenComplete((tries_amount) -> {
             if (tries_amount > 0) {
                 console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
             }
@@ -308,18 +309,33 @@ public final class Manager {
                 case 0:
                     console.send("Connected to LockLogin web services successfully", Level.INFO);
                 default:
-                    //JsonObject data = new JsonObject();
+                    KarmaMain hashes = new KarmaMain(plugin, ".hashes");
+                    if (hashes.exists()) {
+                        for (String hash : hashes.getKeys()) {
+                            String server = hashes.get(hash).getObjet().getString();
+
+                            Socket connection = socket.client();
+                            JsonObject data = new JsonObject();
+                            data.addProperty("server", server);
+                            data.addProperty("hash", hash);
+
+                            connection.emit(Channel.ACCESS.getName(), data); //We don't want ACK, as, if everything is OK, the onServerConnected trigger will be called
+                        }
+                    }
+
                     BungeeSender.sender = pds;
                     BungeeSender.useSocket = true;
 
-                    c_Manager.onServerConnected((name, aka) -> {
+                    c_Manager.onServerConnected((name) -> {
                         ServerInfo server = plugin.getProxy().getServerInfo(name);
                         if (server != null) {
-                            pds.addMap(server, aka);
+                            BungeeSender.sender.queue(name).unlock();
+                            ServerDataStorage.setProxyRegistered(name);
                             console.send("Server {0} has been connected to the proxy", Level.INFO, name);
                         }
                     });
-                    c_Manager.onProxyConnected((address) -> {
+                    //TODO: Realize how I will make this work
+                    /*c_Manager.onProxyConnected((address) -> {
                         try {
                             InetAddress inet = InetAddress.getByName(address);
                             if (inet.isReachable(15000)) {
@@ -330,7 +346,7 @@ public final class Manager {
                         } catch (Throwable ex) {
                             console.send("A proxy from {0} has connected the server, but we were unable to resolve its host. In a future the connection will reset if that happens", Level.GRAVE, address);
                         }
-                    });
+                    });*/
 
                     console.send("Registering LockLogin web service listeners", Level.INFO);
                     c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (server, data) -> {
@@ -445,10 +461,10 @@ public final class Manager {
             }
 
             initialized = true;
-        });*/
+        });
 
-        BungeeSender.sender = new BungeeDataSender();
-        BungeeSender.useSocket = false;
+        /*BungeeSender.sender = new BungeeDataSender();
+        BungeeSender.useSocket = false;*/
         initialized = true;
     }
 
@@ -608,15 +624,64 @@ public final class Manager {
      */
     static void registerMetrics() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        Metrics metrics = new Metrics(plugin, 6512);
+        if (config.shareBStats()) {
+            Metrics metrics = new Metrics(plugin, 6512);
 
-        metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
-        metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
-                .replace("true", "Clear chat")
-                .replace("false", "Don't clear chat")));
-        metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
-                .replace("true", "Sessions enabled")
-                .replace("false", "Sessions disabled")));
+            metrics.addCustomChart(new SimplePie("used_locale", () -> config.getLang().friendlyName(config.getLangName())));
+            metrics.addCustomChart(new SimplePie("clear_chat", () -> String.valueOf(config.clearChat())
+                    .replace("true", "Clear chat")
+                    .replace("false", "Don't clear chat")));
+            metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
+                    .replace("true", "Sessions enabled")
+                    .replace("false", "Sessions disabled")));
+        }
+        if (config.sharePlugin()) {
+            String[] hosts = new String[]{
+                    "https://karmadev.es/api/v2",
+                    "https://karmaconfigs.ml/api/v2",
+                    "https://karmarepo.ml/api/v2",
+                    "https://backup.karmadev.es/api/v2",
+                    "https://backup.karmaconfigs.ml/api/v2",
+                    "https://backup.karmarepo.ml/api/v2"
+            };
+
+            URL sv = null;
+            for (String host : hosts) {
+                try {
+                    URL url = new URL(host);
+                    HttpUtil util = URLUtils.extraUtils(URLUtils.append(url, "status"));
+
+                    if (util != null) {
+                        String response = util.getResponse();
+                        if (response.contains("\"status\": \"ok\"")) {
+                            sv = url;
+                            break;
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+
+            if (sv != null) {
+                URL server = sv;
+
+                new SourceScheduler(plugin, 5, SchedulerUnit.MINUTE, true).multiThreading(true).restartAction(() -> {
+                    HttpUtil util = URLUtils.extraUtils(URLUtils.append(server, "metrics"));
+                    if (util != null) {
+                        String id = plugin.getIdentifier();
+
+                        Post post = Post.newPost()
+                                .add("plugin", '0')
+                                .add("server", id)
+                                .add("logged", SessionDataContainer.getLogged())
+                                .add("registered", SessionDataContainer.getRegistered())
+                                .add("version", plugin.version())
+                                .add("network", BungeeSender.registered_servers);
+
+                        util.push(post);
+                    }
+                }).start();
+            }
+        }
     }
 
     /**
@@ -647,6 +712,7 @@ public final class Manager {
     /**
      * Perform a version check
      */
+    @SuppressWarnings("deprecation")
     static void performVersionCheck() {
         if (updater == null)
             updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
@@ -962,6 +1028,7 @@ public final class Manager {
      * @deprecated Implemented in another better way
      */
     @Deprecated @ApiStatus.ScheduledForRemoval
+    @SuppressWarnings("all")
     public static CompletableFuture<Boolean> connect(final String address, final int port) {
         /*
         Actually this is ready to work. We should only have to make the API For it lol

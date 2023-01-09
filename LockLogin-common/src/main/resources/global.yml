@@ -18,6 +18,7 @@ project_urls:
       version: "/version/"
       dependency: "-repository/{0}/"
       update: "/version/{0}/LockLogin.jar"
+      manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
       alternative:
         - "backup"
     karmarepo:
@@ -27,6 +28,7 @@ project_urls:
       version: "/version/"
       dependency: "-repository/{0}/"
       update: "/version/{0}/LockLogin.jar"
+      manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
       alternative:
         - "backup"
   es:
@@ -37,6 +39,7 @@ project_urls:
       version: "/version/"
       dependency: "-repository/{0}/"
       update: "/version/{0}/LockLogin.jar"
+      manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
       alternative:
         - "backup"
   io:
@@ -47,8 +50,5 @@ project_urls:
       version: "version/"
       dependency: "repository/{0}/"
       update: "version/{0}/LockLogin.jar"
+      manager: "modules/manager/${project.manager}/LockLoginManager.jar"
       alternative: []
-editor_urls:
-  - "https://panel.karmaconfigs.ml/editor/"
-  - "https://panel.karmarepo.ml/editor/"
-  - "https://panel.karmadev.es/editor/"

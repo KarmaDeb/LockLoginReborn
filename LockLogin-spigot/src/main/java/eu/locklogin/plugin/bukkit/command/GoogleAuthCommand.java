@@ -30,7 +30,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
@@ -45,6 +45,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 @SystemCommand(command = "2fa")
+@SuppressWarnings("unused")
 public final class GoogleAuthCommand implements CommandExecutor {
 
     /**
@@ -116,7 +117,9 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                                         }
                                                     }
 
-                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url);
+                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink())
+                                                            .hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!"))
+                                                            .click(ClickEvent.Action.OPEN_URL, token_url);
                                                     user.send(c_factory.get());
 
                                                     List<Integer> scratch_codes = factory.getRecoveryCodes();

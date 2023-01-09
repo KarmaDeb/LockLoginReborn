@@ -14,8 +14,9 @@ package eu.locklogin.api.common.utils.plugin;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
@@ -43,13 +44,17 @@ public final class ComponentFactory {
      * @param hoverText the hover text
      * @return this instance
      */
+    @SuppressWarnings("deprecation")
     public ComponentFactory hover(final String hoverText) {
         try {
-            text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor(hoverText))));
-        } catch (Throwable ex) {
             text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor(hoverText))));
+        } catch (Throwable ex) {
+            try {
+                text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor(hoverText)).create()));
+            } catch (Throwable e) {
+                text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor(hoverText))));
+            }
         }
-
         return this;
     }
 

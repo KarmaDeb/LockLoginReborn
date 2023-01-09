@@ -40,10 +40,14 @@ import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -57,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "account")
+@SuppressWarnings("unused")
 public class AccountCommand implements CommandExecutor {
 
     private final static Map<String, String> confirmation = new ConcurrentHashMap<>();
@@ -74,6 +79,7 @@ public class AccountCommand implements CommandExecutor {
      * @return true if a valid command, otherwise false
      */
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -86,7 +92,7 @@ public class AccountCommand implements CommandExecutor {
                 if (args.length == 0) {
                     user.send(messages.prefix() + messages.accountArguments());
                 } else {
-                    ClientSession session = user.getSession();
+                    ClientSession session;
                     switch (args[0].toLowerCase()) {
                         case "change":
                             if (args.length == 3) {
@@ -405,9 +411,13 @@ public class AccountCommand implements CommandExecutor {
                                 user.send(messages.panicRequested());
                                 TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
                                 try {
-                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
+                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor("&bClick to copy"))));
                                 } catch (Throwable ex) {
-                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
+                                    try {
+                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClickt to copy")).create()));
+                                    } catch (Throwable e) {
+                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
+                                    }
                                 }
                                 component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
                                 user.send(component);

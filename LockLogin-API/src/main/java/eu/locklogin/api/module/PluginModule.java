@@ -30,17 +30,18 @@ import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.api.util.platform.Platform;
-import ml.karmaconfigs.api.common.Logger;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.collection.list.ConcurrentList;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.utils.ConcurrentList;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.logger.KarmaLogger;
+import ml.karmaconfigs.api.common.logger.Logger;
+import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.string.random.RandomString;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.string.RandomString;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
@@ -175,16 +176,16 @@ public abstract class PluginModule implements KarmaSource {
      * @param info  the info to log
      */
     public final void log(final Level level, final Object info) {
-        Logger logger = new Logger(this);
-
-        if (info instanceof Throwable) {
-            Throwable error = (Throwable) info;
-            logger.scheduleLog(level, error);
-        } else {
-            try {
-                logger.scheduleLog(level, info.toString());
-            } catch (Throwable ex) {
-                logger.scheduleLog(level, String.valueOf(info));
+        try(KarmaLogger logger = new Logger(this)) {
+            if (info instanceof Throwable) {
+                Throwable error = (Throwable) info;
+                logger.scheduleLog(level, error);
+            } else {
+                try {
+                    logger.scheduleLog(level, info.toString());
+                } catch (Throwable ex) {
+                    logger.scheduleLog(level, String.valueOf(info));
+                }
             }
         }
     }
@@ -753,7 +754,7 @@ public abstract class PluginModule implements KarmaSource {
         File parent = mainJar.getParentFile();
         File dataFolder;
         if (StringUtils.isNullOrEmpty(this.name())) {
-            dataFolder = new File(parent, StringUtils.generateString(RandomString.createBuilder().withSize(5)).create());
+            dataFolder = new File(parent, new RandomString(RandomString.createBuilder().withSize(5)).create());
         } else {
             dataFolder = new File(parent, this.name());
         }
@@ -772,7 +773,7 @@ public abstract class PluginModule implements KarmaSource {
         File parent = mainJar.getParentFile();
         File dataFolder;
         if (StringUtils.isNullOrEmpty(this.name())) {
-            dataFolder = new File(parent, StringUtils.generateString(RandomString.createBuilder().withSize(5)).create());
+            dataFolder = new File(parent, new RandomString(RandomString.createBuilder().withSize(5)).create());
         } else {
             dataFolder = new File(parent, this.name());
         }
@@ -842,8 +843,8 @@ public abstract class PluginModule implements KarmaSource {
      * @param path the karma file path
      * @return the karma file
      */
-    public final KarmaFile loadFile(final String name, final String... path) {
-        return new KarmaFile(this, name, path);
+    public final KarmaMain loadFile(final String name, final String... path) {
+        return new KarmaMain(this, name, path);
     }
 
     /**

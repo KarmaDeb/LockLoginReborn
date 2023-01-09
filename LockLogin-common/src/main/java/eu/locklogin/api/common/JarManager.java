@@ -12,10 +12,10 @@ package eu.locklogin.api.common;
  */
 
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -32,8 +32,7 @@ import java.util.Set;
 
 /**
  * LockLogin jar manager, from KarmaAPI
- *
- * THIS IS TOO OLD, THIS DOES NOT EVEN EXIST IN KARMAPI NOW DAYS
+ * THIS IS TOO OLD, THIS DOES NOT EVEN EXIST IN KARMA-API NOW DAYS
  */
 public final class JarManager {
 

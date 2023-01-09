@@ -1,5 +1,6 @@
-package eu.locklogin.api.file.plugin.key;
+package eu.locklogin.api.file.pack.key;
 
+@SuppressWarnings("unused")
 public abstract class PackKey {
 
     /**
@@ -50,7 +51,7 @@ public abstract class PackKey {
      * @return the integer
      * @throws IllegalStateException if the integer cannot be got
      */
-    public abstract int getAsInt() throws IllegalStateException;
+    public abstract Number getAsNumber() throws IllegalStateException;
 
     /**
      * Get the key as boolean

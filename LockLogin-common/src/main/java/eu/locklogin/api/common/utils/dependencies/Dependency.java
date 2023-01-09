@@ -15,7 +15,6 @@ package eu.locklogin.api.common.utils.dependencies;
  */
 
 import eu.locklogin.api.common.utils.FileInfo;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -76,8 +75,7 @@ public enum Dependency {
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "SocketIO.jar"), true);
             */case MANAGER:
             default:
-                String version = FileInfo.getManagerVersion(null);
-                return PluginDependency.of(prettyName(), URLUtils.getOrNull("https://karmaconfigs.github.io/updates/LockLogin/modules/manager/" + version + "/LockLoginManager.jar"), true, true);
+                return PluginDependency.of(prettyName(), FileInfo.managerHost(null), true, true);
         }
     }
 

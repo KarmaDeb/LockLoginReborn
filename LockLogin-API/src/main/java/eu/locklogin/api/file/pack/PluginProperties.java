@@ -1,4 +1,4 @@
-package eu.locklogin.api.file.plugin;
+package eu.locklogin.api.file.pack;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -14,12 +14,11 @@ package eu.locklogin.api.file.plugin;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.VersionComparator;
+import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -106,10 +105,9 @@ public final class PluginProperties {
 
                 String localVersion = local.getProperty("properties_lang_version", "1.0.0");
                 String jarVersion = jar.getProperty("properties_lang_version", "1.0.0");
-                VersionComparator comparator = StringUtils.compareTo(VersionComparator
-                        .createBuilder()
-                        .checkVersion(jarVersion)
-                        .currentVersion(localVersion));
+                VersionComparator comparator = new VersionComparator(
+                        VersionComparator.createBuilder().checkVersion(jarVersion).currentVersion(localVersion)
+                );
 
 
                 if (!comparator.isUpToDate()) {

@@ -32,11 +32,11 @@ import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -303,8 +303,6 @@ public class MainBootstrap {
                     for (ModulePlayer player : server.getOnlinePlayers()) {
                         if (player.isPlaying()) {
                             if (data != null) {
-                                /*MessageData message = DataSender.getBuilder(DataType.LISTENER, "ll:plugin", null).writeOther(data).build();
-                                DataSender.send((ProxiedPlayer) player.getPlayer(), message);*/
                                 BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player.getPlayer()))
                                                 .insert(DataMessage.newInstance(DataType.LISTENER, Channel.PLUGIN)
                                                         .addProperty("other", new String(Base64.getEncoder().encode(data))).getInstance().build());

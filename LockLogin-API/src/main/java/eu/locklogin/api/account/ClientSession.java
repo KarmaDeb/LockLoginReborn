@@ -14,11 +14,8 @@ package eu.locklogin.api.account;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * LockLogin client session
@@ -49,6 +46,7 @@ public abstract class ClientSession implements Serializable {
      *
      * @return the session initialization time
      */
+    @SuppressWarnings("unused")
     public abstract Instant getInitialization();
 
     /**

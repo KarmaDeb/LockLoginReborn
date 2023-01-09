@@ -6,18 +6,21 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.plugin.bungee.com.ProxyDataSender;
 import io.socket.client.Socket;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static eu.locklogin.plugin.bungee.LockLogin.console;
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
+@SuppressWarnings("all")
 public final class ConnectionManager {
 
     private final SocketClient client;
@@ -119,7 +122,7 @@ public final class ConnectionManager {
      *
      * @param consumer the server connect listener
      */
-    public void onServerConnected(final BiConsumer<String, String> consumer) {
+    public void onServerConnected(final Consumer<String> consumer) {
         Socket socket = client.client();
         Gson gson = new GsonBuilder().create();
 
@@ -128,17 +131,32 @@ public final class ConnectionManager {
                 JsonElement response = gson.fromJson(String.valueOf(data[0]), JsonElement.class);
                 if (response.isJsonObject()) {
                     JsonObject object = response.getAsJsonObject();
-                    if (object.has("name") && object.has("aka")) {
+                    if (object.has("name") && object.has("hash")) {
                         JsonElement name = object.get("name");
-                        JsonElement aka = object.get("aka");
+                        JsonElement aka = object.get("hash");
 
                         if (name.isJsonPrimitive() && aka.isJsonPrimitive()) {
                             JsonPrimitive primitive_name = name.getAsJsonPrimitive();
                             JsonPrimitive primitive_aka = aka.getAsJsonPrimitive();
 
-                            if (primitive_name.isString() && primitive_aka.isString()) {
-                                consumer.accept(primitive_name.getAsString(), primitive_aka.getAsString());
+                            String server = primitive_name.getAsString();
+                            String hash = primitive_aka.getAsString();
+
+                            pds.server_maps.put(server, hash);
+                            KarmaMain main = new KarmaMain(plugin, ".hashes");
+                            if (!main.exists())
+                                main.create();
+
+                            if (!main.isSet(hash)) {
+                                main.set(hash, new KarmaObject(server));
+                                if (main.save()) {
+                                    console.send("Stored {0} hash successfully, next startup the communication will be performed instantly", Level.INFO, server);
+                                } else {
+                                    console.send("Failed to store server hash for {0}", Level.GRAVE, server);
+                                }
                             }
+
+                            consumer.accept(server);
                         }
                     }
                 }

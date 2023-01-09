@@ -8,7 +8,9 @@ import eu.locklogin.api.module.plugin.javamodule.sender.ModuleConsole;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 
-public final class ModuleInfoCommand extends Command {
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public final class ModuleInfoCommand extends Command implements LockLoginManager {
 
     /**
      * Initialize the module info command
@@ -28,29 +30,42 @@ public final class ModuleInfoCommand extends Command {
     @Override
     public void processCommand(final String arg, final ModuleSender sender, final String... parameters) {
         if (sender instanceof ModuleConsole) {
-            sender.sendMessage("&d------------------------------");
-            sender.sendMessage("");
-            sender.sendMessage("&7LockLogin plugin information");
-            sender.sendMessage("");
-            sender.sendMessage("&bServer hash: &eu.c" + CurrentPlatform.getServerHash());
-            sender.sendMessage("&bPanel status: &cNot terminated (https://panel.karmaconfigs.ml)");
-            sender.sendMessage("&bRegistered users: &eu.c" + SessionDataContainer.getRegistered());
-            sender.sendMessage("&bLogged users: &eu.c" + SessionDataContainer.getLogged());
-            RemoteNotification rm = new RemoteNotification();
-            if (parameters.length == 1) {
-                String param = parameters[0];
-                if (param.equalsIgnoreCase("--force-alert")) {
-                    rm.checkAlerts().whenComplete(() -> System.out.println("Done!"));
-                }
-            }
-            Notification notification = rm.getNotification();
+            module.async().queue("info_command", () -> {
+                RemoteNotification rm = new RemoteNotification();
+                if (parameters.length == 1) {
+                    String param = parameters[0];
+                    if (param.equalsIgnoreCase("--force-alert")) {
+                        sender.sendMessage("&dFetching notifications, please wait...");
 
-            sender.sendMessage("&bLast notification level: &eu.c" + notification.getLevel());
-            sender.sendMessage("&bLast notification: &eu.c" + notification.getNotification());
-            sender.sendMessage("&bForce configuration: &eu.c" + notification.forceConfig());
-            sender.sendMessage("&bForce proxy configuration: &eu.c" + notification.forceProxy());
-            sender.sendMessage("");
-            sender.sendMessage("&d------------------------------");
+                        synchronized (Thread.currentThread()) {
+                            AtomicBoolean completed = new AtomicBoolean(false);
+                            rm.checkAlerts().whenComplete(() -> completed.set(true));
+
+                            while (!completed.get()) {
+                                try {
+                                    Thread.currentThread().wait();
+                                } catch (Throwable ignored) {}
+                            }
+                        }
+                    }
+                }
+                Notification notification = rm.getNotification();
+
+                sender.sendMessage("&d------------------------------");
+                sender.sendMessage("");
+                sender.sendMessage("&7LockLogin plugin information");
+                sender.sendMessage("");
+                sender.sendMessage("&bServer hash: &eu.c" + CurrentPlatform.getServerHash());
+                sender.sendMessage("&bPanel status: &cMaintenance");
+                sender.sendMessage("&bRegistered users: &eu.c" + SessionDataContainer.getRegistered());
+                sender.sendMessage("&bLogged users: &eu.c" + SessionDataContainer.getLogged());
+                sender.sendMessage("&bLast notification level: &eu.c" + notification.getLevel());
+                sender.sendMessage("&bLast notification: &eu.c" + notification.getNotification());
+                sender.sendMessage("&bForce configuration: &eu.c" + notification.forceConfig());
+                sender.sendMessage("&bForce proxy configuration: &eu.c" + notification.forceProxy());
+                sender.sendMessage("");
+                sender.sendMessage("&d------------------------------");
+            });
         } else {
             sender.sendMessage(CurrentPlatform.getMessages().prefix() + "&cThis command can be only run from console!");
         }

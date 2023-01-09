@@ -17,13 +17,14 @@ import eu.locklogin.api.common.web.alert.remote.RemoteProxy;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.ListTransformation;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.io.FileOutputStream;
@@ -97,7 +98,7 @@ public final class RemoteNotification {
                         /*
                         Read the file, store its info and then remove it.
                          */
-                        simple_json = StringUtils.listToString(PathUtilities.readAllLines(alert), false);
+                        simple_json = StringUtils.listToString(PathUtilities.readAllLines(alert), ListTransformation.NEW_LINES);
 
                         PathUtilities.destroy(alert);
                     }
@@ -135,7 +136,7 @@ public final class RemoteNotification {
             }
         }
 
-        return StringUtils.listToString(messages, false);
+        return StringUtils.listToString(messages, ListTransformation.NEW_LINES);
     }
 
     /**

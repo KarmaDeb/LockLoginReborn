@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.javamodule.updater;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import ml.karmaconfigs.api.common.karma.APISource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
@@ -23,9 +23,9 @@ import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.common.version.LegacyVersionUpdater;
-import ml.karmaconfigs.api.common.version.VersionFetchResult;
-import ml.karmaconfigs.api.common.version.VersionUpdater;
-import ml.karmaconfigs.api.common.version.util.VersionCheckType;
+import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
+import ml.karmaconfigs.api.common.version.checker.fetch.VersionFetchResult;
+import ml.karmaconfigs.api.common.version.updater.VersionCheckType;
 
 import java.util.Collections;
 import java.util.Set;
@@ -47,6 +47,7 @@ public final class JavaModuleVersion {
      *
      * @param owner the module owner
      */
+    @SuppressWarnings("deprecation")
     public JavaModuleVersion(final PluginModule owner) {
         module = owner;
 
@@ -109,7 +110,7 @@ public final class JavaModuleVersion {
          * @param module the module
          */
         public OfflineResult(PluginModule module) {
-            super(module, module.version(), module.updateURL(), new String[]{}, null);
+            super(module, module.version(), new String[]{module.updateURL()}, null, new String[]{}, null);
         }
     }
 }

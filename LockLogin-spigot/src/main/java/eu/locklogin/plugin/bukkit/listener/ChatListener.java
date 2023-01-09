@@ -16,7 +16,6 @@ package eu.locklogin.plugin.bukkit.listener;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.AllowedCommand;
-import eu.locklogin.api.common.security.client.CredentialsHolder;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
@@ -86,8 +85,6 @@ public final class ChatListener implements Listener {
         PluginMessages messages = CurrentPlatform.getMessages();
 
         String command = getCommand(e.getMessage());
-        String[] arguments = getArguments(e.getMessage());
-
         if (session.isValid()) {
             if (!session.isLogged()) {
                 e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !command.equalsIgnoreCase("panic") && AllowedCommand.notAllowed(command));
@@ -191,6 +188,7 @@ public final class ChatListener implements Listener {
      * @param cmd the cmd
      * @return a command ignoring ":" prefix
      */
+    @SuppressWarnings("unused")
     private String[] getArguments(String cmd) {
         if (cmd.contains(" ")) {
             String[] cmdData = cmd.split(" ");

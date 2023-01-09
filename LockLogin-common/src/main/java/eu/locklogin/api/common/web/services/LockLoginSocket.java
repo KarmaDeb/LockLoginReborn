@@ -10,7 +10,6 @@ import okhttp3.OkHttpClient;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 

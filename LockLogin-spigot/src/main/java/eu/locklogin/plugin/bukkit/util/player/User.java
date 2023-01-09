@@ -15,7 +15,6 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
-import eu.locklogin.api.common.session.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -33,13 +32,13 @@ import eu.locklogin.plugin.bukkit.TaskTarget;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BossMessage;
 import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
-import ml.karmaconfigs.api.common.boss.BossColor;
-import ml.karmaconfigs.api.common.boss.BossProvider;
-import ml.karmaconfigs.api.common.boss.ProgressiveBar;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.minecraft.boss.BossColor;
+import ml.karmaconfigs.api.common.minecraft.boss.BossProvider;
+import ml.karmaconfigs.api.common.minecraft.boss.ProgressiveBar;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -414,6 +413,7 @@ public final class User {
     /**
      * Set the client in panic mode
      */
+    @SuppressWarnings("unused")
     public void panic() {
         panicking.add(player.getUniqueId());
     }
@@ -454,11 +454,13 @@ public final class User {
                 time = CurrentPlatform.getConfiguration().loginOptions().timeOut();
 
                 if (CurrentPlatform.getConfiguration().loginOptions().hasBossBar()) {
-                    message = new BossMessage(plugin, CurrentPlatform.getMessages().loginBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    message = new BossMessage(plugin, CurrentPlatform.getMessages().loginBar("&a", time), time)
+                            .color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             } else {
                 if (CurrentPlatform.getConfiguration().registerOptions().hasBossBar()) {
-                    message = new BossMessage(plugin, CurrentPlatform.getMessages().registerBar("&a", time), time).color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
+                    message = new BossMessage(plugin, CurrentPlatform.getMessages().registerBar("&a", time), time)
+                            .color(BossColor.GREEN).progress(ProgressiveBar.DOWN);
                 }
             }
 
@@ -536,6 +538,7 @@ public final class User {
      *
      * @return if the client is panicking
      */
+    @SuppressWarnings("unused")
     public boolean isPanicking() {
         return panicking.contains(player.getUniqueId());
     }

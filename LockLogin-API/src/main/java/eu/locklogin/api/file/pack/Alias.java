@@ -1,4 +1,4 @@
-package eu.locklogin.api.file.plugin;
+package eu.locklogin.api.file.pack;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -15,14 +15,15 @@ package eu.locklogin.api.file.plugin;
  */
 
 import eu.locklogin.api.account.AccountID;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ import java.util.Set;
 public final class Alias {
 
     private final String name;
-    private final KarmaFile file;
+    private final KarmaMain file;
 
     /**
      * Initialize the alias class
@@ -41,11 +42,9 @@ public final class Alias {
      */
     public Alias(final String _name) {
         name = StringUtils.stripColor(_name.toLowerCase().replace(" ", "_"));
+        KarmaSource source = APISource.loadProvider("LockLogin");
 
-        File aliases = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data", "aliases");
-        File alias = new File(aliases, name + ".alias");
-
-        file = new KarmaFile(alias);
+        file = source.loadFile(name + ".alias", "data", "aliases");
     }
 
     /**
@@ -60,11 +59,7 @@ public final class Alias {
      * Destroy the specified alias
      */
     public void destroy() {
-        try {
-            if (file.exists())
-                Files.delete(file.getFile().toPath());
-        } catch (Throwable ignored) {
-        }
+        PathUtilities.destroy(file.getDocument());
     }
 
     /**
@@ -83,16 +78,22 @@ public final class Alias {
      * @return the already added user ids
      */
     public Set<String> addUsers(final Map<AccountID, String> accounts) {
-        List<String> set = file.getStringList("USERS");
-        Set<String> already = new LinkedHashSet<>();
-        for (AccountID id : accounts.keySet()) {
-            if (!set.contains(id.getId()))
-                set.add(id.getId());
-            else
-                already.add(accounts.get(id));
+        KarmaArray array = new KarmaArray();
+        if (file.isSet("users")) {
+            array = file.get("users").getArray();
         }
 
-        file.set("USERS", set);
+        Set<String> already = new LinkedHashSet<>();
+        for (AccountID id : accounts.keySet()) {
+            if (array.contains(KarmaElement.from(id.getId()))) {
+                already.add(accounts.get(id));
+            } else {
+                array.add(KarmaElement.from(id.getId()));
+            }
+        }
+        file.set("users", array);
+        file.save();
+
         return already;
     }
 
@@ -103,16 +104,23 @@ public final class Alias {
      * @return the non-removed ids
      */
     public Set<String> delUsers(final Map<AccountID, String> accounts) {
-        List<String> set = file.getStringList("USERS");
-        Set<String> not_in = new LinkedHashSet<>();
-        for (AccountID id : accounts.keySet()) {
-            if (set.contains(id.getId()))
-                set.remove(id.getId());
-            else
-                not_in.add(accounts.get(id));
+        KarmaArray array = new KarmaArray();
+        if (file.isSet("users")) {
+            array = file.get("users").getArray();
         }
 
-        file.set("USERS", set);
+        Set<String> not_in = new LinkedHashSet<>();
+        for (AccountID id : accounts.keySet()) {
+            if (array.contains(KarmaElement.from(id.getId()))) {
+                array.remove(KarmaElement.from(id.getId()));
+            } else {
+                not_in.add(accounts.get(id));
+            }
+        }
+
+        file.set("users", array);
+        file.save();
+
         return not_in;
     }
 
@@ -122,11 +130,15 @@ public final class Alias {
      * @return the alias user ids
      */
     public Set<AccountID> getUsers() {
-        List<String> set = file.getStringList("USERS");
+        KarmaArray array = new KarmaArray();
+        if (file.isSet("users")) {
+            array = file.get("users").getArray();
+        }
+
         Set<AccountID> ids = new LinkedHashSet<>();
 
-        for (String str : set)
-            ids.add(AccountID.fromString(str));
+        for (KarmaElement element : array)
+            ids.add(AccountID.fromString(element.getObjet().getString()));
 
         return ids;
     }

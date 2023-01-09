@@ -11,10 +11,10 @@ package eu.locklogin.api.common.utils;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.file.plugin.PluginProperties;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.util.KarmaUnit;
-import ml.karmaconfigs.api.common.utils.string.util.time.TimeName;
+import eu.locklogin.api.file.pack.PluginProperties;
+import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.time.Unit;
+import ml.karmaconfigs.api.common.time.name.TimeName;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -161,42 +161,30 @@ public final class InstantParser {
         String millis = properties.getProperty("diff_millis", "ms");
 
         return StringUtils.timeToString(diff, TimeName.create()
-                .add(KarmaUnit.YEAR, year)
-                .add(KarmaUnit.YEARS, years)
+                .add(Unit.YEAR, year)
+                .add(Unit.YEARS, years)
 
-                .add(KarmaUnit.MONTH, month)
-                .add(KarmaUnit.MONTHS, months)
+                .add(Unit.MONTH, month)
+                .add(Unit.MONTHS, months)
 
-                .add(KarmaUnit.WEEK, week)
-                .add(KarmaUnit.WEEKS, weeks)
+                .add(Unit.WEEK, week)
+                .add(Unit.WEEKS, weeks)
 
-                .add(KarmaUnit.DAY, day)
-                .add(KarmaUnit.DAYS, days)
+                .add(Unit.DAY, day)
+                .add(Unit.DAYS, days)
 
-                .add(KarmaUnit.HOUR, hour)
-                .add(KarmaUnit.HOURS, hours)
+                .add(Unit.HOUR, hour)
+                .add(Unit.HOURS, hours)
 
-                .add(KarmaUnit.MINUTE, minute)
-                .add(KarmaUnit.MINUTES, minutes)
+                .add(Unit.MINUTE, minute)
+                .add(Unit.MINUTES, minutes)
 
-                .add(KarmaUnit.SECOND, second)
-                .add(KarmaUnit.SECONDS, seconds)
+                .add(Unit.SECOND, second)
+                .add(Unit.SECONDS, seconds)
 
-                .add(KarmaUnit.MILLISECOND, milli)
-                .add(KarmaUnit.MILLISECONDS, millis))
+                .add(Unit.MILLISECOND, milli)
+                .add(Unit.MILLISECONDS, millis))
                 .replace(", ", properties.getProperty("diff_spacer", ", ").replace("\"", ""))
                 .replace(" and ", properties.getProperty("diff_final", " and ").replace("\"", ""));
-    }
-
-    /**
-     * Get the time ago from the specified instant
-     *
-     * @param difference the time to use as check
-     * @return the time ago
-     * @deprecated As argument was never being used, use {@link InstantParser#getDifference()} instead
-     */
-    @Deprecated
-    public String getDifference(final Instant difference) {
-        return getDifference();
     }
 }

@@ -18,13 +18,13 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.file.pack.Alias;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -34,6 +34,7 @@ import java.util.*;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "alias")
+@SuppressWarnings("unused")
 public final class AliasCommand extends Command {
 
     /**

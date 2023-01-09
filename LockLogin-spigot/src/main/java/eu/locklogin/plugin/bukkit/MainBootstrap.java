@@ -29,8 +29,8 @@ import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
@@ -47,7 +47,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public class MainBootstrap {
 
@@ -208,7 +207,8 @@ public class MainBootstrap {
                 container.setResult(player.isOp() || player.hasPermission("*") || player.hasPermission("'*'"));
             }
         };
-        BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule;
+        @SuppressWarnings("unused")
+        BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule; //I may use this in a future
 
         try {
             JarManager.changeField(ModulePlayer.class, "onChat", onMessage);

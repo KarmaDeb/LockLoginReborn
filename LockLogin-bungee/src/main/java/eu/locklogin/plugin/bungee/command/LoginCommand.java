@@ -35,8 +35,8 @@ import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -47,6 +47,7 @@ import java.util.List;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "login", aliases = {"log"})
+@SuppressWarnings("unused")
 public final class LoginCommand extends Command {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();

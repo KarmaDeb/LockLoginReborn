@@ -1,17 +1,17 @@
 package eu.locklogin.api.file;
 
-import eu.locklogin.api.file.plugin.Alias;
-import eu.locklogin.api.file.plugin.PluginProperties;
+import eu.locklogin.api.file.pack.Alias;
+import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.karma.file.yaml.YamlReloader;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -1059,6 +1059,7 @@ public abstract class PluginMessages {
      *
      * @return plugin message
      */
+    @SuppressWarnings("unused")
     public String panicDisabled() {
         String str = msg.getString("PanicDisabled", "&5&oThe server is not protected against brute force attacks");
 
@@ -1096,6 +1097,7 @@ public abstract class PluginMessages {
      *
      * @return plugin message
      */
+    @SuppressWarnings("unused")
     public String panicEnabled() {
         List<String> messages = msg.getStringList("PanicEnabled");
         StringBuilder builder = new StringBuilder();
@@ -1111,6 +1113,7 @@ public abstract class PluginMessages {
      *
      * @return plugin message
      */
+    @SuppressWarnings("unused")
     public String tokenLink() {
         String str = msg.getString("TokenLink", "&bClick to reveal the token");
 

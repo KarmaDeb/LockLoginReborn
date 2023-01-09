@@ -22,6 +22,9 @@ import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import ml.karmaconfigs.api.bungee.KarmaPlugin;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -36,7 +39,6 @@ import java.util.UUID;
 
 public final class Main extends KarmaPlugin {
 
-    private static boolean status = false;
     private static MainBootstrap plugin;
 
     private boolean unloaded = false;
@@ -63,7 +65,6 @@ public final class Main extends KarmaPlugin {
     @Override
     @SuppressWarnings("unchecked")
     public void enable() {
-        status = true;
         plugin.enable();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (!unloaded) {
@@ -125,15 +126,10 @@ public final class Main extends KarmaPlugin {
 
     @Override
     public void onDisable() {
-        status = false;
         plugin.disable();
         stopTasks();
 
         unloaded = true;
-    }
-
-    public boolean enabled() {
-        return status;
     }
 
     @Override
@@ -163,5 +159,21 @@ public final class Main extends KarmaPlugin {
             return url.toString();
 
         return null;
+    }
+
+    @Override
+    public String getIdentifier() {
+        KarmaMain container = new KarmaMain(this, "", "/cache/stats.kf");
+        if (!container.exists())
+            container.create();
+
+        KarmaElement element = container.get("identifier", new KarmaObject(UUID.randomUUID().toString()));
+        String id = element.getObjet().getString();
+        if (!container.isSet("identifier")) {
+            container.set("identifier", new KarmaObject(id));
+            container.save();
+        }
+
+        return id;
     }
 }

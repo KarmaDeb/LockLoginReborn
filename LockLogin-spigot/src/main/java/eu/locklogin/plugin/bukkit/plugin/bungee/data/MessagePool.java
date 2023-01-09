@@ -4,7 +4,7 @@ import com.google.common.io.ByteArrayDataInput;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.TriConsumer;
+import ml.karmaconfigs.api.common.triple.consumer.TriConsumer;
 import org.bukkit.entity.Player;
 
 import java.util.Map;

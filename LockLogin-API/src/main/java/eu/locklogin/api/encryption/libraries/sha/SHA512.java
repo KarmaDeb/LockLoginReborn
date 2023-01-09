@@ -14,10 +14,9 @@ package eu.locklogin.api.encryption.libraries.sha;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.utils.string.RandomString;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.util.TextContent;
-import ml.karmaconfigs.api.common.utils.string.util.TextType;
+import ml.karmaconfigs.api.common.string.random.RandomString;
+import ml.karmaconfigs.api.common.string.text.TextContent;
+import ml.karmaconfigs.api.common.string.text.TextType;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -56,7 +55,9 @@ public final class SHA512 {
     /**
      * Prefix for our hash, every user should change this
      */
-    private final String ID = "$" + StringUtils.generateString(RandomString.createBuilder().withSize(16).withType(TextType.ALL_LOWER).withContent(TextContent.ONLY_LETTERS)).create() + "$";
+    private final String ID = "$" + new RandomString(
+            RandomString.createBuilder().withSize(16).withType(TextType.ALL_LOWER).withContent(TextContent.ONLY_LETTERS)
+    ).create() + "$";
 
     /**
      * Initialize codification class

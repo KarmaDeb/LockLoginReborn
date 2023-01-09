@@ -23,12 +23,12 @@ import eu.locklogin.api.util.enums.UpdateChannel;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.VersionComparator;
+import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -219,51 +219,53 @@ public class BungeeManager {
         String latest_version = versionID.resolve(version);
         if (Files.exists(update_folder) && Files.isDirectory(update_folder)) {
             try {
-                Stream<Path> files = Files.list(update_folder);
-                files.forEachOrdered((downloaded) -> {
-                    String name = PathUtilities.getName(downloaded, true);
-                    String extension = PathUtilities.getExtension(downloaded);
-                    if (extension.equalsIgnoreCase("jar")) {
-                        //We only want jar files here!
-                        JarFile jar = null;
-                        InputStream data = null;
-                        try {
-                            jar = new JarFile(downloaded.toFile());
-                            JarEntry entry = jar.getJarEntry("global.yml");
+                try(Stream<Path> files = Files.list(update_folder)) {
+                    files.forEachOrdered((downloaded) -> {
+                        String name = PathUtilities.getName(downloaded, true);
+                        String extension = PathUtilities.getExtension(downloaded);
+                        if (extension.equalsIgnoreCase("jar")) {
+                            //We only want jar files here!
+                            JarFile jar = null;
+                            InputStream data = null;
+                            try {
+                                jar = new JarFile(downloaded.toFile());
+                                JarEntry entry = jar.getJarEntry("global.yml");
 
-                            if (entry != null) {
-                                data = jar.getInputStream(entry);
-                                KarmaYamlManager manager = new KarmaYamlManager(data);
+                                if (entry != null) {
+                                    data = jar.getInputStream(entry);
+                                    KarmaYamlManager manager = new KarmaYamlManager(data);
 
-                                String target_version = manager.getString("project_version", null);
-                                if (!StringUtils.isNullOrEmpty(target_version)) {
-                                    VersionComparator comparator = StringUtils.compareTo(VersionComparator
-                                            .createBuilder()
-                                            .currentVersion(target_version)
-                                            .checkVersion(latest_version));
+                                    String target_version = manager.getString("project_version", null);
+                                    if (!StringUtils.isNullOrEmpty(target_version)) {
+                                        VersionComparator comparator = new VersionComparator(
+                                                VersionComparator.createBuilder()
+                                                        .currentVersion(target_version)
+                                                        .checkVersion(latest_version)
+                                        );
 
-                                    if (comparator.isUpToDate()) {
-                                        File curr = update_file.get();
-                                        if (curr != null)
-                                            FileUtilities.destroy(curr);
+                                        if (comparator.isUpToDate()) {
+                                            File curr = update_file.get();
+                                            if (curr != null)
+                                                FileUtilities.destroy(curr);
 
-                                        update_file.set(downloaded.toFile());
-                                    } else {
-                                        PathUtilities.destroy(downloaded);
+                                            update_file.set(downloaded.toFile());
+                                        } else {
+                                            PathUtilities.destroy(downloaded);
+                                        }
                                     }
                                 }
-                            }
-                        } catch (Throwable ex) {
-                            plugin.logger().scheduleLog(Level.GRAVE, ex);
-                            plugin.logger().scheduleLog(Level.INFO, "Failed to read POSSIBLE LockLogin update jar {0}", name);
+                            } catch (Throwable ex) {
+                                plugin.logger().scheduleLog(Level.GRAVE, ex);
+                                plugin.logger().scheduleLog(Level.INFO, "Failed to read POSSIBLE LockLogin update jar {0}", name);
 
-                            plugin.console().send("An error occurred while trying to read jar file {0}. This may cause the plugin to not update", Level.INFO, name);
-                        } finally {
-                            tryClose(jar);
-                            tryClose(data);
+                                plugin.console().send("An error occurred while trying to read jar file {0}. This may cause the plugin to not update", Level.INFO, name);
+                            } finally {
+                                tryClose(jar);
+                                tryClose(data);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             } catch (Throwable ex) {
                 plugin.logger().scheduleLog(Level.GRAVE, ex);
                 plugin.logger().scheduleLog(Level.INFO, "Failed to update LockLogin");

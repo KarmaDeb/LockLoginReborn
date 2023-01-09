@@ -6,8 +6,6 @@ import eu.locklogin.api.common.communication.queue.DataQueue;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import static eu.locklogin.plugin.bungee.LockLogin.console;
-
 /**
  * Proxy message queue
  */
@@ -25,11 +23,6 @@ public class MessageQueue extends DataQueue {
      */
     @Override
     public void insert(final byte[] data, final boolean onTop) {
-        /*if (onTop) {
-            queue.addFirst(data);
-        } else {
-            queue.addLast(data);
-        }*/
         throw new RuntimeException("Cannot insert non-packet data to the queue!");
     }
 
@@ -43,7 +36,6 @@ public class MessageQueue extends DataQueue {
     @Override
     public void insert(final Packet packet, final boolean onTop) {
         if (queue.stream().noneMatch((p) -> p.packetID().equals(packet.packetID()))) {
-            console.send("Inserting message");
             if (onTop) {
                 queue.addFirst(packet);
             } else {
@@ -60,7 +52,7 @@ public class MessageQueue extends DataQueue {
      */
     @Override
     public byte[] next() {
-        if (!read && !locked) {
+        if (!read) {
             read = true;
             Packet next = queue.peek();
             if (next != null)
@@ -76,12 +68,10 @@ public class MessageQueue extends DataQueue {
      */
     @Override
     public void shift() {
-        if (!locked) {
-            Packet top = queue.poll();
-            queue.add(top);
-            if (read)
-                read = false;
-        }
+        Packet top = queue.poll();
+        queue.add(top);
+        if (read)
+            read = false;
     }
 
     /**
@@ -91,8 +81,9 @@ public class MessageQueue extends DataQueue {
     public void consume() {
         if (!locked) {
             queue.poll();
-            read = false;
         }
+
+        read = false;
     }
 
     /**

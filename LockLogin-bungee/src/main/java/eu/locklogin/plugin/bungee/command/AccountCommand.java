@@ -42,12 +42,15 @@ import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.security.token.TokenGenerator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -60,6 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "account")
+@SuppressWarnings("unused")
 public class AccountCommand extends Command {
 
     private final static Map<String, String> confirmation = new ConcurrentHashMap<>();
@@ -399,8 +403,6 @@ public class AccountCommand extends Command {
                                                     BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
                                                                     .addProperty("account", StringUtils.serialize(account)).getInstance().build());
-                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player)
-                                                            .addProperty("account", StringUtils.serialize(account)).build());*/
                                                     sent++;
                                                 }
 
@@ -410,8 +412,6 @@ public class AccountCommand extends Command {
                                                                 .addProperty("player", player.getUniqueId())
                                                                 .addProperty("player_info", parser.toString())
                                                                 .getInstance().build());
-                                                /*DataSender.send(player, DataSender.getBuilder(DataType.LOOKUPGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                             } else {
                                                 user.send(messages.prefix() + messages.neverPlayer(target));
                                             }
@@ -458,12 +458,8 @@ public class AccountCommand extends Command {
                                 String password = TokenGenerator.generateLiteral(32);
 
                                 user.send(messages.panicRequested());
-                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                try {
-                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClick to copy")).create()));
-                                } catch (Throwable ex) {
-                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new BaseComponent[]{new TextComponent(StringUtils.toColor("&bClick to copy"))}));
-                                }
+                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &c" + password));
+                                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
                                 component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
                                 user.send(component);
 

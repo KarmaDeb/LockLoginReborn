@@ -1,6 +1,6 @@
 package eu.locklogin.api.common.utils.other.name;
 
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +79,7 @@ public class NameSearchResult {
      *
      * @return the uuids
      */
+    @SuppressWarnings("unused")
     public final UUID[] getUniqueIDs() {
         return uuids;
     }

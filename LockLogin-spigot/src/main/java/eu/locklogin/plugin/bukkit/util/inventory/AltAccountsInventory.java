@@ -23,7 +23,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.inventory.object.Button;
 import eu.locklogin.plugin.bukkit.util.inventory.object.SkullCache;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -249,7 +249,7 @@ public final class AltAccountsInventory implements InventoryHolder {
      *
      * @param page the page
      */
-    public final void openPage(int page) {
+    public void openPage(int page) {
         player.openInventory(pages.get(page));
         playerPage.put(player.getUniqueId(), page);
     }
@@ -259,7 +259,7 @@ public final class AltAccountsInventory implements InventoryHolder {
      *
      * @return a integer
      */
-    public final int getPlayerPage() {
+    public int getPlayerPage() {
         if (player != null) {
             if (playerPage.get(player.getUniqueId()) != null) {
                 return playerPage.get(player.getUniqueId());
@@ -277,7 +277,7 @@ public final class AltAccountsInventory implements InventoryHolder {
      * @return an integer
      */
 
-    public final int getPages() {
+    public int getPages() {
         return pages.size();
     }
 

@@ -5,11 +5,9 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
@@ -30,8 +28,8 @@ import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -150,19 +148,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                                                 res.addProperty("id", remote_bungee_data.get("msg_id").getAsInt());
                                                 client.emit("message", res);
                                             });
-                                            /*client.on("ll:access", (args) -> {
-                                                JsonObject remote_bungee_data = gson.fromJson(String.valueOf(args[0]), JsonObject.class);
-                                                console.send("RECEIVED ACCESS MESSAGE FROM WEB CONNECTION. THIS IS DEPRECATED FOR WEB CONNECTIONS AND YOU SHOULDN'T BE RECEIVING ANY MESSAGE FROM HERE. THE MESSAGE WILL BE PROCESSED IN CASE AN OFFLINE BUNGEECORD INSTANCE NEEDS IT, BUT THIS WON'T LAST FOREVER.", Level.WARNING);
-
-                                                Player remote_client = player;
-                                                if (remote_bungee_data.has("player")) {
-                                                    remote_client = plugin.getServer().getPlayer(UUID.fromString(remote_bungee_data.get("player").getAsString()));
-                                                }
-
-                                                if (remote_client != null && remote_client.isOnline()) {
-                                                    processAccessCommand(remote_client, remote_bungee_data);
-                                                }
-                                            });*/
                                         }
                                     }
 
@@ -444,18 +429,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                 Config.manager.loadBungee(configString);
                 break;
             case LISTENER:
-                                    /*
-                                    String name = input.readUTF();
-                                    int byteLength = input.readInt();
-                                    byte[] message = new byte[byteLength];
-
-                                    int i = 0;
-                                    while (i < byteLength) {
-                                        message[i] = input.readByte();
-                                        i++;
-                                    }
-
-                                    //ModuleMessageService.listenMessage(name, message);*/
                 break;
             default:
                 logger.scheduleLog(Level.GRAVE, "Unknown plugin sub channel message: " + sub);
@@ -470,21 +443,19 @@ public final class BungeeReceiver implements PluginMessageListener {
         String proxyKey = bungee_data.get("key").getAsString();
         String serverName = bungee_data.get("server").getAsString();
 
-        switch (sub) {
-            case REGISTER: //PREVIOUSLY: KEY
-                //This also checks if the proxy key is empty, retuning true if it is
-                //so we will just use it as a "emptyProxyOwner" check
-                if (storager.isProxyKey(proxyKey)) {
-                    storager.setServerName(serverName);
-                    storager.setProxyKey(proxyKey);
-                    proxy_com = CryptoFactory.getBuilder().withPassword(proxyKey).unsafe().hash(HashType.pickRandom(), true);
-                    BungeeSender.sendProxyStatus(sub.name().toLowerCase());
-                } else {
-                    BungeeSender.sendProxyStatus(sub.name().toLowerCase());
-                    logger.scheduleLog(Level.GRAVE, "Proxy with id {0} tried to register a key but the key is already registered and the specified one is incorrect", id.toString());
-                }
-                break;
-            /*case KEY: //PREVIOUSLY: REGISTER
+        if (sub.equals(DataType.REGISTER)) { //PREVIOUSLY: KEY
+            //This also checks if the proxy key is empty, retuning true if it is
+            //so we will just use it as a "emptyProxyOwner" check
+            if (storager.isProxyKey(proxyKey)) {
+                storager.setServerName(serverName);
+                storager.setProxyKey(proxyKey);
+                proxy_com = CryptoFactory.getBuilder().withPassword(proxyKey).unsafe().hash(HashType.pickRandom(), true);
+                BungeeSender.sendProxyStatus(sub.name().toLowerCase());
+            } else {
+                BungeeSender.sendProxyStatus(sub.name().toLowerCase());
+                logger.scheduleLog(Level.GRAVE, "Proxy with id {0} tried to register a key but the key is already registered and the specified one is incorrect", id.toString());
+            }
+                /*case KEY: //PREVIOUSLY: REGISTER
                 if (storager.isProxyKey(proxyKey)) {
                     BungeeSender.sendProxyStatus(sub.name().toLowerCase());
                 } else {
@@ -492,7 +463,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                     logger.scheduleLog(Level.GRAVE, "Proxy with id {0} to register itself with an invalid access key", id.toString());
                 }
                 break;*/
-            case REMOVE:
+            /*case REMOVE:
                 //This can be removed as proxy key is always the same
                 if (storager.isProxyKey(proxyKey)) {
                     try {
@@ -504,7 +475,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                 } else {
                     BungeeSender.sendProxyStatus(sub.name().toLowerCase());
                     logger.scheduleLog(Level.GRAVE, "Tried to remove proxy with id {0} using an invalid key", id.toString());
-                }
+                }*/
         }
     }
 }

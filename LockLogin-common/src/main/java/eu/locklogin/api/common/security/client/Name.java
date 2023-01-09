@@ -16,7 +16,7 @@ package eu.locklogin.api.common.security.client;
 
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

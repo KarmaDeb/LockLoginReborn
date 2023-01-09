@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import eu.locklogin.api.common.communication.Packet;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.plugin.bungee.BungeeSender;
 import lombok.Builder;
 
 import java.util.Arrays;
@@ -50,15 +51,17 @@ public final class DataMessage {
 
     public static class DataMessageBuilder {
 
-        private final String[] protect = {"data_type", "channel"};
+        private final String[] protect = {"data_type", "channel", "socket"};
 
         public DataMessageBuilder(final DataType t, final Channel channel) {
             json = new JsonObject();
 
+            json.addProperty("socket", BungeeSender.useSocket);
             json.addProperty("data_type", t.name());
-            json.addProperty("channel", channel.getName());
+            json.addProperty("channel", channel.name());
         }
 
+        @SuppressWarnings("unused")
         private DataMessageBuilder json(final JsonObject ob) {
             json = ob;
             return this;

@@ -3,10 +3,11 @@ package eu.locklogin.api.common.web;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.dependencies.Dependency;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -84,8 +85,7 @@ public final class ChecksumTables {
                         BufferedReader bf = new BufferedReader(reader);
 
                         File dataFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "tables.lldb");
-                        @SuppressWarnings("deprecation")
-                        KarmaFile checksum = new KarmaFile(dataFile);
+                        KarmaMain checksum = new KarmaMain(Files.newInputStream(dataFile.toPath()));
                         checksum.create();
 
                         BufferedWriter writer = Files.newBufferedWriter(dataFile.toPath(), StandardCharsets.UTF_8);
@@ -103,8 +103,8 @@ public final class ChecksumTables {
 
                         for (Dependency dependency : Dependency.values()) {
                             String name = dependency.getAsDependency().getName();
-                            long adler = checksum.getLong(name + "_adler", 0L);
-                            long crc = checksum.getLong(name + "_crc", 0L);
+                            long adler = checksum.get(name + "_adler", KarmaElement.from(0L)).getObjet().getNumber().longValue();
+                            long crc = checksum.get(name + "_crc", KarmaElement.from(0L)).getObjet().getNumber().longValue();
 
                             adler_tables.put(name, adler);
                             crc_tables.put(name, crc);

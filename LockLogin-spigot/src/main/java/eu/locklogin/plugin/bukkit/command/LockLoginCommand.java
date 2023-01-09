@@ -29,13 +29,13 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.version.VersionUpdater;
-import ml.karmaconfigs.api.common.version.util.VersionType;
+import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
+import ml.karmaconfigs.api.common.version.updater.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "locklogin", bungee_command = "slocklogin", bungeecord = true)
+@SuppressWarnings("unused")
 public final class LockLoginCommand implements CommandExecutor {
 
     /**
@@ -66,6 +67,7 @@ public final class LockLoginCommand implements CommandExecutor {
      * @return true if a valid command, otherwise false
      */
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         PluginMessages messages = CurrentPlatform.getMessages();
         sender.sendMessage(StringUtils.toColor(messages.prefix() + properties.

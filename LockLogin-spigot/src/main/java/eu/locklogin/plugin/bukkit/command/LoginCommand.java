@@ -34,8 +34,8 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
 @SystemCommand(command = "login", aliases = {"log"})
+@SuppressWarnings("unused")
 public final class LoginCommand implements CommandExecutor {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();

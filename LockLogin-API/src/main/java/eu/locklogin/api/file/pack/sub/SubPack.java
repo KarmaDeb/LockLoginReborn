@@ -1,11 +1,12 @@
-package eu.locklogin.api.file.plugin.sub;
+package eu.locklogin.api.file.pack.sub;
 
-import eu.locklogin.api.file.plugin.LanguagePack;
-import eu.locklogin.api.file.plugin.key.PackKey;
+import eu.locklogin.api.file.pack.LanguagePack;
+import eu.locklogin.api.file.pack.key.PackKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+@SuppressWarnings("unused")
 public abstract class SubPack {
 
     /**
@@ -21,6 +22,14 @@ public abstract class SubPack {
      * @return the sub pack name
      */
     public abstract String getName();
+
+    /**
+     * Set the pack key value
+     *
+     * @param key the pack key
+     * @param value the value
+     */
+    public abstract void setKey(final String key, final Object value);
 
     /**
      * Get a key
@@ -42,7 +51,7 @@ public abstract class SubPack {
     /**
      * Get pack sub packs
      *
-     * @return a list of pack sub packs name
+     * @return a set of pack sub packs name
      */
     public abstract Set<String> getSubs();
 }

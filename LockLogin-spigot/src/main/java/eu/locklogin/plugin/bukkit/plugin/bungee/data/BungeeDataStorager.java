@@ -11,13 +11,13 @@ package eu.locklogin.plugin.bukkit.plugin.bungee.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.common.security.TokenGen;
 import eu.locklogin.api.common.session.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.encryption.Validation;
+import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.string.random.RandomString;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
@@ -29,7 +29,6 @@ import static eu.locklogin.plugin.bukkit.LockLogin.logger;
 
 public final class BungeeDataStorager {
 
-    @SuppressWarnings("FieldMayBeFinal")
     //This could be modified by the cache loader or when a bungeecord message has been received for the first time, so it can't be final
     private static String proxyKey = "";
     private static String serverName = "";
@@ -78,7 +77,7 @@ public final class BungeeDataStorager {
             return TokenGen.requestNode();
         }*/
 
-        return StringUtils.generateString().create();
+        return new RandomString().create();
     }
 
     /**
@@ -139,6 +138,7 @@ public final class BungeeDataStorager {
      *
      * @return if the server has a proxy
      */
+    @SuppressWarnings("unused")
     public boolean needsProxy() {
         return StringUtils.isNullOrEmpty(proxyKey);
     }

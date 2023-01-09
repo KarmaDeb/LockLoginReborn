@@ -17,8 +17,8 @@ package eu.locklogin.plugin.bukkit.util.files;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.rgb.RGBTextComponent;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.minecraft.rgb.RGBTextComponent;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 

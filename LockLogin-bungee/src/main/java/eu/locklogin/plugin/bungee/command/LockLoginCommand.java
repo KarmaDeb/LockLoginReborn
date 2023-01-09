@@ -30,15 +30,15 @@ import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.injector.Injector;
 import eu.locklogin.plugin.bungee.plugin.injector.ModuleExecutorInjector;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.version.VersionUpdater;
-import ml.karmaconfigs.api.common.version.util.VersionType;
+import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
+import ml.karmaconfigs.api.common.version.updater.VersionType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -54,6 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "locklogin")
+@SuppressWarnings("unused")
 public final class LockLoginCommand extends Command {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
@@ -74,6 +75,7 @@ public final class LockLoginCommand extends Command {
      * @param args   arguments used to invoke this command
      */
     @Override
+    @SuppressWarnings("deprecation")
     public void execute(CommandSender sender, String[] args) {
         PluginMessages messages = CurrentPlatform.getMessages();
         sender.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.

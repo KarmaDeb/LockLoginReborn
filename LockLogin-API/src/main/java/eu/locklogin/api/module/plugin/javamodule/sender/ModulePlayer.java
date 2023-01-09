@@ -26,8 +26,8 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -35,13 +35,13 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
  * ModulePlayer class
  */
+@SuppressWarnings("unused")
 public final class ModulePlayer extends ModuleSender implements Serializable {
 
     @SuppressWarnings("FieldMayBeFinal")
@@ -172,22 +172,6 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
                     getPlayer = bungeeServer.getClass().getMethod("getPlayer", UUID.class);
 
                     return getPlayer.invoke(bungeeServer, uniqueId);
-                case VELOCITY:
-                    Class<?> locklogin = Class.forName("eu.locklogin.plugin.velocity.LockLogin");
-                    Object karmaPlugin = locklogin.getField("plugin").get(null);
-                    Method getServer = karmaPlugin.getClass().getMethod("getServer");
-                    Object velocityServer = getServer.invoke(karmaPlugin);
-
-                    getPlayer = velocityServer.getClass().getMethod("getPlayer", UUID.class);
-                    Object result = getPlayer.invoke(velocityServer, uniqueId);
-
-                    if (result instanceof Optional) {
-                        Optional<?> optional = (Optional<?>) result;
-                        return optional.orElse(null);
-                    } else {
-                        APISource.loadProvider("LockLogin").console().send("&cTried to get player object from LockLoginAPI with server platform velocity, but player result does not match velocity method");
-                        return null;
-                    }
                 default:
                     APISource.loadProvider("LockLogin").console().send("&cTried to get player object from LockLoginAPI with an unknown server platform");
                     return null;
@@ -214,9 +198,6 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
                     case BUNGEE:
                         Method isConnected = player.getClass().getMethod("isConnected");
                         return (boolean) isConnected.invoke(player);
-                    case VELOCITY:
-                        Method isActive = player.getClass().getMethod("isActive");
-                        return (boolean) isActive.invoke(player);
                 }
             } catch (Throwable ex) {
                 ex.printStackTrace();

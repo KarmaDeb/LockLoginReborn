@@ -14,14 +14,12 @@ package eu.locklogin.api.common.session;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.utils.string.RandomString;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.util.TextContent;
-import ml.karmaconfigs.api.common.utils.string.util.TextType;
+import ml.karmaconfigs.api.common.string.random.RandomString;
+import ml.karmaconfigs.api.common.string.text.TextContent;
+import ml.karmaconfigs.api.common.string.text.TextType;
 
 import java.time.Instant;
 
@@ -63,11 +61,12 @@ public final class Session extends ClientSession {
                 generation = TextContent.NUMBERS_AND_LETTERS;
             }
 
-            captcha = StringUtils.generateString(RandomString.
-                    createBuilder()
+            captcha = new RandomString(
+                    RandomString.createBuilder()
                     .withContent(generation)
                     .withType(type)
-                    .withSize(config.captchaOptions().getLength())).create();
+                    .withSize(config.captchaOptions().getLength())
+            ).create();
         }
     }
 

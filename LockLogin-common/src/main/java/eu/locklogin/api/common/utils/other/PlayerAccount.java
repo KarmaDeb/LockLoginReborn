@@ -15,18 +15,16 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
-import ml.karmaconfigs.api.common.Console;
-import ml.karmaconfigs.api.common.karma.APISource;
-import ml.karmaconfigs.api.common.karma.KarmaSource;
+import ml.karmaconfigs.api.common.console.Console;
+import ml.karmaconfigs.api.common.data.file.FileUtilities;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karmafile.KarmaFile;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.file.FileUtilities;
-import ml.karmaconfigs.api.common.utils.file.PathUtilities;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +41,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 /**
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -71,10 +70,9 @@ public final class PlayerAccount extends AccountManager {
 
         if (Files.exists(original) && !Files.exists(backup)) {
             boolean success = false;
-            try {
+            try(Stream<Path> files = Files.list(original)) {
                 AtomicBoolean error = new AtomicBoolean(false);
-
-                Files.list(original).forEachOrdered((sub) -> {
+                files.forEachOrdered((sub) -> {
                     Path newPath = backup.resolve(sub.getFileName().toString());
 
                     try {
@@ -194,176 +192,6 @@ public final class PlayerAccount extends AccountManager {
             }
         } else {
             manager = null;
-        }
-    }
-
-    /**
-     * Migrate from LockLogin v1 player database
-     */
-    @SuppressWarnings("deprecation")
-    public static void migrateV1() {
-        File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "Users");
-        File[] files = v1DataFolder.listFiles();
-
-        if (files != null) {
-            console.send("Initializing LockLogin v1 player database migration", Level.INFO);
-
-            for (File file : files) {
-                if (file.getName().endsWith(".yml")) {
-                    console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
-                    KarmaYamlManager oldManager = new KarmaYamlManager(source, file.getName(), "Users");
-
-                    File newFile = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
-                    KarmaFile user = new KarmaFile(newFile);
-
-                    String name = oldManager.getString("Player");
-                    String password = oldManager.getString("Auth.Password");
-                    String token = oldManager.getString("2FA.gAuth");
-                    boolean fa = oldManager.getBoolean("2FA.enabled");
-
-                    if (!user.exists()) {
-                        user.create();
-
-                        user.set("/// LockLogin user data file. -->");
-                        user.set("/// Please do not modify this file -->");
-                        user.set("/// until you know what you are doing! -->");
-
-                        user.set("\n");
-
-                        user.set("/// The first recorded player name -->");
-                        user.set("PLAYER", name);
-
-                        user.set("\n");
-
-                        //UUID record wasn't a feature in that time...
-                        user.set("/// The user UUID, used for offline API -->");
-                        user.set("UUID", "");
-
-                        user.set("\n");
-
-                        user.set("/// The user password -->");
-                        user.set("PASSWORD", password);
-
-                        user.set("\n");
-
-                        user.set("/// The user google auth token -->");
-                        user.set("TOKEN", token);
-
-                        user.set("\n");
-
-                        //Pin didn't exist at that time, so let's just set it empty
-                        user.set("/// The user pin -->");
-                        user.set("PIN", "");
-
-                        user.set("\n");
-
-                        user.set("/// The user Google Auth status -->");
-                    } else {
-                        user.set("PLAYER", name);
-                        user.set("UUID", "");
-                        user.set("PASSWORD", password);
-                        user.set("TOKEN", token);
-                        user.set("PIN", "");
-                    }
-                    user.set("2FA", fa);
-                }
-
-                try {
-                    Files.delete(file.toPath());
-                } catch (Throwable ignored) {
-                }
-            }
-
-            try {
-                Files.delete(v1DataFolder.toPath());
-            } catch (Throwable ignored) {
-            }
-        }
-    }
-
-    /**
-     * Migrate from LockLogin v2 player database
-     */
-    @SuppressWarnings("deprecation")
-    public static void migrateV2() {
-        File v1DataFolder = new File(source.getDataPath().toFile() + File.separator + "playerdata");
-        File[] files = v1DataFolder.listFiles();
-
-        if (files != null) {
-            console.send("Initializing LockLogin v2 player database migration", Level.INFO);
-
-            for (File file : files) {
-                if (file.getName().endsWith(".yml")) {
-                    console.send("Migrating account #" + file.getName().replace(".yml", ""), Level.INFO);
-                    KarmaYamlManager oldManager = new KarmaYamlManager(source, file.getName(), "playerdata");
-
-                    File newFile = new File(source.getDataPath().toFile() + File.separator + "data" + File.separator + "accounts", file.getName().replace(".yml", ".lldb"));
-                    KarmaFile user = new KarmaFile(newFile);
-
-                    String name = oldManager.getString("Player");
-                    String uuid = oldManager.getString("UUID");
-                    String password = oldManager.getString("Password");
-                    String token = oldManager.getString("GAuth");
-                    String pin = oldManager.getString("Pin");
-                    boolean fa = oldManager.getBoolean("2FA");
-
-                    if (!user.exists()) {
-                        user.create();
-
-                        user.set("/// LockLogin user data file. -->");
-                        user.set("/// Please do not modify this file -->");
-                        user.set("/// until you know what you are doing! -->");
-
-                        user.set("\n");
-
-                        user.set("/// The first recorded player name -->");
-                        user.set("PLAYER", name);
-
-                        user.set("\n");
-
-                        //UUID record wasn't a feature in that time...
-                        user.set("/// The user UUID, used for offline API -->");
-                        user.set("UUID", uuid);
-
-                        user.set("\n");
-
-                        user.set("/// The user password -->");
-                        user.set("PASSWORD", password);
-
-                        user.set("\n");
-
-                        user.set("/// The user google auth token -->");
-                        user.set("TOKEN", token);
-
-                        user.set("\n");
-
-                        //Pin didn't exist at that time, so let's just set it empty
-                        user.set("/// The user pin -->");
-                        user.set("PIN", pin);
-
-                        user.set("\n");
-
-                        user.set("/// The user Google Auth status -->");
-                    } else {
-                        user.set("PLAYER", name);
-                        user.set("UUID", uuid);
-                        user.set("PASSWORD", password);
-                        user.set("TOKEN", token);
-                        user.set("PIN", pin);
-                    }
-                    user.set("2FA", fa);
-                }
-
-                try {
-                    Files.delete(file.toPath());
-                } catch (Throwable ignored) {
-                }
-            }
-
-            try {
-                Files.delete(v1DataFolder.toPath());
-            } catch (Throwable ignored) {
-            }
         }
     }
 
@@ -786,8 +614,8 @@ public final class PlayerAccount extends AccountManager {
 
         Path accounts = source.getDataPath().resolve("data").resolve("accounts");
         if (Files.exists(accounts)) {
-            try {
-                Files.list(accounts).forEach((sub) -> {
+            try(Stream<Path> files = Files.list(accounts)) {
+                files.forEach((sub) -> {
                     String extension = PathUtilities.getExtension(sub);
                     String trimmedId = sub.getFileName().toString().replace("." + extension, "");
 

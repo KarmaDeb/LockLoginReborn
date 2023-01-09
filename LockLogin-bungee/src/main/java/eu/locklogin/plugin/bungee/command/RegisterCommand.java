@@ -30,8 +30,8 @@ import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -41,6 +41,7 @@ import java.util.List;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "register", aliases = {"reg"})
+@SuppressWarnings("unused")
 public final class RegisterCommand extends Command {
 
     /**
@@ -121,18 +122,6 @@ public final class RegisterCommand extends Command {
                                         ModulePlugin.callEvent(event);
 
                                         user.restorePotionEffects();
-
-                                        /*DataSender.MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                                        DataSender.MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
-                                                .addProperty("pin", false).build();
-                                        DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-
-                                        DataSender.send(player, login);
-
-                                        if (session.isPinLogged())
-                                            DataSender.send(player, pin);
-                                        if (session.is2FALogged())
-                                            DataSender.send(player, gauth);*/
 
                                         if (session.isPinLogged()) {
                                             BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))

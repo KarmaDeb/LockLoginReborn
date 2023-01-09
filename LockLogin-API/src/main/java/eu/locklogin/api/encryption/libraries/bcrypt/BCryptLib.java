@@ -388,7 +388,7 @@ public final class BCryptLib {
     private static String encode_base64(byte[] d, int len)
             throws IllegalArgumentException {
         int off = 0;
-        StringBuffer rs = new StringBuffer();
+        StringBuilder rs = new StringBuilder();
         int c1, c2;
 
         if (len <= 0 || len > d.length)
@@ -426,7 +426,7 @@ public final class BCryptLib {
      * @return the decoded value of x
      */
     private static byte char64(char x) {
-        if ((int) x < 0 || (int) x > index_64.length)
+        if ((int) x > index_64.length)
             return -1;
         return index_64[x];
     }
@@ -436,22 +436,21 @@ public final class BCryptLib {
      * byte array. Note that this is *not* compatible with
      * the standard MIME-base64 encoding.
      *
-     * @param s       the string to decode
-     * @param maxolen the maximum number of bytes to decode
+     * @param s the string to decode
      * @return an array containing the decoded bytes
      * @throws IllegalArgumentException if maxolen is invalid
      */
-    private static byte[] decode_base64(String s, int maxolen)
+    private static byte[] decode_base64(String s)
             throws IllegalArgumentException {
-        StringBuffer rs = new StringBuffer();
+        StringBuilder rs = new StringBuilder();
         int off = 0, slen = s.length(), olen = 0;
         byte[] ret;
         byte c1, c2, c3, c4, o;
 
-        if (maxolen <= 0)
+        if (BCryptLib.BCRYPT_SALT_LEN <= 0)
             throw new IllegalArgumentException("Invalid maxolen");
 
-        while (off < slen - 1 && olen < maxolen) {
+        while (off < slen - 1 && olen < BCryptLib.BCRYPT_SALT_LEN) {
             c1 = char64(s.charAt(off++));
             c2 = char64(s.charAt(off++));
             if (c1 == -1 || c2 == -1)
@@ -459,7 +458,7 @@ public final class BCryptLib {
             o = (byte) (c1 << 2);
             o |= (c2 & 0x30) >> 4;
             rs.append((char) o);
-            if (++olen >= maxolen || off >= slen)
+            if (++olen >= BCryptLib.BCRYPT_SALT_LEN || off >= slen)
                 break;
             c3 = char64(s.charAt(off++));
             if (c3 == -1)
@@ -467,7 +466,7 @@ public final class BCryptLib {
             o = (byte) ((c2 & 0x0f) << 4);
             o |= (c3 & 0x3c) >> 2;
             rs.append((char) o);
-            if (++olen >= maxolen || off >= slen)
+            if (++olen >= BCryptLib.BCRYPT_SALT_LEN || off >= slen)
                 break;
             c4 = char64(s.charAt(off++));
             o = (byte) ((c3 & 0x03) << 6);
@@ -517,8 +516,8 @@ public final class BCryptLib {
         String real_salt;
         byte[] passwordb, saltb, hashed;
         char minor = (char) 0;
-        int rounds, off = 0;
-        StringBuffer rs = new StringBuffer();
+        int rounds, off;
+        StringBuilder rs = new StringBuilder();
 
         if (salt.charAt(0) != '$' || salt.charAt(1) != '2')
             throw new IllegalArgumentException("Invalid salt version");
@@ -539,7 +538,7 @@ public final class BCryptLib {
         real_salt = salt.substring(off + 3, off + 25);
         passwordb = (password + (minor >= 'a' ? "\000" : "")).getBytes(StandardCharsets.UTF_8);
 
-        saltb = decode_base64(real_salt, BCRYPT_SALT_LEN);
+        saltb = decode_base64(real_salt);
 
         B = new BCryptLib();
         hashed = B.crypt_raw(passwordb, saltb, rounds,
@@ -573,7 +572,7 @@ public final class BCryptLib {
      * @return an encoded salt value
      */
     public static String gensalt(int log_rounds, SecureRandom random) {
-        StringBuffer rs = new StringBuffer();
+        StringBuilder rs = new StringBuilder();
         byte[] rnd = new byte[BCRYPT_SALT_LEN];
 
         random.nextBytes(rnd);
@@ -643,7 +642,7 @@ public final class BCryptLib {
      * @param lr  an array containing the two 32-bit half blocks
      * @param off the position in the array of the blocks
      */
-    private final void encipher(int[] lr, int off) {
+    private void encipher(int[] lr, int off) {
         int i, n, l = lr[off], r = lr[off + 1];
 
         l ^= P[0];
@@ -704,7 +703,7 @@ public final class BCryptLib {
     /**
      * Perform the "enhanced key schedule" step described by
      * Provos and Mazieres in "A Future-Adaptable Password Scheme"
-     * http://www.openbsd.org/papers/bcrypt-paper.ps
+     * <a href="http://www.openbsd.org/papers/bcrypt-paper.ps">...</a>
      *
      * @param data salt information
      * @param key  password information

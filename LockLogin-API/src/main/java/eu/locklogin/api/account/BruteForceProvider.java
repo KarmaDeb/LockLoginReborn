@@ -15,14 +15,14 @@ package eu.locklogin.api.account;
  */
 
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import ml.karmaconfigs.api.common.utils.string.RandomString;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.random.RandomString;
 
 import java.net.InetAddress;
 
 /**
  * LockLogin brute force prevention provider
  */
+@SuppressWarnings("unused")
 public abstract class BruteForceProvider {
 
     private final ModulePlayer victim;
@@ -86,7 +86,7 @@ public abstract class BruteForceProvider {
      * @return the login token
      */
     protected final String generate() {
-        return StringUtils.generateString(RandomString.createBuilder().withSize(32)).create();
+        return new RandomString(RandomString.createBuilder().withSize(32)).create();
     }
 
     /**

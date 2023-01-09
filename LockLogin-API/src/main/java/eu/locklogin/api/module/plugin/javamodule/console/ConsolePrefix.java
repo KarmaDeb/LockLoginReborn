@@ -15,7 +15,7 @@ package eu.locklogin.api.module.plugin.javamodule.console;
  */
 
 import eu.locklogin.api.module.PluginModule;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +23,7 @@ import java.util.Map;
 /**
  * LockLogin module console prefix
  */
+@SuppressWarnings("unused")
 public final class ConsolePrefix {
 
     private final static Map<PluginModule, Map<MessageLevel, String>> prefixes = new HashMap<>();

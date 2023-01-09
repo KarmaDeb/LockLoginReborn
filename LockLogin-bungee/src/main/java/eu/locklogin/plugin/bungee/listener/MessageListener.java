@@ -28,7 +28,6 @@ import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
@@ -39,10 +38,9 @@ import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.BungeeDataSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
-import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
@@ -53,10 +51,8 @@ import net.md_5.bungee.event.EventPriority;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -70,7 +66,6 @@ public final class MessageListener implements Listener {
             try {
                 if (e.getTag().equalsIgnoreCase("ll:access") || e.getTag().equalsIgnoreCase("ll:plugin") || e.getTag().equalsIgnoreCase("ll:account")) {
                     PluginMessages messages = CurrentPlatform.getMessages();
-                    ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
                     Server server = (Server) e.getSender();
 
                     ByteArrayDataInput input = ByteStreams.newDataInput(e.getData());
@@ -116,8 +111,6 @@ public final class MessageListener implements Listener {
                                                         } else {
                                                             session.set2FALogged(true);
 
-                                                            /*DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-                                                            DataSender.send(player, gauth);*/
                                                             BungeeSender.sender.queue(server.getInfo().getName())
                                                                             .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
                                                                                     .addProperty("player", player.getUniqueId()).getInstance().build());
@@ -125,16 +118,12 @@ public final class MessageListener implements Listener {
                                                             user.checkServer(0);
                                                         }
 
-                                                        /*DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player)
-                                                                .addProperty("pin", false).build());*/
                                                         BungeeSender.sender.queue(server.getInfo().getName())
                                                                 .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
                                                                         .addProperty("player", player.getUniqueId())
                                                                         .addProperty("pin", false).getInstance().build());
                                                     } else {
                                                         if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                                            /*DataSender.send(player, DataSender.getBuilder(DataType.PIN, DataSender.CHANNEL_PLAYER, player)
-                                                                    .addProperty("pin", false).build());*/
                                                             BungeeSender.sender.queue(server.getInfo().getName())
                                                                     .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
                                                                             .addProperty("player", player.getUniqueId())
@@ -153,8 +142,6 @@ public final class MessageListener implements Listener {
                                                             } else {
                                                                 session.set2FALogged(true);
 
-                                                                /*DataSender.MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
-                                                                DataSender.send(player, gauth);*/
                                                                 BungeeSender.sender.queue(server.getInfo().getName())
                                                                         .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
                                                                                 .addProperty("player", player.getUniqueId()).getInstance().build());
@@ -212,7 +199,7 @@ public final class MessageListener implements Listener {
                                 break;
                             case "ll:access":
                                 if (sub.equals(DataType.REGISTER)) {
-                                    TargetServerStorage storage = new TargetServerStorage(name);
+                                    //TargetServerStorage storage = new TargetServerStorage(name);
                                     //storage.save(TokenGen.find(name));
 
                                     InetAddress address = getIp(server.getSocketAddress());
@@ -232,6 +219,9 @@ public final class MessageListener implements Listener {
                                         stored_set.add(target_server);
 
                                         if (ServerDataStorage.needsProxyKnowledge(name)) {
+                                            BungeeSender.sender.queue(name).unlock();
+                                            BungeeSender.registered_servers++;
+
                                             console.send("Registered proxy key into server {0}", Level.INFO, name);
                                             ServerDataStorage.setProxyRegistered(name);
                                         }

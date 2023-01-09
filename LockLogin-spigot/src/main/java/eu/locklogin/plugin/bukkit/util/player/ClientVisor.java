@@ -21,7 +21,7 @@ import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 import static eu.locklogin.plugin.bukkit.LockLogin.trySync;

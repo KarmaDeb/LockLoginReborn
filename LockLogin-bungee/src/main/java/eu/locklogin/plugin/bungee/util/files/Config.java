@@ -19,13 +19,13 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.*;
 import eu.locklogin.api.util.enums.Lang;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.YamlReloader;
-import ml.karmaconfigs.api.common.utils.string.RandomString;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.string.util.TextContent;
-import ml.karmaconfigs.api.common.utils.string.util.TextType;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
+import ml.karmaconfigs.api.common.karma.file.yaml.YamlReloader;
+import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.string.random.RandomString;
+import ml.karmaconfigs.api.common.string.text.TextContent;
+import ml.karmaconfigs.api.common.string.text.TextType;
 
 import java.io.File;
 
@@ -69,7 +69,7 @@ public final class Config extends PluginConfiguration {
     public String serverName() {
         String server_name = cfg.getString("ServerName", "");
         if (StringUtils.isNullOrEmpty(server_name)) {
-            server_name = StringUtils.generateString(
+            server_name = new RandomString(
                     RandomString.createBuilder()
                             .withType(TextType.ALL_LOWER)
                             .withContent(TextContent.ONLY_LETTERS)
@@ -493,7 +493,7 @@ public final class Config extends PluginConfiguration {
             assert module_prefix != null;
 
             if (StringUtils.isNullOrEmpty(server_name)) {
-                server_name = StringUtils.generateString(
+                server_name = new RandomString(
                         RandomString.createBuilder()
                                 .withType(TextType.ALL_LOWER)
                                 .withContent(TextContent.ONLY_LETTERS)

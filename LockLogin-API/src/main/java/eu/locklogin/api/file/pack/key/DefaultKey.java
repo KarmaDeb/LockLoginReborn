@@ -1,12 +1,12 @@
-package eu.locklogin.api.file.plugin.key;
+package eu.locklogin.api.file.pack.key;
 
-import eu.locklogin.api.file.plugin.sub.SubPack;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import eu.locklogin.api.file.pack.sub.SubPack;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 public final class DefaultKey extends PackKey {
 
     private SubPack sub = null;
-    private Integer num = null;
+    private Number num = null;
     private Boolean bool = null;
     private String str = null;
     private Character ch = null;
@@ -25,7 +25,7 @@ public final class DefaultKey extends PackKey {
      *
      * @param p the parameter
      */
-    public DefaultKey(final Integer p) {
+    public DefaultKey(final Number p) {
         num = p;
     }
 
@@ -123,7 +123,7 @@ public final class DefaultKey extends PackKey {
      * @throws IllegalStateException if the integer cannot be got
      */
     @Override
-    public int getAsInt() throws IllegalStateException {
+    public Number getAsNumber() throws IllegalStateException {
         if (num != null) {
             return num;
         } else {
@@ -153,10 +153,10 @@ public final class DefaultKey extends PackKey {
                 }
             }
             if (num != null) {
-                if (num == 1) {
+                if (num.intValue() == 1) {
                     return true;
                 } else {
-                    if (num == 0) {
+                    if (num.intValue() == 0) {
                         return false;
                     }
                 }

@@ -23,7 +23,7 @@ import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.file.plugin.Alias;
+import eu.locklogin.api.file.pack.Alias;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.util.enums.Manager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -33,7 +33,7 @@ import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.utils.string.StringUtils;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -47,6 +47,7 @@ import java.util.*;
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "playerinfo")
+@SuppressWarnings("unused")
 public final class PlayerInfoCommand extends Command {
 
     /**
@@ -105,8 +106,6 @@ public final class PlayerInfoCommand extends Command {
                                                 for (AccountManager account : accounts) {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.PLAYER, DataSender.PLUGIN_CHANNEL, player)
-                                                            .addProperty("account", StringUtils.serialize(account)).build());*/
                                                     BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
                                                                     .addProperty("account", StringUtils.serialize(account))
@@ -115,8 +114,6 @@ public final class PlayerInfoCommand extends Command {
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
-                                                /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                                 BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                         .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                                                 .addProperty("player", player.getUniqueId())
@@ -147,8 +144,6 @@ public final class PlayerInfoCommand extends Command {
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                                     BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                                                     .addProperty("player", player.getUniqueId())
@@ -167,8 +162,6 @@ public final class PlayerInfoCommand extends Command {
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                                     BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                                                     .addProperty("player", player.getUniqueId())
@@ -198,8 +191,6 @@ public final class PlayerInfoCommand extends Command {
                                                     }
 
                                                     parser = new AccountParser(accounts);
-                                                    /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                                     BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                             .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                                                     .addProperty("player", player.getUniqueId())
@@ -230,8 +221,6 @@ public final class PlayerInfoCommand extends Command {
                                             }
 
                                             AccountParser parser = new AccountParser(accounts);
-                                           /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                                             BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                                     .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                                             .addProperty("player", player.getUniqueId())
@@ -315,8 +304,6 @@ public final class PlayerInfoCommand extends Command {
                             }
 
                             AccountParser parser = new AccountParser(accounts);
-                            /*DataSender.send(player, DataSender.getBuilder(DataType.INFOGUI, DataSender.PLUGIN_CHANNEL, player)
-                                                        .addProperty("player_info", parser.toString()).build());*/
                             BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
                                     .insert(DataMessage.newInstance(DataType.INFOGUI, Channel.PLUGIN)
                                             .addProperty("player", player.getUniqueId())

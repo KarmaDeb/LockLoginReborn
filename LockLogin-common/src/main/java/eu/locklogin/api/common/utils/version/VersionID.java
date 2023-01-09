@@ -14,8 +14,8 @@ package eu.locklogin.api.common.utils.version;
  * the version number 2.1.]
  */
 
-import ml.karmaconfigs.api.common.version.util.VersionCheckType;
-import ml.karmaconfigs.api.common.version.util.VersionResolver;
+import ml.karmaconfigs.api.common.version.updater.VersionCheckType;
+import ml.karmaconfigs.api.common.version.updater.VersionResolver;
 
 import java.util.HashMap;
 import java.util.Map;

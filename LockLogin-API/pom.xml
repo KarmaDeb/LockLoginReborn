@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.38</version>
+        <version>1.13.39</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -91,6 +91,18 @@
             <groupId>ml.karmaconfigs</groupId>
             <artifactId>RemoteMessaging</artifactId>
             <version>1.1.7</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

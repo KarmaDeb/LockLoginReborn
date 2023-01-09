@@ -19,7 +19,7 @@ import eu.locklogin.module.manager.ModuleHelpCommand;
 import eu.locklogin.module.manager.ModuleInfoCommand;
 import eu.locklogin.module.manager.UsersListener;
 import eu.locklogin.module.manager.bungee.listener.UpdateRequestListener;
-import ml.karmaconfigs.api.common.karmafile.karmayaml.FileCopy;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 
 public final class Main extends PluginModule {
 
