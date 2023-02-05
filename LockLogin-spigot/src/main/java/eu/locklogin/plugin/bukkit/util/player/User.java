@@ -12,7 +12,6 @@ package eu.locklogin.plugin.bukkit.util.player;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -26,7 +25,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.util.enums.Manager;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -62,7 +61,7 @@ public final class User {
     private final static Set<UUID> registered = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Set<UUID> panicking = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Map<UUID, Collection<PotionEffect>> effects = new ConcurrentHashMap<>();
-    private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
+    private final static Map<UUID, eu.locklogin.api.account.AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
@@ -84,7 +83,7 @@ public final class User {
         User loaded = UserDatabase.loadUser(player);
         if (loaded == null) {
             if (CurrentPlatform.isValidAccountManager()) {
-                AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
+                eu.locklogin.api.account.AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
 
                 if (manager == null) {
                     plugin.getPluginLoader().disablePlugin(plugin);
@@ -487,7 +486,7 @@ public final class User {
      * @throws IllegalStateException if the current manager is null
      */
     @NotNull
-    public AccountManager getManager() throws IllegalStateException {
+    public eu.locklogin.api.account.AccountManager getManager() throws IllegalStateException {
         return managers.get(player.getUniqueId());
     }
 

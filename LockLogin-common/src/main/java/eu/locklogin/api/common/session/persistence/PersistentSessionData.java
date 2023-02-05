@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.session;
+package eu.locklogin.api.common.session.persistence;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -16,14 +16,14 @@ package eu.locklogin.api.common.session;
 
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.util.enums.Manager;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 
 import java.io.File;
 import java.util.LinkedHashSet;
@@ -37,7 +37,7 @@ public final class PersistentSessionData {
     private final static File folder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin", "data");
     private final static File file = new File(folder, "sessions.lldb");
 
-    private final static KarmaMain sessions = new KarmaMain(APISource.loadProvider("LockLogin"), file.toPath());
+    private final static KarmaMain sessions = new KarmaMain(file.toPath());
 
     private final AccountID id;
 
@@ -60,19 +60,21 @@ public final class PersistentSessionData {
      */
     public static Set<AccountManager> getPersistentAccounts() {
         Set<AccountManager> accounts = new LinkedHashSet<>();
-        AccountManager tmp_manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, null);
+        AccountManager tmp_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
 
         if (tmp_manager != null) {
             Set<AccountManager> tmp_accounts = tmp_manager.getAccounts();
             if (sessions.isSet("persistent")) {
-                KarmaElement element = sessions.get("persistent");
+                Element<?> element = sessions.get("persistent");
 
                 if (element.isArray()) {
-                    KarmaArray array = element.getArray();
+                    KarmaArray array = (KarmaArray) element.getAsArray();
 
                     for (AccountManager manager : tmp_accounts) {
                         if (manager != null) {
-                            if (array.contains(new KarmaObject(manager.getUUID().getId())))
+                            ElementPrimitive check_id = new KarmaPrimitive(manager.getUUID().getId());
+
+                            if (array.contains(check_id))
                                 accounts.add(manager);
                         }
                     }
@@ -94,16 +96,16 @@ public final class PersistentSessionData {
         boolean result = false;
 
         if (sessions.isSet("persistent")) {
-            KarmaElement element = sessions.get("persistent");
+            Element<?> element = sessions.get("persistent");
 
             if (element.isArray()) {
-                KarmaArray array = element.getArray();
-                KarmaObject d = new KarmaObject(id.getId());
+                KarmaArray array = (KarmaArray) element.getAsArray();
+                ElementPrimitive check_id = new KarmaPrimitive(id.getId());
 
-                if (array.contains(d)) {
-                    array.remove(d);
+                if (array.contains(check_id)) {
+                    array.remove(check_id);
                 } else {
-                    array.add(d);
+                    array.add(check_id);
                     result = true;
                 }
 
@@ -112,7 +114,7 @@ public final class PersistentSessionData {
             }
         } else {
             KarmaArray array = new KarmaArray();
-            array.add(new KarmaObject(id.getId()));
+            array.add(id.getId());
 
             sessions.set("persistent", array);
             return sessions.save();
@@ -128,11 +130,12 @@ public final class PersistentSessionData {
      */
     public boolean isPersistent() {
         if (sessions.isSet("persistent")) {
-            KarmaElement element = sessions.get("persistent");
+            Element<?> element = sessions.get("persistent");
 
             if (element.isArray()) {
-                KarmaArray array = element.getArray();
-                return array.contains(new KarmaObject(id.getId()));
+                KarmaArray array = (KarmaArray) element.getAsArray();
+                ElementPrimitive check_id = new KarmaPrimitive(id.getId());
+                return array.contains(check_id);
             }
         }
 

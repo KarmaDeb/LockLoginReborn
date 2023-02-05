@@ -19,9 +19,10 @@ import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -32,9 +33,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,8 +74,8 @@ public final class AccountData {
         File revLibFile = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "data" + File.separator +
                 "ips" + File.separator + "rev_lib", account.getId() + ".library");
 
-        lib = new KarmaMain(plugin, libFile.toPath());
-        rev_lib = new KarmaMain(plugin, revLibFile.toPath());
+        lib = new KarmaMain(libFile.toPath());
+        rev_lib = new KarmaMain(revLibFile.toPath());
     }
 
     /**
@@ -84,19 +83,17 @@ public final class AccountData {
      */
     public void save() {
         if (!lib.exists()) {
-            List<KarmaElement> sets = new ArrayList<>();
-            sets.add(new KarmaObject(uuid.getId()));
-
-            lib.set("assigned", new KarmaArray(sets.toArray(new KarmaElement[0])));
+            KarmaArray array = new KarmaArray(new KarmaPrimitive(uuid.getId()));
+            lib.set("assigned", array);
         } else {
             if (lib.isSet("assigned")) {
-                KarmaElement sets = lib.get("assigned");
+                Element<?> sets = lib.get("assigned");
                 if (sets.isArray()) {
-                    KarmaArray array = sets.getArray();
-                    KarmaObject id = new KarmaObject(uuid.getId());
+                    KarmaArray array = (KarmaArray) sets.getAsArray();
+                    ElementPrimitive check_id = new KarmaPrimitive(uuid.getId());
 
-                    if (!array.contains(id)) {
-                        array.add(id);
+                    if (!array.contains(check_id)) {
+                        array.add(check_id);
                         lib.set("assigned", array);
 
                         if (!lib.save()) {
@@ -109,19 +106,17 @@ public final class AccountData {
         }
 
         if (!rev_lib.exists()) {
-            List<KarmaElement> sets = new ArrayList<>();
-            sets.add(new KarmaObject(ip));
-
-            rev_lib.set("assigned", new KarmaArray(sets.toArray(new KarmaElement[0])));
+            KarmaArray array = new KarmaArray(new KarmaPrimitive(ip));
+            rev_lib.set("assigned", array);
         } else {
             if (rev_lib.isSet("assigned")) {
-                KarmaElement sets = rev_lib.get("assigned");
+                Element<?> sets = rev_lib.get("assigned");
                 if (sets.isArray()) {
-                    KarmaArray array = sets.getArray();
-                    KarmaObject id = new KarmaObject(ip);
+                    KarmaArray array = (KarmaArray) sets.getAsArray();
+                    ElementPrimitive check_ip = new KarmaPrimitive(ip);
 
-                    if (!array.contains(id)) {
-                        array.add(id);
+                    if (!array.contains(check_ip)) {
+                        array.add(check_ip);
                         rev_lib.set("assigned", array);
 
                         if (!rev_lib.save()) {
@@ -146,13 +141,15 @@ public final class AccountData {
         }
 
         if (lib.exists() && lib.isSet("assigned")) {
-            KarmaElement sets = lib.get("assigned");
+            Element<?> sets = lib.get("assigned");
             if (sets.isArray()) {
-                KarmaArray array = sets.getArray();
-                if (array.contains(new KarmaObject(uuid.getId()))) {
+                KarmaArray array = (KarmaArray) sets.getAsArray();
+                KarmaPrimitive check_id = new KarmaPrimitive(uuid.getId());
+
+                if (array.contains(check_id)) {
                     return true;
                 } else {
-                    return array.size() < max;
+                    return array.getSize() < max;
                 }
             }
         }
@@ -169,13 +166,13 @@ public final class AccountData {
         Set<AccountID> accounts = new HashSet<>();
 
         if (lib.exists() && lib.isSet("assigned")) {
-            KarmaElement sets = lib.get("assigned");
+            Element<?> sets = lib.get("assigned");
             if (sets.isArray()) {
-                KarmaArray array = sets.getArray();
+                KarmaArray array = (KarmaArray) sets.getAsArray();
 
-                for (KarmaElement element : array.getElements()) {
+                for (ElementPrimitive element : array) {
                     if (element.isString()) {
-                        String str = element.getObjet().getString();
+                        String str = element.asString();
 
                         if (!StringUtils.isNullOrEmpty(str)) {
                             accounts.add(AccountID.fromString(str));
@@ -197,21 +194,21 @@ public final class AccountData {
         Set<AccountID> accounts = new HashSet<>();
 
         if (rev_lib.exists() && rev_lib.isSet("assigned")) {
-            KarmaElement sets = rev_lib.get("assigned");
+            Element<?> sets = rev_lib.get("assigned");
             if (sets.isArray()) {
-                KarmaArray array = sets.getArray();
+                KarmaArray array = (KarmaArray) sets.getAsArray();
 
-                for (KarmaElement libName : array.getElements()) {
+                for (ElementPrimitive libName : array) {
                     Path libFile = plugin.getDataPath().resolve("data").resolve("ips").resolve("lib").resolve(libName + ".kf");
                     if (Files.exists(libFile)) {
-                        KarmaMain lb = new KarmaMain(plugin, libFile);
+                        KarmaMain lb = new KarmaMain(libFile);
                         if (lb.isSet("assigned")) {
-                            KarmaElement lbAssigned = lb.get("assigned");
+                            Element<?> lbAssigned = lb.get("assigned");
                             if (lbAssigned.isArray()) {
-                                KarmaArray lbArray = lbAssigned.getArray();
-                                for (KarmaElement element : lbArray) {
+                                KarmaArray lbArray = (KarmaArray) lbAssigned.getAsArray();
+                                for (ElementPrimitive element : lbArray) {
                                     if (element.isString()) {
-                                        accounts.add(AccountID.fromString(element.getObjet().getString()));
+                                        accounts.add(AccountID.fromString(element.asString()));
                                     }
                                 }
                             }

@@ -32,6 +32,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
@@ -40,6 +41,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
+import java.net.URL;
 import java.util.List;
 
 import static eu.locklogin.plugin.bungee.LockLogin.console;
@@ -103,25 +105,24 @@ public final class GoogleAuthCommand extends Command {
                                                     if (name.replaceAll("\\s", "").isEmpty())
                                                         name = "LockLogin";
 
-                                                    String token_url = StringUtils.formatString("https://karmaconfigs.ml/locklogin/qr/?{0}%20{1}?{2}",
+                                                    String[] tries = new String[]{
+                                                            "https://karmaconfigs.ml/",
+                                                            "https://karmadev.es/",
+                                                            "https://karmarepo.ml/",
+                                                            "https://backup.karmaconfigs.ml/",
+                                                            "https://backup.karmadev.es/",
+                                                            "https://backup.karmarepo.ml/"
+                                                    };
+                                                    URL working = URLUtils.getOrBackup(tries);
+
+                                                    String token_url = StringUtils.formatString(working + "locklogin/qr/?{0}%20{1}?{2}",
                                                             /*{9}*/StringUtils.stripColor(player.getDisplayName()),
                                                             /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
                                                             /*{2}*/token);
-                                                    if (!URLUtils.exists(token_url)) {
-                                                        token_url = StringUtils.formatString("https://karmarepo.ml/locklogin/qr/?{0}%20{1}?{2}",
-                                                                /*{9}*/StringUtils.stripColor(player.getDisplayName()),
-                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
-                                                                /*{2}*/token);
 
-                                                        if (!URLUtils.exists(token_url)) {
-                                                            token_url = StringUtils.formatString("https://karmadev.es/locklogin/qr/?{0}%20{1}?{2}",
-                                                                    /*{9}*/StringUtils.stripColor(player.getDisplayName()),
-                                                                    /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
-                                                                    /*{2}*/token);
-                                                        }
-                                                    }
-
-                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink()).hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!")).click(ClickEvent.Action.OPEN_URL, token_url.replaceAll("\\s", "-"));
+                                                    ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink())
+                                                            .hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!"))
+                                                            .click(ClickEvent.Action.OPEN_URL, token_url.replaceAll("\\s", "%20"));
                                                     user.send(c_factory.get());
 
                                                     List<Integer> scratch_codes = factory.getRecoveryCodes();
@@ -198,10 +199,9 @@ public final class GoogleAuthCommand extends Command {
                                             ScratchCodes codes = new ScratchCodes(user.getManager().getUUID());
 
                                             if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
-                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                        .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                                .addProperty("player", player.getUniqueId()).getInstance().build());
-                                                //DataSender.send(player, DataSender.getBuilder(DataType.GAUTH, DataSender.CHANNEL_PLAYER, player).build());
+                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                        .getInstance(),
+                                                        BungeeSender.serverFromPlayer(player));
 
                                                 session.set2FALogged(true);
                                                 session.setPinLogged(true);

@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bukkit.listener;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
@@ -33,6 +34,7 @@ import org.bukkit.event.server.ServerCommandEvent;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
@@ -86,9 +88,13 @@ public final class ChatListener implements Listener {
 
         String command = getCommand(e.getMessage());
         if (session.isValid()) {
+            if (CommandProxy.mustMask(command)) {
+                UUID mask_id = CommandProxy.mask(e.getMessage(), getArguments(e.getMessage()));
+                e.setMessage(CommandProxy.getCommand(mask_id) + " " + mask_id);
+            }
+
             if (!session.isLogged()) {
                 e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !command.equalsIgnoreCase("panic") && AllowedCommand.notAllowed(command));
-
                 return;
             } else {
                 if (!session.isTempLogged() && user.getManager().has2FA()) {

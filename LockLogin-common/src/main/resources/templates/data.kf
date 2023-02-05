@@ -1,8 +1,0 @@
-("main"
-
-    'local_token' -> ""
-    'local_node' -> ""
-
-    'external_tokens' -> {
-    }
-)

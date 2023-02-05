@@ -7,30 +7,31 @@ project_developers: '${project.author}'
 project_description: '${project.description}'
 project_build: '${project.buildType}'
 project_karmaapi: '${project.karmaapi}'
+project_karmaapi_min: '${project.minimal_karmaapi}'
 project_update: '${project.update}'
 project_checksums: ${project.showchecksums}
 project_urls:
-  ml:
-    karmaconfigs:
-      safe: true
-      target: "/locklogin"
-      checksum: "/checksum/{0}/checksum.lldb"
-      version: "/version/"
-      dependency: "-repository/{0}/"
-      update: "/version/{0}/LockLogin.jar"
-      manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
-      alternative:
-        - "backup"
-    karmarepo:
-      safe: true
-      target: "/locklogin"
-      checksum: "/checksum/{0}/checksum.lldb"
-      version: "/version/"
-      dependency: "-repository/{0}/"
-      update: "/version/{0}/LockLogin.jar"
-      manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
-      alternative:
-        - "backup"
+  #ml:
+  #  karmaconfigs:
+  #    safe: true
+  #    target: "/locklogin"
+  #    checksum: "/checksum/{0}/checksum.lldb"
+  #    version: "/version/"
+  #    dependency: "-repository/{0}/"
+  #    update: "/version/{0}/LockLogin.jar"
+  #    manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
+  #    alternative:
+  #      - "backup"
+  #  karmarepo:
+  #    safe: true
+  #    target: "/locklogin"
+  #    checksum: "/checksum/{0}/checksum.lldb"
+  #    version: "/version/"
+  #    dependency: "-repository/{0}/"
+  #    update: "/version/{0}/LockLogin.jar"
+  #    manager: "-repository/manager/${project.manager}/LockLoginManager.jar"
+  #    alternative:
+  #      - "backup"
   es:
     karmadev:
       safe: true

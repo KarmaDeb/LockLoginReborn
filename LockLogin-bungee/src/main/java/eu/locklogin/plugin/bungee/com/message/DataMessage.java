@@ -8,8 +8,10 @@ import com.google.gson.JsonObject;
 import eu.locklogin.api.common.communication.Packet;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import lombok.Builder;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -23,8 +25,8 @@ public final class DataMessage {
 
     private JsonObject json;
 
-    public static DataMessageBuilder newInstance(final DataType type, final Channel channel) {
-        return new DataMessageBuilder(type, channel);
+    public static DataMessageBuilder newInstance(final DataType type, final Channel channel, final ProxiedPlayer player) {
+        return new DataMessageBuilder(type, channel, player);
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -46,24 +48,43 @@ public final class DataMessage {
             public byte[] packetData() {
                 return out.toByteArray();
             }
+
+            /**
+             * Get the packet raw data
+             *
+             * @return the packet raw data
+             */
+            @Override
+            public String raw() {
+                return str;
+            }
         };
     }
 
     public static class DataMessageBuilder {
 
-        private final String[] protect = {"data_type", "channel", "socket"};
+        private final String[] protect = {"data_type", "channel", "socket", "proxy", "player"};
 
-        public DataMessageBuilder(final DataType t, final Channel channel) {
+        public DataMessageBuilder(final DataType t, final Channel channel, final ProxiedPlayer player) {
             json = new JsonObject();
 
+            json.addProperty("proxy", CurrentPlatform.getProxyConfiguration().getProxyID().toString());
             json.addProperty("socket", BungeeSender.useSocket);
             json.addProperty("data_type", t.name());
-            json.addProperty("channel", channel.name());
+            json.addProperty("channel", channel.getName());
+            if (player != null) {
+                json.addProperty("player", player.getUniqueId().toString());
+            }
         }
 
         @SuppressWarnings("unused")
         private DataMessageBuilder json(final JsonObject ob) {
-            json = ob;
+            for (String name : ob.keySet()) {
+                if (Arrays.stream(protect).noneMatch(name::equalsIgnoreCase)) {
+                    json.add(name, ob.get(name));
+                }
+            }
+
             return this;
         }
 

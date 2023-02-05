@@ -15,7 +15,7 @@ package eu.locklogin.plugin.bukkit.listener;
  */
 
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;

@@ -1,6 +1,8 @@
 package eu.locklogin.api.common.utils.plugin;
 
-import java.lang.reflect.Method;
+import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.player.FloodgatePlayer;
+
 import java.util.UUID;
 
 public final class FloodGateUtil {
@@ -16,6 +18,14 @@ public final class FloodGateUtil {
         id = clientID;
     }
 
+    public static boolean hasFloodgate() {
+        try {
+            Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            return true;
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
     /**
      * Get if the player is a flood gate client
      * <p>
@@ -25,18 +35,21 @@ public final class FloodGateUtil {
      *
      * @return if the player is a flood gate client
      */
-    public final boolean isFloodClient() {
-        try {
-            Class<?> api = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
-            Method getInstance = api.getMethod("getInstance");
+    public boolean isBedrockClient() {
+        FloodgateApi api = FloodgateApi.getInstance();
+        return api.isFloodgatePlayer(id);
+    }
 
-            Object instance = getInstance.invoke(api);
-            Method getPlayer = instance.getClass().getMethod("getPlayer", UUID.class);
-
-            Object player = getPlayer.invoke(instance, id);
-            return player != null;
-        } catch (Throwable ex) {
-            return false;
-        }
+    /**
+     * Get if the java client of this player already
+     * exists
+     *
+     * @return if the java player for this client
+     * already exists
+     */
+    public boolean javaClientExists() {
+        FloodgateApi api = FloodgateApi.getInstance();
+        FloodgatePlayer player = api.getPlayer(id);
+        return player.getLinkedPlayer() != null;
     }
 }

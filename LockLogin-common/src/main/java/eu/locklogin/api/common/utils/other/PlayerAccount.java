@@ -14,13 +14,12 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.common.console.Console;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -40,7 +38,6 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
@@ -65,7 +62,7 @@ public final class PlayerAccount extends AccountManager {
     private final KarmaMain manager;
 
     static {
-        Path backup = source.getDataPath().resolve("data").resolve("accounts_backup");
+        /*Path backup = source.getDataPath().resolve("data").resolve("accounts_backup");
         Path original = source.getDataPath().resolve("data").resolve("accounts");
 
         if (Files.exists(original) && !Files.exists(backup)) {
@@ -91,7 +88,7 @@ public final class PlayerAccount extends AccountManager {
 
             ASCIIArtGenerator generator = new ASCIIArtGenerator();
             if (success) {
-                generator.print("&eu.c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+                generator.print("&c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
 
                 source.console().send("-------------------------------------------");
                 source.console().send("");
@@ -106,7 +103,7 @@ public final class PlayerAccount extends AccountManager {
                 source.console().send("");
                 source.console().send("-------------------------------------------");
             } else {
-                generator.print("&eu.c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
+                generator.print("&c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
 
                 source.console().send("-------------------------------------------");
                 source.console().send("");
@@ -124,11 +121,6 @@ public final class PlayerAccount extends AccountManager {
                 source.console().send("");
                 source.console().send("Exiting server as backup couldn't be done", Level.GRAVE);
 
-                //System.exit(1); Exiting server is too much
-                /*
-                Instead we will set the plugin as disabled. We can do this in BungeeCord and
-                Spigot, but I have no idea on how to do it in Velocity so...
-                 */
                 try {
                     Method unload;
                     if (CurrentPlatform.getPlatform().equals(Platform.BUKKIT)) {
@@ -144,7 +136,7 @@ public final class PlayerAccount extends AccountManager {
                     ex.printStackTrace();
                 }
             }
-        }
+        }*/
     }
 
     /**
@@ -178,7 +170,7 @@ public final class PlayerAccount extends AccountManager {
                         throw new IllegalArgumentException("Cannot initialize player file instance for unknown account constructor type: " + parameter.getLocalName());
                 }
 
-                manager = new KarmaMain(source, randomId.getAccountFile())
+                manager = new KarmaMain(randomId.getAccountFile())
                         .internal(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
 
                 try {
@@ -266,7 +258,7 @@ public final class PlayerAccount extends AccountManager {
 
     @Override
     public void saveUUID(final @NotNull AccountID id) {
-        manager.set("uuid", new KarmaObject(id.getId()));
+        manager.setRaw("uuid", id.getId());
         manager.save();
     }
 
@@ -277,7 +269,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void set2FA(final boolean status) {
-        manager.set("2fa", new KarmaObject(status));
+        manager.setRaw("2fa", status);
         manager.save();
     }
 
@@ -289,12 +281,12 @@ public final class PlayerAccount extends AccountManager {
     @Override
     protected void importFrom(final @NotNull AccountManager account) {
         if (exists()) {
-            manager.set("player", new KarmaObject(account.getName()));
-            manager.set("uuid", new KarmaObject(account.getUUID().getId()));
-            manager.set("password", new KarmaObject(account.getPassword()));
-            manager.set("token", new KarmaObject(account.getGAuth()));
-            manager.set("pin", new KarmaObject(account.getPin()));
-            manager.set("2fa", new KarmaObject(account.has2FA()));
+            manager.setRaw("player", account.getName());
+            manager.setRaw("uuid", account.getUUID().getId());
+            manager.setRaw("password",account.getPassword());
+            manager.setRaw("token", account.getGAuth());
+            manager.setRaw("pin", account.getPin());
+            manager.setRaw("2fa", account.has2FA());
 
             manager.save();
         }
@@ -308,8 +300,13 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public @NotNull String getName() {
         if (manager.isSet("player")) {
-            KarmaElement element = manager.get("player");
-            return element.getObjet().getString();
+            Element<?> element = manager.get("player");
+            if (element.isPrimitive()) {
+                ElementPrimitive primitive = element.getAsPrimitive();
+                if (primitive.isString()) {
+                    return primitive.asString();
+                }
+            }
         }
 
         return "";
@@ -322,7 +319,7 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setName(final @NotNull String name) {
-        manager.set("player", new KarmaObject(name));
+        manager.setRaw("player", name);
         manager.save();
     }
 
@@ -334,37 +331,41 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public @NotNull AccountID getUUID() {
         if (manager.isSet("uuid")) {
-            KarmaElement element = manager.get("uuid");
-            if (element.isString()) {
-                String id = element.getObjet().getString();
+            Element<?> element = manager.get("uuid");
+            if (element.isPrimitive()) {
+                ElementPrimitive primitive = element.getAsPrimitive();
 
-                if (StringUtils.isNullOrEmpty(id)) {
-                    String name = PathUtilities.getName(manager.getDocument(), false);
-                    String extension = FileUtilities.getExtension(name);
-                    UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
+                if (primitive.isString()) {
+                    String id = primitive.asString();
 
-                    String nick = UUIDUtil.fetchNick(fixed);
-                    if (nick != null && !nick.startsWith("Ratelimited")) {
-                        setName(nick);
+                    if (StringUtils.isNullOrEmpty(id)) {
+                        String name = PathUtilities.getName(manager.getDocument(), false);
+                        String extension = FileUtilities.getExtension(name);
+                        UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
 
-                        if (CurrentPlatform.isOnline()) {
-                            id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
-                        } else {
-                            id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
-                        }
+                        String nick = UUIDUtil.fetchNick(fixed);
+                        if (nick != null && !nick.startsWith("Ratelimited")) {
+                            setName(nick);
 
-                        manager.set("uuid", new KarmaObject(id));
-                        manager.save();
-                    } else {
-                        if (fixed != null) {
-                            manager.set("uuid", new KarmaObject(fixed.toString()));
-                            id = fixed.toString();
+                            if (CurrentPlatform.isOnline()) {
+                                id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
+                            } else {
+                                id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
+                            }
+
+                            manager.setRaw("uuid", id);
                             manager.save();
+                        } else {
+                            if (fixed != null) {
+                                manager.setRaw("uuid", fixed.toString());
+                                id = fixed.toString();
+                                manager.save();
+                            }
                         }
                     }
-                }
 
-                return AccountID.fromString(id);
+                    return AccountID.fromString(id);
+                }
             }
         }
 
@@ -379,8 +380,11 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public @NotNull String getPassword() {
         if (manager.isSet("password")) {
-            KarmaElement element = manager.get("password");
-            return element.getObjet().getString();
+            Element<?> element = manager.get("password");
+            if (element.isPrimitive()) {
+                ElementPrimitive primitive = element.getAsPrimitive();
+                if (primitive.isString()) return primitive.asString();
+            }
         }
 
         return "";
@@ -396,7 +400,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("password", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
+        manager.setRaw("password", util.hash(config.passwordEncryption(), config.encryptBase64()));
         manager.save();
     }
 
@@ -420,7 +424,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("password", new KarmaObject(util.hash(config.passwordEncryption(), config.encryptBase64())));
+        manager.setRaw("password", util.hash(config.passwordEncryption(), config.encryptBase64()));
         manager.save();
     }
 
@@ -432,8 +436,11 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public @NotNull String getGAuth() {
         if (manager.isSet("token")) {
-            KarmaElement element = manager.get("token");
-            return element.getObjet().getString();
+            Element<?> element = manager.get("token");
+            if (element.isPrimitive()) {
+                ElementPrimitive primitive = element.getAsPrimitive();
+                if (primitive.isString()) return primitive.asString();
+            }
         }
 
         return "";
@@ -447,7 +454,7 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public void setGAuth(final String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
-        manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
+        manager.setRaw("token", util.toBase64(CryptTarget.PASSWORD));
         manager.save();
     }
 
@@ -459,7 +466,7 @@ public final class PlayerAccount extends AccountManager {
     @Override
     public void setUnsafeGAuth(final @Nullable String token) {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
-        manager.set("token", new KarmaObject(util.toBase64(CryptTarget.PASSWORD)));
+        manager.setRaw("token", util.toBase64(CryptTarget.PASSWORD));
         manager.save();
     }
 
@@ -473,8 +480,11 @@ public final class PlayerAccount extends AccountManager {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             if (manager.isSet("pin")) {
-                KarmaElement element = manager.get("pin");
-                return element.getObjet().getString();
+                Element<?> element = manager.get("pin");
+                if (element.isPrimitive()) {
+                    ElementPrimitive primitive = element.getAsPrimitive();
+                    if (primitive.isString()) return primitive.asString();
+                }
             }
         }
 
@@ -491,7 +501,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("pin", new KarmaObject(util.hash(config.pinEncryption(), config.encryptBase64())));
+        manager.setRaw("pin", util.hash(config.pinEncryption(), config.encryptBase64()));
         manager.save();
     }
 
@@ -505,7 +515,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         HashType hash = HashType.pickRandom();
 
-        manager.set("panic", new KarmaObject(util.hash(hash, true)));
+        manager.setRaw("panic", util.hash(hash, true));
         manager.save();
     }
 
@@ -519,8 +529,11 @@ public final class PlayerAccount extends AccountManager {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             if (manager.isSet("panic")) {
-                KarmaElement element = manager.get("panic");
-                return element.getObjet().getString();
+                Element<?> element = manager.get("panic");
+                if (element.isPrimitive()) {
+                    ElementPrimitive primitive = element.getAsPrimitive();
+                    if (primitive.isString()) return primitive.asString();
+                }
             }
         }
 
@@ -537,10 +550,10 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory factory = CryptoFactory.getBuilder().withToken(token).withPassword(token).unsafe();
         HashType detected = factory.getTokenHash();
         if (detected.equals(HashType.NONE) || detected.equals(HashType.UNKNOWN)) {
-            manager.set("panic", new KarmaObject(factory.hash(HashType.pickRandom(), true)));
+            manager.setRaw("panic", factory.hash(HashType.pickRandom(), true));
             manager.save();
         } else {
-            manager.set("panic", new KarmaObject(token));
+            manager.setRaw("panic", token);
             manager.save();
         }
     }
@@ -565,7 +578,7 @@ public final class PlayerAccount extends AccountManager {
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        manager.set("pin", new KarmaObject(util.hash(config.pinEncryption(), config.encryptBase64())));
+        manager.setRaw("pin", util.hash(config.pinEncryption(), config.encryptBase64()));
         manager.save();
     }
 
@@ -579,8 +592,11 @@ public final class PlayerAccount extends AccountManager {
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enable2FA()) {
             if (manager.isSet("2fa")) {
-                KarmaElement element = manager.get("2fa");
-                return element.getObjet().getBoolean();
+                Element<?> element = manager.get("2fa");
+                if (element.isPrimitive()) {
+                    ElementPrimitive primitive = element.getAsPrimitive();
+                    if (primitive.isBoolean()) return primitive.asBoolean();
+                }
             }
         }
 
@@ -621,8 +637,7 @@ public final class PlayerAccount extends AccountManager {
 
                     AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
                     AccountID uuid = manager.getUUID();
-                    String name = manager.getName();
-                    if (!uuid.getId().replaceAll("\\s", "").isEmpty() && !name.replaceAll("\\s", "").isEmpty())
+                    if (!StringUtils.isNullOrEmpty(uuid.getId()))
                         managers.add(manager);
                 });
             } catch (Throwable ex) {

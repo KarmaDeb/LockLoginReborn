@@ -5,9 +5,9 @@ import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public final class ScratchCodes {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         for (int code : scratch_codes) {
             CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).build();
-            codes.add(new KarmaObject(util.hash(config.pinEncryption(), false)));
+            codes.add(util.hash(config.pinEncryption(), false));
         }
 
         codesFile.set("codes", codes);
@@ -53,19 +53,21 @@ public final class ScratchCodes {
     public boolean validate(final int code) {
         boolean status = false;
 
-        KarmaElement codes = codesFile.get("codes");
-        KarmaElement remove = null;
+        Element<?> codes = codesFile.get("codes");
+        ElementPrimitive remove = null;
         KarmaArray stored = new KarmaArray();
         if (codes != null && codes.isArray()) {
-            stored = codes.getArray();
+            stored = (KarmaArray) codes.getAsArray();
 
-            for (KarmaElement token : stored) {
-                CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token.getObjet().getString()).build();
-                if (util.validate(Validation.ALL)) {
-                    remove = token;
-                    status = true;
+            for (ElementPrimitive token : stored) {
+                if (token.isString()) {
+                    CryptoFactory util = CryptoFactory.getBuilder().withPassword(code).withToken(token.asString()).build();
+                    if (util.validate(Validation.ALL)) {
+                        remove = token;
+                        status = true;
 
-                    break;
+                        break;
+                    }
                 }
             }
         }
@@ -84,9 +86,9 @@ public final class ScratchCodes {
      * @return if the client needs new scratch codes
      */
     public boolean needsNew() {
-        KarmaElement codes = codesFile.get("codes");
+        Element<?> codes = codesFile.get("codes");
         if (codes.isArray()) {
-            return codes.getArray().size() <= 0;
+            return codes.getAsArray().getSize() <= 0;
         }
 
         return true;

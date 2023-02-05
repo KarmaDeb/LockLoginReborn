@@ -1,6 +1,6 @@
 ###########################################################
 #                                                         #
-#   LockLogin source is a plugin under GSA GPL license    #
+#   LockLogin source is a plugin under RedDo GPL license  #
 #             https://karmadev.es/license                 #
 #                                                         #
 #                                                         #
@@ -13,6 +13,10 @@
 #and some plugin messages
 ServerName: ""
 
+#Allow bedrock players to bypass login if
+#they already have an account on LockLogin
+BedrockLogin: false
+
 #This will share statistics with LockLogin web services, the statistics we
 #recopilate are:
 ######################
@@ -22,18 +26,30 @@ ServerName: ""
 # - Amount of registered accounts
 # - Amount of active players
 # - Fidelity (time the plugin has been used in this server)
-# - Server name
 # - Server address
 #
 #Any of this data will be public, except:
 # - Amount of registered accounts
 # - Amount of active players
 #
-#
 # WARNING: plugin statistics won't work for now, so no data will be sent to LockLogin servers
 Statistics:
   bStats: true
   plugin: true
+
+#Account backups configuration
+#
+# NOTE: THIS OPTIONS DON'T WORK CURRENTLY
+#
+# Backup.Enable -> Enable periodical backups (A backup is always performed on server startup and server stop)
+# Backup.Max -> The maximum amount of backups. If max limit reached, the oldest backup will be removed (Leeave to 0 to disable)
+# Backup.Period -> The period to store player accounts (in hours)
+# Backup.PurgeAfter -> The time to purge old backups (in hours). Leave to 0 to disable
+Backup:
+  Enable: true
+  Max: 5
+  Period: 1
+  PurgeAfter: 6
 
 #NOT IMPLEMENTED YET
 #
@@ -62,6 +78,11 @@ BungeeMotd: true
 #make sure the communication gets at least
 #encrypted
 PanelKey: ""
+
+#The communication key, leave empty to disable (not recommended)
+#
+#THIS SHOULD BE THE SAME IN ALL THE NETWORK
+BungeeKey: ""
 
 #Registration options
 # Boss -> Shows a boss bar which health and color
@@ -122,9 +143,6 @@ Login:
 #
 #   The maximum amount of a session life
 #   time is 30 minutes
-#This requires the player to have a
-#valid LockLogin pin configured, otherwise
-#it won't work
 Sessions:
   MultiSession: false
   Enabled: false
@@ -201,15 +219,58 @@ Encryption:
   Encrypt: true
   VirtualID: false
 
-#Block login/register attempt when the
-#client has an insecure password, while
-#login process, the player account will be
-#unregistered ( only password ).
+#Permissions configuration
 #
-#While this in false, only a warning will be
-#set to the client telling him his password
-#is not safe
-BlockUnsafePasswords: true
+# BlockOperator: If true, and a player had operator. The plugin will remove from him even after a successful login
+# RemoveEverything: If true, all the permissions from player will be taken, unless he is successful login
+# AllowWildcard: If false, and a player had the permission '*'. The plugin will remove from him even after a successful login
+#
+# Why you shouldn't allow OP?
+#   OP is literally pointless when having a permission plugin, unless required, OP shouldn't be granted to
+#   anyone, including server owners. If required, the correct would be grant op, do the needed tasks, and
+#   remove op.
+#
+# Why you shouldn't allow '*' wildcard?
+#   There's no problem when used in a plugin permission (example: locklogin.*), the problem is when you use it as a
+#   single permission. It grants you all the permissions (including op). Meaning you can do whatever you want. The
+#   correct permission policy would be that one that only allows permission managing from console, and only the
+#   required permission should be granted to staff members (ban, kick, warn...). WorldEdit or massive world editor
+#   plugin permissions should aso be separated in another world/server
+Permissions:
+  BlockOperator: true
+  RemoveEverything: true
+  AllowWildcard: false
+
+#Password configuration
+#
+# PrintSuccess: When warn unsafe is enabled, print success checks in green to the player
+# BlockUnsafe: Block unsafe passwords
+# WarnUnsafe: If true, all staff members with the permission
+#             locklogin.unsafe.warning will receive a message about the player used an unsafe password.
+#             If a discord webhook is also configured, a discord message will be also sent (A warning will
+#             be sent to staff only if BlockUnsafe is disabled)
+#
+# Safety: Password general safety setting (Leave everything to 0 to disable)
+#   MinLength: The password minimum length, will be override if other password policy characters are more than
+#              the min length. For example, setting min lower letters to 10, and having min length to 6, will
+#              make min length be 10
+#
+#   Characters: The minimum amount of special characters needed in the password (Leave to 0 to disable)
+#   Numbers: The minimum amount of numbers needed in the password (Leave to 0 to disable)
+#   Letters: The minimum amount of letters
+#     Upper: The minimum amount of upper case letters needed in the password (Leave to 0 to disable)
+#     Lower: The minimum amount of lower case letters needed in the password (Leave to 0 to disable)
+Password:
+  PrintSuccess: true
+  BlockUnsafe: true
+  WarnUnsafe: true
+  Safety:
+    MinLength: 10
+    Characters: 1
+    Numbers: 2
+    Letters:
+      Upper: 2
+      Lower: 5
 
 #BurteForce options
 # Tries -> The maximum amount of tries
@@ -250,7 +311,7 @@ Pin: true
 # Channel -> Update system channel;
 #            Available channels:
 #            - RELEASE
-#            - RC | RELEASECANDIDATE | RELEASE_CANDIDATE
+#            - RC
 #            - SNAPSHOT
 #
 # Check -> Enable the update checker
@@ -262,7 +323,7 @@ Pin: true
 #              update check, the minimum is 5 and
 #              the maximum is 86400 (1 day)
 Updater:
-  Channel: "RELEASE"
+  Channel: "${project.buildType}"
   Check: true
   CheckTime: 10
 

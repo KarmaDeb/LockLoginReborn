@@ -132,7 +132,7 @@ public final class Name {
                 value = "commas";
             }
 
-            builder.append("&eu.c").append(value).append("&7, ");
+            builder.append("&c").append(value).append("&7, ");
         }
 
         return StringUtils.replaceLast(builder.toString(), "&7, ", "");

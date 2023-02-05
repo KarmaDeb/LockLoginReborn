@@ -258,4 +258,8 @@ public final class PluginPermissions {
 
         return permission;
     }
+
+    public static PermissionObject warn_unsafe() {
+        return new AdvancedPermission("locklogin.unsafe.warning", PermissionDefault.OP, false);
+    }
 }

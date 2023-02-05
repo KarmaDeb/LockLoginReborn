@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.39</version>
+        <version>1.13.45</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -33,12 +33,20 @@
                                 </relocation>
                                 <!-- https://github.com/games647/CraftAPI -->
                                 <relocation>
-                                    <pattern>com.github.games647.craftapi</pattern>
-                                    <shadedPattern>ml.karmaconfigs.games647.craftapi</shadedPattern>
+                                    <pattern>io.socket</pattern>
+                                    <shadedPattern>eu.locklogin.plugin.shaded.io.socket</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>io.socket</pattern>
-                                    <shadedPattern>ml.karmaconfigs.io.socket</shadedPattern>
+                                    <pattern>okhttp3</pattern>
+                                    <shadedPattern>eu.locklogin.plugin.shaded.io.okhttp3</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>okio</pattern>
+                                    <shadedPattern>eu.locklogin.plugin.shaded.io.okio</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.json</pattern>
+                                    <shadedPattern>eu.locklogin.plugin.shaded.org.json</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>

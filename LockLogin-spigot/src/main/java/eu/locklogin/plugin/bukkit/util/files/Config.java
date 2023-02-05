@@ -130,6 +130,16 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if bedrock players login automatically
+     *
+     * @return if bedrock players log in automatically
+     */
+    @Override
+    public boolean bedrockLogin() {
+        return cfg.getBoolean("BedrockLogin", false);
+    }
+
+    /**
      * Get if the plugin share statistics with bStats
      *
      * @return if the plugin will share his statistics
@@ -169,6 +179,16 @@ public final class Config extends PluginConfiguration {
     @Override
     public String serverKey() {
         return cfg.getString("ServerKey", "");
+    }
+
+    /**
+     * Get the communication key
+     *
+     * @return the communication key
+     */
+    @Override
+    public String comKey() {
+        return cfg.getString("BungeeKey", "");
     }
 
     @Override
@@ -344,16 +364,36 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
-     * Get if the plugin should block the player
-     * login/register when he has an invalid password.
-     * <p>
-     * Forcing him to change it until it's safe
+     * Get the permission configuration
      *
-     * @return if the plugin should block unsafe passwords
+     * @return the permission configuration
      */
     @Override
-    public boolean blockUnsafePasswords() {
-        return cfg.getBoolean("BlockUnsafePasswords", true);
+    public PermissionConfig permissionConfig() {
+        return new PermissionConfig(
+                cfg.getBoolean("Permission.BlockOperator", true),
+                cfg.getBoolean("Permission.RemoveEverything", true),
+                cfg.getBoolean("Permission.AllowWildcard", false)
+        );
+    }
+
+    /**
+     * Get the password configuration
+     *
+     * @return the password configuration
+     */
+    @Override
+    public PasswordConfig passwordConfig() {
+        return new PasswordConfig(
+                cfg.getBoolean("Password.PrintSuccess", true),
+                cfg.getBoolean("Password.BlockUnsafe", true),
+                cfg.getBoolean("Password.WarnUnsafe", true),
+                cfg.getInt("Password.Safety.MinLength", 10),
+                cfg.getInt("Password.Safety.Characters", 1),
+                cfg.getInt("Password.Safety.Numbers", 2),
+                cfg.getInt("Password.Safety.Letters.Upper", 2),
+                cfg.getInt("Password.Safety.Letters.Lower", 5)
+        );
     }
 
     @Override

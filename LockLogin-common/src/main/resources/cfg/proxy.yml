@@ -31,19 +31,6 @@ ProxyKey: ""
 #IF ENABLED
 ID: ""
 
-#Karma remote messaging protocol info.
-#The address is the IP address in where this
-#server remote messaging will be hosted, and the port
-#is the port that will listen for new connections.
-#
-#By default, there are no extra steps while all servers are running locally
-#but if your bungee server is out of your network, for example, in another VPS
-#which is not the same as your spigot servers, then you should CHANGE and
-#OPEN the port for TCP, and also change the Address to the local IPv4 address
-Channel:
-  Address: "127.0.0.1"
-  Port: 49305
-
 #Manage which servers will use LockLogin
 # This works like server-priority of bungee's configuration,
 # the plugin will try with the first, if fail with the second

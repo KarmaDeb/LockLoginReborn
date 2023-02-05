@@ -21,4 +21,11 @@ public abstract class Packet {
      * @return the packet data
      */
     public abstract byte[] packetData();
+
+    /**
+     * Get the packet raw data
+     *
+     * @return the packet raw data
+     */
+    public abstract String raw();
 }

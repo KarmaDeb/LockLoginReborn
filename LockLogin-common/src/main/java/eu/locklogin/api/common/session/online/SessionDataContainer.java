@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.session;
+package eu.locklogin.api.common.session.online;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -51,7 +51,7 @@ public final class SessionDataContainer {
      */
     public static void setLogged(final int amount) {
         int before = logged;
-        logged = amount;
+        logged = Math.max(0, amount);
 
         if (onDataChange != null) {
             SessionChangeData.DataChange change = SessionChangeData.DataChange.SAME;
@@ -83,7 +83,7 @@ public final class SessionDataContainer {
      */
     public static void setRegistered(final int amount) {
         int before = registered;
-        registered = amount;
+        registered = Math.max(0, amount);;
 
         if (onDataChange != null) {
             SessionChangeData.DataChange change = SessionChangeData.DataChange.SAME;

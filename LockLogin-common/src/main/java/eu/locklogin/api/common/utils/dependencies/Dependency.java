@@ -38,10 +38,6 @@ public enum Dependency {
      */
     GUAVA,
     /**
-     * LockLogin dependency
-     */
-    REMOTE,
-    /**
      * LockLogin 1.7.10 dependency
      */
     APACHE_COMMONS,
@@ -67,8 +63,6 @@ public enum Dependency {
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Log4jWeb.jar"), true);
             case GUAVA:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Guava.jar"), true);
-            case REMOTE:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "RemoteMessaging.jar"), true);
             case APACHE_COMMONS:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "ApacheCommons.jar"), true);
             /*case SOCKET_IO:
@@ -89,8 +83,6 @@ public enum Dependency {
                 return "Log4j Web";
             case GUAVA:
                 return "Google Guava";
-            case REMOTE:
-                return "Remote Messaging";
             case APACHE_COMMONS:
                 return "Apache Commons";
             /*case SOCKET_IO:

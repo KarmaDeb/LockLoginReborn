@@ -19,6 +19,7 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -29,6 +30,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -125,10 +127,10 @@ public final class PanicCommand extends Command {
                                         String password = TokenGenerator.generateLiteral(32);
 
                                         user.send(messages.panicRequested());
-                                        TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
-                                        component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
-                                        user.send(component);
+                                        ComponentFactory cf = new ComponentFactory(StringUtils.toColor("&7Panic token: &e" + password))
+                                                .hover(StringUtils.toColor("&bClick to copy"))
+                                                .click(ClickEvent.Action.SUGGEST_COMMAND, password);
+                                        user.send(cf.get());
 
                                         manager.setPanic(password);
 
@@ -136,18 +138,14 @@ public final class PanicCommand extends Command {
 
                                         user.restorePotionEffects();
 
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId())
-                                                        .getInstance().build());
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
+                                                .getInstance(), BungeeSender.serverFromPlayer(player));
 
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId())
-                                                        .addProperty("pin", false).getInstance().build());
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                .addProperty("pin", false).getInstance(), BungeeSender.serverFromPlayer(player));
 
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                .getInstance(), BungeeSender.serverFromPlayer(player));
 
                                         UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
                                                 UserAuthenticateEvent.Result.SUCCESS,

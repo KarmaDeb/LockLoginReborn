@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.ScratchCodes;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
@@ -28,6 +29,7 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
+import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -39,7 +41,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URL;
 import java.util.List;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
@@ -57,11 +61,11 @@ public final class GoogleAuthCommand implements CommandExecutor {
      * @param sender  Source of the command
      * @param command Command which was executed
      * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
+     * @param tmpArgs    Passed command arguments
      * @return true if a valid command, otherwise false
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
@@ -72,6 +76,32 @@ public final class GoogleAuthCommand implements CommandExecutor {
             ClientSession session = user.getSession();
             AccountManager manager = user.getManager();
             if (session.isValid()) {
+                boolean validated = false;
+
+                String[] args = new String[0];
+                if (tmpArgs.length >= 1) {
+                    String last_arg = tmpArgs[tmpArgs.length - 1];
+                    try {
+                        UUID command_id = UUID.fromString(last_arg);
+                        args = CommandProxy.getArguments(command_id);
+                        validated = true;
+                    } catch (Throwable ignored) {}
+                }
+
+                if (!validated) {
+                    if (!session.isLogged()) {
+                        user.send(messages.prefix() + messages.register());
+                    } else {
+                        if (session.isTempLogged()) {
+                            user.send(messages.prefix() + messages.gAuthenticate());
+                        } else {
+                            user.send(messages.prefix() + messages.alreadyRegistered());
+                        }
+                    }
+
+                    return false;
+                }
+
                 if (config.enable2FA()) {
                     if (args.length == 0) {
                         user.send(messages.prefix() + messages.gAuthUsages());
@@ -99,27 +129,24 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                                     if (name.replaceAll("\\s", "").isEmpty())
                                                         name = "LockLogin";
 
-                                                    String token_url = StringUtils.formatString("https://karmaconfigs.ml/locklogin/qr/?{0}%20{1}?{2}",
+                                                    String[] tries = new String[]{
+                                                            "https://karmaconfigs.ml/",
+                                                            "https://karmadev.es/",
+                                                            "https://karmarepo.ml/",
+                                                            "https://backup.karmaconfigs.ml/",
+                                                            "https://backup.karmadev.es/",
+                                                            "https://backup.karmarepo.ml/"
+                                                    };
+                                                    URL working = URLUtils.getOrBackup(tries);
+
+                                                    String token_url = StringUtils.formatString(working + "locklogin/qr/?{0}%20{1}?{2}",
                                                             /*{9}*/StringUtils.stripColor(player.getDisplayName()),
                                                             /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
                                                             /*{2}*/token);
-                                                    if (!URLUtils.exists(token_url)) {
-                                                        token_url = StringUtils.formatString("https://karmarepo.ml/locklogin/qr/?{0}%20{1}?{2}",
-                                                                /*{9}*/StringUtils.stripColor(player.getDisplayName()),
-                                                                /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
-                                                                /*{2}*/token);
-
-                                                        if (!URLUtils.exists(token_url)) {
-                                                            token_url = StringUtils.formatString("https://karmadev.es/locklogin/qr/?{0}%20{1}?{2}",
-                                                                    /*{9}*/StringUtils.stripColor(player.getDisplayName()),
-                                                                    /*{1}*/StringUtils.formatString("({0})", name.replaceAll("\\s", "%20")),
-                                                                    /*{2}*/token);
-                                                        }
-                                                    }
 
                                                     ComponentFactory c_factory = new ComponentFactory(messages.gAuthLink())
                                                             .hover(properties.getProperty("command_gauth_hover", "&eClick here to scan the QR code!"))
-                                                            .click(ClickEvent.Action.OPEN_URL, token_url);
+                                                            .click(ClickEvent.Action.OPEN_URL, token_url.replaceAll("\\s", "%20"));
                                                     user.send(c_factory.get());
 
                                                     List<Integer> scratch_codes = factory.getRecoveryCodes();
@@ -221,6 +248,8 @@ public final class GoogleAuthCommand implements CommandExecutor {
 
                                                     codes.store(newCodes);
                                                 }
+
+                                                TransientMap.apply(player);
                                             } else {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2,
                                                         UserAuthenticateEvent.Result.FAILED,

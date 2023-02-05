@@ -21,11 +21,12 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.MigrationManager;
 import eu.locklogin.api.common.JarManager;
+import eu.locklogin.api.common.security.BackupTask;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.common.session.SessionDataContainer;
-import eu.locklogin.api.common.session.SessionKeeper;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
+import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
@@ -53,6 +54,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.Main;
@@ -72,10 +74,11 @@ import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import eu.locklogin.plugin.bungee.util.player.User;
+import io.socket.client.Ack;
 import io.socket.client.Socket;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaMap;
 import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -102,12 +105,14 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -122,6 +127,17 @@ public final class Manager {
     private static int alert_id = 0;
 
     private static boolean initialized = false;
+
+    public static BiFunction<DataMessage, ServerInfo, Void> sendFunction;
+    public static BiFunction<DataMessage, ServerInfo, Void> sendTopFunction;
+    public static BiFunction<DataMessage, ServerInfo, Void> sendSecondaryFunction;
+    public static BiFunction<DataMessage, ServerInfo, Void> sendSecondaryTopFunction;
+    public static Function<String, Void> unlockFunction;
+
+    public static BiFunction<String, String, Void> mapFunction;
+    public static Function<String, Void> unlockSecondaryFunction;
+
+    private static Function<Void, Void> end;
 
     public static void initialize() {
         int size = 10;
@@ -164,51 +180,15 @@ public final class Manager {
 
         loadCache();
 
+        BackupTask.performBackup();
+        SourceScheduler backup_scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.HOUR, true);
+        backup_scheduler.restartAction(BackupTask::performBackup);
+
         plugin.getProxy().registerChannel(Channel.ACCOUNT.getName());
         plugin.getProxy().registerChannel(Channel.PLUGIN.getName());
         plugin.getProxy().registerChannel(Channel.ACCESS.getName());
 
-        AccountManager acc_manager = CurrentPlatform.getAccountManager(eu.locklogin.api.util.enums.Manager.CUSTOM, null);
-        if (acc_manager != null) {
-            Set<AccountManager> accounts = acc_manager.getAccounts();
-            Set<AccountManager> nonLocked = new HashSet<>();
-            for (AccountManager account : accounts) {
-                LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.isLocked())
-                    nonLocked.add(account);
-            }
-
-            SessionDataContainer.setRegistered(nonLocked.size());
-
-            SessionDataContainer.onDataChange(data -> {
-                try {
-                    Collection<ServerInfo> servers = plugin.getProxy().getServers().values();
-
-                    switch (data.getDataType()) {
-                        case LOGIN:
-                            for (ServerInfo server : servers) {
-                                BungeeSender.sender.queue(server.getName())
-                                        .insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN)
-                                                .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
-                            }
-                            break;
-                        case REGISTER:
-                            for (ServerInfo server : servers) {
-                                BungeeSender.sender.queue(server.getName())
-                                        .insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN)
-                                                .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (Throwable ignored) {
-                }
-            });
-        }
-
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
         if (config.useVirtualID()) {
             CryptoFactory.loadVirtualID();
@@ -222,7 +202,6 @@ public final class Manager {
         }
 
         scheduleAlertSystem();
-        initPlayers();
 
         registerMetrics();
 
@@ -238,62 +217,113 @@ public final class Manager {
                     notification.checkAlerts().whenComplete(() -> console.send(notification.getStartup()));
                 }).start();
 
-        String[] tries = new String[]{
-                "https://backup.karmadev.es/locklogin/com/",
-                "https://backup.karmaconfigs.ml/locklogin/com/",
-                "https://backup.karmarepo.ml/locklogin/com/",
-                "https://karmadev.es/locklogin/com/",
-                "https://karmaconfigs.ml/com/",
-                "https://karmarepo.ml/com/"
-        };
-
-        console.send("Generating communication key, please wait...", Level.INFO);
-        String token = TokenGenerator.generateLiteral(64);
-        URL working = URLUtils.getOrBackup(tries);
-        HttpUtil utilities = URLUtils.extraUtils(working);
-        if (utilities != null) {
-            String resul = utilities.getResponse();
-
-            Gson gson = new GsonBuilder().create();
-            JsonObject element = gson.fromJson(resul, JsonObject.class);
-            try {
-                boolean success = element.getAsJsonPrimitive("success").getAsBoolean();
-                if (success) {
-                    console.send("Loaded communication key from server", Level.INFO);
-                    token = element.getAsJsonPrimitive("message").getAsString();
-                } else {
-                    console.send("Failed to generate communication key ({0}), a temporal one will be used", Level.WARNING, element.getAsJsonPrimitive("message").getAsString());
-                }
-            } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
-                logger.scheduleLog(Level.INFO, "Failed to generate communication key");
-                console.send("Failed to generate communication key (error), a temporal one will be used", Level.WARNING);
-            }
-        } else {
-            console.send("Failed to generate communication key, a temporal one will be used", Level.WARNING);
-        }
-
-        try {
-            Class<?> clazz = BungeeDataSender.class;
-            Field com = clazz.getDeclaredField("com");
-            Field sec = clazz.getDeclaredField("secret");
-            com.setAccessible(true);
-            sec.setAccessible(true);
-            com.set(BungeeDataSender.class, token);
-            sec.set(BungeeDataSender.class, proxy.getProxyID().toString());
-            com.setAccessible(false);
-            sec.setAccessible(false);
-
-            console.send("Successfully defined communication key", Level.INFO);
-        } catch (Throwable ignored) {}
-
         console.send("Connecting to LockLogin web services (statistics and spigot communication)", Level.INFO);
         SocketClient socket = new LockLoginSocket();
         ProxyDataSender pds = new ProxyDataSender(socket);
         ConnectionManager c_Manager = new ConnectionManager(socket, pds);
 
+        BungeeSender sender = new BungeeSender();
+
+        sendFunction = (dataMessage, serverInfo) -> {
+            if (BungeeSender.isForceBungee(serverInfo)) {
+                if (sender.secondarySender != null) {
+                    sender.secondarySender.queue(serverInfo.getName()).insert(dataMessage.build());
+                }
+            } else {
+                if (sender.sender != null) {
+                    sender.sender.queue(serverInfo.getName()).insert(dataMessage.build());
+                }
+            }
+            return null;
+        };
+        sendTopFunction = (dataMessage, serverInfo) -> {
+            if (BungeeSender.isForceBungee(serverInfo)) {
+                if (sender.secondarySender != null) {
+                    sender.secondarySender.queue(serverInfo.getName()).insert(dataMessage.build(), true);
+                }
+            } else {
+                if (sender.sender != null) {
+                    sender.sender.queue(serverInfo.getName()).insert(dataMessage.build(), true);
+                }
+            }
+            return null;
+        };
+
+        sendSecondaryFunction = (dataMessage, serverInfo) -> {
+            if (sender.secondarySender != null) {
+                sender.secondarySender.queue(serverInfo.getName()).insert(dataMessage.build());
+            }
+            return null;
+        };
+        sendSecondaryTopFunction = (dataMessage, serverInfo) -> {
+            if (sender.secondarySender != null) {
+                sender.secondarySender.queue(serverInfo.getName()).insert(dataMessage.build(), true);
+            }
+            return null;
+        };
+
+        unlockFunction = (server) -> {
+            ServerInfo info = plugin.getProxy().getServerInfo(server);
+
+            if (BungeeSender.isForceBungee(info)) {
+                if (sender.secondarySender != null) {
+                    sender.secondarySender.queue(server).unlock();
+                }
+            } else {
+                if (sender.sender != null) {
+                    sender.sender.queue(server).unlock();
+                }
+            }
+            return null;
+        };
+        unlockSecondaryFunction = (server) -> {
+            if (sender.secondarySender != null) {
+                sender.secondarySender.queue(server).unlock();
+            }
+            return null;
+        };
+
+        mapFunction = (server, id) -> {
+            if (sender.sender instanceof ProxyDataSender) {
+                ((ProxyDataSender) sender.sender).server_maps.put(server, id);
+            }
+            if (sender.secondarySender instanceof ProxyDataSender) {
+                ((ProxyDataSender) sender.secondarySender).server_maps.put(server, id);
+            }
+            return null;
+        };
+
+        BungeeDataSender bs = new BungeeDataSender();
+        final Map<String, String> internalMap = new ConcurrentHashMap<>();
+
         //TODO: Launch web services communication project. For now this will never connect
-        c_Manager.connect(5).whenComplete((tries_amount) -> {
+        c_Manager.connect(5, (name, id, hash) -> {
+            ServerInfo server = plugin.getProxy().getServerInfo(name);
+            if (server != null) {
+                KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
+                if (!hash_store.exists())
+                    hash_store.create();
+
+                ServerDataStorage.setProxyRegistered(name);
+
+                pds.server_maps.put(name, id);
+                pds.queue(name).unlock();
+
+                InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
+
+                KarmaMap data = new KarmaMap();
+                data.put("name", name);
+                data.put("address", isa.getHostString());
+                data.put("port", isa.getPort());
+                //We store this information to detect changes when loading
+                hash_store.set(hash, data);
+                hash_store.save();
+
+                internalMap.put(name, hash);
+
+                console.send("Server {0} has been connected to the proxy", Level.INFO, name);
+            }
+        }, sender, bs).whenComplete((tries_amount) -> {
             if (tries_amount > 0) {
                 console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
             }
@@ -303,35 +333,103 @@ public final class Manager {
                     //TODO: Allow configure tries amount from config and read that value
                     console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
                 case -2:
-                    BungeeSender.sender = new BungeeDataSender();
-                    BungeeSender.useSocket = false;
+                    sender.sender = bs;
+                    sender.secondarySender = sender.sender; //For stability reasons, should never be null
+                    //BungeeSender.useSocket = false;
+
+                    initPlayers(sender);
                     break;
                 case 0:
                     console.send("Connected to LockLogin web services successfully", Level.INFO);
                 default:
-                    KarmaMain hashes = new KarmaMain(plugin, ".hashes");
+                    KarmaMain hashes = new KarmaMain(plugin, ".hashes", "cache");
                     if (hashes.exists()) {
                         for (String hash : hashes.getKeys()) {
-                            String server = hashes.get(hash).getObjet().getString();
+                            hash = hash.replace("main.", "");
+                            KarmaMap data = (KarmaMap) hashes.get(hash);
 
-                            Socket connection = socket.client();
-                            JsonObject data = new JsonObject();
-                            data.addProperty("server", server);
-                            data.addProperty("hash", hash);
+                            String name = data.get("name").asString();
+                            String address = data.get("address").asString();
+                            int port = data.get("port").asInteger();
 
-                            connection.emit(Channel.ACCESS.getName(), data); //We don't want ACK, as, if everything is OK, the onServerConnected trigger will be called
+                            ServerInfo info = plugin.getProxy().getServerInfo(name);
+                            if (info != null) {
+                                InetSocketAddress isa = (InetSocketAddress) info.getSocketAddress();
+
+                                if (isa.getHostString().equals(address) && isa.getPort() == port) {
+                                    Socket connection = socket.client();
+                                    JsonObject request = new JsonObject();
+
+                                    request.addProperty("hash", hash);
+                                    request.addProperty("name", name);
+                                    connection.emit("init_auth", request, (Ack) (response) -> {
+                                        try {
+                                            Gson gson = new GsonBuilder().create();
+                                            JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
+
+                                            if (r.get("success").getAsBoolean()) {
+                                                plugin.console().send("Trying to register {0}", Level.INFO, name);
+                                            } else {
+                                                String reason = r.get("message").getAsString();
+                                                plugin.console().send("Failed to register {0} ({1})", Level.GRAVE, name, reason);
+                                            }
+                                        } catch (Throwable ex) {
+                                            logger.scheduleLog(Level.GRAVE, ex);
+                                        }
+                                    });
+                                } else {
+                                    hashes.unset(hash); //Data changed, forget it
+                                }
+                            }
                         }
                     }
 
-                    BungeeSender.sender = pds;
+                    sender.sender = pds;
+                    sender.secondarySender = bs;
                     BungeeSender.useSocket = true;
 
-                    c_Manager.onServerConnected((name) -> {
+                    initPlayers(sender);
+
+                    c_Manager.onServerConnected((name, id, hash) -> {
                         ServerInfo server = plugin.getProxy().getServerInfo(name);
                         if (server != null) {
-                            BungeeSender.sender.queue(name).unlock();
+                            KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
+                            if (!hash_store.exists())
+                                hash_store.create();
+
                             ServerDataStorage.setProxyRegistered(name);
+
+                            pds.server_maps.put(name, id);
+                            pds.queue(name).unlock();
+
+                            InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
+
+                            KarmaMap data = new KarmaMap();
+                            data.put("name", name);
+                            data.put("address", isa.getHostString());
+                            data.put("port", isa.getPort());
+                            //We store this information to detect changes when loading
+                            hash_store.set(hash, data);
+                            hash_store.save();
+
+                            internalMap.put(name, hash);
+
                             console.send("Server {0} has been connected to the proxy", Level.INFO, name);
+                        }
+                    });
+                    c_Manager.onServerDisconnected((name, reason) -> {
+                        ServerInfo server = plugin.getProxy().getServerInfo(name);
+                        if (server != null) {
+                            ServerDataStorage.removeProxyRegistered(name);
+                            console.send("Server {0} has been disconnected ({1})", Level.INFO, name, reason);
+
+                            Socket connection = socket.client();
+
+                            JsonObject request = new JsonObject();
+                            request.addProperty("hash", internalMap.remove(name));
+                            request.addProperty("name", name);
+
+                            connection.emit("init_auth", request);
                         }
                     });
                     //TODO: Realize how I will make this work
@@ -376,22 +474,20 @@ public final class Manager {
                                             session.set2FALogged(false);
                                         } else {
                                             session.set2FALogged(true);
-                                            BungeeSender.sender.queue(server.getName())
-                                                    .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId()).getInstance().build());
+                                            sender.sender.queue(server.getName())
+                                                    .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                            .getInstance().build());
 
                                             user.checkServer(0);
                                         }
 
-                                        BungeeSender.sender.queue(server.getName())
-                                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId())
+                                        sender.sender.queue(server.getName())
+                                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
                                                         .addProperty("pin", false).getInstance().build());
                                     } else {
                                         if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                            BungeeSender.sender.queue(server.getName())
-                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId())
+                                            sender.sender.queue(server.getName())
+                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
                                                             .addProperty("pin", false).getInstance().build());
 
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
@@ -407,9 +503,9 @@ public final class Manager {
                                             } else {
                                                 session.set2FALogged(true);
 
-                                                BungeeSender.sender.queue(server.getName())
-                                                        .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                                .addProperty("player", player.getUniqueId()).getInstance().build());
+                                                sender.sender.queue(server.getName())
+                                                        .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                .getInstance().build());
 
                                                 user.checkServer(0);
                                             }
@@ -435,6 +531,8 @@ public final class Manager {
                         if (data.has("player")) {
                             UUID uuid = UUID.fromString(data.get("player").getAsString());
                             ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
+
+                            System.out.println("Validated player: " + player.getUniqueId());
 
                             if (player != null) {
                                 User user = new User(player);
@@ -462,6 +560,50 @@ public final class Manager {
 
             initialized = true;
         });
+
+        end = unused -> {
+            endPlayers(sender);
+            return null;
+        };
+
+        AccountManager acc_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
+        if (acc_manager != null) {
+            Set<AccountManager> accounts = acc_manager.getAccounts();
+            Set<AccountManager> nonLocked = new HashSet<>();
+            for (AccountManager account : accounts) {
+                LockedAccount locked = new LockedAccount(account.getUUID());
+                if (!locked.isLocked())
+                    nonLocked.add(account);
+            }
+
+            SessionDataContainer.setRegistered(nonLocked.size());
+
+            SessionDataContainer.onDataChange(data -> {
+                try {
+                    Collection<ServerInfo> servers = plugin.getProxy().getServers().values();
+
+                    switch (data.getDataType()) {
+                        case LOGIN:
+                            for (ServerInfo server : servers) {
+                                sender.sender.queue(server.getName())
+                                        .insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                                                .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
+                            }
+                            break;
+                        case REGISTER:
+                            for (ServerInfo server : servers) {
+                                sender.sender.queue(server.getName())
+                                        .insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                                                .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (Throwable ignored) {
+                }
+            });
+        }
 
         /*BungeeSender.sender = new BungeeDataSender();
         BungeeSender.useSocket = false;*/
@@ -499,7 +641,7 @@ public final class Manager {
         console.send(" ");
         console.send("&e-----------------------");
 
-        endPlayers();
+        end.apply(null);
     }
 
     /**
@@ -838,7 +980,7 @@ public final class Manager {
      * This is util after plugin updates or
      * plugin load using third-party loaders
      */
-    static void initPlayers() {
+    static void initPlayers(final BungeeSender sender) {
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             PluginMessages messages = CurrentPlatform.getMessages();
@@ -854,57 +996,27 @@ public final class Manager {
                         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                         if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                            eu.locklogin.api.common.communication.DataSender s = BungeeSender.sender;
                             if (BungeeSender.useSocket) {
-                                s = new BungeeDataSender();
-                            }
-
-                            /*if (ServerDataStorage.needsRegister(info.getName())) {
-                                s.queue(info.getName())
-                                        .insert(DataMessage.newInstance(DataType.KEY, Channel.ACCESS)
-                                                .addProperty("key", proxy.proxyKey())
-                                                .addProperty("server", info.getName())
-                                                .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
-
-                                            DataSender.send(info, DataSender.getBuilder(DataType.KEY, ACCESS_CHANNEL, player)
-                                                    .addProperty("key", proxy.proxyKey())
-                                                    .addProperty("server", info.getName())
-                                                    .build());
-                            }*/
-
-                            //Scheduled for removal
-                            if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                s.queue(info.getName())
-                                        .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS)
-                                                .addProperty("key", proxy.proxyKey())
-                                                .addProperty("server", info.getName())
-                                                .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
-
-                                            /*
-                                            DataSender.send(info, DataSender.getBuilder(DataType.REGISTER, ACCESS_CHANNEL, player)
-                                                    .addProperty("key", proxy.proxyKey())
-                                                    .addProperty("server", info.getName())
-                                                    //.addTextData(TokenGen.expiration("local_token").toString())
-                                                    .build());*/
+                                Manager.sendSecondaryTopFunction
+                                        .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                        .addProperty("key", proxy.proxyKey())
+                                                        .addProperty("server", info.getName())
+                                                        .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                                info);
+                            } else {
+                                Manager.sendTopFunction
+                                        .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                        .addProperty("key", proxy.proxyKey())
+                                                        .addProperty("server", info.getName())
+                                                        .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                                info);
                             }
                         }
-
-                        /*DataSender.send(player, DataSender.getBuilder(DataType.MESSAGES, PLUGIN_CHANNEL, player)
-                                .addProperty("key", proxy.proxyKey())
-                                .addProperty("server", info.getName())
-                                .addProperty("messages_yml", CurrentPlatform.getMessages().toString()).build());
-                        DataSender.send(player, DataSender.getBuilder(DataType.CONFIG, PLUGIN_CHANNEL, player)
-                                .addProperty("key", proxy.proxyKey())
-                                .addProperty("server", info.getName())
-                                .addProperty("config_yml", Config.manager.getConfiguration()).build());*/
                     }
 
                     CurrentPlatform.requestDataContainerUpdate();
 
-                    /*DataSender.MessageData validation = getBuilder(DataType.VALIDATION, DataSender.CHANNEL_PLAYER, player).build();
-                    DataSender.send(player, validation);*/
-                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
-                            .addProperty("player", player.getUniqueId())
+                    sender.sender.queue(BungeeSender.serverFromPlayer(player).getName()).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
                             .getInstance().build());
 
                     ProxyCheck proxy = new ProxyCheck(ip);
@@ -933,15 +1045,8 @@ public final class Manager {
                         tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
                     }
 
-                    /*MessageData join = DataSender.getBuilder(DataType.JOIN, CHANNEL_PLAYER, player)
-                            .addProperty("pass_login", session.isLogged())
-                            .addProperty("2fa_login", session.is2FALogged())
-                            .addProperty("pin_login", session.isPinLogged())
-                            .addProperty("registered", manager.isRegistered()).build();
-                    DataSender.send(player, join);*/
-                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(
-                            DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT)
-                                    .addProperty("player", player.getUniqueId())
+                    sender.sender.queue(BungeeSender.serverFromPlayer(player).getName()).insert(
+                            DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
                                     .addProperty("pass_login", session.isLogged())
                                     .addProperty("2fa_login", session.is2FALogged())
                                     .addProperty("pin_login", session.isPinLogged())
@@ -975,7 +1080,7 @@ public final class Manager {
      * This is util after plugin updates or
      * plugin unload using third-party loaders
      */
-    static void endPlayers() {
+    static void endPlayers(final BungeeSender sender) {
         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
             User user = new User(player);
 
@@ -988,9 +1093,8 @@ public final class Manager {
             session.setPinLogged(false);
             session.set2FALogged(false);
 
-            //DataSender.send(player, DataSender.getBuilder(DataType.QUIT, DataSender.CHANNEL_PLAYER, player).build());
-            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                    .insert(DataMessage.newInstance(DataType.QUIT, Channel.ACCOUNT).addProperty("player", player.getUniqueId())
+            sender.sender.queue(BungeeSender.serverFromPlayer(player).getName())
+                    .insert(DataMessage.newInstance(DataType.QUIT, Channel.ACCOUNT, player)
                             .getInstance().build());
 
             Event event = new UserUnHookEvent(user.getModule(), null);

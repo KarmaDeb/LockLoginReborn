@@ -18,7 +18,7 @@ import static io.socket.client.IO.Options;
 public class LockLoginSocket implements SocketClient {
 
     private final URI uri;
-    private final static int port = 8443;
+    private final static int port = 2053;
 
     private static Socket socket = null;
 
@@ -44,6 +44,7 @@ public class LockLoginSocket implements SocketClient {
         }
 
         uri = tmpUri;
+        //uri = URI.create("http://localhost:2053");
     }
 
     /**
@@ -63,11 +64,11 @@ public class LockLoginSocket implements SocketClient {
      */
     @Override
     public Socket client() {
-        if (socket == null || !socket.connected()) {
+        if (socket == null) {
             Options options = new Options();
-            options.secure = true;
+            options.secure = false;
             options.multiplex = false;
-            options.forceNew = true;
+            options.forceNew = false;
             options.transports = new String[]{Polling.NAME, WebSocket.NAME};
             options.upgrade = true;
             options.rememberUpgrade = true;
@@ -77,26 +78,6 @@ public class LockLoginSocket implements SocketClient {
             options.reconnectionDelayMax = 5;
             options.randomizationFactor = 0.5;
             options.auth = new ConcurrentHashMap<>();
-            options.auth.put("communication_preference", "");
-            //TODO: Expect this to be generated from LockLogin download server
-            /*for (Method m : SocketHelper.class.getDeclaredMethods()) {
-                try {
-                    Field f = m.getClass().getDeclaredFields()[0];
-                    f.setAccessible(true);
-                    options.auth.put((String) f.get(m), (String) m.invoke(null));
-                    f.set(m, StringUtils.generateString().create());
-                    f.setAccessible(false);
-                    m.setAccessible(false);
-
-                    //Fix method
-                    Field mods = m.getClass().getDeclaredField("modifiers");
-                    mods.setAccessible(true);
-                    mods.set(m, Modifier.NATIVE);
-                    mods.setAccessible(false);
-                } catch (Throwable ex) {
-                    ex.printStackTrace();
-                }
-            }*/
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .readTimeout(1, TimeUnit.MINUTES)

@@ -16,7 +16,7 @@ package eu.locklogin.plugin.bukkit.util;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.player.User;

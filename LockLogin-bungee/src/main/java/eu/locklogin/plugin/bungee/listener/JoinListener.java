@@ -17,7 +17,6 @@ package eu.locklogin.plugin.bungee.listener;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.communication.DataSender;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
@@ -42,7 +41,6 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
-import eu.locklogin.plugin.bungee.com.BungeeDataSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
@@ -72,7 +70,9 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,6 +93,8 @@ public final class JoinListener implements Listener {
 
     public final PlayerPool pool;
     public final PlayerPool switch_pool;
+
+    private final Map<UUID, String> old_servers = new ConcurrentHashMap<>();
 
     /**
      * Initialize the join listener
@@ -147,24 +149,31 @@ public final class JoinListener implements Listener {
                                 ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
 
                                 if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                    DataSender s = BungeeSender.sender;
                                     if (BungeeSender.useSocket) {
-                                        s = new BungeeDataSender();
+                                        Manager.sendSecondaryTopFunction
+                                                .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                                .addProperty("key", proxy.proxyKey())
+                                                                .addProperty("server", info.getName())
+                                                                .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                                        info);
+                                    } else {
+                                        Manager.sendTopFunction
+                                                .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                                .addProperty("key", proxy.proxyKey())
+                                                                .addProperty("server", info.getName())
+                                                                .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                                        info);
                                     }
-
-                                    s.queue(info.getName())
-                                            .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS)
-                                                    .addProperty("key", proxy.proxyKey())
-                                                    .addProperty("server", info.getName())
-                                                    .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
                                 }
                             }
 
                             CurrentPlatform.requestDataContainerUpdate();
 
-                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
-                                    .addProperty("player", player.getUniqueId())
-                                    .getInstance().build());
+                            ServerInfo info = BungeeSender.serverFromPlayer(player);
+
+                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
+                                    .getInstance(),
+                                    info);
 
                             user.applySessionEffects();
 
@@ -183,18 +192,33 @@ public final class JoinListener implements Listener {
                             SimpleScheduler tmp_timer = null;
                             if (!session.isCaptchaLogged()) {
                                 tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
-                                tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                                final String captcha_message = StringUtils.toColor(messages.captcha(session.getCaptcha())); //If we do this, then the captcha code won't get updated on each second
+
+                                tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(captcha_message))).start();
                             }
 
-                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(
-                                    DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT)
-                                            .addProperty("player", player.getUniqueId())
-                                            .addProperty("pass_login", session.isLogged())
-                                            .addProperty("2fa_login", session.is2FALogged())
-                                            .addProperty("pin_login", session.isPinLogged())
-                                            .addProperty("registered", manager.isRegistered())
-                                            .getInstance().build()
-                            );
+                            if (FloodGateUtil.hasFloodgate()) {
+                                FloodGateUtil floodGate = new FloodGateUtil(player.getUniqueId());
+                                if (floodGate.isBedrockClient() && config.bedrockLogin()) {
+                                    AccountManager account = user.getManager();
+                                    if (account.isRegistered()) {
+                                        session.setCaptchaLogged(true);
+                                        session.setLogged(true);
+                                        session.set2FALogged(true);
+                                        session.setPinLogged(true);
+
+                                        plugin.console().send("Detected bedrock player {0}. He has been authenticated without requesting login", Level.INFO, player.getName());
+                                    }
+                                }
+                            }
+
+                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
+                                    .addProperty("pass_login", session.isLogged())
+                                    .addProperty("2fa_login", session.is2FALogged())
+                                    .addProperty("pin_login", session.isPinLogged())
+                                    .addProperty("registered", manager.isRegistered())
+                                    .getInstance(),
+                                    info);
 
                             SimpleScheduler timer = tmp_timer;
                             SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(() -> {
@@ -207,12 +231,9 @@ public final class JoinListener implements Listener {
 
                             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                            //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
-                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player)).insert(
-                                    DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
-                                            .addProperty("player", player.getUniqueId())
-                                            .getInstance().build()
-                            );
+                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                            .getInstance(),
+                                    info);
 
                             if (!Proxy.isAuth(player.getServer().getInfo())) {
                                 user.checkServer(0);
@@ -252,41 +273,76 @@ public final class JoinListener implements Listener {
             }
         });
         switch_pool.whenValid((player) -> {
-            User user = new User(player);
+            Server connected = player.getServer();
+            if (connected != null && old_servers.containsKey(player.getUniqueId())) {
+                ServerInfo info = connected.getInfo();
+                String old = old_servers.get(player.getUniqueId());
 
-            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                    .insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT)
-                            .addProperty("player", player.getUniqueId()).getInstance().build());
+                if (!info.getName().equals(old)) {
+                    if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
+                        if (BungeeSender.useSocket) {
+                            Manager.sendSecondaryTopFunction
+                                    .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                    .addProperty("key", proxy.proxyKey())
+                                                    .addProperty("server", info.getName())
+                                                    .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                            info);
+                        } else {
+                            Manager.sendTopFunction
+                                    .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                    .addProperty("key", proxy.proxyKey())
+                                                    .addProperty("server", info.getName())
+                                                    .addProperty("socket", BungeeSender.useSocket).getInstance(),
+                                            info);
+                        }
+                    }
 
-            CurrentPlatform.requestDataContainerUpdate();
+                    User user = new User(player);
 
-            ClientSession session = user.getSession();
-            AccountManager manager = user.getManager();
-            session.validate();
+                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
+                            .getInstance(), info);
 
-            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                    .insert(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT)
-                            .addProperty("player", player.getUniqueId())
+                    CurrentPlatform.requestDataContainerUpdate();
+
+                    ClientSession session = user.getSession();
+                    AccountManager manager = user.getManager();
+                    session.validate();
+
+                    if (FloodGateUtil.hasFloodgate()) {
+                        FloodGateUtil floodGate = new FloodGateUtil(player.getUniqueId());
+                        if (floodGate.isBedrockClient() && config.bedrockLogin()) {
+                            AccountManager account = user.getManager();
+                            if (account.isRegistered() && config.bedrockLogin()) {
+                                session.setCaptchaLogged(true);
+                                session.setLogged(true);
+                                session.set2FALogged(true);
+                                session.setPinLogged(true);
+
+                                plugin.console().send("Detected bedrock player {0}. He has been authenticated without requesting login", Level.INFO, player.getName());
+                            }
+                        }
+                    }
+
+                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
                             .addProperty("pass_login", session.isLogged())
                             .addProperty("2fa_login", session.is2FALogged())
                             .addProperty("pin_login", session.isPinLogged())
                             .addProperty("registered", manager.isRegistered())
-                            .getInstance().build());
+                            .getInstance(), info);
 
-            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                    .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
-                            .addProperty("player", player.getUniqueId()).getInstance().build());
+                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                            .getInstance(), info);
 
-            user.checkServer(0);
+                    user.checkServer(0);
+                    return;
+                }
+            }
+
+            switch_pool.addPlayer(player.getUniqueId());
         });
 
         pool.startCheckTask();
         switch_pool.startCheckTask();
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onConnect(ServerConnectEvent e) {
-
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -374,9 +430,21 @@ public final class JoinListener implements Listener {
                                 name.check();
 
                                 if (name.notValid()) {
-                                    e.setCancelled(true);
-                                    e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))));
-                                    return;
+                                    boolean r = false;
+
+                                    if (FloodGateUtil.hasFloodgate()) {
+                                        FloodGateUtil util = new FloodGateUtil(gen_uuid);
+                                        if (util.isBedrockClient()) {
+                                            r = true;
+                                            plugin.console().send("Connected player {0} from bedrock", Level.WARNING, conn_name);
+                                        }
+                                    }
+
+                                    if (!r) {
+                                        e.setCancelled(true);
+                                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))));
+                                        return;
+                                    }
                                 }
                             }
 
@@ -459,8 +527,15 @@ public final class JoinListener implements Listener {
 
                 if (config.uuidValidator()) {
                     if (!gen_uuid.equals(tar_uuid)) {
-                        FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                        if (!util.isFloodClient()) {
+                        boolean r = false;
+                        if (FloodGateUtil.hasFloodgate()) {
+                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                            if (util.isBedrockClient()) {
+                                r = true;
+                            }
+                        }
+
+                        if (!r) {
                             e.setCancelled(true);
                             e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.uuidFetchError())));
                             return;
@@ -491,24 +566,8 @@ public final class JoinListener implements Listener {
     public void onSwitch(ServerSwitchEvent e) {
         ProxiedPlayer player = e.getPlayer();
 
-        Server server = player.getServer();
-        if (server != null && server.getInfo() != null) {
-            ServerInfo info = server.getInfo();
-            if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                DataSender s = BungeeSender.sender;
-                if (BungeeSender.useSocket) {
-                    s = new BungeeDataSender();
-                }
-
-                s.queue(info.getName())
-                        .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS)
-                                .addProperty("key", proxy.proxyKey())
-                                .addProperty("server", info.getName())
-                                .addProperty("socket", BungeeSender.useSocket).getInstance().build(), true);
-            }
-        }
-
         if (CurrentPlatform.getServer().isOnline(player.getUniqueId())) {
+            old_servers.put(player.getUniqueId(), e.getFrom().getName());
             switch_pool.addPlayer(player.getUniqueId());
         }
     }

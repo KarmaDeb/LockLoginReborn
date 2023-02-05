@@ -2,7 +2,7 @@ package eu.locklogin.plugin.bukkit.util.inventory;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -11,6 +11,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
+import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
@@ -196,6 +197,7 @@ public final class PinInventory implements InventoryHolder {
                             session.set2FALogged(true);
 
                             SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+                            TransientMap.apply(player);
                         }
 
                         close();
@@ -278,7 +280,7 @@ public final class PinInventory implements InventoryHolder {
         ItemMeta paperMeta = paper.getItemMeta();
         assert paperMeta != null;
 
-        paperMeta.setDisplayName(StringUtils.toColor("&eu.c" + input.getOrDefault(player.getUniqueId(), "/-/-/-/")));
+        paperMeta.setDisplayName(StringUtils.toColor("&c" + input.getOrDefault(player.getUniqueId(), "/-/-/-/")));
 
         paper.setItemMeta(paperMeta);
 

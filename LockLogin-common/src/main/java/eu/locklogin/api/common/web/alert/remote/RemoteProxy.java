@@ -80,26 +80,6 @@ public class RemoteProxy extends ProxyConfiguration {
     }
 
     /**
-     * Get the proxy channel address
-     *
-     * @return the proxy channel address
-     */
-    @Override
-    public String messageAddress() {
-        return manager.getString("Channel.Address", CurrentPlatform.getRealProxyConfiguration().messageAddress());
-    }
-
-    /**
-     * Get the proxy channel port
-     *
-     * @return the proxy channel port
-     */
-    @Override
-    public int messagePort() {
-        return manager.getInt("Channel.Port", CurrentPlatform.getRealProxyConfiguration().messagePort());
-    }
-
-    /**
      * Get all the lobby servers
      *
      * @param instance the server class instance

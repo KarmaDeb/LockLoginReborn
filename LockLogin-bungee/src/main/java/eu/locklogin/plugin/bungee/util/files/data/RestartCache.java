@@ -15,8 +15,8 @@ import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -39,7 +39,7 @@ public final class RestartCache {
         String sessions_serialized = StringUtils.serialize(sessions);
 
         if (sessions_serialized != null) {
-            cache.set("sessions", new KarmaObject(sessions_serialized));
+            cache.setRaw("sessions", sessions_serialized);
         } else {
             console.send(properties.getProperty("plugin_error_cache_save", "Failed to save cache object {0} ( {1} )"), Level.GRAVE, "sessions", "sessions are null");
         }
@@ -52,33 +52,36 @@ public final class RestartCache {
      */
     public void loadUserData() {
         if (cache.exists() && cache.isSet("sessions")) {
-            KarmaElement element = cache.get("sessions");
-            if (element.isString()) {
-                String sessions_serialized = element.getObjet().getString();
+            Element<?> element = cache.get("sessions");
+            if (element.isPrimitive()) {
+                ElementPrimitive primitive = element.getAsPrimitive();
+                if (primitive.isString()) {
+                    String sessions_serialized = primitive.asString();
 
-                if (!StringUtils.isNullOrEmpty(sessions_serialized)) {
-                    Map<UUID, ClientSession> sessions = StringUtils.loadUnsafe(sessions_serialized);
-                    Map<UUID, ClientSession> fixedSessions = new HashMap<>();
-                    if (sessions != null) {
-                        //Remove offline player sessions to avoid security issues
-                        for (UUID id : sessions.keySet()) {
-                            ClientSession session = sessions.getOrDefault(id, null);
-                            if (session != null) {
-                                ProxiedPlayer player = plugin.getProxy().getPlayer(id);
+                    if (!StringUtils.isNullOrEmpty(sessions_serialized)) {
+                        Map<UUID, ClientSession> sessions = StringUtils.loadUnsafe(sessions_serialized);
+                        Map<UUID, ClientSession> fixedSessions = new HashMap<>();
+                        if (sessions != null) {
+                            //Remove offline player sessions to avoid security issues
+                            for (UUID id : sessions.keySet()) {
+                                ClientSession session = sessions.getOrDefault(id, null);
+                                if (session != null) {
+                                    ProxiedPlayer player = plugin.getProxy().getPlayer(id);
 
-                                if (player != null && player.isConnected()) {
-                                    fixedSessions.put(id, session);
+                                    if (player != null && player.isConnected()) {
+                                        fixedSessions.put(id, session);
+                                    }
                                 }
                             }
-                        }
 
-                        try {
-                            JarManager.changeField(User.class, "sessions", fixedSessions);
-                        } catch (Throwable ex) {
-                            console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
+                            try {
+                                JarManager.changeField(User.class, "sessions", fixedSessions);
+                            } catch (Throwable ex) {
+                                console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", ex.fillInStackTrace());
+                            }
+                        } else {
+                            console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                         }
-                    } else {
-                        console.send(properties.getProperty("plugin_error_cache_load", "Failed to load cache object {0} ( {1} )"), Level.GRAVE, "sessions", "session map is null");
                     }
                 }
             }

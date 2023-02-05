@@ -17,8 +17,10 @@ package eu.locklogin.api.file.pack;
 import eu.locklogin.api.account.AccountID;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -79,16 +81,19 @@ public final class Alias {
      */
     public Set<String> addUsers(final Map<AccountID, String> accounts) {
         KarmaArray array = new KarmaArray();
-        if (file.isSet("users")) {
-            array = file.get("users").getArray();
+        Element<?> element = file.get("users");
+        if (element.isArray()) {
+            array = (KarmaArray) element.getAsArray();
         }
 
         Set<String> already = new LinkedHashSet<>();
         for (AccountID id : accounts.keySet()) {
-            if (array.contains(KarmaElement.from(id.getId()))) {
+            ElementPrimitive check_id = new KarmaPrimitive(id.getId());
+
+            if (array.contains(check_id)) {
                 already.add(accounts.get(id));
             } else {
-                array.add(KarmaElement.from(id.getId()));
+                array.add(check_id);
             }
         }
         file.set("users", array);
@@ -105,14 +110,17 @@ public final class Alias {
      */
     public Set<String> delUsers(final Map<AccountID, String> accounts) {
         KarmaArray array = new KarmaArray();
-        if (file.isSet("users")) {
-            array = file.get("users").getArray();
+        Element<?> element = file.get("users");
+        if (element.isArray()) {
+            array = (KarmaArray) element.getAsArray();
         }
 
         Set<String> not_in = new LinkedHashSet<>();
         for (AccountID id : accounts.keySet()) {
-            if (array.contains(KarmaElement.from(id.getId()))) {
-                array.remove(KarmaElement.from(id.getId()));
+            ElementPrimitive check_id = new KarmaPrimitive(id.getId());
+
+            if (array.contains(check_id)) {
+                array.remove(check_id);
             } else {
                 not_in.add(accounts.get(id));
             }
@@ -131,14 +139,18 @@ public final class Alias {
      */
     public Set<AccountID> getUsers() {
         KarmaArray array = new KarmaArray();
-        if (file.isSet("users")) {
-            array = file.get("users").getArray();
+        Element<?> element = file.get("users");
+        if (element.isArray()) {
+            array = (KarmaArray) element.getAsArray();
         }
 
         Set<AccountID> ids = new LinkedHashSet<>();
 
-        for (KarmaElement element : array)
-            ids.add(AccountID.fromString(element.getObjet().getString()));
+        for (ElementPrimitive primitive : array) {
+            if (primitive.isString()) {
+                ids.add(AccountID.fromString(primitive.asString()));
+            }
+        }
 
         return ids;
     }

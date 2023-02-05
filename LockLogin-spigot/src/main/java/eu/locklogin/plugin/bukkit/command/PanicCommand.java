@@ -17,6 +17,8 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.security.client.CommandProxy;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -29,6 +31,7 @@ import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
@@ -37,6 +40,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -56,11 +61,12 @@ public final class PanicCommand implements CommandExecutor {
      * @param sender  Source of the command
      * @param command Command which was executed
      * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
+     * @param tmpArgs    Passed command arguments
      * @return true if a valid command, otherwise false
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    @SuppressWarnings("deprecation")
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         if (sender instanceof Player) {
             tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
                 Player player = (Player) sender;
@@ -68,6 +74,32 @@ public final class PanicCommand implements CommandExecutor {
 
                 ClientSession session = user.getSession();
                 if (session.isValid()) {
+                    boolean validated = false;
+
+                    String[] args = new String[0];
+                    if (tmpArgs.length >= 1) {
+                        String last_arg = tmpArgs[tmpArgs.length - 1];
+                        try {
+                            UUID command_id = UUID.fromString(last_arg);
+                            args = CommandProxy.getArguments(command_id);
+                            validated = true;
+                        } catch (Throwable ignored) {}
+                    }
+
+                    if (!validated) {
+                        if (!session.isLogged()) {
+                            user.send(messages.prefix() + messages.register());
+                        } else {
+                            if (session.isTempLogged()) {
+                                user.send(messages.prefix() + messages.gAuthenticate());
+                            } else {
+                                user.send(messages.prefix() + messages.alreadyRegistered());
+                            }
+                        }
+
+                        return;
+                    }
+
                     if (!session.isLogged()) {
                         AccountManager manager = user.getManager();
                         if (!manager.exists())
@@ -116,10 +148,10 @@ public final class PanicCommand implements CommandExecutor {
                                             String password = TokenGenerator.generateLiteral(32);
 
                                             user.send(messages.panicRequested());
-                                            TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
-                                            component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
-                                            user.send(component);
+                                            ComponentFactory cf = new ComponentFactory(StringUtils.toColor("&7Panic token: &e" + password))
+                                                    .hover(StringUtils.toColor("&bClick to copy"))
+                                                    .click(ClickEvent.Action.SUGGEST_COMMAND, password);
+                                            user.send(cf.get());
 
                                             manager.setPanic(password);
                                         } else {

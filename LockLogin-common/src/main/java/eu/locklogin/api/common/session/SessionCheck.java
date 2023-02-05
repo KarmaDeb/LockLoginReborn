@@ -3,6 +3,7 @@ package eu.locklogin.api.common.session;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
+import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
@@ -115,7 +116,7 @@ public final class SessionCheck<T> implements Runnable {
 
                                 if (timer_time == ((int) Math.round(((double) time / 3)))) {
                                     boss.color(BossColor.RED);
-                                    BAR_COLOR = "&eu.c";
+                                    BAR_COLOR = "&c";
                                 }
 
                                 if (manager.isRegistered()) {

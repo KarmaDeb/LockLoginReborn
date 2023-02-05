@@ -41,6 +41,19 @@ public final class MessagePool {
     }
 
     /**
+     * Trigger a valid player
+     *
+     * @param channel the message channel
+     * @param player  the player instance
+     * @param data    the message data
+     */
+    public static void trigger(final String channel, final Player player, final ByteArrayDataInput data) {
+        if (whenValidPlayer != null) {
+            whenValidPlayer.accept(channel, player, data);
+        }
+    }
+
+    /**
      * Remove a player from the player pool
      *
      * @param id the player uuid

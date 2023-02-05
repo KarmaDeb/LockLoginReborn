@@ -1,6 +1,6 @@
 package eu.locklogin.module.manager;
 
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
 import eu.locklogin.api.module.plugin.api.command.Command;
@@ -55,14 +55,14 @@ public final class ModuleInfoCommand extends Command implements LockLoginManager
                 sender.sendMessage("");
                 sender.sendMessage("&7LockLogin plugin information");
                 sender.sendMessage("");
-                sender.sendMessage("&bServer hash: &eu.c" + CurrentPlatform.getServerHash());
+                sender.sendMessage("&bServer hash: &e" + CurrentPlatform.getServerHash());
                 sender.sendMessage("&bPanel status: &cMaintenance");
-                sender.sendMessage("&bRegistered users: &eu.c" + SessionDataContainer.getRegistered());
-                sender.sendMessage("&bLogged users: &eu.c" + SessionDataContainer.getLogged());
-                sender.sendMessage("&bLast notification level: &eu.c" + notification.getLevel());
-                sender.sendMessage("&bLast notification: &eu.c" + notification.getNotification());
-                sender.sendMessage("&bForce configuration: &eu.c" + notification.forceConfig());
-                sender.sendMessage("&bForce proxy configuration: &eu.c" + notification.forceProxy());
+                sender.sendMessage("&bRegistered users: &e" + SessionDataContainer.getRegistered());
+                sender.sendMessage("&bLogged users: &e" + SessionDataContainer.getLogged());
+                sender.sendMessage("&bLast notification level: &e" + notification.getLevel());
+                sender.sendMessage("&bLast notification: &&e" + notification.getNotification());
+                sender.sendMessage("&bForce configuration: &&e" + notification.forceConfig());
+                sender.sendMessage("&bForce proxy configuration: &&e" + notification.forceProxy());
                 sender.sendMessage("");
                 sender.sendMessage("&d------------------------------");
             });

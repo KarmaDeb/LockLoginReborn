@@ -14,6 +14,7 @@ package eu.locklogin.plugin.bungee;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.security.BackupTask;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
@@ -23,8 +24,7 @@ import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import ml.karmaconfigs.api.bungee.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -67,6 +67,8 @@ public final class Main extends KarmaPlugin {
     public void enable() {
         plugin.enable();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            BackupTask.performBackup();
+
             if (!unloaded) {
                 onDisable();
             }
@@ -159,21 +161,5 @@ public final class Main extends KarmaPlugin {
             return url.toString();
 
         return null;
-    }
-
-    @Override
-    public String getIdentifier() {
-        KarmaMain container = new KarmaMain(this, "", "/cache/stats.kf");
-        if (!container.exists())
-            container.create();
-
-        KarmaElement element = container.get("identifier", new KarmaObject(UUID.randomUUID().toString()));
-        String id = element.getObjet().getString();
-        if (!container.isSet("identifier")) {
-            container.set("identifier", new KarmaObject(id));
-            container.save();
-        }
-
-        return id;
     }
 }

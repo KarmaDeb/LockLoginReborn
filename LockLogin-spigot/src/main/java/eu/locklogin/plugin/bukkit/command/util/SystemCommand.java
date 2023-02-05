@@ -12,11 +12,9 @@ package eu.locklogin.plugin.bukkit.command.util;
  */
 
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.plugin.bukkit.command.*;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -48,17 +46,18 @@ public @interface SystemCommand {
          * @return an array of system commands
          */
         public static Class<?>[] recognizedClasses() {
-            String name = pack.getName().substring(0, pack.getName().lastIndexOf('.'));
-
-            InputStream stream = ClassLoader.getSystemClassLoader()
-                    .getResourceAsStream(name.replaceAll("[.]", "/"));
-            if (stream != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                return reader.lines().filter(line -> line.endsWith(".class"))
-                        .map(line -> toClass(name, line)).distinct().toArray(Class<?>[]::new);
-            }
-
-            return new Class<?>[0];
+            return new Class[]{
+                    AccountCommand.class,
+                    AliasCommand.class,
+                    GoogleAuthCommand.class,
+                    LastLocationCommand.class,
+                    LockLoginCommand.class,
+                    LoginCommand.class,
+                    PanicCommand.class,
+                    PinCommand.class,
+                    PlayerInfoCommand.class,
+                    RegisterCommand.class,
+                    SetSpawnCommand.class};
         }
 
         private static Class<?> toClass(final String pack, final String clazz) {

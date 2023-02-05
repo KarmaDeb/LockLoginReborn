@@ -77,6 +77,23 @@ LoginOut: "&5&o你花了太长时间来登录"
 LoginTitle: "&7你还有"
 LoginSubtitle: "&b{time} &7来登录"
 
+#Unsafe password messages
+Password:
+  Success:
+    Unique: "&e- &a您的密码大多是唯一的"
+    Length: "&e- &a您的密码至少有 {min_length} 个字符"
+    Special: "&e- &a您的密码至少包含 {min_special} 个特殊字符"
+    Numbers: "&e- &a您的密码至少有 {min_number} 个数字"
+    Uppers: "&e- &a您的密码至少包含 {min_lower} 个小写字符"
+    Lowers: "&e- &a您的密码至少包含 {min_upper} 个大写字符"
+  Failed:
+    Unique: "&e- &c您的密码与已知密码相似"
+    Length: "&e- &c您的密码有 {length} 个 {min_length} 个字符"
+    Special: "&e- &c您的密码包含 {special} 个字符，共 {min_special} 个字符"
+    Numbers: "&e- &c您的密码有 {number} 个 {min_number} 个数字"
+    Uppers: "&e- &c您的密码包含 {lower} 个小写字符，共 {min_lower} 个"
+    Lowers: "&e- &c您的密码包含 {upper} 个大写字符，共 {min_upper} 个"
+
 #Session messages - Pin
 PinUsages: "&5&o有效的pin子参数：&e<setup>&7，&e<remove>&7，&e<change>"
 PinSet: "&d成功设置你的pin"
@@ -164,7 +181,7 @@ AccountRemoved: "&5&o你的账户已删除"
 ForcedAccountRemoval:
   - "{ServerName}"
   - ""
-  - "&c你的账户已被管理员（&7{player}&eu.c）删除"
+  - "&c你的账户已被管理员（&7{player}&c）删除"
   - "&c并且暂时封禁来避免数据丢失，"
   - "&c直到有工作人员打开它"
   - ""
@@ -223,3 +240,11 @@ IpProxyError:
   - "&c你的IP地址似乎有一点可疑"
   - "&c如果你认为这是一个错误，你可以在以下平台报告："
   - "&7QQ群（群号（未设置））"
+BedrockJavaError:
+  - "{ServerName}"
+  - ""
+  - "&5It seems that your bedrock account is already"
+  - "&5registered by a java account or vice-versa."
+  - ""
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"

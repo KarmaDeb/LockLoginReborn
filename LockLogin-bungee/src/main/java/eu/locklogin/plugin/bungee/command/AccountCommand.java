@@ -17,9 +17,11 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.api.file.options.PasswordConfig;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
@@ -39,6 +41,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.plugin.sender.AccountParser;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.User;
@@ -48,9 +51,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -64,7 +65,7 @@ import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SystemCommand(command = "account")
 @SuppressWarnings("unused")
-public class AccountCommand extends Command {
+public class  AccountCommand extends Command {
 
     private final static Map<String, String> confirmation = new ConcurrentHashMap<>();
 
@@ -105,6 +106,9 @@ public class AccountCommand extends Command {
 
                                 AccountManager manager = user.getManager();
 
+                                PasswordConfig passwordConfig = config.passwordConfig();
+                                Map.Entry<Boolean, String[]> rs = passwordConfig.check(new_pass);
+
                                 CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (util.validate(Validation.ALL)) {
                                     ChangeResult result;
@@ -113,7 +117,7 @@ public class AccountCommand extends Command {
                                         if (secure.isSecure()) {
                                             result = ChangeResult.ALLOWED;
                                         } else {
-                                            result = (config.blockUnsafePasswords() ? ChangeResult.DENIED_UNSAFE : ChangeResult.ALLOWED_UNSAFE);
+                                            result = (passwordConfig.block_unsafe() ? UserChangePasswordEvent.ChangeResult.DENIED_UNSAFE : UserChangePasswordEvent.ChangeResult.ALLOWED_UNSAFE);
                                         }
                                     } else {
                                         result = ChangeResult.DENIED_SAME;
@@ -130,16 +134,33 @@ public class AccountCommand extends Command {
                                                 manager.setPassword(new_pass);
                                                 user.send(messages.prefix() + messages.changeDone());
                                                 break;
-                                            case ALLOWED_UNSAFE:
-                                                manager.setPassword(new_pass);
-                                                user.send(messages.prefix() + messages.loginInsecure());
-                                                break;
                                             case DENIED_SAME:
                                                 user.send(messages.prefix() + messages.changeSame());
                                                 break;
                                             case DENIED_UNSAFE:
+                                            case ALLOWED_UNSAFE:
                                             default:
-                                                user.send(messages.prefix() + messages.passwordInsecure());
+                                                if (result.equals(UserChangePasswordEvent.ChangeResult.ALLOWED_UNSAFE)) {
+                                                    manager.setPassword(new_pass);
+                                                    user.send(messages.prefix() + messages.loginInsecure());
+
+                                                    if (passwordConfig.warn_unsafe()) {
+                                                        for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
+                                                            User staff = new User(online);
+                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                                staff.send(messages.prefix() + messages.passwordWarning());
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    user.send(messages.prefix() + messages.passwordInsecure());
+                                                }
+
+                                                if (passwordConfig.warn_unsafe()) {
+                                                    for (String msg : rs.getValue())
+                                                        if (msg != null)
+                                                            user.send(msg);
+                                                }
                                                 break;
                                         }
                                     }
@@ -195,11 +216,8 @@ public class AccountCommand extends Command {
                                     session.setPinLogged(false);
                                     session.set2FALogged(false);
 
-                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                    .insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId()).getInstance().build());
-                                    //DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
-
+                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                            .getInstance(), BungeeSender.serverFromPlayer(player));
                                     user.applySessionEffects();
 
                                     if (config.clearChat()) {
@@ -287,10 +305,9 @@ public class AccountCommand extends Command {
                                                                 StringUtils.stripColor(player.getName()));
 
                                                         if (online != null) {
-                                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                                    .insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT)
-                                                                            .addProperty("player", player.getUniqueId()).getInstance().build());
-                                                            //DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
+                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                                            .getInstance(),
+                                                                     BungeeSender.serverFromPlayer(player));
 
                                                             User onlineUser = new User(online);
                                                             onlineUser.removeSessionCheck();
@@ -342,10 +359,8 @@ public class AccountCommand extends Command {
                                             session.invalidate();
                                             session.validate();
 
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                    .insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId()).getInstance().build());
-                                            //DataSender.send(player, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, player).build());
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                    .getInstance(), BungeeSender.serverFromPlayer(player));
 
                                             user.applySessionEffects();
 
@@ -400,18 +415,17 @@ public class AccountCommand extends Command {
                                                 for (AccountManager account : accounts) {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                    BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                            .insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN)
-                                                                    .addProperty("account", StringUtils.serialize(account)).getInstance().build());
+                                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
+                                                            .getInstance(),
+                                                            BungeeSender.serverFromPlayer(player));
+
                                                     sent++;
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
-                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                        .insert(DataMessage.newInstance(DataType.LOOKUPGUI, Channel.PLUGIN)
-                                                                .addProperty("player", player.getUniqueId())
-                                                                .addProperty("player_info", parser.toString())
-                                                                .getInstance().build());
+                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.LOOKUPGUI, Channel.PLUGIN, player)
+                                                        .addProperty("player_info", parser.toString())
+                                                        .getInstance(), BungeeSender.serverFromPlayer(player));
                                             } else {
                                                 user.send(messages.prefix() + messages.neverPlayer(target));
                                             }
@@ -458,10 +472,10 @@ public class AccountCommand extends Command {
                                 String password = TokenGenerator.generateLiteral(32);
 
                                 user.send(messages.panicRequested());
-                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &c" + password));
-                                component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
-                                component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
-                                user.send(component);
+                                ComponentFactory cf = new ComponentFactory(StringUtils.toColor("&7Panic token: &e" + password))
+                                        .hover(StringUtils.toColor("&bClick to copy"))
+                                        .click(ClickEvent.Action.SUGGEST_COMMAND, password);
+                                user.send(cf.get());
 
                                 manager.setPanic(password);
                             } else {
@@ -582,10 +596,8 @@ public class AccountCommand extends Command {
                                                    config.serverName());
 
                                             if (online != null) {
-                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(online))
-                                                        .insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT)
-                                                                .addProperty("player", online.getUniqueId()).getInstance().build());
-                                                //DataSender.send(online, DataSender.getBuilder(DataType.CLOSE, DataSender.CHANNEL_PLAYER, online).build());
+                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, online)
+                                                        .getInstance(), BungeeSender.serverFromPlayer(online));
 
                                                 User onlineUser = new User(online);
                                                 onlineUser.removeSessionCheck();

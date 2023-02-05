@@ -26,6 +26,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -84,10 +85,8 @@ public class PinCommand extends Command {
 
                                             session.setPinLogged(false);
 
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                            .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                                    .addProperty("player", player.getUniqueId())
-                                                                    .addProperty("pin", true).getInstance().build());
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                    .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
 
                                             CurrentPlatform.requestDataContainerUpdate();
                                         } else {

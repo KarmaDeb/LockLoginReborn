@@ -5,6 +5,7 @@ import eu.locklogin.api.common.communication.queue.DataQueue;
 
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Consumer;
 
 /**
  * Proxy message queue
@@ -39,7 +40,7 @@ public class MessageQueue extends DataQueue {
             if (onTop) {
                 queue.addFirst(packet);
             } else {
-                queue.add(packet);
+                queue.addLast(packet);
             }
         }
     }
@@ -51,12 +52,10 @@ public class MessageQueue extends DataQueue {
      * @return the next entry
      */
     @Override
-    public byte[] next() {
+    public Packet next() {
         if (!read) {
             read = true;
-            Packet next = queue.peek();
-            if (next != null)
-                return next.packetData();
+            return queue.peek();
         }
 
         return null;
@@ -69,9 +68,11 @@ public class MessageQueue extends DataQueue {
     @Override
     public void shift() {
         Packet top = queue.poll();
-        queue.add(top);
-        if (read)
-            read = false;
+        if (top != null) {
+            queue.add(top);
+            if (read)
+                read = false;
+        }
     }
 
     /**
@@ -79,7 +80,7 @@ public class MessageQueue extends DataQueue {
      */
     @Override
     public void consume() {
-        if (!locked) {
+        if (read) {
             queue.poll();
         }
 
@@ -111,5 +112,9 @@ public class MessageQueue extends DataQueue {
     @Override
     public boolean locked() {
         return locked;
+    }
+
+    public int size() {
+        return queue.size();
     }
 }

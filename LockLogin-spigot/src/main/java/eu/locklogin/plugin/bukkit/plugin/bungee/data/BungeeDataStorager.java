@@ -11,7 +11,7 @@ package eu.locklogin.plugin.bukkit.plugin.bungee.data;
  * or (fallback domain) <a href="https://karmaconfigs.github.io/page/license"> here </a>
  */
 
-import eu.locklogin.api.common.session.SessionDataContainer;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.encryption.Validation;

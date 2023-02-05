@@ -18,7 +18,7 @@ database: false
 api-version: 1.13
 load: STARTUP
 depend:
-  - AnotherBarelyCodedKarmaPlugin
+  - KarmaAPI
 
 #ProtocolLib soft dependency is for modules
 #that require that plugin ( LockLoginPremium
@@ -27,6 +27,7 @@ softdepend:
   - AnotherBarelyCodedKarmaPlugin
   - PlaceholderAPI
   - ProtocolLib
+  - floodgate
 
 
 
@@ -186,3 +187,6 @@ permissions:
         default: false
     description: The permission required for web related options in LockLogin
     default: false
+  locklogin.unsafe.warning:
+    description: The permission required to be notified when a player uses an unsafe password
+    default: op

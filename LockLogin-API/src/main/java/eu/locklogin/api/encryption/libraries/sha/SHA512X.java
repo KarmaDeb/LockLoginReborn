@@ -85,7 +85,7 @@ public final class SHA512X {
      * @param value the value to hash
      * @return the hashed value
      */
-    private String sha512c(final String value) {
+    public String sha512c(final String value) {
         String str = null;
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");

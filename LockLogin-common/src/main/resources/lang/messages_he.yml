@@ -76,6 +76,23 @@ LoginOut: '&5&oלקח לך יותר מידי זמן להיכנס'
 LoginTitle: '&7יש לך'
 LoginSubtitle: '&b{time} &7בשביל להיכנס'
 
+#Unsafe password messages
+Password:
+  Success:
+    Unique: "&e- &aהסיסמה שלך היא לרוב ייחודית"
+    Length: "&e- &aהסיסמה שלך מכילה לפחות {min_length} תווים"
+    Special: "&e- &aהסיסמה שלך מכילה לפחות {min_special} תווים מיוחדים"
+    Numbers: "&e- &aלסיסמה שלך יש לפחות {min_number} מספרים"
+    Uppers: "&e- &aהסיסמה שלך מכילה לפחות {min_lower} תווים קטנים"
+    Lowers: "&e- &aהסיסמה שלך כוללת לפחות {min_upper} תווים רישיות"
+  Failed:
+    Unique: "&e- &cהסיסמה שלך דומה לאלה המוכרות"
+    Length: "&e- &cהסיסמה שלך מכילה {length} של {min_length} תווים"
+    Special: "&e- &cהסיסמה שלך מכילה {special} של {min_special} תווים"
+    Numbers: "&e- &cהסיסמה שלך מכילה {number} של {min_number} מספרים"
+    Uppers: "&e- &cהסיסמה שלך מכילה {lower} מתוך {min_lower} תווים קטנים"
+    Lowers: "&e- &cהסיסמה שלך מכילה {upper} מתוך {min_upper} תווים רישיות"
+
 #Session messages - Pin
 PinUsages: '&5&oפקודות השלמה למערכת קוד: &e<setup>&7, &e<remove>&7, &e<change>'
 PinSet: '&dהקוד הוגדר בהצלחה'
@@ -123,7 +140,7 @@ Enabled2FA: '&dמערכת אדוש מופעלת המשתמש שלכם מוגן'
 #Session messages - Brute force
 PanicLogin: '&5&oנא לעשות &f/panic <token>'
 PanicTitle: '&cמצב חירום!'
-PanicSubtitle: '&4נא לעשות &eu.c/panic <token>'
+PanicSubtitle: '&4נא לעשות &c/panic <token>'
 PanicMode: '&5&oהמשתמש שלך נמצא במצב פאניקה, יש לכם נסיון אחד להכניס את האסימון לפני שתקבלו חסימת אייפי'
 PanicDisabled: '&5&oהשרת אינו מוגן מפני התקפות כוח'
 PanicAlready: '&dיש לך כבר אסימון למצב פאניקה, חשבונך מאובטח'
@@ -236,3 +253,11 @@ IpProxyError:
   - '&5האייפי שלכם חשוד קצת'
   - '&5אם אתם חושבים שמדובר בטעות'
   - '&5צרו קשר אם צוות השרת: &fhttps://discordexample.gg'
+BedrockJavaError:
+  - "{ServerName}"
+  - ""
+  - "&5It seems that your bedrock account is already"
+  - "&5registered by a java account or vice-versa."
+  - ""
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"

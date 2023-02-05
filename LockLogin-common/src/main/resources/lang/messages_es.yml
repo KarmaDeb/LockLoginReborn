@@ -78,6 +78,23 @@ LoginOut: "&5&oHas tardado demasiado en iniciar sesión"
 LoginTitle: "&7Tienes"
 LoginSubtitle: "&b{time} &7para iniciar sesión"
 
+#Unsafe password messages
+Password:
+  Success:
+    Unique: "&e- &aTu contraseña es en su mayoria, unica"
+    Length: "&e- &aTu contraseña tiene al menos {min_length} caracteres"
+    Special: "&e- &aTu contraseña tiene al menos {min_special} caracteres especiales"
+    Numbers: "&e- &aTu contraseña tiene al menos {min_number} numeros"
+    Uppers: "&e- &aTu contraseña tiene al menos {min_lower} minusculas"
+    Lowers: "&e- &aTu contraseña tiene al menos {min_upper} mayusculas"
+  Failed:
+    Unique: "&e- &cTu contraseña es similar a las conocidas"
+    Length: "&e- &cTu contraseña tiene {length} de {min_length} caracteres requeridos"
+    Special: "&e- &cTu contraseña tiene {special} de {min_special} caracteres especiales requeridos"
+    Numbers: "&e- &cTu contraseña tiene {number} de {min_number} numeros requeridos"
+    Uppers: "&e- &cTu contraseña tiene {lower} de {min_lower} minusculas requeridas"
+    Lowers: "&e- &cTu contraseña tiene {upper} de {min_upper} mayuscuas requeridas"
+
 #Session messages - Pin
 PinUsages: "&5&oArgumentos 2fa válidos: &e<setup>&7, &e<remove>&7, &e<change>"
 PinSet: "&dTu pin ha sido establecido correctamente"
@@ -165,7 +182,7 @@ ForcedAccountRemoval:
   - "{ServerName}"
   - ""
   - "&cTu cuenta ha sido eliminada por"
-  - "&cun administrador ( &7{player}&eu.c )"
+  - "&cun administrador ( &7{player}&c )"
   - "&cy ha sido bloqueada temporalmente"
   - "&cpara evitar que se pierdan tus datos"
   - "&chasta que un administrador la desbloquee"
@@ -227,3 +244,11 @@ IpProxyError:
   - "&cTu IP ha sido marcada como sospechosa"
   - "&cSi crees que se trata de un error, por favor"
   - "&crepórtalo en: &7https://discordexample.gg"
+BedrockJavaError:
+  - "{ServerName}"
+  - ""
+  - "&5It seems that your bedrock account is already"
+  - "&5registered by a java account or vice-versa."
+  - ""
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"

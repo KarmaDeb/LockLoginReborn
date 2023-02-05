@@ -37,6 +37,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
+import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
@@ -176,8 +177,15 @@ public final class JoinListener implements Listener {
 
                                 if (config.uuidValidator()) {
                                     if (!gen_uuid.equals(tar_uuid)) {
-                                        FloodGateUtil util = new FloodGateUtil(tar_uuid);
-                                        if (!util.isFloodClient()) {
+                                        boolean r = false;
+                                        if (FloodGateUtil.hasFloodgate()) {
+                                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                            if (util.isBedrockClient()) {
+                                                r = true;
+                                            }
+                                        }
+
+                                        if (!r) {
                                             logger.scheduleLog(Level.GRAVE, "Denied connection from {0} because its UUID ( {1} ) doesn't match with generated one ( {2} )", conn_name, tar_uuid, gen_uuid);
 
                                             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
@@ -191,8 +199,20 @@ public final class JoinListener implements Listener {
                                     name.check();
 
                                     if (name.notValid()) {
-                                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
-                                        return;
+                                        boolean r = false;
+
+                                        if (FloodGateUtil.hasFloodgate()) {
+                                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                            if (util.isBedrockClient()) {
+                                                r = true;
+                                                plugin.console().send("Connected player {0} from bedrock", Level.WARNING, conn_name);
+                                            }
+                                        }
+
+                                        if (!r) {
+                                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(name.getInvalidChars())));
+                                            return;
+                                        }
                                     }
                                 }
 
@@ -310,14 +330,33 @@ public final class JoinListener implements Listener {
                 if (!config.isBungeeCord()) {
                     ClientSession session = user.getSession();
                     session.validate();
-                    session.setPinLogged(false);
-                    session.set2FALogged(false);
-                    session.setLogged(false);
 
-                    //Automatically mark players as captcha verified if captcha is disabled
-                    if (!config.captchaOptions().isEnabled())
-                        session.setCaptchaLogged(true);
+                    boolean skip = false;
+                    if (FloodGateUtil.hasFloodgate()) {
+                        FloodGateUtil floodGate = new FloodGateUtil(player.getUniqueId());
+                        if (floodGate.isBedrockClient() && config.bedrockLogin()) {
+                            AccountManager account = user.getManager();
+                            if (account.isRegistered()) {
+                                session.setCaptchaLogged(true);
+                                session.setLogged(true);
+                                session.set2FALogged(true);
+                                session.setPinLogged(true);
 
+                                plugin.console().send("Detected bedrock player {0}. He has been authenticated without requesting login", Level.INFO, player.getName());
+                                skip = true;
+                            }
+                        }
+                    }
+
+                    if (!skip) {
+                        session.setPinLogged(false);
+                        session.set2FALogged(false);
+                        session.setLogged(false);
+
+                        //Automatically mark players as captcha verified if captcha is disabled
+                        if (!config.captchaOptions().isEnabled())
+                            session.setCaptchaLogged(true);
+                    }
                     OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
                     Event event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
@@ -366,6 +405,10 @@ public final class JoinListener implements Listener {
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
                         tryAsync(TaskTarget.EVENT, () -> {
+                            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+                                TransientMap.add(player);
+                            }
+
                             ClientSession session = user.getSession();
 
                             if (!config.isBungeeCord()) {
@@ -381,8 +424,7 @@ public final class JoinListener implements Listener {
                                 try {
                                     if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
                                         barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                                } catch (Throwable ignored) {
-                                }
+                                } catch (Throwable ignored) {}
 
                                 BarMessage bar = new BarMessage(player, barMessage);
                                 if (!session.isCaptchaLogged())

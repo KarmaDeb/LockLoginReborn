@@ -16,7 +16,8 @@ package eu.locklogin.plugin.bungee.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.file.options.PasswordConfig;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -29,6 +30,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -37,6 +39,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.List;
+import java.util.Map;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -92,15 +95,36 @@ public final class RegisterCommand extends Command {
                                     String confirmation = args[1];
 
                                     if (password.equals(confirmation)) {
-                                        Password checker = new Password(password);
-                                        checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                        Password tmp = new Password(null);
+                                        tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                        PasswordConfig passwordConfig = config.passwordConfig();
+                                        Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
 
-                                        if (!checker.isSecure()) {
+                                        if (!rs.getKey()) {
+                                            boolean ret = false;
                                             user.send(messages.prefix() + messages.passwordInsecure());
 
-                                            if (config.blockUnsafePasswords()) {
-                                                return;
+                                            if (passwordConfig.block_unsafe()) {
+                                                ret = true;
+                                            } else {
+                                                if (passwordConfig.warn_unsafe()) {
+                                                    for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
+                                                        User staff = new User(online);
+                                                        if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                            staff.send(messages.prefix() + messages.passwordWarning());
+                                                        }
+                                                    }
+                                                }
                                             }
+
+                                            if (passwordConfig.warn_unsafe()) {
+                                                for (String msg : rs.getValue()) {
+                                                    if (msg != null)
+                                                        user.send(msg);
+                                                }
+                                            }
+
+                                            if (ret) return;
                                         }
 
                                         manager.setPassword(password);
@@ -124,21 +148,20 @@ public final class RegisterCommand extends Command {
                                         user.restorePotionEffects();
 
                                         if (session.isPinLogged()) {
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                    .insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId())
-                                                            .getInstance().build());
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
+                                                    .getInstance(),
+                                                    BungeeSender.serverFromPlayer(player));
                                         }
 
                                         if (session.is2FALogged()) {
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId())
-                                                            .addProperty("pin", false).getInstance().build());
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                    .addProperty("pin", false).getInstance(),
+                                                    BungeeSender.serverFromPlayer(player));
                                         }
 
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                .getInstance(),
+                                                BungeeSender.serverFromPlayer(player));
 
                                         user.checkServer(0);
 
@@ -167,10 +190,10 @@ public final class RegisterCommand extends Command {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("register " + password + " " + confirmation);
-                                        //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
+
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                                .getInstance(),
+                                                BungeeSender.serverFromPlayer(player));
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

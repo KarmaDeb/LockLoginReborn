@@ -33,25 +33,20 @@ public abstract class ProxyConfiguration {
     public abstract String proxyKey();
 
     /**
+     * Get the server transient name, used for proxy lite
+     *
+     * @return the server transient name
+     */
+    public String transientName() {
+        return "";
+    }
+
+    /**
      * Get the proxy ID
      *
      * @return the proxy server ID
      */
     public abstract UUID getProxyID();
-
-    /**
-     * Get the proxy channel address
-     *
-     * @return the proxy channel address
-     */
-    public abstract String messageAddress();
-
-    /**
-     * Get the proxy channel port
-     *
-     * @return the proxy channel port
-     */
-    public abstract int messagePort();
 
     /**
      * Get all the lobby servers

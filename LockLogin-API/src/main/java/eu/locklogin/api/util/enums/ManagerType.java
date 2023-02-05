@@ -1,5 +1,5 @@
 package eu.locklogin.api.util.enums;
 
-public enum Manager {
+public enum ManagerType {
     DEFAULT,PREVIOUS,CUSTOM
 }

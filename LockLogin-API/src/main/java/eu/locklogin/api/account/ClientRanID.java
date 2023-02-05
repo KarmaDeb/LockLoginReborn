@@ -15,11 +15,10 @@ package eu.locklogin.api.account;
  */
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public final class ClientRanID {
     private final String uuid;
 
     private final static KarmaSource source = APISource.loadProvider("LockLogin");
-    private final static KarmaMain idData = new KarmaMain(source, source.getDataPath().resolve("data").resolve("local").resolve("ids.lldb"));
+    private final static KarmaMain idData = new KarmaMain(source.getDataPath().resolve("data").resolve("local").resolve("ids.lldb"));
 
     /**
      * Initialize the azuriom id memory
@@ -56,7 +55,7 @@ public final class ClientRanID {
      * @param name the account name
      */
     public void assignTo(final String name) {
-        idData.set(name, new KarmaObject(name));
+        idData.setRaw(name, name);
         idData.save();
     }
 
@@ -72,15 +71,19 @@ public final class ClientRanID {
         source.async().queue("load_assigned_ids", () -> {
             boolean response = false;
             for (String key : idData.getKeys()) {
-                KarmaElement tmpVal = idData.get(key);
+                Element<?> tmpVal = idData.get(key);
 
-                if (tmpVal.isString()) {
-                    String id = tmpVal.getObjet().getString();
-                    if (uuid.equals(id)) {
-                        result.complete(key);
+                if (tmpVal.isPrimitive()) {
+                    ElementPrimitive primitive = tmpVal.getAsPrimitive();
 
-                        response = true;
-                        break;
+                    if (primitive.isString()) {
+                        String id = primitive.asString();
+                        if (uuid.equals(id)) {
+                            result.complete(key);
+
+                            response = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -111,11 +114,14 @@ public final class ClientRanID {
      */
     @Nullable
     public static AccountID getAssigned(final String name) {
-        KarmaElement id = idData.get(name);
-        if (!StringUtils.isNullOrEmpty(id)) {
-            return AccountID.fromString(id.getObjet().getString());
-        } else {
-            return null;
+        Element<?> id = idData.get(name);
+        if (id.isPrimitive()) {
+            ElementPrimitive primitive = id.getAsPrimitive();
+            if (primitive.isString()) {
+                return AccountID.fromString(primitive.asString());
+            }
         }
+
+        return null;
     }
 }

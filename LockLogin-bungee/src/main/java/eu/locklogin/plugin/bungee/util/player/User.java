@@ -12,7 +12,6 @@ package eu.locklogin.plugin.bungee.util.player;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -28,10 +27,11 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.util.enums.Manager;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import ml.karmaconfigs.api.bungee.makeiteasy.BossMessage;
 import ml.karmaconfigs.api.bungee.makeiteasy.TitleMessage;
@@ -65,7 +65,7 @@ import static eu.locklogin.plugin.bungee.LockLogin.*;
 public final class User {
 
     private final static KarmaSource lockLogin = APISource.loadProvider("LockLogin");
-    private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
+    private final static Map<UUID, eu.locklogin.api.account.AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<ProxiedPlayer>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
@@ -85,7 +85,7 @@ public final class User {
         User loaded = UserDatabase.loadUser(player);
         if (loaded == null) {
             if (CurrentPlatform.isValidAccountManager()) {
-                AccountManager manager = CurrentPlatform.getAccountManager(Manager.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
+                eu.locklogin.api.account.AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
 
                 if (manager == null) {
                     throw new IllegalStateException("Cannot initialize user with a null player account manager");
@@ -184,7 +184,7 @@ public final class User {
      * @param player the player
      * @return the player account manager
      */
-    public static AccountManager getManager(final ProxiedPlayer player) {
+    public static eu.locklogin.api.account.AccountManager getManager(final ProxiedPlayer player) {
         return managers.get(player.getUniqueId());
     }
 
@@ -339,21 +339,18 @@ public final class User {
      * types
      */
     public synchronized void applySessionEffects() {
-        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                .insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT)
-                        .addProperty("player", player.getUniqueId())
-                        .addProperty("effects", true).getInstance().build());
+        Manager.sendFunction.apply(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
+                .addProperty("effects", true).getInstance(),
+                BungeeSender.serverFromPlayer(player));
     }
 
     /**
      * Restore the player potion effects
      */
     public synchronized void restorePotionEffects() {
-
-        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                .insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT)
-                        .addProperty("player", player.getUniqueId())
-                        .addProperty("effects", false).getInstance().build());
+        Manager.sendFunction.apply(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
+                .addProperty("effects", false).getInstance(),
+                BungeeSender.serverFromPlayer(player));
     }
 
     /**
@@ -428,7 +425,7 @@ public final class User {
      * @return the player account manager
      */
     @NotNull
-    public AccountManager getManager() {
+    public eu.locklogin.api.account.AccountManager getManager() {
         return managers.get(player.getUniqueId());
     }
 

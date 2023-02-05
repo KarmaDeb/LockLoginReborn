@@ -1,8 +1,8 @@
 package eu.locklogin.plugin.bungee.util.files.cache;
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 
 import java.util.UUID;
 
@@ -18,15 +18,18 @@ public final class TargetServerStorage {
     }
 
     public UUID load() {
-        KarmaElement element = storageFile.get(name);
-        if (element != null && element.isString()) {
-            return UUID.fromString(element.getObjet().getString());
+        Element<?> element = storageFile.get(name);
+        if (element.isPrimitive()) {
+            ElementPrimitive primitive = element.getAsPrimitive();
+            if (primitive.isString()) {
+                return UUID.fromString(primitive.asString());
+            }
         }
 
         return null;
     }
 
     public void save(final UUID id) {
-        storageFile.set(name, new KarmaObject(id.toString()));
+        storageFile.setRaw(name, id.toString());
     }
 }

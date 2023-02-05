@@ -1,9 +1,12 @@
 package eu.locklogin.api.file;
 
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.file.pack.Alias;
 import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
+import eu.locklogin.api.security.PasswordAttribute;
+import eu.locklogin.api.util.enums.CheckType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
@@ -457,6 +460,12 @@ public abstract class PluginMessages {
         return parse(str);
     }
 
+    public String passwordWarning() {
+        String str = msg.getString("PasswordWarning", "&5&oThe client {player} is using an unsafe password");
+
+        return parse(str);
+    }
+
     /**
      * Get a plugin message
      *
@@ -670,6 +679,98 @@ public abstract class PluginMessages {
         }
 
         return parse(str.replace("{time}", format));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param type message type
+     * @param result message argument
+     * @return plugin message
+     */
+    public String checkSuccess(final CheckType type, final PasswordAttribute result) {
+        String str = "";
+        switch (type) {
+            case UNIQUE:
+                str = msg.getString("Password.Success.Unique", "&e- &aYour password is mostly unique");
+                break;
+            case LENGTH:
+                str = msg.getString("Password.Success.Length", "&e- &aYour password has at least {min_length} characters");
+                break;
+            case SPECIAL:
+                str = msg.getString("Password.Success.Special", "&e- &aYour password has at least {min_special} special characters");
+                break;
+            case NUMBER:
+                str = msg.getString("Password.Success.Numbers", "&e- &aYour password has at least {min_number} numbers");
+                break;
+            case LOWER:
+                str = msg.getString("Password.Success.Uppers", "&e- &aYour password has at least {min_lower} lowercase characters");
+                break;
+            case UPPER:
+                str = msg.getString("Password.Success.Lowers", "&e- &aYour password has at least {min_upper} uppercase characters");
+                break;
+        }
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        PasswordConfig passwordConfig = config.passwordConfig();
+
+        return parse(str
+                .replace("{min_length}", String.valueOf(passwordConfig.min_length()))
+                .replace("{min_special}", String.valueOf(passwordConfig.min_characters()))
+                .replace("{min_number}", String.valueOf(passwordConfig.min_numbers()))
+                .replace("{min_lower}", String.valueOf(passwordConfig.min_lower()))
+                .replace("{min_upper}", String.valueOf(passwordConfig.min_upper()))
+                .replace("{length}", String.valueOf(result.getLength()))
+                .replace("{special}", String.valueOf(result.getSpecialCharacters()))
+                .replace("{number}", String.valueOf(result.getNumbers()))
+                .replace("{lower}", String.valueOf(result.getLowerCase()))
+                .replace("{upper}", String.valueOf(result.getUpperCase())));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param type message type
+     * @param result message argument
+     * @return plugin message
+     */
+    public String checkFailed(final CheckType type, final PasswordAttribute result) {
+        String str = "";
+        switch (type) {
+            case UNIQUE:
+                str = msg.getString("Password.Failed.Unique", "&e- &cYour password is similar to known ones");
+                break;
+            case LENGTH:
+                str = msg.getString("Password.Failed.Length", "&e- &cYour password has {length} of {min_length} characters");
+                break;
+            case SPECIAL:
+                str = msg.getString("Password.Failed.Special", "&e- &cYour password has {special} of {min_special} characters");
+                break;
+            case NUMBER:
+                str = msg.getString("Password.Failed.Numbers", "&e- &cYour password has {number} of {min_number} numbers");
+                break;
+            case LOWER:
+                str = msg.getString("Password.Failed.Uppers", "&e- &cYour password has {lower} of {min_lower} lowercase characters");
+                break;
+            case UPPER:
+                str = msg.getString("Password.Failed.Lowers", "&e- &cYour password has {upper} of {min_upper} uppercase characters");
+                break;
+        }
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        PasswordConfig passwordConfig = config.passwordConfig();
+
+        return parse(str
+                .replace("{min_length}", String.valueOf(passwordConfig.min_length()))
+                .replace("{min_special}", String.valueOf(passwordConfig.min_characters()))
+                .replace("{min_number}", String.valueOf(passwordConfig.min_numbers()))
+                .replace("{min_lower}", String.valueOf(passwordConfig.min_lower()))
+                .replace("{min_upper}", String.valueOf(passwordConfig.min_upper()))
+                .replace("{length}", String.valueOf(result.getLength()))
+                .replace("{special}", String.valueOf(result.getSpecialCharacters()))
+                .replace("{number}", String.valueOf(result.getNumbers()))
+                .replace("{lower}", String.valueOf(result.getLowerCase()))
+                .replace("{upper}", String.valueOf(result.getUpperCase())));
     }
 
     /**
@@ -1624,6 +1725,16 @@ public abstract class PluginMessages {
      */
     public String ipProxyError() {
         List<String> messages = msg.getStringList("IpProxyError");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages)
+            builder.append(str).append("\n");
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    public String bedrockJava() {
+        List<String> messages = msg.getStringList("BedrockJavaError");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)

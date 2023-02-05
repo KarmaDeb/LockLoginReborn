@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.security;
+package eu.locklogin.api.security;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -69,7 +69,7 @@ public final class Password {
      *
      * @param insecurities the insecure passwords
      */
-    public final void addInsecure(final String... insecurities) {
+    public void addInsecure(final String... insecurities) {
         insecure.addAll(Arrays.asList(insecurities));
     }
 
@@ -79,7 +79,7 @@ public final class Password {
      *
      * @param insecurities the insecure passwords
      */
-    public final void addInsecure(final Set<String> insecurities) {
+    public void addInsecure(final Set<String> insecurities) {
         insecure.addAll(insecurities);
     }
 
@@ -89,7 +89,7 @@ public final class Password {
      *
      * @param insecurities the insecure passwords
      */
-    public final void addInsecure(final List<String> insecurities) {
+    public void addInsecure(final List<String> insecurities) {
         insecure.addAll(insecurities);
     }
 
@@ -99,7 +99,7 @@ public final class Password {
      *
      * @return if the password is secure
      */
-    public final boolean isSecure() {
+    public boolean isSecure() {
         if (password.length() >= 4)
             return insecure.stream().noneMatch(password::contains);
 

@@ -77,6 +77,23 @@ LoginOut: "&5&oYou took too much time to log-in"
 LoginTitle: "&7You have"
 LoginSubtitle: "&b{time} &7to login"
 
+#Unsafe password messages
+Password:
+  Success:
+    Unique: "&e- &aYour password is mostly unique"
+    Length: "&e- &aYour password has at least {min_length} characters"
+    Special: "&e- &aYour password has at least {min_special} special characters"
+    Numbers: "&e- &aYour password has at least {min_number} numbers"
+    Uppers: "&e- &aYour password has at least {min_lower} lowercase characters"
+    Lowers: "&e- &aYour password has at least {min_upper} uppercase characters"
+  Failed:
+    Unique: "&e- &cYour password is similar to known ones"
+    Length: "&e- &cYour password has {length} of {min_length} characters"
+    Special: "&e- &cYour password has {special} of {min_special} characters"
+    Numbers: "&e- &cYour password has {number} of {min_number} numbers"
+    Uppers: "&e- &cYour password has {lower} of {min_lower} lowercase characters"
+    Lowers: "&e- &cYour password has {upper} of {min_upper} uppercase characters"
+
 #Session messages - Pin
 PinUsages: "&5&oValid pin sub-arguments: &e<setup>&7, &e<remove>&7, &e<change>"
 PinSet: "&dYour pin has been set successfully"
@@ -235,5 +252,13 @@ IpProxyError:
   - "{ServerName}"
   - ""
   - "&5Your IP address seems a bit suspicious"
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"
+BedrockJavaError:
+  - "{ServerName}"
+  - ""
+  - "&5It seems that your bedrock account is already"
+  - "&5registered by a java account or vice-versa."
+  - ""
   - "&5If you think this is an error, please contact"
   - "&5the staff at: &7https://discordexample.gg"

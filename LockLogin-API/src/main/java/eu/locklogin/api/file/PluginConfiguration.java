@@ -24,6 +24,13 @@ public abstract class PluginConfiguration {
     public abstract String serverName();
 
     /**
+     * Get if bedrock players login automatically
+     *
+     * @return if bedrock players log in automatically
+     */
+    public abstract boolean bedrockLogin();
+
+    /**
      * Get if the plugin share statistics with bStats
      *
      * @return if the plugin will share his statistics
@@ -56,6 +63,13 @@ public abstract class PluginConfiguration {
      * @return the panel server key
      */
     public abstract String serverKey();
+
+    /**
+     * Get the communication key
+     *
+     * @return the communication key
+     */
+    public abstract String comKey();
 
     /**
      * Get the registration options
@@ -150,14 +164,18 @@ public abstract class PluginConfiguration {
     public abstract boolean useVirtualID();
 
     /**
-     * Get if the plugin should block the player
-     * login/register when he has an invalid password.
-     * <p>
-     * Forcing him to change it until it's safe
+     * Get the permission configuration
      *
-     * @return if the plugin should block unsafe passwords
+     * @return the permission configuration
      */
-    public abstract boolean blockUnsafePasswords();
+    public abstract PermissionConfig permissionConfig();
+
+    /**
+     * Get the password configuration
+     *
+     * @return the password configuration
+     */
+    public abstract PasswordConfig passwordConfig();
 
     /**
      * Get anti-brute force system options

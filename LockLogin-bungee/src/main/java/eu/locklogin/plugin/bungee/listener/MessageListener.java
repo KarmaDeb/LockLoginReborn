@@ -36,9 +36,12 @@ import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.com.BungeeDataSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -51,6 +54,7 @@ import net.md_5.bungee.event.EventPriority;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -77,7 +81,10 @@ public final class MessageListener implements Listener {
 
                     boolean canRead = true;
                     if (!e.getTag().equalsIgnoreCase("ll:access")) {
-                        canRead = /*TokenGen.matches(token, name, proxy.proxyKey())*/ BungeeDataSender.validate(token);
+                        KarmaMain main = new KarmaMain(Objects.requireNonNull(Main.class.getResourceAsStream("/license.dat")));
+                        String com = main.get("key").getAsString();
+
+                        canRead = token.equals(com);
                     }
 
                     if (canRead) {
@@ -111,23 +118,21 @@ public final class MessageListener implements Listener {
                                                         } else {
                                                             session.set2FALogged(true);
 
-                                                            BungeeSender.sender.queue(server.getInfo().getName())
-                                                                            .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                                                    .addProperty("player", player.getUniqueId()).getInstance().build());
+                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                    .getInstance(),
+                                                                    server.getInfo());
 
                                                             user.checkServer(0);
                                                         }
 
-                                                        BungeeSender.sender.queue(server.getInfo().getName())
-                                                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                                        .addProperty("player", player.getUniqueId())
-                                                                        .addProperty("pin", false).getInstance().build());
+                                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                .addProperty("pin", false).getInstance(),
+                                                                server.getInfo());
                                                     } else {
                                                         if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                                            BungeeSender.sender.queue(server.getInfo().getName())
-                                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                                            .addProperty("player", player.getUniqueId())
-                                                                            .addProperty("pin", false).getInstance().build());
+                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                    .addProperty("pin", false).getInstance(),
+                                                                    server.getInfo());
 
                                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                                     UserAuthenticateEvent.Result.ERROR,
@@ -142,9 +147,8 @@ public final class MessageListener implements Listener {
                                                             } else {
                                                                 session.set2FALogged(true);
 
-                                                                BungeeSender.sender.queue(server.getInfo().getName())
-                                                                        .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                                                .addProperty("player", player.getUniqueId()).getInstance().build());
+                                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                        .getInstance(), server.getInfo());
 
                                                                 user.checkServer(0);
                                                             }
@@ -219,11 +223,21 @@ public final class MessageListener implements Listener {
                                         stored_set.add(target_server);
 
                                         if (ServerDataStorage.needsProxyKnowledge(name)) {
-                                            BungeeSender.sender.queue(name).unlock();
+                                            Manager.unlockFunction.apply(name);
+                                            if (BungeeSender.useSocket) {
+                                                Manager.unlockSecondaryFunction.apply(name);
+                                            }
+
                                             BungeeSender.registered_servers++;
 
                                             console.send("Registered proxy key into server {0}", Level.INFO, name);
                                             ServerDataStorage.setProxyRegistered(name);
+                                            BungeeSender.forceBungee(server.getInfo());
+                                        } else {
+                                            if (json.get("socket").getAsBoolean() && BungeeSender.useSocket) {
+                                                BungeeSender.useProxy(server.getInfo());
+                                                console.send("Server {0} is now using web service communication", Level.INFO, name);
+                                            }
                                         }
                                     }
                                 }

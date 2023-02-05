@@ -26,7 +26,6 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import io.socket.client.Ack;
 import io.socket.client.Socket;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
@@ -43,7 +42,6 @@ public final class BungeeSender {
      * @param sub       the proxy sub channel
      */
     public static void sendProxyStatus(final String sub) {
-        System.out.println("Sending status");
         JsonObject json = new JsonObject();
         Gson gson = new GsonBuilder().create();
 
@@ -93,7 +91,7 @@ public final class BungeeSender {
      *
      * @param player the player that has been validated
      */
-    public static void validatePlayer(final Player player, final String f) {
+    public static void validatePlayer(final Player player) {
         JsonObject json = new JsonObject();
         Gson gson = new GsonBuilder().create();
 
@@ -104,25 +102,26 @@ public final class BungeeSender {
         json.addProperty("server", storager.getServerName());
         json.addProperty("data_type", DataType.JOIN.name());
         json.addProperty("player", player.getUniqueId().toString());
-        if (BungeeReceiver.usesSocket) {
+        /*if (BungeeReceiver.usesSocket) {
             json.addProperty("for", f);
-        }
+        }*/
         output.writeUTF(gson.toJson(json));
 
         if (BungeeReceiver.usesSocket) {
             SocketClient socket = BungeeReceiver.client;
             Socket client = socket.client();
 
-            client.emit("ll:account", json, (Ack) (response) -> {
+            /*client.emit("ll:account", json, (Ack) (response) -> {
                 JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
                 if (!r.get("success").getAsBoolean()) {
-                    validatePlayer(player, f);
+                    validatePlayer(player);
                 } else {
                     User user = new User(player);
                     UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), storager.getServerName(), null);
                     ModulePlugin.callEvent(event);
                 }
-            });
+            });*/
+            client.emit("out", json);
         } else {
             plugin.getServer().sendPluginMessage(plugin, "ll:account", output.toByteArray());
 
@@ -175,12 +174,14 @@ public final class BungeeSender {
             SocketClient socket = BungeeReceiver.client;
             Socket client = socket.client();
 
-            client.emit("ll:account", json, (Ack) (response) -> {
+            /*client.emit("ll:account", json, (Ack) (response) -> {
                 JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
                 if (!r.get("success").getAsBoolean()) {
                     sendPinInput(player, pin, f);
                 }
-            });
+            });*/
+
+            client.emit("out", json);
         } else {
             plugin.getServer().sendPluginMessage(plugin, "ll:account", output.toByteArray());
         }
@@ -225,12 +226,14 @@ public final class BungeeSender {
             SocketClient socket = BungeeReceiver.client;
             Socket client = socket.client();
 
-            client.emit("ll:plugin", json, (Ack) (response) -> {
+            /*client.emit("ll:plugin", json, (Ack) (response) -> {
                 JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
                 if (!r.get("success").getAsBoolean()) {
                     sendPlayerInstance(player, id);
                 }
-            });
+            });*/
+
+            client.emit("out", json);
         } else {
             plugin.getServer().sendPluginMessage(plugin, "ll:plugin", output.toByteArray());
         }

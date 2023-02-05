@@ -7,9 +7,10 @@ import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaKeyArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaMap;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.DyeColor;
@@ -45,27 +46,27 @@ public class Button {
     static {
         translation = new KarmaMain(plugin, "pin.kf").internal(PinInventory.class.getResourceAsStream("/templates/pin.kf"));
 
-        try {
+        /*try {
             translation.validate();
         } catch (Throwable ex) {
             plugin.logger().scheduleLog(Level.GRAVE, ex);
             plugin.logger().scheduleLog(Level.INFO, "Failed to validate pin translation file");
 
             plugin.console().send("Failed to validate pin translation file, default values may be used", Level.WARNING);
-        }
+        }*/
     }
 
     public static void reload() {
         translation = new KarmaMain(plugin, "pin.kf").internal(PinInventory.class.getResourceAsStream("/templates/pin.kf"));
 
-        try {
+        /*try {
             translation.validate();
         } catch (Throwable ex) {
             plugin.logger().scheduleLog(Level.GRAVE, ex);
             plugin.logger().scheduleLog(Level.INFO, "Failed to validate pin translation file");
 
             plugin.console().send("Failed to validate pin translation file, default values may be used", Level.WARNING);
-        }
+        }*/
 
         translation.clearCache();
         translation.preCache();
@@ -130,7 +131,7 @@ public class Button {
             ItemStack stack = getRandomItemStack();
 
             ItemMeta stackMeta;
-            if (BukkitServer.isOver(Version.v1_7_10)) {
+            if (BukkitServer.isOver(Version.v1_8)) {
                 try {
                     stack = getSkull(getNumberProperties(number));
                 } catch (Throwable ignore) {
@@ -143,35 +144,36 @@ public class Button {
                 stackMeta = stack.getItemMeta();
             }
 
+            KarmaMap def = new KarmaMap();
+            def.put("0", "&b0");
+            def.put("1", "&b1");
+            def.put("2", "&b2");
+            def.put("3", "&b3");
+            def.put("4", "&b4");
+            def.put("5", "&b5");
+            def.put("6", "&b6");
+            def.put("7", "&b7");
+            def.put("8", "&b8");
+            def.put("9", "&b9");
 
-            KarmaKeyArray def = new KarmaKeyArray();
-            def.add("0", new KarmaObject("&b0"), false);
-            def.add("1", new KarmaObject("&b1"), false);
-            def.add("2", new KarmaObject("&b2"), false);
-            def.add("3", new KarmaObject("&b3"), false);
-            def.add("4", new KarmaObject("&b4"), false);
-            def.add("5", new KarmaObject("&b5"), false);
-            def.add("6", new KarmaObject("&b6"), false);
-            def.add("7", new KarmaObject("&b7"), false);
-            def.add("8", new KarmaObject("&b8"), false);
-            def.add("9", new KarmaObject("&b9"), false);
-
-            KarmaElement e = translation.get("numbers");
-            if (e == null || !e.isKeyArray()) {
+            Element<?> e = translation.get("numbers");
+            if (!e.isMap()) {
                 e = def;
             }
-            KarmaKeyArray k = (KarmaKeyArray) e;
+            KarmaMap k = (KarmaMap) e;
 
-            KarmaObject n;
+            ElementPrimitive n;
             if (!k.containsKey(String.valueOf(number)) || !k.get(String.valueOf(number)).isString()) {
-                n = new KarmaObject("&b" + number);
+                n = new KarmaPrimitive("&b" + number);
             } else {
-                n = k.get(String.valueOf(number)).getObjet();
+                n = k.get(String.valueOf(number));
             }
             assert stackMeta != null;
 
-            stackMeta.setDisplayName(StringUtils.toColor(n.getObjet().getString()));
-            stack.setItemMeta(stackMeta);
+            if (n.isString()) {
+                stackMeta.setDisplayName(StringUtils.toColor(n.asString()));
+                stack.setItemMeta(stackMeta);
+            }
 
             numbers.put(number, stack);
         }
@@ -193,12 +195,12 @@ public class Button {
         ItemMeta stackMeta = stack.getItemMeta();
         assert stackMeta != null;
 
-        KarmaElement confirm = translation.get("confirm");
-        if (confirm == null || !confirm.isString()) {
-            confirm = new KarmaObject("&aConfirm");
+        Element<?> confirm = translation.get("confirm");
+        if (!confirm.isPrimitive() || !confirm.getAsPrimitive().isString()) {
+            confirm = new KarmaPrimitive("&aConfirm");
         }
 
-        stackMeta.setDisplayName(StringUtils.toColor(confirm.getObjet().getString()));
+        stackMeta.setDisplayName(StringUtils.toColor(confirm.getAsString()));
 
         stack.setItemMeta(stackMeta);
 
@@ -219,12 +221,12 @@ public class Button {
         ItemMeta stackMeta = stack.getItemMeta();
         assert stackMeta != null;
 
-        KarmaElement erase = translation.get("erase");
-        if (erase == null || !erase.isString()) {
-            erase = new KarmaObject("&7Erase");
+        Element<?> erase = translation.get("erase");
+        if (!erase.isPrimitive() || !erase.getAsPrimitive().isString()) {
+            erase = new KarmaPrimitive("&7Erase");
         }
 
-        stackMeta.setDisplayName(StringUtils.toColor(erase.getObjet().getString()));
+        stackMeta.setDisplayName(StringUtils.toColor(erase.getAsString()));
 
         stack.setItemMeta(stackMeta);
 

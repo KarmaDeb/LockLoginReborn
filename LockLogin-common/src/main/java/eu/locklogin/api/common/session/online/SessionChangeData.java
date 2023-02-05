@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.session;
+package eu.locklogin.api.common.session.online;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE
@@ -41,7 +41,7 @@ public final class SessionChangeData {
      *
      * @return the data type
      */
-    public final DataType getDataType() {
+    public DataType getDataType() {
         return type;
     }
 
@@ -50,7 +50,7 @@ public final class SessionChangeData {
      *
      * @return the change type
      */
-    public final DataChange getChangeType() {
+    public DataChange getChangeType() {
         return change;
     }
 
@@ -59,7 +59,7 @@ public final class SessionChangeData {
      *
      * @return the changed size
      */
-    public final int getSize() {
+    public int getSize() {
         return amount;
     }
 

@@ -15,7 +15,8 @@ package eu.locklogin.api.common.security;
  */
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 
@@ -41,10 +42,12 @@ public final class AllowedCommand {
         if (!allowedFile.exists())
             allowedFile.exportDefaults();
 
-        KarmaElement a = allowedFile.get("allowed");
-
-        if (a != null && a.isArray()) {
-            a.getArray().forEach((entry) -> allowed.add(entry.getObjet().textValue()));
+        Element<?> a = allowedFile.get("allowed");
+        if (a.isArray()) {
+            KarmaArray array = (KarmaArray) a.getAsArray();
+            array.forEach((entry) -> {
+                if (entry.isString()) allowed.add(entry.asString());
+            });
         }
     }
 

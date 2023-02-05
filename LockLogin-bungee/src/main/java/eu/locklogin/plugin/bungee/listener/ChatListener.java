@@ -31,7 +31,7 @@ import static eu.locklogin.plugin.bungee.LockLogin.properties;
 public final class ChatListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public final void onChat(ChatEvent e) {
+    public void onChat(ChatEvent e) {
         if (e.getMessage().startsWith("/")) {
             parseCommand(e);
         } else {

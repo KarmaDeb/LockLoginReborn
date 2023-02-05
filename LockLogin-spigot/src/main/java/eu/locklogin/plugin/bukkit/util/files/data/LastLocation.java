@@ -15,9 +15,8 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
-import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -73,27 +72,37 @@ public final class LastLocation {
                     //I didn't think I would need this when I made it
                     //I was wrong...
                     if (FileUtilities.isKarmaFile(file)) {
-                        KarmaMain database = new KarmaMain(plugin, file.toPath());
+                        KarmaMain database = new KarmaMain(file.toPath());
 
-                        KarmaElement x_string = database.get("y", null);
-                        KarmaElement y_string = database.get("x", null);
-                        KarmaElement z_string = database.get("z", null);
-                        KarmaElement pitch_string = database.get("pitch", null);
-                        KarmaElement yaw_string = database.get("yaw", null);
-                        KarmaElement world_string = database.get("world", null);
+                        Element<?> x_string = database.get("y");
+                        Element<?> y_string = database.get("x");
+                        Element<?> z_string = database.get("z");
+                        Element<?> pitch_string = database.get("pitch");
+                        Element<?> yaw_string = database.get("yaw");
+                        Element<?> world_string = database.get("world");
 
-                        if (StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
+                        if (!x_string.isPrimitive() && !y_string.isPrimitive() && !z_string.isPrimitive() && !pitch_string.isPrimitive() && !yaw_string.isPrimitive() && !world_string.isPrimitive())
+                            return;
+
+                        ElementPrimitive x_primitive = x_string.getAsPrimitive();
+                        ElementPrimitive y_primitive = y_string.getAsPrimitive();
+                        ElementPrimitive z_primitive = z_string.getAsPrimitive();
+                        ElementPrimitive yaw_primitive = yaw_string.getAsPrimitive();
+                        ElementPrimitive pitch_primitive = pitch_string.getAsPrimitive();
+                        ElementPrimitive world_primitive = world_string.getAsPrimitive();
+
+                        if (!x_primitive.isNumber() && !y_primitive.isNumber() && z_primitive.isNumber() && !yaw_primitive.isNumber() && pitch_primitive.isNumber() && !world_primitive.isString())
                             return;
 
                         try {
-                            double x = x_string.getObjet().getNumber().doubleValue();
-                            double y = y_string.getObjet().getNumber().doubleValue();
-                            double z = z_string.getObjet().getNumber().doubleValue();
+                            double x = x_primitive.asDouble();
+                            double y = y_primitive.asDouble();
+                            double z = z_primitive.asDouble();
 
-                            float pitch = pitch_string.getObjet().getNumber().floatValue();
-                            float yaw = yaw_string.getObjet().getNumber().floatValue();
+                            float pitch = pitch_primitive.asFloat();
+                            float yaw = yaw_primitive.asFloat();
 
-                            World world = plugin.getServer().getWorld(world_string.getObjet().getString());
+                            World world = plugin.getServer().getWorld(world_primitive.asString());
 
                             if (world != null && x != Double.MIN_VALUE && y != Double.MIN_VALUE && z != Double.MIN_VALUE && pitch != Float.MIN_VALUE && yaw != Float.MIN_VALUE) {
                                 Location last_location = new Location(world, x, y, z);
@@ -107,19 +116,19 @@ public final class LastLocation {
                                 if (blockNotSafe(legs) || blockNotSafe(feet) || blockNotSafe(torso) || isSuffocating(legs, torso)) {
                                     Location highest = world.getHighestBlockAt(last_location).getLocation().add(0D, 1D, 0D);
 
-                                    database.set("x", new KarmaObject(highest.getX()));
-                                    database.set("y", new KarmaObject(highest.getY()));
-                                    database.set("z", new KarmaObject(highest.getZ()));
+                                    database.setRaw("x", highest.getX());
+                                    database.setRaw("y", highest.getY());
+                                    database.setRaw("z", highest.getZ());
 
                                     database.save();
                                 }
                             } else {
-                                database.set("x", new KarmaObject(Double.MIN_VALUE));
-                                database.set("y", new KarmaObject(Double.MIN_VALUE));
-                                database.set("z", new KarmaObject(Double.MIN_VALUE));
-                                database.set("pitch", new KarmaObject(Float.MIN_VALUE));
-                                database.set("yaw", new KarmaObject(Float.MIN_VALUE));
-                                database.set("world", new KarmaObject(""));
+                                database.setRaw("x", 0d);
+                                database.setRaw("y", -64d);
+                                database.setRaw("z", 0d);
+                                database.setRaw("pitch", 180f);
+                                database.setRaw("yaw", 180f);
+                                database.setRaw("world", "");
 
                                 database.save();
                             }
@@ -146,15 +155,15 @@ public final class LastLocation {
                     //I didn't thought I would need this when I made it
                     //I was wrong...
                     if (FileUtilities.isKarmaFile(file)) {
-                        KarmaMain database = new KarmaMain(plugin, file.toPath());
+                        KarmaMain database = new KarmaMain(file.toPath());
 
-                        database.set("x", new KarmaObject(Double.MIN_VALUE));
-                        database.set("y", new KarmaObject(Double.MIN_VALUE));
-                        database.set("z", new KarmaObject(Double.MIN_VALUE));
-                        database.set("pitch", new KarmaObject(Float.MIN_VALUE));
-                        database.set("yaw", new KarmaObject(Float.MIN_VALUE));
-                        database.set("world", new KarmaObject(""));
-                        database.set("falling", new KarmaObject(Float.MIN_VALUE));
+                        database.setRaw("x", 0d);
+                        database.setRaw("y", -64d);
+                        database.setRaw("z", 0d);
+                        database.setRaw("pitch", 180f);
+                        database.setRaw("yaw", 180f);
+                        database.setRaw("world", "");
+                        database.setRaw("falling", 0f);
 
                         database.save();
                     }
@@ -199,13 +208,13 @@ public final class LastLocation {
             Location location = player.getLocation();
             assert location.getWorld() != null;
 
-            file.set("X", new KarmaObject(location.getX()));
-            file.set("Y", new KarmaObject(location.getY()));
-            file.set("Z", new KarmaObject(location.getZ()));
-            file.set("PITCH", new KarmaObject(location.getPitch()));
-            file.set("YAW", new KarmaObject(location.getYaw()));
-            file.set("WORLD", new KarmaObject(location.getWorld().getName()));
-            file.set("FALLING", new KarmaObject(player.getFallDistance()));
+            file.setRaw("x", location.getX());
+            file.setRaw("y", location.getY());
+            file.setRaw("z", location.getZ());
+            file.setRaw("pitch", location.getPitch());
+            file.setRaw("yaw", location.getYaw());
+            file.setRaw("world", location.getWorld().getName());
+            file.setRaw("falling", player.getFallDistance());
 
             file.save();
         }
@@ -218,13 +227,13 @@ public final class LastLocation {
     @SuppressWarnings("unused")
     public void saveAt(final Location location) {
         if (location != null && location.getWorld() != null) {
-            file.set("X", new KarmaObject(location.getX()));
-            file.set("Y", new KarmaObject(location.getY()));
-            file.set("Z", new KarmaObject(location.getZ()));
-            file.set("PITCH", new KarmaObject(location.getPitch()));
-            file.set("YAW", new KarmaObject(location.getYaw()));
-            file.set("WORLD", new KarmaObject(location.getWorld().getName()));
-            file.set("FALLING", new KarmaObject(0f));
+            file.setRaw("x", location.getX());
+            file.setRaw("y", location.getY());
+            file.setRaw("z", location.getZ());
+            file.setRaw("pitch", location.getPitch());
+            file.setRaw("yaw", location.getYaw());
+            file.setRaw("world", location.getWorld().getName());
+            file.setRaw("falling", 0f);
 
             file.save();
         }
@@ -234,25 +243,35 @@ public final class LastLocation {
      * Fix the player location
      */
     public void fix() {
-        KarmaElement x_string = file.get("X", null);
-        KarmaElement y_string = file.get("Y", null);
-        KarmaElement z_string = file.get("Z", null);
-        KarmaElement pitch_string = file.get("PITCH", null);
-        KarmaElement yaw_string = file.get("YAW", null);
-        KarmaElement world_string = file.get("WORLD", null);
+        Element<?> x_string = file.get("y");
+        Element<?> y_string = file.get("x");
+        Element<?> z_string = file.get("z");
+        Element<?> pitch_string = file.get("pitch");
+        Element<?> yaw_string = file.get("yaw");
+        Element<?> world_string = file.get("world");
 
-        if (StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string))
+        if (!x_string.isPrimitive() && !y_string.isPrimitive() && !z_string.isPrimitive() && !pitch_string.isPrimitive() && !yaw_string.isPrimitive() && !world_string.isPrimitive())
+            return;
+
+        ElementPrimitive x_primitive = x_string.getAsPrimitive();
+        ElementPrimitive y_primitive = y_string.getAsPrimitive();
+        ElementPrimitive z_primitive = z_string.getAsPrimitive();
+        ElementPrimitive yaw_primitive = yaw_string.getAsPrimitive();
+        ElementPrimitive pitch_primitive = pitch_string.getAsPrimitive();
+        ElementPrimitive world_primitive = world_string.getAsPrimitive();
+
+        if (!x_primitive.isNumber() && !y_primitive.isNumber() && z_primitive.isNumber() && !yaw_primitive.isNumber() && pitch_primitive.isNumber() && !world_primitive.isString())
             return;
 
         try {
-            double x = x_string.getObjet().getNumber().doubleValue();
-            double y = y_string.getObjet().getNumber().doubleValue();
-            double z = z_string.getObjet().getNumber().doubleValue();
+            double x = x_primitive.asDouble();
+            double y = y_primitive.asDouble();
+            double z = z_primitive.asDouble();
 
-            float pitch = pitch_string.getObjet().getNumber().floatValue();
-            float yaw = yaw_string.getObjet().getNumber().floatValue();
+            float pitch = pitch_primitive.asFloat();
+            float yaw = yaw_primitive.asFloat();
 
-            World world = plugin.getServer().getWorld(world_string.getObjet().getString());
+            World world = plugin.getServer().getWorld(world_primitive.asString());
 
             if (world != null && x != Double.MIN_VALUE && y != Double.MIN_VALUE && z != Double.MIN_VALUE && pitch != Float.MIN_VALUE && yaw != Float.MIN_VALUE) {
                 Location last_location = new Location(world, x, y, z);
@@ -266,19 +285,19 @@ public final class LastLocation {
                 if (blockNotSafe(legs) || blockNotSafe(feet) || blockNotSafe(torso) || isSuffocating(legs, torso)) {
                     Location highest = world.getHighestBlockAt(last_location).getLocation().add(0D, 1D, 0D);
 
-                    file.set("X", new KarmaObject(highest.getX()));
-                    file.set("Y", new KarmaObject(highest.getY()));
-                    file.set("Z", new KarmaObject(highest.getZ()));
+                    file.setRaw("x", highest.getX());
+                    file.setRaw("y", highest.getY());
+                    file.setRaw("z", highest.getZ());
 
                     file.save();
                 }
             } else {
-                file.set("X", new KarmaObject(Double.MIN_VALUE));
-                file.set("Y", new KarmaObject(Double.MIN_VALUE));
-                file.set("Z", new KarmaObject(Double.MIN_VALUE));
-                file.set("PITCH", new KarmaObject(Float.MIN_VALUE));
-                file.set("YAW", new KarmaObject(Float.MIN_VALUE));
-                file.set("WORLD", new KarmaObject(""));
+                file.setRaw("x", 0d);
+                file.setRaw("y", -64d);
+                file.setRaw("z", 0d);
+                file.setRaw("pitch", 180f);
+                file.setRaw("yaw", 180f);
+                file.setRaw("world", "");
 
                 file.save();
             }
@@ -290,13 +309,13 @@ public final class LastLocation {
      * Remove the player last location
      */
     public void remove() {
-        file.set("X", new KarmaObject(Double.MIN_VALUE));
-        file.set("Y", new KarmaObject(Double.MIN_VALUE));
-        file.set("Z", new KarmaObject(Double.MIN_VALUE));
-        file.set("PITCH", new KarmaObject(Float.MIN_VALUE));
-        file.set("YAW", new KarmaObject(Float.MIN_VALUE));
-        file.set("WORLD", new KarmaObject(""));
-        file.set("FALLING", new KarmaObject(Float.MIN_VALUE));
+        file.setRaw("x", 0d);
+        file.setRaw("y", -64d);
+        file.setRaw("z", 0d);
+        file.setRaw("pitch", 180f);
+        file.setRaw("yaw", 180f);
+        file.setRaw("world", "");
+        file.setRaw("falling", 0f);
 
         file.save();
     }
@@ -306,32 +325,39 @@ public final class LastLocation {
      */
     public void teleport() {
         if (player != null) {
-            KarmaElement x_string = file.get("X", null);
-            KarmaElement y_string = file.get("Y", null);
-            KarmaElement z_string = file.get("Z", null);
-            KarmaElement pitch_string = file.get("PITCH", null);
-            KarmaElement yaw_string = file.get("YAW", null);
-            KarmaElement world_string = file.get("WORLD", null);
-            KarmaElement fall_string = file.get("FALLING", null);
+            Element<?> x_string = file.get("x");
+            Element<?> y_string = file.get("y");
+            Element<?> z_string = file.get("z");
+            Element<?> pitch_string = file.get("pitch");
+            Element<?> yaw_string = file.get("yaw");
+            Element<?> world_string = file.get("world");
+            Element<?> fall_string = file.get("falling");
 
-            if (StringUtils.areNullOrEmpty(x_string, y_string, z_string, pitch_string, yaw_string, world_string, fall_string))
+            if (!x_string.isPrimitive() && !y_string.isPrimitive() && !z_string.isPrimitive() && !pitch_string.isPrimitive() && !yaw_string.isPrimitive() && !world_string.isPrimitive())
+                return;
+
+            ElementPrimitive x_primitive = x_string.getAsPrimitive();
+            ElementPrimitive y_primitive = y_string.getAsPrimitive();
+            ElementPrimitive z_primitive = z_string.getAsPrimitive();
+            ElementPrimitive yaw_primitive = yaw_string.getAsPrimitive();
+            ElementPrimitive pitch_primitive = pitch_string.getAsPrimitive();
+            ElementPrimitive world_primitive = world_string.getAsPrimitive();
+            ElementPrimitive fall_primitive = fall_string.getAsPrimitive();
+
+            if (!x_primitive.isNumber() && !y_primitive.isNumber() && z_primitive.isNumber() && !yaw_primitive.isNumber() && pitch_primitive.isNumber() && !world_primitive.isString() && !fall_primitive.isNumber())
                 return;
 
             try {
-                double x = x_string.getObjet().getNumber().doubleValue();
-                double y = y_string.getObjet().getNumber().doubleValue();
-                double z = z_string.getObjet().getNumber().doubleValue();
+                double x = x_primitive.asDouble();
+                double y = y_primitive.asDouble();
+                double z = z_primitive.asDouble();
 
-                float pitch = pitch_string.getObjet().getNumber().floatValue();
-                float yaw = yaw_string.getObjet().getNumber().floatValue();
+                float pitch = pitch_primitive.asFloat();
+                float yaw = yaw_primitive.asFloat();
 
-                float f_dist = fall_string.getObjet().getNumber().floatValue();
-                if (f_dist == Float.MIN_VALUE)
-                    f_dist = 0;
+                World world = plugin.getServer().getWorld(world_primitive.asString());
+                float fall_distance = fall_primitive.asFloat();
 
-                World world = plugin.getServer().getWorld(world_string.getObjet().getString());
-
-                float fall_distance = f_dist;
                 if (world != null && x != Double.MIN_VALUE && y != Double.MIN_VALUE && z != Double.MIN_VALUE && yaw != Float.MIN_VALUE && pitch != Float.MIN_VALUE) {
                     Location last_location = new Location(world, x, y, z);
                     last_location.setPitch(pitch);

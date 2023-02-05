@@ -1,4 +1,4 @@
-package eu.locklogin.api.common.session;
+package eu.locklogin.api.common.session.persistence;
 
 /*
  * GNU LESSER GENERAL PUBLIC LICENSE

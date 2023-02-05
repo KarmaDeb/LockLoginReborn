@@ -23,15 +23,20 @@ import eu.locklogin.api.encryption.libraries.sha.SHA512X;
 import eu.locklogin.api.encryption.libraries.wordpress.WordPressCrypt;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
+import eu.locklogin.api.encryption.plugin.nlogin.NLoginSHA512;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 
+import java.io.FileReader;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -318,6 +323,10 @@ public final class CryptoFactory {
                     switch (current_type) {
                         case SHA512:
                             try_result = sha512.auth(password_try, key);
+                            if (!try_result) {
+                                NLoginSHA512 nLoginSHA512 = new NLoginSHA512(password_try);
+                                try_result = nLoginSHA512.validate(key);
+                            }
                             break;
                         case SHA256:
                             SHA256 sha256 = new SHA256(password_try);
@@ -363,6 +372,10 @@ public final class CryptoFactory {
                         switch (current_type) {
                             case SHA512:
                                 try_result = sha512.auth(password_try, key);
+                                if (!try_result) {
+                                    NLoginSHA512 nLoginSHA512 = new NLoginSHA512(password_try);
+                                    try_result = nLoginSHA512.validate(key);
+                                }
                                 break;
                             case SHA256:
                                 SHA256 sha256 = new SHA256(password_try);
@@ -417,7 +430,13 @@ public final class CryptoFactory {
             SaltData data = new SaltData(key);
             switch (current_type) {
                 case SHA512:
-                    return sha512.auth(usePassword, key);
+                    boolean rs = sha512.auth(usePassword, key);
+                    if (!rs) {
+                        NLoginSHA512 nLoginSHA512 = new NLoginSHA512(usePassword);
+                        return nLoginSHA512.validate(key);
+                    }
+
+                    return true;
                 case SHA256:
                     SHA256 sha256 = new SHA256(usePassword);
                     return sha256.check(key);
@@ -497,49 +516,30 @@ public final class CryptoFactory {
         KarmaSource plugin = APISource.loadProvider("LockLogin");
         KarmaMain vid = new KarmaMain(plugin, "virtual_id.kf", "cache");
 
-        /*
-        boolean proceed;
-        FileEncryptor e = new FileEncryptor(vid.getDocument(), CurrentPlatform.getServerHash());
+        if (CurrentPlatform.getConfiguration().useVirtualID()) {
+            Element<?> virtual_id = vid.get("virtual_key");
+            ElementPrimitive primitive = (ElementPrimitive) virtual_id;
 
-        There's no purpose on encrypting a file that is being encrypted with a password that is not secret.
-
-        virtual id will help to avoid database leaks for systems such as MySQL. But there's no guarantee that file
-        system will be completely protected using this system as to steal player file accounts you need access to the
-        machine, so you also have access to the virtual id file.
-         */
-
-        /*if (e.decrypt()) {
-            proceed = true;
-        } else {
-            try {
-                KarmaSource original = APISource.getOriginal(true);
-                Throwable error = original.getHandler(FileEncryptor.class).getLast();
-                if (error != null)
-                    error.printStackTrace();
-            } catch (Throwable ignored) {}
-
-            if (vid.exists()) {
-                proceed = vid.isSet("virtual_key");
-            } else {
-                proceed = true;
-            }
-        }
-
-        if (proceed) {*/
-            KarmaElement virtual_id = vid.get("virtual_key");
-            if (virtual_id == null || !virtual_id.isString()) {
-                virtual_id = new KarmaObject(TokenGenerator.generateToken());
-
+            if (!primitive.isString()) {
+                virtual_id = new KarmaPrimitive(TokenGenerator.generateToken());
                 vid.set("virtual_key", virtual_id);
                 vid.save();
             }
 
-            if (CurrentPlatform.getConfiguration().useVirtualID()) {
-                CryptoFactory.virtual_id = virtual_id.getObjet().getString();
+            CryptoFactory.virtual_id = virtual_id.getAsString();
+            try (FileChannel channel = FileChannel.open(vid.getDocument());) {
+                channel.lock();
+                try (FileReader reader = new FileReader(vid.getDocument().toFile())) {
+                    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                        try {
+                            reader.close();
+                        } catch (Throwable ignored) {}
+                    }));
+                }
+            } catch (Throwable error) {
+                plugin.console().send("Failed to lock virtual id file. This is not a security risk internally, but some attackers may take profit of it", Level.WARNING);
             }
-        /*} else {
-            plugin.console().send("Failed to load virtual ID, try restarting your server. If the issue persists ask for support at https://discord.gg/jRFfsdxnJR", Level.GRAVE);
-        }*/
+        }
     }
 
     /**

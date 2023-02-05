@@ -17,9 +17,11 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.session.PersistentSessionData;
+import eu.locklogin.api.common.security.client.CommandProxy;
+import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
@@ -44,10 +46,6 @@ import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -56,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
@@ -75,12 +74,12 @@ public class AccountCommand implements CommandExecutor {
      * @param sender  Source of the command
      * @param command Command which was executed
      * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
+     * @param tmpArgs    Passed command arguments
      * @return true if a valid command, otherwise false
      */
     @Override
     @SuppressWarnings("deprecation")
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
@@ -89,6 +88,32 @@ public class AccountCommand implements CommandExecutor {
             User user = new User(player);
 
             if (user.getSession().isValid()) {
+                boolean validated = false;
+
+                String[] args = new String[0];
+                if (tmpArgs.length >= 1) {
+                    String last_arg = tmpArgs[tmpArgs.length - 1];
+                    try {
+                        UUID command_id = UUID.fromString(last_arg);
+                        args = CommandProxy.getArguments(command_id);
+                        validated = true;
+                    } catch (Throwable ignored) {}
+                }
+
+                if (!validated) {
+                    if (!user.getSession().isLogged()) {
+                        user.send(messages.prefix() + messages.register());
+                    } else {
+                        if (user.getSession().isTempLogged()) {
+                            user.send(messages.prefix() + messages.gAuthenticate());
+                        } else {
+                            user.send(messages.prefix() + messages.alreadyRegistered());
+                        }
+                    }
+
+                    return false;
+                }
+
                 if (args.length == 0) {
                     user.send(messages.prefix() + messages.accountArguments());
                 } else {
@@ -101,15 +126,17 @@ public class AccountCommand implements CommandExecutor {
 
                                 AccountManager manager = user.getManager();
 
+                                PasswordConfig passwordConfig = config.passwordConfig();
+                                Map.Entry<Boolean, String[]> rs = passwordConfig.check(new_pass);
+
                                 CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                 if (util.validate(Validation.ALL)) {
                                     UserChangePasswordEvent.ChangeResult result;
                                     if (!password.equals(new_pass)) {
-                                        Password secure = new Password(new_pass);
-                                        if (secure.isSecure()) {
+                                        if (rs.getKey()) {
                                             result = UserChangePasswordEvent.ChangeResult.ALLOWED;
                                         } else {
-                                            result = (config.blockUnsafePasswords() ? UserChangePasswordEvent.ChangeResult.DENIED_UNSAFE : UserChangePasswordEvent.ChangeResult.ALLOWED_UNSAFE);
+                                            result = (passwordConfig.block_unsafe() ? UserChangePasswordEvent.ChangeResult.DENIED_UNSAFE : UserChangePasswordEvent.ChangeResult.ALLOWED_UNSAFE);
                                         }
                                     } else {
                                         result = UserChangePasswordEvent.ChangeResult.DENIED_SAME;
@@ -126,16 +153,34 @@ public class AccountCommand implements CommandExecutor {
                                                 manager.setPassword(new_pass);
                                                 user.send(messages.prefix() + messages.changeDone());
                                                 break;
-                                            case ALLOWED_UNSAFE:
-                                                manager.setPassword(new_pass);
-                                                user.send(messages.prefix() + messages.loginInsecure());
-                                                break;
                                             case DENIED_SAME:
                                                 user.send(messages.prefix() + messages.changeSame());
                                                 break;
                                             case DENIED_UNSAFE:
+                                            case ALLOWED_UNSAFE:
                                             default:
-                                                user.send(messages.prefix() + messages.passwordInsecure());
+                                                if (result.equals(UserChangePasswordEvent.ChangeResult.ALLOWED_UNSAFE)) {
+                                                    manager.setPassword(new_pass);
+                                                    user.send(messages.prefix() + messages.loginInsecure());
+
+                                                    if (passwordConfig.warn_unsafe()) {
+                                                        for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                                            User staff = new User(online);
+                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                                staff.send(messages.prefix() + messages.passwordWarning());
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    user.send(messages.prefix() + messages.passwordInsecure());
+                                                }
+
+                                                if (passwordConfig.warn_unsafe()) {
+                                                    for (String msg : rs.getValue()) {
+                                                        if (msg != null)
+                                                            user.send(msg);
+                                                    }
+                                                }
                                                 break;
                                         }
                                     }
@@ -227,7 +272,12 @@ public class AccountCommand implements CommandExecutor {
 
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
-                                                trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand("account close"));
+
+                                                String cmd = "account close";
+                                                UUID cmd_id = CommandProxy.mask(cmd, "close");
+                                                String exec = CommandProxy.getCommand(cmd_id);
+
+                                                trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand(exec + " " + cmd_id));
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
@@ -409,18 +459,10 @@ public class AccountCommand implements CommandExecutor {
                                 String password = TokenGenerator.generateLiteral(32);
 
                                 user.send(messages.panicRequested());
-                                TextComponent component = new TextComponent(StringUtils.toColor("&7Panic token: &eu.c" + password));
-                                try {
-                                    component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(StringUtils.toColor("&bClick to copy"))));
-                                } catch (Throwable ex) {
-                                    try {
-                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder().append(StringUtils.toColor("&bClickt to copy")).create()));
-                                    } catch (Throwable e) {
-                                        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(StringUtils.toColor("&bClick to copy"))));
-                                    }
-                                }
-                                component.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, password));
-                                user.send(component);
+                                ComponentFactory cf = new ComponentFactory(StringUtils.toColor("&7Panic token: &e" + password))
+                                        .hover(StringUtils.toColor("&bClick to copy"))
+                                        .click(ClickEvent.Action.SUGGEST_COMMAND, password);
+                                user.send(cf.get());
 
                                 manager.setPanic(password);
                             } else {
@@ -436,15 +478,15 @@ public class AccountCommand implements CommandExecutor {
                 user.send(messages.prefix() + LockLogin.properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            if (args.length == 0) {
+            if (tmpArgs.length == 0) {
                 console.send(messages.prefix() + messages.accountArguments());
             } else {
                 String tar_name;
 
-                switch (args[0].toLowerCase()) {
+                switch (tmpArgs[0].toLowerCase()) {
                     case "unlock":
-                        if (args.length == 2) {
-                            tar_name = args[1];
+                        if (tmpArgs.length == 2) {
+                            tar_name = tmpArgs[1];
                             AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
                                     OfflineClient offline = new OfflineClient(tar_name);
@@ -475,8 +517,8 @@ public class AccountCommand implements CommandExecutor {
                         }
                         break;
                     case "close":
-                        if (args.length == 2) {
-                            tar_name = args[1];
+                        if (tmpArgs.length == 2) {
+                            tar_name = tmpArgs[1];
                             Player tar_p = LockLogin.plugin.getServer().getPlayer(tar_name);
 
                             if (tar_p != null && tar_p.isOnline()) {
@@ -485,7 +527,12 @@ public class AccountCommand implements CommandExecutor {
 
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
-                                    trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand("account close"));
+
+                                    String cmd = "account close";
+                                    UUID cmd_id = CommandProxy.mask(cmd, "close");
+                                    String exec = CommandProxy.getCommand(cmd_id);
+
+                                    trySync(TaskTarget.COMMAND_FORCE, () -> tar_p.performCommand(exec + " " + cmd_id));
                                     console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
@@ -503,8 +550,8 @@ public class AccountCommand implements CommandExecutor {
                         break;
                     case "remove":
                     case "delete":
-                        if (args.length == 2) {
-                            String target = args[1];
+                        if (tmpArgs.length == 2) {
+                            String target = tmpArgs[1];
                             AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
                                     Player online = plugin.getServer().getPlayer(nsr.getUniqueId());

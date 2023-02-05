@@ -17,7 +17,9 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.file.options.PasswordConfig;
+import eu.locklogin.api.security.Password;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
@@ -31,6 +33,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
+import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -41,6 +44,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -60,11 +66,11 @@ public final class LoginCommand implements CommandExecutor {
      * @param sender  Source of the command
      * @param command Command which was executed
      * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
+     * @param tmpArgs    Passed command arguments
      * @return true if a valid command, otherwise false
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         if (sender instanceof Player) {
             tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
                 Player player = (Player) sender;
@@ -72,6 +78,32 @@ public final class LoginCommand implements CommandExecutor {
 
                 ClientSession session = user.getSession();
                 if (session.isValid()) {
+                    boolean validated = false;
+
+                    String[] args = new String[0];
+                    if (tmpArgs.length >= 1) {
+                        String last_arg = tmpArgs[tmpArgs.length - 1];
+                        try {
+                            UUID command_id = UUID.fromString(last_arg);
+                            args = CommandProxy.getArguments(command_id);
+                            validated = true;
+                        } catch (Throwable ignored) {}
+                    }
+
+                    if (!validated) {
+                        if (!session.isLogged()) {
+                            user.send(messages.prefix() + messages.register());
+                        } else {
+                            if (session.isTempLogged()) {
+                                user.send(messages.prefix() + messages.gAuthenticate());
+                            } else {
+                                user.send(messages.prefix() + messages.alreadyRegistered());
+                            }
+                        }
+
+                        return;
+                    }
+
                     if (!session.isLogged()) {
                         AccountManager manager = user.getManager();
                         if (!manager.exists())
@@ -97,8 +129,10 @@ public final class LoginCommand implements CommandExecutor {
                                     if (session.isCaptchaLogged()) {
                                         password = args[0];
 
-                                        Password checker = new Password(password);
-                                        checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                        Password tmp = new Password(null);
+                                        tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                        PasswordConfig passwordConfig = config.passwordConfig();
+                                        Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
 
                                         BruteForce protection = null;
                                         if (player.getAddress() != null)
@@ -113,18 +147,37 @@ public final class LoginCommand implements CommandExecutor {
                                             user.send(messages.prefix() + messages.panicLogin());
                                         } else {
                                             CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+
                                             if (utils.validate(Validation.ALL)) {
-                                                if (!checker.isSecure()) {
+                                                if (!rs.getKey()) {
                                                     user.send(messages.prefix() + messages.loginInsecure());
 
-                                                    if (config.blockUnsafePasswords()) {
+                                                    boolean ret = false;
+                                                    if (passwordConfig.block_unsafe()) {
                                                         manager.setPassword(null);
 
                                                         user.getChecker().cancelCheck();
                                                         SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-                                                        return;
+                                                        ret = true;
+                                                    } else {
+                                                        if (passwordConfig.warn_unsafe()) {
+                                                            for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                                                User staff = new User(online);
+                                                                if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                                    staff.send(messages.prefix() + messages.passwordWarning());
+                                                                }
+                                                            }
+                                                        }
                                                     }
+
+                                                    if (passwordConfig.warn_unsafe()) {
+                                                        for (String msg : rs.getValue())
+                                                            if (msg != null)
+                                                                user.send(msg);
+                                                    }
+
+                                                    if (ret) return;
                                                 }
 
                                                 if (utils.needsRehash(config.passwordEncryption())) {
@@ -151,6 +204,7 @@ public final class LoginCommand implements CommandExecutor {
                                                     }
 
                                                     user.send(messages.prefix() + event.getAuthMessage());
+                                                    TransientMap.apply(player);
                                                 } else {
                                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, user.getModule(), messages.logged(), null);
                                                     ModulePlugin.callEvent(event);
@@ -170,7 +224,11 @@ public final class LoginCommand implements CommandExecutor {
                                                 protection.success();
 
                                                 if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
-                                                    trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
+                                                    String cmd = "2fa setup " + password;
+                                                    UUID cmd_id = CommandProxy.mask(cmd, "setup", password);
+                                                    String exec = CommandProxy.getCommand(cmd_id);
+
+                                                    trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand(exec + " " + cmd_id));
                                                 }
 
                                                 if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
@@ -220,7 +278,11 @@ public final class LoginCommand implements CommandExecutor {
                                         if (session.getCaptcha().equals(captcha)) {
                                             session.setCaptchaLogged(true);
 
-                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("login " + password));
+                                            String cmd = "login " + password;
+                                            UUID cmd_id = CommandProxy.mask(cmd, password);
+                                            String exec = CommandProxy.getCommand(cmd_id);
+
+                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand(exec + " " + cmd_id));
                                         } else {
                                             user.send(messages.prefix() + messages.invalidCaptcha());
                                         }

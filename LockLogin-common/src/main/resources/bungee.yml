@@ -5,5 +5,6 @@ author: ${project.author}
 description: ${project.description}
 softDepends:
   - RedisBungee
+  - floodgate
 depends:
-  - AnotherBarelyCodedKarmaPlugin
+  - KarmaAPI

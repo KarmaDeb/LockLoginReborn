@@ -17,6 +17,7 @@ package eu.locklogin.api.account;
 import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 
 import java.io.Serializable;

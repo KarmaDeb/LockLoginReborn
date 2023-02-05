@@ -16,7 +16,9 @@ package eu.locklogin.plugin.bukkit.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.file.options.PasswordConfig;
+import eu.locklogin.api.security.Password;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
@@ -26,6 +28,7 @@ import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
+import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -34,6 +37,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
 
@@ -53,11 +59,11 @@ public final class RegisterCommand implements CommandExecutor {
      * @param sender  Source of the command
      * @param command Command which was executed
      * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
+     * @param tmpArgs    Passed command arguments
      * @return true if a valid command, otherwise false
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         if (sender instanceof Player) {
             tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
                 Player player = (Player) sender;
@@ -65,6 +71,32 @@ public final class RegisterCommand implements CommandExecutor {
 
                 ClientSession session = user.getSession();
                 if (session.isValid()) {
+                    boolean validated = false;
+
+                    String[] args = new String[0];
+                    if (tmpArgs.length >= 1) {
+                        String last_arg = tmpArgs[tmpArgs.length - 1];
+                        try {
+                            UUID command_id = UUID.fromString(last_arg);
+                            args = CommandProxy.getArguments(command_id);
+                            validated = true;
+                        } catch (Throwable ignored) {}
+                    }
+
+                    if (!validated) {
+                        if (!session.isLogged()) {
+                            user.send(messages.prefix() + messages.register());
+                        } else {
+                            if (session.isTempLogged()) {
+                                user.send(messages.prefix() + messages.gAuthenticate());
+                            } else {
+                                user.send(messages.prefix() + messages.alreadyRegistered());
+                            }
+                        }
+
+                        return;
+                    }
+
                     if (!session.isLogged()) {
                         AccountManager manager = user.getManager();
                         if (!manager.exists()) {
@@ -88,27 +120,53 @@ public final class RegisterCommand implements CommandExecutor {
                                         String confirmation = args[1];
 
                                         if (password.equals(confirmation)) {
-                                            Password checker = new Password(password);
-                                            checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                            Password tmp = new Password(null);
+                                            tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                            PasswordConfig passwordConfig = config.passwordConfig();
+                                            Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
 
-                                            if (!checker.isSecure()) {
+                                            if (!rs.getKey()) {
                                                 user.send(messages.prefix() + messages.passwordInsecure());
 
-                                                if (config.blockUnsafePasswords()) {
-                                                    return;
+                                                boolean ret = false;
+                                                if (passwordConfig.block_unsafe()) {
+                                                    ret = true;
+                                                } else {
+                                                    if (passwordConfig.warn_unsafe()) {
+                                                        for (Player online : plugin.getServer().getOnlinePlayers()) {
+                                                            User staff = new User(online);
+                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                                staff.send(messages.prefix() + messages.passwordWarning());
+                                                            }
+                                                        }
+                                                    }
                                                 }
+
+                                                if (passwordConfig.warn_unsafe()) {
+                                                    for (String msg : rs.getValue()) {
+                                                        if (msg != null) {
+                                                            user.send(msg);
+                                                        }
+                                                    }
+                                                }
+
+                                                if (ret) return;
                                             }
 
                                             manager.setPassword(password);
-
                                             user.send(messages.prefix() + messages.registered());
-
                                             session.setLogged(true);
 
                                             if (!manager.has2FA() && config.enable2FA() && user.hasPermission(PluginPermissions.force_2fa())) {
-                                                trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("2fa setup " + password));
+                                                String cmd = "2fa setup " + password;
+                                                UUID cmd_id = CommandProxy.mask(cmd, "setup", password);
+                                                String exec = CommandProxy.getCommand(cmd_id);
+
+                                                trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand(exec + " " + cmd_id));
                                             } else {
                                                 session.set2FALogged(true);
+                                                if (!manager.hasPin())
+                                                    TransientMap.apply(player);
                                             }
                                             if (!manager.hasPin())
                                                 session.setPinLogged(true);
@@ -140,7 +198,11 @@ public final class RegisterCommand implements CommandExecutor {
                                         if (session.getCaptcha().equals(captcha)) {
                                             session.setCaptchaLogged(true);
 
-                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand("register " + password + " " + confirmation));
+                                            String cmd = "register " + password + " " + confirmation;
+                                            UUID cmd_id = CommandProxy.mask(cmd, password, confirmation);
+                                            String exec = CommandProxy.getCommand(cmd_id);
+
+                                            trySync(TaskTarget.COMMAND_FORCE, () -> player.performCommand(exec + " " + cmd_id));
                                         } else {
                                             user.send(messages.prefix() + messages.invalidCaptcha());
                                         }

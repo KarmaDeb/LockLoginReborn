@@ -1,7 +1,9 @@
 package eu.locklogin.api.encryption;
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 
 /**
@@ -29,7 +31,7 @@ public final class SaltData {
      */
     @SuppressWarnings("unused")
     public void assign(final String salt) {
-        file.set(password, KarmaElement.from(salt));
+        file.setRaw(password, salt);
     }
 
     /**
@@ -38,6 +40,12 @@ public final class SaltData {
      * @return the password salt
      */
     public String getSalt() {
-        return file.get(password, KarmaElement.from("")).getObjet().getString();
+        Element<?> element = file.get(password, new KarmaPrimitive(""));
+        if (element.isPrimitive()) {
+            ElementPrimitive primitive = element.getAsPrimitive();
+            if (primitive.isString()) return primitive.asString();
+        }
+
+        return "";
     }
 }

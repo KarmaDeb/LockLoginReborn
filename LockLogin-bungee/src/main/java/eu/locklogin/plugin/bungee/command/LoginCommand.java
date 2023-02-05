@@ -17,7 +17,8 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.common.security.Password;
+import eu.locklogin.api.file.options.PasswordConfig;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
@@ -34,6 +35,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
+import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -43,6 +45,7 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -100,8 +103,10 @@ public final class LoginCommand extends Command {
                                 if (session.isCaptchaLogged()) {
                                     password = args[0];
 
-                                    Password checker = new Password(password);
-                                    checker.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                    Password tmp = new Password(null);
+                                    tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                    PasswordConfig passwordConfig = config.passwordConfig();
+                                    Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
 
                                     BruteForce protection = null;
                                     InetAddress ip = getIp(player.getSocketAddress());
@@ -115,20 +120,38 @@ public final class LoginCommand extends Command {
 
                                     CryptoFactory utils = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
                                     if (utils.validate(Validation.ALL)) {
-                                        if (!checker.isSecure()) {
+                                        if (!rs.getKey()) {
                                             user.send(messages.prefix() + messages.loginInsecure());
 
-                                            if (config.blockUnsafePasswords()) {
+                                            boolean ret = false;
+                                            if (passwordConfig.block_unsafe()) {
                                                 manager.setPassword(null);
 
                                                 SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                                 plugin.getProxy().getScheduler().runAsync(plugin, check);
-                                                return;
+                                                ret = true;
+                                            } else {
+                                                if (passwordConfig.warn_unsafe()) {
+                                                    for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
+                                                        User staff = new User(online);
+                                                        if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                            staff.send(messages.prefix() + messages.passwordWarning());
+                                                        }
+                                                    }
+                                                }
                                             }
+
+                                            if (passwordConfig.warn_unsafe()) {
+                                                for (String msg : rs.getValue())
+                                                    if (msg != null)
+                                                        user.send(msg);
+                                            }
+
+                                            if (ret) return;
                                         }
 
-                                        //MessageData login = DataSender.getBuilder(DataType.SESSION, CHANNEL_PLAYER, player).build();
-                                        DataMessage login = DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT).addProperty("player", player.getUniqueId()).getInstance();
+                                        DataMessage login = DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
+                                                .getInstance();
 
                                         if (utils.needsRehash(config.passwordEncryption())) {
                                             //Set the player password again to update his hash
@@ -147,21 +170,13 @@ public final class LoginCommand extends Command {
                                                     messages.logged(),
                                                     null);
                                             ModulePlugin.callEvent(event);
-                                            /*MessageData pin = DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
-                                                    .addProperty("pin", false).build();
-                                            MessageData gauth = DataSender.getBuilder(DataType.GAUTH, CHANNEL_PLAYER, player).build();
 
-                                            DataSender.send(player, pin);
-                                            DataSender.send(player, gauth);*/
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                    .addProperty("pin", false).getInstance(),
+                                                    BungeeSender.serverFromPlayer(player));
 
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                            .addProperty("player", player.getUniqueId())
-                                                            .addProperty("pin", false).getInstance().build());
-
-                                            BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                            .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT)
-                                                                    .addProperty("player", player.getUniqueId()).getInstance().build());
+                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                    .getInstance(), BungeeSender.serverFromPlayer(player));
 
                                             session.set2FALogged(true);
                                             session.setPinLogged(true);
@@ -179,12 +194,8 @@ public final class LoginCommand extends Command {
                                             if (manager.hasPin()) {
                                                 session.setPinLogged(false);
 
-                                                /*DataSender.send(player, DataSender.getBuilder(DataType.PIN, CHANNEL_PLAYER, player)
-                                                        .addProperty("pin", true).build());*/
-                                                BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                        .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT)
-                                                                .addProperty("player", player.getUniqueId())
-                                                                .addProperty("pin", true).getInstance().build());
+                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                        .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
                                             } else {
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                                 user.send(messages.prefix() + messages.gAuthInstructions());
@@ -196,9 +207,7 @@ public final class LoginCommand extends Command {
 
                                         user.restorePotionEffects();
 
-                                        //DataSender.send(player, login);
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(login.build());
+                                        Manager.sendFunction.apply(login, BungeeSender.serverFromPlayer(player));
 
                                         if (checkServer)
                                             user.checkServer(0);
@@ -258,10 +267,8 @@ public final class LoginCommand extends Command {
                                         session.setCaptchaLogged(true);
 
                                         user.performCommand("login " + password);
-                                        //DataSender.send(player, DataSender.getBuilder(DataType.CAPTCHA, DataSender.CHANNEL_PLAYER, player).build());
-                                        BungeeSender.sender.queue(BungeeSender.serverFromPlayer(player))
-                                                .insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT)
-                                                        .addProperty("player", player.getUniqueId()).getInstance().build());
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                                .getInstance(), BungeeSender.serverFromPlayer(player));
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

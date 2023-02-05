@@ -53,4 +53,17 @@ public enum Channel {
     public String getName() {
         return name;
     }
+
+    public static Channel fromName(final String name) {
+        switch (name.toLowerCase()) {
+            case "ll:account":
+                return Channel.ACCOUNT;
+            case "ll:plugin":
+                return Channel.PLUGIN;
+            case "ll:access":
+                return Channel.ACCESS;
+        }
+
+        return null;
+    }
 }

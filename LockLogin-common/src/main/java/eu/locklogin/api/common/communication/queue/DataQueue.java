@@ -54,7 +54,7 @@ public abstract class DataQueue {
      *
      * @return the next entry
      */
-    public abstract byte[] next();
+    public abstract Packet next();
 
     /**
      * Shift the second element to top and the top element

@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.39</version>
+    <version>1.13.45</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -41,24 +41,25 @@
         <connection>scm:git:git://github.com/KarmaConfigs/LockLoginReborn.git</connection>
         <developerConnection>scm:git:ssh://github.com:KarmaConfigs/LockLoginReborn.git</developerConnection>
         <url>http://github.com/KarmaConfigs/LockLoginReborn/tree/master</url>
-        <tag>1.13.28</tag>
+        <tag>1.13.40</tag>
     </scm>
 
     <properties>
         <java.version>8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <project.manager>v8</project.manager>
+        <project.manager>v9</project.manager>
         <!-- This is more efficient than having checksum per version -->
-        <project.checksum>v4</project.checksum>
+        <project.checksum>v5</project.checksum>
         <!-- Now using my own repository host, let's goooo -->
         <project.repository>v2</project.repository>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.properties.version>1.0.4</project.properties.version>
         <project.name>LockLogin</project.name>
         <project.author>KarmaDev</project.author>
-        <project.buildType>SNAPSHOT</project.buildType>
-        <project.karmaapi>1.3.3-SNAPSHOT</project.karmaapi>
+        <project.buildType>RC</project.buildType>
+        <project.karmaapi>1.3.4-SNAPSHOT</project.karmaapi>
+        <project.minimal_karmaapi>1.3.4-1</project.minimal_karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>
             LockLogin is an advanced login plugin, one of the most secure available,
@@ -186,9 +187,6 @@
         <module>locklogin-common</module>
         <module>locklogin-spigot</module>
         <module>locklogin-bungee</module>
-        <!--
-        <module>locklogin-velocity</module>
-        -->
         <module>LockLogin-bundle</module>
         <module>LockLogin-manager</module>
     </modules>

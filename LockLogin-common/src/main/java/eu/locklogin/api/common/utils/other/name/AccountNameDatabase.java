@@ -1,9 +1,10 @@
 package eu.locklogin.api.common.utils.other.name;
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaArray;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaArray;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
@@ -38,15 +39,16 @@ public final class AccountNameDatabase {
     public static LateScheduler<NameSearchResult> find(final String name) {
         LateScheduler<NameSearchResult> result = new AsyncLateScheduler<>();
 
-        KarmaObject nm = new KarmaObject(name);
         lockLogin.async().queue("find_user_name", () -> {
             Set<UUID> ids = new LinkedHashSet<>();
 
             for (String key : nameDatabase.getKeys()) {
-                KarmaElement value = nameDatabase.get(key);
-                if (value.isArray() && value.getArray().contains(nm)) {
-                    ids.add(UUID.fromString(key.replaceFirst("main\\.", "")));
-                }
+                Element<?> value = nameDatabase.get(key);
+                value.getAsArray().forEach((element) -> {
+                    if (element.getAsString().equals(name)) {
+                        ids.add(UUID.fromString(key.replaceFirst("main\\.", "")));
+                    }
+                });
             }
 
             NameSearchResult nsr = new NameSearchResult(ids.toArray(new UUID[0]));
@@ -65,17 +67,21 @@ public final class AccountNameDatabase {
     public static LateScheduler<String[]> otherPossible(final String name) {
         LateScheduler<String[]> result = new AsyncLateScheduler<>();
 
-        KarmaObject nm = new KarmaObject(name);
+        ElementPrimitive nm = new KarmaPrimitive(name);
         lockLogin.async().queue("find_user_names", () -> {
             Set<String> names = new LinkedHashSet<>();
 
             for (String key : nameDatabase.getKeys()) {
-                KarmaElement value = nameDatabase.get(key);
+                Element<?> value = nameDatabase.get(key);
 
                 if (value.isArray()) {
-                    KarmaArray array = value.getArray();
+                    KarmaArray array = (KarmaArray) value.getAsArray();
                     if (array.contains(nm)) {
-                        array.forEach((sub) -> names.add(sub.getObjet().getString()));
+                        array.forEach((sub) -> {
+                            if (sub.isString()) {
+                                names.add(sub.asString());
+                            }
+                        });
                     }
                 }
             }
@@ -98,19 +104,17 @@ public final class AccountNameDatabase {
         KarmaArray array = null;
 
         if (nameDatabase.isSet(uuid.toString())) {
-            KarmaElement element = nameDatabase.get(uuid.toString());
+            Element<?> element = nameDatabase.get(uuid.toString());
             if (element.isArray()) {
-                array = element.getArray();
+                array = (KarmaArray) element.getAsArray();
             }
         }
 
         if (array == null) {
-            array = new KarmaArray(
-                    new KarmaObject(name)
-            );
+            array = new KarmaArray(new KarmaPrimitive(name));
         }
 
-        KarmaObject object = new KarmaObject(name);
+        ElementPrimitive object = new KarmaPrimitive(name);
         if (!array.contains(object)) {
             array.add(object);
         }

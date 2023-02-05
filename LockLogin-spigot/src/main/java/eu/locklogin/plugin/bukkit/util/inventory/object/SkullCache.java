@@ -1,8 +1,9 @@
 package eu.locklogin.plugin.bukkit.util.inventory.object;
 
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaElement;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaObject;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
@@ -52,8 +53,8 @@ public final class SkullCache {
         SimpleDateFormat ll_format = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = ll_format.format(today);
 
-        sk_cache.set("value", new KarmaObject(value));
-        sk_cache.set("timestamp", new KarmaObject(timestamp));
+        sk_cache.setRaw("value", value);
+        sk_cache.setRaw("timestamp", timestamp);
 
         sk_cache.save();
     }
@@ -68,8 +69,15 @@ public final class SkullCache {
         if (!sk_cache.exists())
             sk_cache.create();
 
-        KarmaElement value = sk_cache.get("value");
-        return (value == null || !value.isString() ? null : value.getObjet().getString());
+        Element<?> value = sk_cache.get("value");
+        if (value.isPrimitive()) {
+            ElementPrimitive primitive = value.getAsPrimitive();
+            if (primitive.isString()) {
+                return primitive.asString();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -86,11 +94,15 @@ public final class SkullCache {
             SimpleDateFormat ll_format = new SimpleDateFormat("yyyyMMddHHmmss");
             String timestamp = ll_format.format(today);
 
-            KarmaElement stored_timestamp = sk_cache.get("timestamp", new KarmaObject(timestamp));
+            Element<?> stored_timestamp = sk_cache.get("timestamp", new KarmaPrimitive(timestamp));
             try {
-                Date way_back = ll_format.parse(stored_timestamp.getObjet().getString());
-
-                return Math.round((today.getTime() - way_back.getTime()) / (double) 86400000) > 1;
+                if (stored_timestamp.isPrimitive()) {
+                    ElementPrimitive primitive = stored_timestamp.getAsPrimitive();
+                    if (primitive.isString()) {
+                        Date way_back = ll_format.parse(primitive.asString());
+                        return Math.round((today.getTime() - way_back.getTime()) / (double) 86400000) > 1;
+                    }
+                }
             } catch (Throwable ex) {
                 ex.printStackTrace();
             }

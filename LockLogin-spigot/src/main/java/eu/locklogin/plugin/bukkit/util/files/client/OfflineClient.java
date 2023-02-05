@@ -12,8 +12,7 @@ package eu.locklogin.plugin.bukkit.util.files.client;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
-import eu.locklogin.api.util.enums.Manager;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.jetbrains.annotations.Nullable;
@@ -50,15 +49,15 @@ public final class OfflineClient {
      * @return the offline client account
      */
     @Nullable
-    public AccountManager getAccount() {
-        AccountManager result = null;
+    public eu.locklogin.api.account.AccountManager getAccount() {
+        eu.locklogin.api.account.AccountManager result = null;
 
         if (CurrentPlatform.isValidAccountManager()) {
-            AccountManager current = CurrentPlatform.getAccountManager(Manager.CUSTOM, null);
+            eu.locklogin.api.account.AccountManager current = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
             if (current != null) {
-                Set<AccountManager> managers = current.getAccounts();
+                Set<eu.locklogin.api.account.AccountManager> managers = current.getAccounts();
 
-                for (AccountManager manager : managers) {
+                for (eu.locklogin.api.account.AccountManager manager : managers) {
                     if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching)) {
                         result = manager;
                         break;
