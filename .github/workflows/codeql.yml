@@ -7,19 +7,6 @@ on:
     types: [created]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Build with Maven
-      run: mvn -B clean package
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: LockLogin.jar
-        path: target/my-plugin.jar
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
