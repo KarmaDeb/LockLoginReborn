@@ -18,7 +18,9 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -679,6 +681,145 @@ public abstract class PluginMessages {
         }
 
         return parse(str.replace("{time}", format));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumEnabled() {
+        List<String> messages = msg.getStringList("PremiumEnabled");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages) builder.append(str).append("\n");
+        return parse(builder.toString());
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumDisabled() {
+        List<String> messages = msg.getStringList("PremiumDisabled");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages) builder.append(str).append("\n");
+        return parse(builder.toString());
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumError() {
+        String message = msg.getString("PremiumError", "&5&oAn error occurred while disabling/enabling premium in your account");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumAuth() {
+        String message = msg.getString("PremiumAuth", "&dAuthenticated using premium authentication");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumServer() {
+        String message = msg.getString("PremiumServer", "&5&lThis server is for premium users only!");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumWarning() {
+        List<String> messages = msg.getStringList("PremiumWarning");
+        StringBuilder builder = new StringBuilder();
+
+        for (String str : messages) builder.append(str).append("\n");
+        return parse(builder.toString());
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailAuth() {
+        String message = msg.getString("PremiumFails.AuthenticationError", "&5&oFailed to validate your connection. Are you authenticated through mojang?");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailInternal() {
+        String message = msg.getString("PremiumFails.InternalError", "&5&oAn internal server error occurred");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailConnection() {
+        String message = msg.getString("PremiumFails.ConnectionError", "&5&oFailed to validate your connection with this server");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailAddress() {
+        String message = msg.getString("AddressError", "&5&oFailed to authenticate your address");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailEncryption() {
+        String message = msg.getString("PremiumFails.EncryptionError", "&5&oInvalid encryption provided");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailPrecocious() {
+        String message = msg.getString("PremiumFails.PrecociousEncryption", "&5&oTried to authenticate before the server does!");
+        return parse(message);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public String premiumFailSession() {
+        String message = msg.getString("PremiumFails.SessionError", "&5&oInvalid session");
+        return parse(message);
     }
 
     /**
@@ -1775,7 +1916,7 @@ public abstract class PluginMessages {
      */
     @Override
     public final String toString() {
-        return msg.toString();
+        return Base64.getEncoder().encodeToString(msg.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     /**

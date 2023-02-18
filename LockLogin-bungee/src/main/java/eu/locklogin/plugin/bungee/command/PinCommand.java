@@ -80,15 +80,24 @@ public class PinCommand extends Command {
                                         if (!manager.hasPin()) {
                                             String pin = args[1];
 
-                                            manager.setPin(pin);
-                                            user.send(messages.prefix() + messages.pinSet());
+                                            try {
+                                                Integer.parseInt(pin);
+                                                if (pin.length() == 4) {
+                                                    manager.setPin(pin);
+                                                    user.send(messages.prefix() + messages.pinSet());
 
-                                            session.setPinLogged(false);
+                                                    session.setPinLogged(false);
 
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                    .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
+                                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                            .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
 
-                                            CurrentPlatform.requestDataContainerUpdate();
+                                                    CurrentPlatform.requestDataContainerUpdate();
+                                                } else {
+                                                    user.send(messages.prefix() + messages.pinLength());
+                                                }
+                                            } catch (NumberFormatException ex) {
+                                                user.send(messages.prefix() + messages.pinLength());
+                                            }
                                         } else {
                                             user.send(messages.prefix() + messages.alreadyPin());
                                         }

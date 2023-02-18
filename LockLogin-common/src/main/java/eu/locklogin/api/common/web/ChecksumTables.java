@@ -108,10 +108,9 @@ public final class ChecksumTables {
 
                         for (Dependency dependency : Dependency.values()) {
                             String name = dependency.getAsDependency().getName();
-                            Element<?> adler = checksum.get("adler." + name.replace(" ", "_"), new KarmaPrimitive(0L));
-                            Element<?> crc = checksum.get("crc." + name.replace(" ", "_"), new KarmaPrimitive(0L));
-
-                            System.out.println("Reading checksum for: " + name.replace(" ", "_"));
+                            String dpName = name.replaceAll("\\s", "_");
+                            Element<?> adler = checksum.get("adler." + dpName, new KarmaPrimitive(0L));
+                            Element<?> crc = checksum.get("crc." + dpName, new KarmaPrimitive(0L));
 
                             if (adler.isPrimitive() && crc.isPrimitive()) {
                                 ElementPrimitive adlerPrimitive = adler.getAsPrimitive();

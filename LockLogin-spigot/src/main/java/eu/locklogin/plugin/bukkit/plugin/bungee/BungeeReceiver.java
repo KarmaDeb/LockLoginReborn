@@ -13,6 +13,7 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.TaskTarget;
@@ -37,6 +38,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,8 +50,6 @@ public final class BungeeReceiver implements PluginMessageListener {
     private static final Map<String, AccountManager> accounts = new ConcurrentHashMap<>();
 
     static String proxy_com = "";
-    static String proxy_license = "";
-
     static SocketClient client;
     static boolean usesSocket = false;
 
@@ -64,9 +64,12 @@ public final class BungeeReceiver implements PluginMessageListener {
         client = socket;
 
         try {
-            KarmaMain main = new KarmaMain(Objects.requireNonNull(Main.class.getResourceAsStream("/license.dat")));
-            proxy_com = main.get("key").getAsString();
-            proxy_license = main.get("license").getAsString();
+            License license = CurrentPlatform.getLicense();
+            if (license != null) {
+                proxy_com = license.comKey();
+            } else {
+                plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
+            }
 
             BungeeDataStorager storager = new BungeeDataStorager();
             storager.setProxyKey(proxy_com);
@@ -127,74 +130,82 @@ public final class BungeeReceiver implements PluginMessageListener {
         Gson gson = new GsonBuilder().create();
         Socket client = socket.client();
 
-        JsonObject message = new JsonObject();
-        message.addProperty("license", proxy_license);
-        message.addProperty("keyCode", proxy_com);
-        message.addProperty("name", server);
+        License license = CurrentPlatform.getLicense();
+        if (license != null) {
+            JsonObject message = new JsonObject();
+            message.addProperty("name", server);
 
-        client.emit("init", message, (Ack) (ackData) -> {
-            //for (Object o : data) console.send("{0}", Level.INFO, o);
             try {
-                JsonObject ackResponse = gson.fromJson(String.valueOf(ackData[0]), JsonObject.class);
-                boolean success = ackResponse.get("success").getAsBoolean();
-                String response_message = ackResponse.get("message").getAsString();
+                byte[] license_data = Files.readAllBytes(license.getLocation().resolve("license.dat"));
+                client.emit("init", message, license_data, (Ack) (ackData) -> {
+                    //for (Object o : data) console.send("{0}", Level.INFO, o);
+                    try {
+                        JsonObject ackResponse = gson.fromJson(String.valueOf(ackData[0]), JsonObject.class);
+                        boolean success = ackResponse.get("success").getAsBoolean();
+                        String response_message = ackResponse.get("message").getAsString();
 
-                if (success) {
-                    plugin.console().send("Successfully registered this server", Level.INFO);
-                    use_socket = true;
+                        if (success) {
+                            plugin.console().send("Successfully registered this server", Level.INFO);
+                            use_socket = true;
 
-                    client.on("proxy_leave", (data) -> {
-                        try {
-                            JsonObject j = gson.fromJson(data[0].toString(), JsonObject.class);
+                            client.on("proxy_leave", (data) -> {
+                                try {
+                                    JsonObject j = gson.fromJson(data[0].toString(), JsonObject.class);
 
-                            plugin.console().send("Disconnected from proxy {0} ({1})", Level.GRAVE, j.get("server").getAsString(), j.get("cause").getAsString());
-                        } catch (Throwable ex) {
-                            plugin.console().send("Some of the proxies you were connected with went offline", Level.WARNING);
-                        }
-                    });
-
-                    client.on("proxy_alive", (name) -> plugin.console().send("Some of the proxies that disconnected ({0}) is online again", Level.INFO, name[0]));
-
-                    client.on("in", (data) -> {
-                        JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
-                        String ch_name = response.get("channel").getAsString();
-
-                        Channel channel = Channel.fromName(ch_name);
-                        if (channel != null) {
-                            JsonObject message_data = response.get("data").getAsJsonObject();
-                            message_data.addProperty("data_type", response.get("type").getAsString());
-                            int id = response.get("id").getAsInt();
-
-                            client.emit("confirm", id);
-
-                            Player player = null;
-                            if (response.has("player")) {
-                                player = plugin.getServer().getPlayer(UUID.fromString(response.get("player").getAsString()));
-                            } else {
-                                if (message_data.has("player")) {
-                                    player = plugin.getServer().getPlayer(UUID.fromString(message_data.get("player").getAsString()));
+                                    plugin.console().send("Disconnected from proxy {0} ({1})", Level.GRAVE, j.get("server").getAsString(), j.get("cause").getAsString());
+                                } catch (Throwable ex) {
+                                    plugin.console().send("Some of the proxies you were connected with went offline", Level.WARNING);
                                 }
-                            }
+                            });
 
-                            switch (channel) {
-                                case ACCOUNT:
-                                    processAccountCommand(player, message_data);
-                                    break;
-                                case PLUGIN:
-                                    processPluginCommand(player, message_data);
-                                    break;
-                                case ACCESS:
-                                    break;
-                            }
+                            client.on("proxy_alive", (name) -> plugin.console().send("Some of the proxies that disconnected ({0}) is online again", Level.INFO, name[0]));
+
+                            client.on("in", (data) -> {
+                                JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
+                                String ch_name = response.get("channel").getAsString();
+
+                                Channel channel = Channel.fromName(ch_name);
+                                if (channel != null) {
+                                    JsonObject message_data = response.get("data").getAsJsonObject();
+                                    message_data.addProperty("data_type", response.get("type").getAsString());
+                                    int id = response.get("id").getAsInt();
+
+                                    client.emit("confirm", id);
+
+                                    Player player = null;
+                                    if (response.has("player")) {
+                                        player = plugin.getServer().getPlayer(UUID.fromString(response.get("player").getAsString()));
+                                    } else {
+                                        if (message_data.has("player")) {
+                                            player = plugin.getServer().getPlayer(UUID.fromString(message_data.get("player").getAsString()));
+                                        }
+                                    }
+
+                                    switch (channel) {
+                                        case ACCOUNT:
+                                            processAccountCommand(player, message_data);
+                                            break;
+                                        case PLUGIN:
+                                            processPluginCommand(player, message_data);
+                                            break;
+                                        case ACCESS:
+                                            break;
+                                    }
+                                }
+                            });
+                        } else {
+                            console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
                         }
-                    });
-                } else {
-                    console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
-                }
+                    } catch (Throwable ex) {
+                        logger.scheduleLog(Level.GRAVE, ex);
+                    }
+                });
             } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
+                ex.printStackTrace();
             }
-        });
+        } else {
+            console.send("Cannot register this server because its license is invalid", Level.GRAVE);
+        }
     }
 
     /**
@@ -243,129 +254,132 @@ public final class BungeeReceiver implements PluginMessageListener {
         DataType sub = DataType.valueOf(bungee_data.get("data_type").getAsString());
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
-        User user = new User(player);
-        ClientSession session = user.getSession();
 
-        switch (sub) {
-            case JOIN:
-                if (!user.isLockLoginUser()) {
-                    user.applyLockLoginUser();
-                }
+        if (player != null && player.isOnline()) {
+            User user = new User(player);
+            ClientSession session = user.getSession();
 
-                if (!session.isValid()) {
-                    //Validate BungeeCord/Velocity session
-                    BungeeSender.validatePlayer(player);
-                    session.validate();
-                }
-
-                if (config.enableSpawn()) {
-                    trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
-
-                    Spawn spawn = new Spawn(player.getWorld());
-                    spawn.load().whenComplete(() -> spawn.teleport(player));
-                }
-
-                session.setLogged(bungee_data.get("pass_login").getAsBoolean());
-                session.set2FALogged(bungee_data.get("2fa_login").getAsBoolean());
-                session.setPinLogged(bungee_data.get("pin_login").getAsBoolean());
-                user.setRegistered(bungee_data.get("registered").getAsBoolean());
-
-                //proxies_map.put(player.getUniqueId(), UUID.fromString(emitter));
-                break;
-            case QUIT:
-                if (user.isLockLoginUser()) {
-                    //Last location will be always saved since if the server
-                    //owner wants to enable it, it would be good to see
-                    //the player last location has been stored to avoid
-                    //location problems
-                    LastLocation last_loc = new LastLocation(player);
-                    last_loc.save();
-
-                    session.invalidate();
-                    session.setLogged(false);
-                    session.setPinLogged(false);
-                    session.set2FALogged(false);
-
-                    user.removeLockLoginUser();
-                }
-
-                user.setTempSpectator(false);
-                proxies_map.remove(player.getUniqueId());
-                break;
-            case VALIDATION:
-                session.validate();
-                break;
-            case CAPTCHA:
-                if (!session.isCaptchaLogged()) {
-                    session.setCaptchaLogged(true);
-                }
-                break;
-            case SESSION:
-                if (!session.isLogged()) {
-                    session.setLogged(true);
-                }
-
-                if (config.takeBack()) {
-                    LastLocation location = new LastLocation(player);
-                    location.teleport();
-                }
-                break;
-            case PIN:
-                BungeeDataStorager storager = new BungeeDataStorager();
-
-                if (bungee_data.get("pin").getAsBoolean()) {
-                    if (!session.isPinLogged()) {
-                        plugin.sync().queue("open_pin", () -> {
-                            PinInventory pin = new PinInventory(player);
-                            pin.open();
-                        });
+            switch (sub) {
+                case JOIN:
+                    if (!user.isLockLoginUser()) {
+                        user.applyLockLoginUser();
                     }
 
-                    storager.setPinConfirmation(player, true);
-                } else {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        session.setPinLogged(true);
-                        storager.setPinConfirmation(player, false);
+                    if (!session.isValid()) {
+                        //Validate BungeeCord/Velocity session
+                        BungeeSender.validatePlayer(player);
+                        session.validate();
+                    }
 
-                        InventoryView view = player.getOpenInventory();
-                        PluginMessages messages = CurrentPlatform.getMessages();
+                    if (config.enableSpawn()) {
+                        trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
 
-                        if (StringUtils.stripColor(view.getTitle()).equals(StringUtils.stripColor(messages.pinTitle()))) {
-                            PinInventory inventory = new PinInventory(player);
-                            inventory.close();
+                        Spawn spawn = new Spawn(player.getWorld());
+                        spawn.load().whenComplete(() -> spawn.teleport(player));
+                    }
+
+                    session.setLogged(bungee_data.get("pass_login").getAsBoolean());
+                    session.set2FALogged(bungee_data.get("2fa_login").getAsBoolean());
+                    session.setPinLogged(bungee_data.get("pin_login").getAsBoolean());
+                    user.setRegistered(bungee_data.get("registered").getAsBoolean());
+
+                    //proxies_map.put(player.getUniqueId(), UUID.fromString(emitter));
+                    break;
+                case QUIT:
+                    if (user.isLockLoginUser()) {
+                        //Last location will be always saved since if the server
+                        //owner wants to enable it, it would be good to see
+                        //the player last location has been stored to avoid
+                        //location problems
+                        LastLocation last_loc = new LastLocation(player);
+                        last_loc.save();
+
+                        session.invalidate();
+                        session.setLogged(false);
+                        session.setPinLogged(false);
+                        session.set2FALogged(false);
+
+                        user.removeLockLoginUser();
+                    }
+
+                    user.setTempSpectator(false);
+                    proxies_map.remove(player.getUniqueId());
+                    break;
+                case VALIDATION:
+                    session.validate();
+                    break;
+                case CAPTCHA:
+                    if (!session.isCaptchaLogged()) {
+                        session.setCaptchaLogged(true);
+                    }
+                    break;
+                case SESSION:
+                    if (!session.isLogged()) {
+                        session.setLogged(true);
+                    }
+
+                    if (config.takeBack()) {
+                        LastLocation location = new LastLocation(player);
+                        location.teleport();
+                    }
+                    break;
+                case PIN:
+                    BungeeDataStorager storager = new BungeeDataStorager();
+
+                    if (bungee_data.get("pin").getAsBoolean()) {
+                        if (!session.isPinLogged()) {
+                            plugin.sync().queue("open_pin", () -> {
+                                PinInventory pin = new PinInventory(player);
+                                pin.open();
+                            });
                         }
-                    });
-                }
-                break;
-            case GAUTH:
-                session.set2FALogged(true);
-                TransientMap.apply(player);
-                break;
-            case CLOSE:
-                if (session.isLogged()) {
-                    session.setLogged(false);
-                    session.set2FALogged(false);
-                    session.setPinLogged(false);
-                }
 
-                break;
-            case EFFECTS:
-                boolean status = bungee_data.get("effects").getAsBoolean();
+                        storager.setPinConfirmation(player, true);
+                    } else {
+                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            session.setPinLogged(true);
+                            storager.setPinConfirmation(player, false);
 
-                if (status) {
-                    user.savePotionEffects();
-                    user.applySessionEffects();
-                } else {
-                    user.restorePotionEffects();
-                }
+                            InventoryView view = player.getOpenInventory();
+                            PluginMessages messages = CurrentPlatform.getMessages();
 
-                break;
-            case INVALIDATION:
-                session.invalidate();
-                break;
-            default:
-                logger.scheduleLog(Level.GRAVE, "Unknown account sub channel message: " + sub);
-                break;
+                            if (StringUtils.stripColor(view.getTitle()).equals(StringUtils.stripColor(messages.pinTitle()))) {
+                                PinInventory inventory = new PinInventory(player);
+                                inventory.close();
+                            }
+                        });
+                    }
+                    break;
+                case GAUTH:
+                    session.set2FALogged(true);
+                    TransientMap.apply(player);
+                    break;
+                case CLOSE:
+                    if (session.isLogged()) {
+                        session.setLogged(false);
+                        session.set2FALogged(false);
+                        session.setPinLogged(false);
+                    }
+
+                    break;
+                case EFFECTS:
+                    boolean status = bungee_data.get("effects").getAsBoolean();
+
+                    if (status) {
+                        user.savePotionEffects();
+                        user.applySessionEffects();
+                    } else {
+                        user.restorePotionEffects();
+                    }
+
+                    break;
+                case INVALIDATION:
+                    session.invalidate();
+                    break;
+                default:
+                    logger.scheduleLog(Level.GRAVE, "Unknown account sub channel message: " + sub);
+                    break;
+            }
         }
     }
 
@@ -434,11 +448,11 @@ public final class BungeeReceiver implements PluginMessageListener {
                 }
                 break;
             case MESSAGES:
-                String messageString = bungee_data.get("messages_yml").getAsString();
+                String messageString = bungee_data.get("raw").getAsString();
                 CurrentPlatform.getMessages().loadString(messageString);
                 break;
             case CONFIG:
-                String configString = bungee_data.get("config.yml").getAsString();
+                String configString = bungee_data.get("raw").getAsString();
                 Config.manager.loadBungee(configString);
                 break;
             case LISTENER:

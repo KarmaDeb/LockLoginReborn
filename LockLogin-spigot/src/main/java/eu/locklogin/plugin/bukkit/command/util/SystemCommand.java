@@ -14,14 +14,18 @@ package eu.locklogin.plugin.bukkit.command.util;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.*;
 import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
@@ -38,15 +42,13 @@ public @interface SystemCommand {
      * Get the plugin command manager
      */
     class manager {
-        
-        private final static Package pack = SystemCommand.class.getPackage();
 
         /**
          * Get a list of recognized system account commands
          * @return an array of system commands
          */
         public static Class<?>[] recognizedClasses() {
-            return new Class[]{
+            List<Class<?>> classes = new ArrayList<>(Arrays.asList(
                     AccountCommand.class,
                     AliasCommand.class,
                     GoogleAuthCommand.class,
@@ -57,7 +59,15 @@ public @interface SystemCommand {
                     PinCommand.class,
                     PlayerInfoCommand.class,
                     RegisterCommand.class,
-                    SetSpawnCommand.class};
+                    SetSpawnCommand.class
+            ));
+
+            if (CurrentPlatform.getPremiumDatabase() != null && CurrentPlatform.getConfiguration().enablePremium()) {
+                classes.add(PremiumCommand.class);
+                plugin.console().send("Registered premium command as a premium database has been registered", Level.INFO);
+            }
+
+            return classes.toArray(new Class[0]);
         }
 
         private static Class<?> toClass(final String pack, final String clazz) {

@@ -114,3 +114,20 @@ run/
 
 #Non longer supported
 /LockLogin-velocity
+
+#API
+/LockLogin-API/target
+
+#Bundle
+/LockLogin-bundle/target
+/LockLogin-bundle/src/test
+/LockLogin-bundle/dependency-reduced-pom.xml
+
+#Bungee
+/LockLogin-bungee/target
+
+#Common
+/LockLogin-common/src/test/
+/LockLogin-common/src/main/java/eu/locklogin/api/common/web/services/metric/
+/LockLogin-common/src/main/java/eu/locklogin/api/common/license
+/LockLogin-common/src/main/java/eu/locklogin/api/common/web/services/LockLoginSocket.java

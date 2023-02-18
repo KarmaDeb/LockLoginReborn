@@ -1,0 +1,327 @@
+#LockLogin message file
+#----------------------------------
+#Translation: Polish (Official - Community based)
+#Editor: Toogen#8368
+#Last edited: 18 - February - 2023 0:55
+#
+# THIS LANGUAGE IS COMPLETE LANGUAGE PACK; WHICH MEANS:
+# - Translates base plugin messages
+# - Translates advanced plugin messages (plugin_messages.properties)
+#
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates ( this means
+#   this language will be translated by the author when a new
+#   message is added )
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
+
+#Plugin prefix
+Prefix: '&eLockLogin &7>> '
+
+#Permission error message
+PermissionError: '&5&oBrak dostępu do tego polecenia {permission}'
+
+#BungeeCord proxy message
+BungeeProxy: '&5&oPołącz się przez bungee proxy!'
+
+#Inventories messages
+PinTitle: '&8&lLockLogin PIN'
+AltTitle: '&8&lPowiązane konta'
+InfoTitle: '&8&lBundled player info'
+Next: '&eNastępna'
+Back: '&ePoprzednia'
+
+#Session messages - Manager
+PlayerNotVerified: '&5&oNie możesz uderzyć {player}, dopóki nie jest zalogowany/zarejestrowany'
+AlreadyPlaying: '&5&oTen gracz jest zalogowany'
+PlayerInfoUsage: '&5&oDostępne argumenty: &e<gracz|gracze>&7, &e<@[alias]>'
+ConnectionError: '&5&oGracz {player} nie jest online'
+LookUpUsage: '&5&oUżyj /account alts <gracz>'
+AltFound: '&5&o{player} może mieć {alts} kont, użyj /account alts {player} po więcej informacji'
+NeverPlayed: '&5&oGracz {player} nigdy nie był na serwerze'
+TargetAccessError: '&5&oGracz {player} nie jest zalogowany/zarejestrowany'
+IncorrectPassword: '&5&oPodane hasło jest nieprawidłowe!'
+Captcha: '&7Twój kod captcha to: &e{captcha}'
+InvalidCaptcha: '&5&oPodany kod captcha jest nieprawidłowy'
+SessionServerDisabled: '&5&oSesje logowania są wyłączone na tym serwerze'
+SessionEnabled: '&dWłączono sesję logowania dla Twojego konta'
+SessionDisabled: '&5&oWyłączono sesję logowania dla Twojego konta'
+
+#Session messages - Register
+Register: '&5&oProszę użyć /register <hasło> <hasło> <captcha>'
+KarmaRegister: '&5&oProszę użyć /register <hasło> <captcha> <email>'
+RegisterBar: '{color}Pozostało &7{time}{color} na rejestrację'
+Registered: '&dRejestracja zakończona pomyślnie'
+AlreadyRegistered: '&5&oJesteś już zarejestrowany!'
+RegisterError: '&5&oPodane hasła nie pasują do siebie!'
+PasswordInsecure: '&5&oPodane hasło nie jest bezpieczne!'
+RegisterOut: '&5&oRejestracja zajęła Ci zbyt dużo czasu'
+RegisterTitle: '&7Pozostało'
+RegisterSubtitle: '&b{time} &7na rejestrację'
+MaxRegisters:
+  - '{ServerName}'
+  - ''
+  - '&5Osiągnąłeś maksymalną liczbę zarejestrowanych kont na serwerze'
+  - ''
+  - '&5Jeśli uważasz, że to błąd, zgłoś go na'
+  - '&7https://discordexample.gg'
+
+#Session messages - Login
+Login: '&5&oProszę użyć /login <hasło> <captcha>'
+LoginBar: '{color}Pozostało &7{time}{color} na zalogowanie'
+Logged: '&dZalogowany, witamy ponownie &7{player}'
+AlreadyLogged: '&5&oJesteś już zalogowany!'
+LoginInsecure: '&5&oTwoje hasło zostało sklasyfikowane jako niezabezpieczone i musisz je zmienić'
+LoginOut: '&5&oLogowanie zajęło Ci zbyt dużo czasu'
+LoginTitle: '&7Pozostało'
+LoginSubtitle: '&b{time} &7na zalogowanie'
+
+#Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&dTryb Premium&a włączony&d, oznacza to:"
+  - ""
+  - "&7- &bNie zostaniesz poproszony o podanie danych uwierzytelniających"
+  - "&7- &bBędziesz miał swoją skórę"
+  - "&7- &bMożesz utracić swoje postępy"
+  - "&7- &bJeśli serwery mojang są wyłączone, nie będziesz mógł dołączyć"
+  - "&7- &bJeśli nie jesteś uwierzytelniony przez mojang lub xbox, nie będziesz mógł dołączyć"
+  - ""
+  - "&eDołącz ponownie do serwera, aby zakończyć konfigurację"
+PremiumDisabled:
+  - "{Nazwa serwera}"
+  - ""
+  - "&dTryb premium&c wyłączony&d, oznacza to:"
+  - ""
+  - "&7- &bZostaniesz poproszony o podanie danych uwierzytelniających"
+  - "&7- &bNie będziesz miał swojej skóry"
+  - "&7- &bTwoje postępy będą zależeć od twojego pseudonimu"
+  - "&7- &bBędziesz mógł dołączyć, nawet jeśli serwery mojang nie działają"
+  - "&7- &bBędziesz mógł dołączyć, nawet jeśli nie uwierzytelniłeś mojejng lub xbox"
+  - ""
+  - "&eDołącz ponownie do serwera, aby zakończyć konfigurację"
+PremiumError: „&5&oWystąpił błąd podczas wyłączania/włączania premium na Twoim koncie”
+PremiumAuth: „&dUwierzytelniono przy użyciu uwierzytelniania premium”
+PremiumServer: "&5&lTen serwer jest przeznaczony tylko dla użytkowników premium!"
+PremiumWarning:
+  - "&dHey you! Przed przejściem na konto premium, proszę"
+  - "&rozważ następujące kwestie:"
+  - ""
+  - "&7- &bW zależności od serwera możesz utracić swoje postępy"
+  - "&7- &bJeśli nie jesteś uwierzytelniony na serwerach mojang lub xbox"
+  - "serwery &b, nie będziesz już mógł dołączyć do tego konta"
+  - "&7- &b (tak jak na serwerach premium) Jeśli serwery autoryzacji mojang nie działają"
+  - "&b nie będziesz mógł dołączyć, dopóki serwer nie wróci do trybu online"
+  - ""
+  - "&dJeśli nadal chcesz kontynuować, ponownie uruchom &e/premium&d"
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&o Nie udało się zweryfikować połączenia. Czy jesteś uwierzytelniony przez mojang?"
+  InternalError: "&5&oWystąpił wewnętrzny błąd serwera"
+  ConnectionError: "&5&oNie udało się zweryfikować połączenia z tym serwerem"
+  AddressError: "&5&oNie udało się uwierzytelnić Twojego adresu"
+  EncryptionError: "&5&oPodano nieprawidłowe szyfrowanie"
+  PrecociousEncryption: "&5&oPróbowano uwierzytelnić, zanim zrobi to serwer!"
+  SessionError: "&5&oNieprawidłowa sesja"
+
+#Unsafe password messages
+Password:
+  Success:
+    Unique: '&e- &aTwoje hasło jest w większości unikalne'
+    Length: '&e- &aTwoje hasło ma co najmniej {min_length} znaków'
+    Special: '&e- &aTwoje hasło ma co najmniej {min_special} znaków specjalnych'
+    Numbers: '&e- &aTwoje hasło ma co najmniej {min_number} liczb'
+    Uppers: '&e- &aTwoje hasło ma co najmniej {min_lower} małych liter'
+    Lowers: '&e- &aTwoje hasło ma co najmniej {min_upper} dużych liter'
+  Failed:
+    Unique: '&e- &cTwoje hasło jest podobne do znanych'
+    Length: '&e- &cTwoje hasło ma {length} z {min_length} znaków'
+    Special: '&e- &cTwoje hasło ma {special} z {min_special} znaków specjalnych'
+    Numbers: '&e- &cTwoje hasło ma {number} z {min_number} liczb'
+    Uppers: '&e- &cTwoje hasło ma {lower} z {min_lower} małych liter'
+    Lowers: '&e- &cTwoje hasło ma {upper} z {min_upper} dużych liter'
+
+#Session messages - Pin
+PinUsages: '&5&oDostępne argumenty pin: &e<setup>&7, &e<remove>&7, &e<change>'
+PinSet: '&dTwój kod PIN został pomyślnie ustawiony'
+PinResetted: '&5&oPin usunięty, Twoje konto jest teraz mniej bezpieczne'
+PinChanged: '&dTwój kod PIN został pomyślnie zmieniony'
+AlreadyPin: '&5&oPosiadasz już ustawiony kod PIN!'
+NoPin: '&5&oNie masz ustawionego kodu pin!'
+SetPin: '&5&oUżyj /pin setup <pin>'
+ResetPin: '&5&oUżyj /pin remove <pin>'
+ChangePin: '&5&ooUżyj /pin change <pin> <nowy pin>'
+PinDisabled: '&5&oKod pin jest wyłączony'
+PinLength: '&5&oPin musi mieć 4 cyfry'
+IncorrectPin: '&5&oPodany pin jest nieprawidłowy!'
+
+#Session messages - 2FA
+2FaUsages: '&5&oDostępne argumenty 2FA: &e<setup>&7, &e<remove>&7, &e<2fa code>'
+2FaSetupUsage: '&5&oUżyj /2fa setup <hasło>'
+2FaRemoveUsage: '&5&oUżyj /2fa remove <hasło> <kod 2fa>'
+2FaAuthenticate: '&5&oUżyj /2fa aby zacząć grać'
+2FaLogged: '&dZweryfikowano kod 2FA'
+2FaAlreadyLogged: '&5&oJesteś już zalogowany za pomocą 2FA!'
+2FaIncorrect: '&5&oNiepoprawny kod 2FA'
+2FaAlready: '&5&oMasz już skonfigurowane 2FA!'
+2FaToggleError: '&5&oBłąd podczas próby przełączenia 2FA (niepoprawne hasło/kod)'
+Disabled2FA: '&5&o2FA wyłączone, Twoje konto jest teraz mniej bezpieczne'
+Enabled2FA: '&d2FA włączone, Twoje konto jest ponownie bezpieczne'
+2FaAccountDisabled: '&5&o2FA jest wyłączone na Twoim koncie'
+2FAServerDisabled: '&5&o2FA jest obecnie wyłączone na tym serwerze'
+2FaLocked: '&5&oTen serwer chce, abyś miał włączone 2FA'
+2FAScratchCodes:
+  - '&7Hej! &b{player}&7, to są twoje kody odzyskiwania,'
+  - '&7make sure to not lose them as this will be the last'
+  - '&7uważaj, aby ich nie zgubić, ponieważ będzie to'
+  - '&7ostatni raz, kiedy je zobaczysz:'
+2FaInstructions:
+  - '&fJak zalogować się za pomocą Google Authenticator?'
+  - '&71 - Kliknij ''{message}'''
+  - '&72 - Pobierz aplikację Google Authenticator'
+  - '&73 - Kliknij w ''+'' w aplikacji'
+  - '&74 - Kliknij w ''Zeskanuj kod QR'''
+  - '&75 - Zeskanuj kod QR pokazany na ekranie ( krok 1 )'
+  - '&77 - Wyszukaj {account} w aplikacji Google Auth'
+  - '&78 - Wpisz /2fa <kod pokazany w app> lub <klucz>'
+2FaLink: '&bKliknij tutaj, aby otrzymać kod QR 2FA'
+
+#Session messages - Brute force
+PanicLogin: '&5&oProszę użyć /panic <token>'
+PanicTitle: '&cPANIC MODE'
+PanicSubtitle: '&cUŻYJ &4/panic <token>'
+PanicMode: '&5&oKonto wprowadzone w trybie paniki, masz 1 próbę logowania tokenem przed zablokowaniem adresu IP'
+PanicDisabled: '&5&oSerwer nie jest chroniony przed atakami brute-force'
+PanicAlready: '&dMasz już token brute force, Twoje konto jest bezpieczne'
+PanicUnsafeUsage: '&dAby wyłączyć token paniki, użyj /account unsafe <hasło> <token> [pin] [2fa]'
+PanicNowUnsafe:
+  - '&eLockLogin'
+  - ''
+  - '&dWyłączyłeś token pankiki, co narazi twoje'
+  - '&dkonto na ataki typu brute force.'
+  - '&dToken paniki będzie wymagał tokena gdy'
+  - '&podczas logowania wprowadzisz okrelśoną liczbę'
+  - '&niepoprawnych haseł. Zalecane jest włączenie'
+  - '&ntokena przez /account protect!'
+PanicRequested:
+  - '&eLockLogin'
+  - ''
+  - '&dWygenerowaliśmy dla Ciebie token paniki.'
+  - '&dPrzechowuj go w bezpiecznym miejscu i'
+  - '&dupewnij się, że nikt o nim nie wie.'
+PanicEnabled:
+  - '&eLockLogin'
+  - ''
+  - '&dSerwer jest chroniony przed brutal force'
+  - '&dza pomocą ochrony tokena LockLogin.'
+  - '&dAby rozpocząć z tą ochroną, użyj /account protect'
+  - '&di zapisać wygenerowany token oraz zalogować się'
+  - '&dza jego pomocą, gdy serwer o to poprosi'
+TokenLink: '&bKliknij, aby odsłonić token'
+
+#Session messages - Account management
+AccountArguments: '&5&oDostępne argumenty: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>'
+Change: '&5&oUżyj /account change <hasło> <nowe hasło>'
+ChangeSame: '&5&oTwoje hasło nie może być takie samo jak stare!'
+ChangeDone: '&dTwoje hasło zostało zmienione!'
+AccountUnlock: '&5&oUżyj /account unlock <gracz>'
+AccountUnlocked: '&dKonto {player} zostało odblokowane'
+AccountNotLocked: '&5&oKonto {player} nie jest zablokowane!'
+Close: '&5&oUżyj /account close [player]'
+Closed: '&5&oSesja zamknięta, zaloguj się ponownie!'
+ForceClose: '&5&oSesja zamknięta przed admina, zaloguj się ponownie!'
+ForceCloseAdmin: '&dZamknięto sesję gracza {player}'
+Remove: '&5&oUżyj /account remove <hasło|gracz> [hasło]'
+RemoveAccountMatch: '&5&oPodane hasła nie pasują'
+AccountRemoved: '&5&oTwoje konto zostało usunięte'
+ForcedAccountRemoval:
+  - '{ServerName}'
+  - ''
+  - '&5Twoje konto zostało usunięte'
+  - '&5przed admina ( &7{player}&5 )'
+  - '&5Zostało tymczasowo zablokowane'
+  - '&5aby uniknąć utraty danych, dopóki admin'
+  - '&5go nie odblokuje.'
+  - ''
+  - '&5Jeśli to nie Ty wywołałeś tę akcję, zgłoś ją'
+  - '&5na: &7https://discordexample.gg'
+ForcedAccountRemovalAdmin: '&dKonto {player} usunięte, nie zapomnij użyć /account unlock {player}!'
+
+#Spawn utilities ( includes take back )
+SpawnSet: '&dLokalizacja logowania została ustawiona'
+LocationsReset: '&dWszystkie ostatnie lokalizacje zostały zresetowane'
+LocationReset: '&dOstatnia pozycja {player} została zresetowana'
+LocationsFixed: '&dWszystkie ostatnie lokalizacje zostały naprawione'
+LocationFixed: '&dLokalizacja {player} została naprawiona'
+ResetLastLocUsage: '&5&oUżyj /locations [gracz|@all|@me] <remove|fix>'
+
+#Alias messages
+AliasArguments: '&5&oDostępne argumenty: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [gracz(e)]'
+AliasCreated: '&dAlias {alias} pomyślnie utworzony'
+AliasDestroyed: '&5&oAlias {alias} został zniszczony'
+AliasExists: '&5&oAlias {alias} już istnieje!'
+AliasNotFound: '&5&oNie można znaleźć aliasu o nazwie {alias}'
+AddedPlayer: '&dDodano {player} do {alias}'
+RemovedPlayer: '&dUsunięto {player} z {alias}'
+PlayerNotIn: '&5&o{player} nie jest w {alias}!'
+PlayerAlreadyIn: '&5&o{player} jest już w {alias}!'
+
+#Security messages
+IpBlocked:
+  - '{ServerName}'
+  - ''
+  - '&5System LockLogin wykryły nietypowy ruch'
+  - '&5na twoim adresie IP i został zablokowany.'
+  - '&f{time} {time_format}'
+IllegalName:
+  - '{ServerName}'
+  - ''
+  - '&5Twoja nazwa nie może zawierać:'
+  - '{chars}'
+SimilarName:
+  - '{ServerName}'
+  - ''
+  - '&5Twoja nazwa jest podobna'
+  - '&5do zarejestrowanego już:'
+  - '&7{player}'
+MultipleNames:
+  - '&5Znaleźliśmy więcej niż jeden UUID przypisany do'
+  - '&d{player}&5, więc nie możesz go używać.'
+  - ''
+  - '&5Ale możesz spróbować z:&d {players}'
+UUIDFetchError:
+  - '{ServerName}'
+  - ''
+  - '&5Something went wrong while fetching your UUID'
+  - '&5with client name...'
+IpProxyError:
+  - '{ServerName}'
+  - ''
+  - '&5Twój adres IP wydaje się nieco podejrzany'
+  - '&5Jeśli uważasz, że to błąd, skontaktuj się z nami'
+  - '&5przez: &7https://discordexample.gg'
+BedrockJavaError:
+  - '{ServerName}'
+  - ''
+  - '&5Wygląda na to, że Twoje konto bedrock już istnieje'
+  - '&5zarejestrowane przez konto java lub odwrotnie.'
+  - ''
+  - '&5Jeśli uważasz, że to błąd, skontaktuj się z nami'
+  - '&5przez: &7https://discordexample.gg'

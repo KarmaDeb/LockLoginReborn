@@ -65,4 +65,13 @@ public abstract class ProxyConfiguration {
      * @return all the available auth servers
      */
     public abstract <T> List<T> authServer(final Class<T> instance);
+
+    /**
+     * Get all the premium servers
+     *
+     * @param instance the server class instance
+     * @return all the available premium servers
+     * @param <T> the server type
+     */
+    public abstract <T> List<T> premiumServer(final Class<T> instance);
 }

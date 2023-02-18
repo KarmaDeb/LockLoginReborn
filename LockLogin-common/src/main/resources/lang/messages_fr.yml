@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: French (Official)
 #Editor: KarmaDev
-#Last edited: 10 - July - 2022 21:57
+#Last edited: 18 - February - 2023 0:55
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -15,6 +15,14 @@
 # - This language must receive a community language update ( this
 #   means the author of the language pack must update the
 #   language with the new messages, LockLogin developer won't do it )
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
 
 #Plugin prefix
 Prefix: "&eLockLogin &7>> "
@@ -76,6 +84,57 @@ LoginInsecure: "&5&oVotre mot de passe a été classifié comme non sécurisé e
 LoginOut: "&5&oVous avez pris trop de temps pour vous connecter"
 LoginTitle: "&7Vous avez"
 LoginSubtitle: "&b{time} &7pour la connexion"
+
+#Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&dMode premium&a activé&d, cela implique :"
+  - ""
+  - "&7- &bVous ne serez pas invité à entrer vos identifiants"
+  - "&7- &bVous aurez votre skin"
+  - "&7- &bVous pouvez perdre votre progression"
+  - "&7- &bSi les serveurs de Mojang sont en panne, vous ne pourrez pas rejoindre"
+  - "&7- &bSi vous n'êtes pas authentifié via Mojang ou Xbox, vous ne pourrez pas rejoindre"
+  - ""
+  - "&eRejoignez le serveur pour terminer la configuration"
+PremiumDisabled:
+  - "{ServerName}"
+  - ""
+  - "&dMode premium&c désactivé&d, cela implique :"
+  - ""
+  - "&7- &bVous serez invité à entrer vos identifiants"
+  - "&7- &bVous n'aurez pas votre skin"
+  - "&7- &bVotre progression dépendra de votre pseudo"
+  - "&7- &bVous pourrez rejoindre même si les serveurs de Mojang sont en panne"
+  - "&7- &bVous pourrez rejoindre même si vous n'êtes pas authentifié via Mojang ou Xbox"
+  - ""
+  - "&eRejoignez le serveur pour terminer la configuration"
+PremiumError: "&5&oUne erreur s'est produite lors de l'activation/désactivation du mode premium sur votre compte"
+PremiumAuth: "&dAuthentifié en utilisant l'authentification premium"
+PremiumServer: "&5&lCe serveur est réservé aux utilisateurs premium !"
+PremiumWarning:
+  - "&dHé toi ! Avant de passer en compte premium, veuillez"
+  - "&dconsidérer les éléments suivants :"
+  - ""
+  - "&7- &bEn fonction du serveur, vous pouvez perdre votre progression"
+  - "&7- &bSi vous n'êtes pas authentifié via les serveurs de Mojang ou Xbox"
+  - "&b, vous ne pourrez plus vous connecter avec ce compte"
+  - "&7- &b(Tout comme sur les serveurs premium) Si les serveurs d'authentification de Mojang sont en panne"
+  - "&b, vous ne pourrez pas vous connecter tant que le serveur ne sera pas de retour en ligne"
+  - ""
+  - "&dSi vous souhaitez continuer, exécutez à nouveau &e/premium&d"
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&oImpossible de valider votre connexion. Êtes-vous authentifié via Mojang ?"
+  InternalError: "&5&oUne erreur interne du serveur s'est produite"
+  ConnectionError: "&5&oImpossible de valider votre connexion avec ce serveur"
+  AddressError: "&5&oImpossible d'authentifier votre adresse"
+  EncryptionError: "&5&oCryptage fourni invalide"
+  PrecociousEncryption: "&5&oTentative d'authentification avant le serveur !"
+  SessionError: "&5&oInvalid session"
 
 #Unsafe password messages
 Password:

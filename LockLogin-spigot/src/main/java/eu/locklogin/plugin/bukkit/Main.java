@@ -14,20 +14,29 @@ package eu.locklogin.plugin.bukkit;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.security.BackupTask;
+import eu.locklogin.api.common.security.backup.BackupTask;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
-import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
+
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class Main extends KarmaPlugin {
 
@@ -38,40 +47,25 @@ public final class Main extends KarmaPlugin {
     public Main() throws Throwable {
         super(false);
 
-        String required_api_version = FileInfo.getKarmaVersion(getSourceFile());
-        String current_api_version = KarmaAPI.getVersion();
+        String required_api_version = FileInfo.getKarmaPluginVersion(getSourceFile()).replace("-", ".");
+        String current_api_version = KarmaAPI.getPluginVersion().replace("-", ".");
 
-        String pl_version = current_api_version;
-        String re_version = required_api_version;
         VersionComparator plugin_comparator = new VersionComparator(VersionComparator.createBuilder()
                 .currentVersion(current_api_version)
-                .checkVersion(required_api_version));;
-        try {
-            pl_version = KarmaAPI.getPluginVersion();
-            re_version = FileInfo.getKarmaPluginVersion(getSourceFile());
+                .checkVersion(required_api_version));
 
-            plugin_comparator = new VersionComparator(VersionComparator.createBuilder()
-                    .currentVersion(pl_version.replace("-", "."))
-                    .checkVersion(re_version.replace("-", ".")));
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-        }
-
-        if (required_api_version.equals(current_api_version) && plugin_comparator.isUpToDate()) {
+        if (plugin_comparator.isUpToDate()) {
             CurrentPlatform.setMain(Main.class);
             CurrentPlatform.setPlatform(Platform.BUKKIT);
+            CurrentPlatform.init(getServer().getPort());
 
             ChecksumTables tables = new ChecksumTables();
             tables.checkTables();
 
+            console().send("KarmaAPI found version is up to date with the minimum required. Required: {0} | Current: {1}", Level.OK, StringUtils.replaceLast(required_api_version, StringUtils.escapeString("."), "-"), StringUtils.replaceLast(current_api_version, StringUtils.escapeString("."), "-"));
             plugin = new MainBootstrap(this);
         } else {
-            if (required_api_version.equals(current_api_version)) {
-                console().send("KarmaAPI found version is not the minimum required. You have: {0} | Required: {1}", Level.GRAVE, pl_version, re_version);
-            } else {
-                console().send("KarmaAPI found version is not the minimum required. You have: {0} | Required: {1}", Level.GRAVE, current_api_version, required_api_version);
-            }
-
+            console().send("KarmaAPI found version is not the minimum required. You have: {0} | Required: {1}", Level.GRAVE, current_api_version, required_api_version);
             console().send("You can update from: {0}", Level.INFO, "https://www.spigotmc.org/resources/karmaapi-platform.98542/");
             plugin = null;
             onDisable();
@@ -81,9 +75,20 @@ public final class Main extends KarmaPlugin {
     @Override
     public void enable() {
         if (plugin != null) {
+            CurrentPlatform.setBackupScheduler(new BackupTask());
+
             plugin.enable();
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                BackupTask.performBackup();
+                BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
+                scheduler.performBackup().whenComplete((id, error) -> {
+                    if (error != null) {
+                        logger().scheduleLog(Level.GRAVE, error);
+                        logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                        console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                    } else {
+                        console().send("Successfully created backup with id {0}", Level.INFO, id);
+                    }
+                });
                 if (!unloaded) {
                     onDisable();
                 }
@@ -127,12 +132,10 @@ public final class Main extends KarmaPlugin {
 
     @Override
     public String updateURL() {
-        /*URL url = FileInfo.versionHost(null);
+        URL url = FileInfo.versionHost(null);
         if (url != null)
             return url.toString();
 
-        return null;*/
-
-        return "https://raw.githubusercontent.com/KarmaDeb/updates/master/LockLogin/version/snapshot.kup";
+        return null;
     }
 }

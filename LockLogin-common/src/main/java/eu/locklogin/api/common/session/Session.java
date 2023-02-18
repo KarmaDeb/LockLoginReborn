@@ -154,7 +154,7 @@ public final class Session extends ClientSession {
      */
     @Override
     public boolean isTempLogged() {
-        return gAuth_logged && pin_logged;
+        return captcha_logged && gAuth_logged && pin_logged;
     }
 
     /**

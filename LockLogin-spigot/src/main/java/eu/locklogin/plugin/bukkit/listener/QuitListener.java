@@ -57,12 +57,13 @@ public final class QuitListener implements Listener {
 
             LateScheduler<Event> result = new AsyncLateScheduler<>();
 
+            user.restorePotionEffects();
             tryAsync(TaskTarget.EVENT, () -> {
                 PluginConfiguration config = CurrentPlatform.getConfiguration();
 
                 if (!config.isBungeeCord()) {
                     if (user.getChecker().isUnderCheck()) {
-                        user.getChecker().cancelCheck();
+                        user.getChecker().cancelCheck("Player left");
                     }
 
                     if (user.isLockLoginUser()) {
@@ -137,9 +138,10 @@ public final class QuitListener implements Listener {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
             User user = new User(player);
 
+            user.restorePotionEffects();
             if (!config.isBungeeCord()) {
                 if (user.getChecker().isUnderCheck()) {
-                    user.getChecker().cancelCheck();
+                    user.getChecker().cancelCheck("Player kicked");
                 }
 
                 if (user.isLockLoginUser()) {

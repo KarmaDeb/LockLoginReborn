@@ -14,6 +14,9 @@ package eu.locklogin.api.file.pack;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.util.enums.Lang;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
@@ -45,7 +48,14 @@ public final class PluginProperties {
      * @return the messages properties
      */
     public String getProperty(final String name, final String def) {
-        Path propFile = plugin.getDataPath().resolve("lang").resolve("plugin_messages.properties");
+        PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+        Lang lang = configuration.getLang();
+        String propName = "plugin_messages";
+        if (lang.includeProperties()) {
+            propName = lang.propertiesName();
+        }
+
+        Path propFile = plugin.getDataPath().resolve("lang").resolve(propName + ".properties");
         try {
             if (Files.exists(propFile)) {
                 updatePropsVersion();
@@ -55,7 +65,7 @@ public final class PluginProperties {
 
                 return properties.getProperty(name, def);
             } else {
-                InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
+                InputStream in = getClass().getResourceAsStream("/lang/" + propName + ".properties");
                 if (in != null) {
                     PathUtilities.create(propFile);
                     Files.copy(in, propFile, StandardCopyOption.REPLACE_EXISTING);
@@ -93,8 +103,15 @@ public final class PluginProperties {
                     "#\n" +
                     "#   PLEASE DO NOT MODIFY properties_lang_version VALUE";
 
-            Path propFile = plugin.getDataPath().resolve("lang").resolve("plugin_messages.properties");
-            InputStream in = getClass().getResourceAsStream("/lang/plugin_messages.properties");
+            PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+            Lang lang = configuration.getLang();
+            String propName = "plugin_messages";
+            if (lang.includeProperties()) {
+                propName = lang.propertiesName();
+            }
+
+            Path propFile = plugin.getDataPath().resolve("lang").resolve( propName +".properties");
+            InputStream in = getClass().getResourceAsStream("/lang/" + propName + ".properties");
 
             if (Files.exists(propFile) && in != null) {
                 Properties local = new Properties();

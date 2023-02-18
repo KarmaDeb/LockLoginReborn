@@ -58,7 +58,7 @@ public final class QuitListener implements Listener {
 
                 User user = new User(player);
                 if (user.getChecker().isUnderCheck()) {
-                    user.getChecker().cancelCheck();
+                    user.getChecker().cancelCheck("User left");
                 }
 
                 SessionKeeper keeper = new SessionKeeper(user.getModule());
@@ -94,7 +94,7 @@ public final class QuitListener implements Listener {
 
             User user = new User(player);
             if (user.getChecker().isUnderCheck()) {
-                user.getChecker().cancelCheck();
+                user.getChecker().cancelCheck("User kicked");
             }
 
             SessionKeeper keeper = new SessionKeeper(user.getModule());

@@ -1,5 +1,6 @@
 package eu.locklogin.api.util.platform;
 
+import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 
@@ -17,8 +18,9 @@ public final class ModuleServer {
     private final static Set<ModulePlayer> connected = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Set<TargetServer> servers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    ModuleServer() {
-    }
+    int port;
+
+    ModuleServer() {}
 
     /**
      * Connect a player
@@ -46,6 +48,15 @@ public final class ModuleServer {
      */
     void addServer(final TargetServer server) {
         servers.add(server);
+    }
+
+    /**
+     * Get the server port
+     *
+     * @return the server port
+     */
+    public int port() {
+        return port;
     }
 
     /**
@@ -83,6 +94,23 @@ public final class ModuleServer {
         Collection<ModulePlayer> players = getOnlinePlayers();
         for (ModulePlayer player : players) {
             if (player.getUUID().equals(id))
+                return player;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a module player by its UUID
+     *
+     * @param id the module player UUID
+     * @return the module player
+     */
+    @Nullable
+    public ModulePlayer getPlayer(final AccountID id) {
+        Collection<ModulePlayer> players = getOnlinePlayers();
+        for (ModulePlayer player : players) {
+            if (player.getId().equals(id))
                 return player;
         }
 

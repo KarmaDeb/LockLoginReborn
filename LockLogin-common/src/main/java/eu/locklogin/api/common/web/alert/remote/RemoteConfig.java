@@ -88,6 +88,38 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get the plugin backup configuration
+     *
+     * @return the plugin backup configuration
+     */
+    @Override
+    public BackupConfig backup() {
+        return new BackupConfig(true, 5, 30, 7);
+    }
+
+    /**
+     * Get if the premium support should be
+     * enabled for this server
+     *
+     * @return if the plugin implements premium support
+     */
+    @Override
+    public boolean enablePremium() {
+        return true;
+    }
+
+    /**
+     * Get if the plugin should try to fix UUIDs for
+     * premium users
+     *
+     * @return if the plugin should fix UUIDs
+     */
+    @Override
+    public boolean fixUUIDs() {
+        return true;
+    }
+
+    /**
      * Get if the plugin should replace the server MOTD while in
      * bungeecord mode
      *

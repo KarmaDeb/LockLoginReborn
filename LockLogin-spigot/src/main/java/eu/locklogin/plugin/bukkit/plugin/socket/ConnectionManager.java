@@ -8,7 +8,10 @@ import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import io.socket.client.Socket;
+import ml.karmaconfigs.api.common.timer.SchedulerUnit;
+import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
@@ -81,7 +84,7 @@ public final class ConnectionManager {
             try {
                 action.complete(tmp_tries.get());
 
-                socket.on("disconnect", (reason) -> {
+                socket.once("disconnect", (reason) -> {
                     plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
 
                     long start = System.currentTimeMillis();
@@ -93,14 +96,52 @@ public final class ConnectionManager {
 
                             long diff = end - start;
                             if (diff > 30000) {
-                                plugin.console().send("Failed to reconnect. Giving up", Level.GRAVE);
+                                plugin.console().send("Failed to reconnect. Retrying in 1 minute", Level.GRAVE);
                                 connected = false;
+
+                                SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.MINUTE, false);
+                                scheduler.endAction(() -> {
+                                    plugin.console().send("Trying to reconnect to web services", Level.INFO);
+                                    socket.connect();
+
+                                    plugin.async().queue("connect_web_services", () -> {
+                                        long st = System.currentTimeMillis();
+
+                                        boolean co = true;
+                                        while (!socket.connected()) {
+                                            long now = System.currentTimeMillis();
+                                            if (TimeUnit.MILLISECONDS.toSeconds(now - st) >= 10) { //10 seconds timeout
+                                                if (tmp_tries.getAndIncrement() < tries) {
+                                                    socket.disconnect(); //Avoid multiple connections from a single instance
+                                                    logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services, retrying");
+                                                    socket.connect();
+                                                    st = now;
+                                                } else {
+                                                    socket.disconnect();
+                                                    logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services after {0} tries, giving up...", tmp_tries.get());
+                                                    co = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (co) {
+                                            plugin.console().send("Succesfully reconnected to web services", Level.INFO);
+                                            scheduler.cancel();
+
+                                            invokeReconnect(tries, socket);
+                                        }
+                                    });
+                                });
+                                scheduler.start();
+
                                 break;
                             }
                         }
 
                         if (connected) {
-                            plugin.console().send("Successfully reconnected. Proxy servers may need to refresh this server memory", Level.INFO);
+                            plugin.console().send("Successfully reconnected", Level.INFO);
+                            invokeReconnect(tries, socket);
                         }
                     });
                 });
@@ -139,6 +180,87 @@ public final class ConnectionManager {
         //action.complete(-2);
 
         return action;
+    }
+
+    /**
+     * Setup the server as it was recently connected
+     *
+     * @param tries the connection tries
+     * @param socket the socket
+     * @param onceConnect actions to perform if other servers are already connected
+     * @param s the sender
+     */
+    private void invokeReconnect(final int tries, final Socket socket) {
+        try {
+            Gson gson = new GsonBuilder().create();
+            socket.emit("auth", CurrentPlatform.getServerHash());
+
+            AtomicInteger tmp_tries = new AtomicInteger(0);
+            socket.off("disconnect");
+            socket.once("disconnect", (reason) -> {
+                plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
+
+                long start = System.currentTimeMillis();
+                plugin.async().queue("check_task", () -> {
+                    boolean connected = true;
+
+                    while (!socket.connected()) {
+                        long end = System.currentTimeMillis();
+
+                        long diff = end - start;
+                        if (diff > 30000) {
+                            plugin.console().send("Failed to reconnect. Retrying in 1 minute", Level.GRAVE);
+                            connected = false;
+
+                            SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.MINUTE, false);
+                            scheduler.endAction(() -> {
+                                plugin.console().send("Trying to reconnect to web services", Level.INFO);
+                                socket.connect();
+
+                                plugin.async().queue("connect_web_services", () -> {
+                                    long st = System.currentTimeMillis();
+
+                                    boolean co = true;
+                                    while (!socket.connected()) {
+                                        long now = System.currentTimeMillis();
+                                        if (TimeUnit.MILLISECONDS.toSeconds(now - st) >= 10) { //10 seconds timeout
+                                            if (tmp_tries.getAndIncrement() < tries) {
+                                                socket.disconnect(); //Avoid multiple connections from a single instance
+                                                logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services, retrying");
+                                                socket.connect();
+                                                st = now;
+                                            } else {
+                                                socket.disconnect();
+                                                logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services after {0} tries, giving up...", tmp_tries.get());
+                                                co = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (co) {
+                                        plugin.console().send("Succesfully reconnected to web services", Level.INFO);
+                                        scheduler.cancel();
+
+                                        invokeReconnect(tries, socket);
+                                    }
+                                });
+                            });
+                            scheduler.start();
+
+                            break;
+                        }
+                    }
+
+                    if (connected) {
+                        plugin.console().send("Successfully reconnected", Level.INFO);
+                        invokeReconnect(tries, socket);
+                    }
+                });
+            });
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**

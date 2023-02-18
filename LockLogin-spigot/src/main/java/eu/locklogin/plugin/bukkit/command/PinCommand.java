@@ -99,14 +99,22 @@ public class PinCommand implements CommandExecutor {
                                     if (args.length == 2) {
                                         if (!manager.hasPin()) {
                                             String pin = args[1];
+                                            try {
+                                                Integer.parseInt(pin);
+                                                if (pin.length() == 4) {
+                                                    manager.setPin(pin);
+                                                    user.send(messages.prefix() + messages.pinSet());
 
-                                            manager.setPin(pin);
-                                            user.send(messages.prefix() + messages.pinSet());
+                                                    session.setPinLogged(false);
 
-                                            session.setPinLogged(false);
-
-                                            PinInventory inventory = new PinInventory(player);
-                                            inventory.open();
+                                                    PinInventory inventory = new PinInventory(player);
+                                                    inventory.open();
+                                                } else {
+                                                    user.send(messages.prefix() + messages.pinLength());
+                                                }
+                                            } catch (NumberFormatException e) {
+                                                user.send(messages.prefix() + messages.pinLength());
+                                            }
                                         } else {
                                             user.send(messages.prefix() + messages.alreadyPin());
                                         }

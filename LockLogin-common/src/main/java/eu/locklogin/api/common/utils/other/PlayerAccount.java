@@ -170,15 +170,22 @@ public final class PlayerAccount extends AccountManager {
                         throw new IllegalArgumentException("Cannot initialize player file instance for unknown account constructor type: " + parameter.getLocalName());
                 }
 
-                manager = new KarmaMain(randomId.getAccountFile())
-                        .internal(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
-
+                KarmaMain tmpManager = null;
                 try {
-                    manager.validate();
+                    tmpManager = new KarmaMain(randomId.getAccountFile())
+                            .internal(CurrentPlatform.getMain().getResourceAsStream("/templates/user.lldb"));
 
-                    manager.clearCache();
-                    manager.preCache();
-                } catch (Throwable ignored) {}
+                    try {
+                        tmpManager.validate();
+
+                        tmpManager.clearCache();
+                        tmpManager.preCache();
+                    } catch (Throwable ignored) {}
+                } catch (Throwable ex) {
+                    console.send("Failed to read account of {0} ({1})", Level.GRAVE, PathUtilities.getPrettyPath(randomId.getAccountFile()), ex.fillInStackTrace());
+                }
+
+                manager = tmpManager;
             } else {
                 throw new IllegalArgumentException("Cannot initialize player file instance for invalid account constructor parameter");
             }
@@ -254,6 +261,28 @@ public final class PlayerAccount extends AccountManager {
         } catch (Throwable ex) {
             return false;
         }
+    }
+
+    /**
+     * Set a raw value
+     *
+     * @param key the key
+     * @param value the value
+     */
+    public void setRaw(final String key, final String value) {
+        manager.setRaw(key, value);
+        manager.save();
+    }
+
+    /**
+     * Set a raw value
+     *
+     * @param key the key
+     * @param value the value
+     */
+    public void setRaw(final String key, final boolean value) {
+        manager.setRaw(key, value);
+        manager.save();
     }
 
     @Override
@@ -635,10 +664,12 @@ public final class PlayerAccount extends AccountManager {
                     String extension = PathUtilities.getExtension(sub);
                     String trimmedId = sub.getFileName().toString().replace("." + extension, "");
 
-                    AccountManager manager = new PlayerAccount(AccountID.fromString(trimmedId));
-                    AccountID uuid = manager.getUUID();
-                    if (!StringUtils.isNullOrEmpty(uuid.getId()))
-                        managers.add(manager);
+                    PlayerAccount manager = new PlayerAccount(AccountID.fromString(trimmedId));
+                    if (manager.manager != null) {
+                        AccountID uuid = manager.getUUID();
+                        if (!StringUtils.isNullOrEmpty(uuid.getId()))
+                            managers.add(manager);
+                    }
                 });
             } catch (Throwable ex) {
                 ex.printStackTrace();

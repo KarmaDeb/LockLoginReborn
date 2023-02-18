@@ -55,6 +55,13 @@ public final class InstantParser {
         return calendar.get(Calendar.YEAR);
     }
 
+    public int monthValue() {
+        ZonedDateTime instantZone = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+        Calendar calendar = GregorianCalendar.from(instantZone);
+
+        return calendar.get(Calendar.MONTH);
+    }
+
     /**
      * Get the instant month
      *
@@ -122,7 +129,12 @@ public final class InstantParser {
      * @return the parsed instant to string
      */
     public String parse() {
-        return getYear() + " / " + getMonth() + " / " + getDay() + " " + getHour() + ":" + getMinute() + ":" + getSecond();
+        String day_string = String.format("%02d", getDay());
+        String hour_string = String.format("%02d", getHour());
+        String minute_string = String.format("%02d", getMinute());
+        String second_string = String.format("%02d", getSecond());
+
+        return String.format("%d/%s/%s %s:%s:%s", getYear(), getMonth(), day_string, hour_string, minute_string, second_string);
     }
 
     /**

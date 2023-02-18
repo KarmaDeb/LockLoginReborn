@@ -35,18 +35,37 @@ public abstract class PluginConfiguration {
      *
      * @return if the plugin will share his statistics
      */
-    public boolean shareBStats() {
-        return true; //TODO: Make this method abstract
-    }
+    public abstract boolean shareBStats();
 
     /**
      * Get if the plugin share statistics with official server
      *
      * @return if the plugin will share statistics wil official web server
      */
-    public boolean sharePlugin() {
-        return true; //TODO: Make this method abstract
-    }
+    public abstract boolean sharePlugin();
+
+    /**
+     * Get the plugin backup configuration
+     *
+     * @return the plugin backup configuration
+     */
+    public abstract BackupConfig backup();
+
+    /**
+     * Get if the premium support should be
+     * enabled for this server
+     *
+     * @return if the plugin implements premium support
+     */
+    public abstract boolean enablePremium();
+
+    /**
+     * Get if the plugin should try to fix UUIDs for
+     * premium users
+     *
+     * @return if the plugin should fix UUIDs
+     */
+    public abstract boolean fixUUIDs();
 
     /**
      * Get if the plugin should replace the server MOTD while in

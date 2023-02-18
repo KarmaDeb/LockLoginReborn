@@ -32,6 +32,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
@@ -39,10 +40,12 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
+import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
@@ -66,6 +69,8 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -77,6 +82,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
+import static java.lang.invoke.MethodHandles.lookup;
 
 public final class JoinListener implements Listener {
 
@@ -95,6 +101,25 @@ public final class JoinListener implements Listener {
     public final PlayerPool switch_pool;
 
     private final Map<UUID, String> old_servers = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> offline_to_online = new ConcurrentHashMap<>();
+
+    private final static MethodHandle HANDLE;
+
+    static {
+        MethodHandle handle = null;
+        try {
+            MethodHandles.Lookup lookup = lookup();
+
+            Class<?> initial_handler = Class.forName("net.md_5.bungee.connection.InitialHandler");
+            Field uniqueId = initial_handler.getDeclaredField("uniqueId");
+            uniqueId.setAccessible(true);
+            handle = lookup.unreflectSetter(uniqueId);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
+
+        HANDLE = handle;
+    }
 
     /**
      * Initialize the join listener
@@ -165,6 +190,14 @@ public final class JoinListener implements Listener {
                                                         info);
                                     }
                                 }
+
+                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
+                                                .addProperty("raw", CurrentPlatform.getMessages().toString()).getInstance(),
+                                        info);
+
+                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
+                                                .addProperty("raw", Config.manager.getConfiguration()).getInstance(),
+                                        info);
                             }
 
                             CurrentPlatform.requestDataContainerUpdate();
@@ -190,13 +223,16 @@ public final class JoinListener implements Listener {
                                 session.setCaptchaLogged(true);
 
                             SimpleScheduler tmp_timer = null;
-                            if (!session.isCaptchaLogged()) {
-                                tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
-                                final String captcha_message = StringUtils.toColor(messages.captcha(session.getCaptcha())); //If we do this, then the captcha code won't get updated on each second
+                            if (config.captchaOptions().isEnabled()) {
+                                if (!session.isCaptchaLogged()) {
+                                    tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                                    final String captcha_message = StringUtils.toColor(messages.captcha(session.getCaptcha())); //If we do this, then the captcha code won't get updated on each second
 
-                                tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(captcha_message))).start();
+                                    tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(captcha_message))).start();
+                                }
                             }
 
+                            boolean skip = false;
                             if (FloodGateUtil.hasFloodgate()) {
                                 FloodGateUtil floodGate = new FloodGateUtil(player.getUniqueId());
                                 if (floodGate.isBedrockClient() && config.bedrockLogin()) {
@@ -208,7 +244,46 @@ public final class JoinListener implements Listener {
                                         session.setPinLogged(true);
 
                                         plugin.console().send("Detected bedrock player {0}. He has been authenticated without requesting login", Level.INFO, player.getName());
+                                        skip = true;
                                     }
+                                }
+                            }
+
+                            if (!skip) {
+                                PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
+                                if (database != null && config.enablePremium()) {
+                                    UUID id = offline_to_online.getOrDefault(player.getUniqueId(), player.getUniqueId());
+                                    offline_to_online.remove(player.getUniqueId());
+
+                                    if (database.isPremium(id)) {
+                                        user.setPremium(true);
+                                        session.setCaptchaLogged(true);
+                                        session.setLogged(true);
+                                        session.set2FALogged(true);
+                                        session.setPinLogged(true);
+
+                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                                                UserAuthenticateEvent.Result.SUCCESS, //We will pass premium as success
+                                                user.getModule(),
+                                                messages.prefix() + messages.premiumAuth(),
+                                                null);
+                                        ModulePlugin.callEvent(event);
+
+                                        user.send(event.getAuthMessage());
+                                        skip = true;
+
+                                        user.sendToPremium(0);
+                                    }
+                                }
+
+                                if (!skip) {
+                                    session.setPinLogged(false);
+                                    session.set2FALogged(false);
+                                    session.setLogged(false);
+
+                                    //Automatically mark players as captcha verified if captcha is disabled
+                                    if (!config.captchaOptions().isEnabled())
+                                        session.setCaptchaLogged(true);
                                 }
                             }
 
@@ -227,7 +302,7 @@ public final class JoinListener implements Listener {
 
                                 if (timer != null)
                                     timer.cancel();
-                            });
+                            }).silent(user.isPremium());
 
                             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
@@ -297,7 +372,22 @@ public final class JoinListener implements Listener {
                         }
                     }
 
+                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
+                                    .addProperty("raw", CurrentPlatform.getMessages().toString()).getInstance(),
+                            info);
+
+                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
+                                    .addProperty("raw", Config.manager.getConfiguration()).getInstance(),
+                            info);
+
                     User user = new User(player);
+
+                    if (Proxy.isPremium(info)) {
+                        if (config.enablePremium() && !user.isPremium()) {
+                            player.connect(plugin.getProxy().getServerInfo(old));
+                            user.send(messages.prefix() + messages.premiumServer());
+                        }
+                    }
 
                     Manager.sendFunction.apply(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
                             .getInstance(), info);
@@ -380,20 +470,39 @@ public final class JoinListener implements Listener {
 
             String conn_name = e.getConnection().getName();
             UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
+            UUID online_gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+
+            offline_to_online.put(gen_uuid, online_gen_uuid);
+            plugin.console().debug("Fetching offline UUID ({0})", Level.INFO, gen_uuid);
             if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
-                gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+                plugin.console().debug("Fetching online UUID", Level.INFO);
+                gen_uuid = online_gen_uuid;
+
+                plugin.console().debug("Found online UUID: {0}", Level.INFO, gen_uuid);
+            } else {
+                PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+                if (pm != null && config.enablePremium()) {
+                    if (pm.isPremium(online_gen_uuid) && !config.fixUUIDs()) {
+                        e.getConnection().setOnlineMode(true);
+                        gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
+                    }
+                }
             }
 
             if (!ipEvent.isHandled()) {
+                plugin.console().debug("Ip event not handled", Level.INFO);
                 QuitListener.tmp_clients.remove(gen_uuid);
 
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
+                        plugin.console().debug("Success IP event", Level.INFO);
                         if (!e.isCancelled()) {
                             if (config.registerOptions().maxAccounts() > 0) {
+                                plugin.console().debug("Checking for alt accounts", Level.INFO);
                                 AccountData data = new AccountData(ip, AccountID.fromUUID(gen_uuid));
 
                                 if (data.allow(config.registerOptions().maxAccounts())) {
+                                    plugin.console().debug("Passed alt check", Level.INFO);
                                     data.save();
 
                                     int amount = data.getAlts().size();
@@ -417,19 +526,28 @@ public final class JoinListener implements Listener {
                             }
 
                             if (config.bruteForceOptions().getMaxTries() > 0) {
+                                plugin.console().debug("Checking brute force", Level.INFO);
+
                                 BruteForce protection = new BruteForce(ip);
                                 if (protection.isBlocked()) {
+                                    plugin.console().debug("Failed brute force check", Level.INFO);
+
                                     e.setCancelled(true);
                                     e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))));
                                     return;
+                                } else {
+                                    plugin.console().debug("Passed brute force check", Level.INFO);
                                 }
                             }
 
                             if (config.checkNames()) {
+                                plugin.console().debug("Checking client name", Level.INFO);
                                 Name name = new Name(conn_name);
                                 name.check();
 
                                 if (name.notValid()) {
+                                    plugin.console().debug("Name not valid", Level.INFO);
+
                                     boolean r = false;
 
                                     if (FloodGateUtil.hasFloodgate()) {
@@ -445,35 +563,44 @@ public final class JoinListener implements Listener {
                                         e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.illegalName(name.getInvalidChars()))));
                                         return;
                                     }
+                                } else {
+                                    plugin.console().debug("Passed name!", Level.INFO);
                                 }
                             }
 
+                            UUID id = gen_uuid;
                             OfflineClient offline = new OfflineClient(conn_name);
-                            AccountManager manager = offline.getAccount();
+                            offline.getAccountAsync().whenComplete((manager) -> {
+                                if (manager != null) {
+                                    ProxiedPlayer connection = plugin.getProxy().getPlayer(id);
 
-                            if (manager != null) {
-                                if (config.enforceNameCheck()) {
-                                    if (!manager.getName().equals(conn_name)) {
-                                        e.setCancelled(true);
-                                        e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.similarName(manager.getName()))));
-                                        return;
+                                    if (config.enforceNameCheck()) {
+                                        if (!manager.getName().equals(conn_name)) {
+                                            if (connection != null) {
+                                                User user = new User(connection);
+                                                user.kick(messages.similarName(manager.getName()));
+                                            }
+
+                                            return;
+                                        }
+                                    }
+
+                                    LockedAccount account = new LockedAccount(manager.getUUID());
+
+                                    if (account.isLocked()) {
+                                        String administrator = account.getIssuer();
+                                        Instant date = account.getLockDate();
+                                        InstantParser parser = new InstantParser(date);
+                                        String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
+
+                                        if (connection != null) {
+                                            User user = new User(connection);
+                                            user.kick(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"));
+                                        }
+                                        logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
                                     }
                                 }
-
-                                LockedAccount account = new LockedAccount(manager.getUUID());
-
-                                if (account.isLocked()) {
-                                    String administrator = account.getIssuer();
-                                    Instant date = account.getLockDate();
-                                    InstantParser parser = new InstantParser(date);
-                                    String dateString = parser.getDay() + " " + parser.getMonth() + " " + parser.getYear();
-
-                                    e.setCancelled(true);
-                                    e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.forcedAccountRemoval(administrator + " [ " + dateString + " ]"))));
-                                    logger.scheduleLog(Level.WARNING, "Client {0} tried to join, but his account was blocked by {1} on {2}", conn_name, administrator, dateString);
-                                    return;
-                                }
-                            }
+                            });
 
                             Event event = new UserPreJoinEvent(ip, gen_uuid, conn_name, e);
                             ModulePlugin.callEvent(event);
@@ -485,11 +612,14 @@ public final class JoinListener implements Listener {
                             }
 
                             e.setCancelled(false);
+                        } else {
+                            plugin.console().debug("Event got cancelled by a third-party", Level.WARNING);
                         }
                         break;
                     case INVALID:
                     case ERROR:
                     default:
+                        plugin.console().debug("IP event: " + ipEvent.getResult(), Level.INFO);
                         if (!ipEvent.getResult().equals(validationResult)) {
                             logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
                                     ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
@@ -516,9 +646,26 @@ public final class JoinListener implements Listener {
     public void onLogin(LoginEvent e) {
         if (!e.isCancelled()) {
             PendingConnection connection = e.getConnection();
+            UUID tar_uuid = connection.getUniqueId();
+
+            PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+            if (pm != null && config.enablePremium()) {
+                boolean premium = pm.isPremium(offline_to_online.getOrDefault(tar_uuid, tar_uuid)) || pm.isPremium(tar_uuid);
+
+                if (premium && config.fixUUIDs()) {
+                    tar_uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + connection.getName()).getBytes());
+                    try {
+                        Class<?> initial_handler = Class.forName("net.md_5.bungee.connection.InitialHandler");
+                        Object handler = initial_handler.cast(connection);
+
+                        HANDLE.invokeExact(handler, tar_uuid);
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
 
             boolean check = CurrentPlatform.isOnline() || !connection.isOnlineMode();
-            UUID tar_uuid = connection.getUniqueId();
             if (check) {
                 UUID gen_uuid = UUIDUtil.fetch(connection.getName(), UUIDType.OFFLINE);
                 if (CurrentPlatform.isOnline() && e.getConnection().isOnlineMode()) {
@@ -564,11 +711,13 @@ public final class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onSwitch(ServerSwitchEvent e) {
-        ProxiedPlayer player = e.getPlayer();
+        if (e.getFrom() != null) {
+            ProxiedPlayer player = e.getPlayer();
 
-        if (CurrentPlatform.getServer().isOnline(player.getUniqueId())) {
-            old_servers.put(player.getUniqueId(), e.getFrom().getName());
-            switch_pool.addPlayer(player.getUniqueId());
+            if (CurrentPlatform.getServer().isOnline(player.getUniqueId())) {
+                old_servers.put(player.getUniqueId(), e.getFrom().getName());
+                switch_pool.addPlayer(player.getUniqueId());
+            }
         }
     }
 

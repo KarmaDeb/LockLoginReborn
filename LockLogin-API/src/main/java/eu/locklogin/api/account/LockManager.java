@@ -15,6 +15,7 @@ package eu.locklogin.api.account;
  */
 
 import java.time.Instant;
+import java.util.Set;
 
 /**
  * LockLogin locked account

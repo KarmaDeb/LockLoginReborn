@@ -23,6 +23,7 @@ import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LockLogin brute force protection
@@ -31,11 +32,13 @@ public final class BruteForce {
 
     private final static KarmaSource plugin = APISource.loadProvider("LockLogin");
     private final static Map<InetAddress, Integer> tries = new HashMap<>();
-    private final static Map<InetAddress, Long> block_time = new HashMap<>();
+    private final static Map<InetAddress, BruteForce> blocked = new HashMap<>();
 
     private final static Set<UUID> panicking = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final InetAddress ip;
+
+    private SimpleScheduler scheduler;
 
     /**
      * Initialize the brute force system
@@ -66,20 +69,41 @@ public final class BruteForce {
      * @param time the block time
      */
     public void block(final int time) {
-        block_time.put(ip, (long) time);
+        /*if (time > 0) {
+            if (!block_time.containsKey(ip)) {
+                block_time.put(ip, (long) time);
 
-        SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
-        scheduler.restartAction(() -> {
-            long time_left = block_time.getOrDefault(ip, 0L);
-            if (time_left > 0) {
-                block_time.put(ip, time_left - 1);
-            } else {
-                block_time.remove(ip);
-                scheduler.cancel();
+                SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                scheduler.restartAction(() -> {
+                    long time_left = block_time.getOrDefault(ip, 0L);
+                    if (time_left > 0) {
+                        block_time.put(ip, time_left - 1);
+                    } else {
+                        block_time.remove(ip);
+                        scheduler.cancel();
+                    }
+                });
+
+                scheduler.start();
             }
-        });
+        } else {
+            block_time.remove(ip);
+        }*/
+        if (blocked.containsKey(ip)) {
+            SimpleScheduler stored = blocked.get(ip).scheduler;
+            if (stored != null)
+                stored.cancel();
+        }
 
-        scheduler.start();
+        if (time > 0) {
+            scheduler = new SourceScheduler(plugin, time, SchedulerUnit.MINUTE, false);
+            scheduler.endAction(() -> {
+                blocked.remove(ip);
+                tries.remove(ip);
+            }).start();
+
+            blocked.put(ip, this);
+        }
     }
 
     /**
@@ -115,7 +139,7 @@ public final class BruteForce {
      * @return the uuid block time left
      */
     public long getBlockLeft() {
-        return block_time.getOrDefault(ip, 0L);
+        return (scheduler != null ? TimeUnit.MILLISECONDS.toSeconds(scheduler.getMillis()) : 0);
     }
 
     /**
@@ -124,7 +148,7 @@ public final class BruteForce {
      * @return if the uuid is blocked
      */
     public boolean isBlocked() {
-        return block_time.getOrDefault(ip, 0L) > 1L;
+        return scheduler != null && scheduler.isRunning();
     }
 
     /**

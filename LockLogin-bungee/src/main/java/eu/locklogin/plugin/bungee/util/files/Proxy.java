@@ -62,6 +62,16 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
+     * Check if the player is in a premium server
+     *
+     * @param player the player
+     * @return if the player is in a premium server
+     */
+    public static boolean inPremium(final ProxiedPlayer player) {
+        return isPremium(player.getServer().getInfo());
+    }
+
+    /**
      * Get if the lobby servers are valid
      *
      * @return if the lobby servers are valid
@@ -92,6 +102,25 @@ public final class Proxy extends ProxyConfiguration {
             List<String> auths = cfg.getStringList("Servers.Auth");
             if (arrayValid(auths)) {
                 return auths.contains(server.getName());
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Get if the specified server is a premium server
+     *
+     * @param server the server to check
+     * @return if the server is a premium server
+     */
+    public static boolean isPremium(final ServerInfo server) {
+        if (server != null) {
+            List<String> premium = cfg.getStringList("Servers.Premium");
+            if (arrayValid(premium)) {
+                return premium.contains(server.getName());
             } else {
                 return true;
             }
@@ -267,6 +296,39 @@ public final class Proxy extends ProxyConfiguration {
                 Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
                 for (ServerInfo info : infos) {
                     if (auths.contains(info.getName())) {
+                        if (isAssignable(info.getClass(), instance)) {
+                            servers.add(instance.cast(info));
+                        }
+                    }
+                }
+            }
+        }
+
+        return servers;
+    }
+
+    /**
+     * Get all the premium servers
+     *
+     * @param instance the server class instance
+     * @return all the available premium servers
+     */
+    @Override
+    public <T> List<T> premiumServer(Class<T> instance) {
+        List<String> premiums = cfg.getStringList("Servers.Premium");
+        List<T> servers = Collections.synchronizedList(new ArrayList<>());
+        if (premiums.contains("*")) {
+            Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+            for (ServerInfo info : infos) {
+                if (isAssignable(info.getClass(), instance)) {
+                    servers.add(instance.cast(info));
+                }
+            }
+        } else {
+            if (!premiums.isEmpty() && arrayValid(premiums)) {
+                Collection<ServerInfo> infos = plugin.getProxy().getServers().values();
+                for (ServerInfo info : infos) {
+                    if (premiums.contains(info.getName())) {
                         if (isAssignable(info.getClass(), instance)) {
                             servers.add(instance.cast(info));
                         }

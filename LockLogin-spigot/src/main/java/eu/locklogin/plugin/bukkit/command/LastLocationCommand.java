@@ -66,6 +66,9 @@ public final class LastLocationCommand implements CommandExecutor {
                         LastLocation location;
 
                         switch (target.toLowerCase()) {
+                            case "@spawn":
+
+                                break;
                             case "@all":
                                 switch (action.toLowerCase()) {
                                     case "remove":
@@ -75,6 +78,9 @@ public final class LastLocationCommand implements CommandExecutor {
                                     case "fix":
                                         LastLocation.fixAll();
                                         user.send(messages.prefix() + messages.locationsFixed());
+                                        break;
+                                    case "teleport":
+                                        user.send(messages.prefix() + "&cNOT SUPPORTED");
                                         break;
                                     default:
                                         user.send(messages.prefix() + messages.resetLocUsage());
@@ -92,6 +98,9 @@ public final class LastLocationCommand implements CommandExecutor {
                                     case "fix":
                                         location.fix();
                                         user.send(messages.prefix() + messages.locationFixed(StringUtils.stripColor(player.getDisplayName())));
+                                        break;
+                                    case "teleport":
+                                        location.teleport();
                                         break;
                                     default:
                                         user.send(messages.prefix() + messages.resetLocUsage());
@@ -113,6 +122,9 @@ public final class LastLocationCommand implements CommandExecutor {
                                         case "fix":
                                             location.fix();
                                             user.send(messages.prefix() + messages.locationFixed(target));
+                                            break;
+                                        case "teleport":
+                                            location.teleport();
                                             break;
                                         default:
                                             user.send(messages.prefix() + messages.resetLocUsage());

@@ -20,6 +20,9 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.minecraft.rgb.RGBTextComponent;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public final class Message extends PluginMessages {
@@ -56,10 +59,11 @@ public final class Message extends PluginMessages {
      * @param yaml the yaml to load
      */
     @Override
-    public void loadString(String yaml) {
+    public void loadString(final String yaml) {
+        String data = new String(Base64.getDecoder().decode(yaml.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.isBungeeCord()) {
-            KarmaYamlManager bungee = new KarmaYamlManager(yaml, false);
+            KarmaYamlManager bungee = new KarmaYamlManager(data, false);
             getManager().update(bungee, true);
         }
     }

@@ -22,6 +22,10 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
+import eu.locklogin.api.plugin.PluginLicenseProvider;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.premium.PremiumDatabase;
+import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
@@ -105,6 +109,12 @@ public final class CurrentPlatform {
     private static Class<? extends ClientSession> sessionManager;
 
     @SuppressWarnings("unused")
+    private static License current_license;
+
+    private static BackupScheduler backupScheduler;
+    private static PremiumDatabase premiumDatabase;
+    private static PluginLicenseProvider licenseProvider;
+    @SuppressWarnings("unused")
     private static PluginConfiguration fake_config;
     @SuppressWarnings("unused")
     private static ProxyConfiguration fake_proxy;
@@ -116,6 +126,15 @@ public final class CurrentPlatform {
     private static BruteLoader current_appender;
     private static Runnable onDataContainerUpdate;
     private static boolean online;
+
+    /**
+     * Initialize the server
+     *
+     * @param port the server port
+     */
+    public static void init(final int port) {
+        server.port = port;
+    }
 
     /**
      * Set the current account manager
@@ -137,6 +156,33 @@ public final class CurrentPlatform {
      */
     public static void setSessionManager(final Class<? extends ClientSession> clazz) {
         sessionManager = clazz;
+    }
+
+    /**
+     * Set the backup scheduler
+     *
+     * @param scheduler the backup scheduler
+     */
+    public static void setBackupScheduler(final BackupScheduler scheduler) {
+        backupScheduler = scheduler;
+    }
+
+    /**
+     * Set the premium database
+     *
+     * @param database the premium database
+     */
+    public static void setPremiumDatabase(final PremiumDatabase database) {
+        premiumDatabase = database;
+    }
+
+    /**
+     * Set the license provider
+     *
+     * @param provider the license provider
+     */
+    public static void setLicenseProvider(final PluginLicenseProvider provider) {
+        licenseProvider = provider;
     }
 
     /**
@@ -448,6 +494,43 @@ public final class CurrentPlatform {
                 return null;
             }
         }
+    }
+
+    /**
+     * Get the backup scheduler
+     *
+     * @return the backup scheduler
+     */
+    public static BackupScheduler getBackupScheduler() {
+        return backupScheduler;
+    }
+
+    /**
+     * Get the premium database
+     *
+     * @return the premium database
+     */
+    public static PremiumDatabase getPremiumDatabase() {
+        return premiumDatabase;
+    }
+
+    /**
+     * Get the license provider
+     *
+     * @return the license provider
+     */
+    public static PluginLicenseProvider getLicenseProvider() {
+        return licenseProvider;
+    }
+
+    /**
+     * Get the current plugin license
+     *
+     * @return the plugin license
+     */
+    @Nullable
+    public static License getLicense() {
+        return current_license;
     }
 
     /**

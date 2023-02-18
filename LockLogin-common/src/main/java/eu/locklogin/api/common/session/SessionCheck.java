@@ -15,8 +15,10 @@ import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,13 +26,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class SessionCheck<T> implements Runnable {
 
     private final static Set<UUID> under_check = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final static Set<UUID> cancel_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Map<UUID, SimpleScheduler> schedulers = new ConcurrentHashMap<>();
     private final static Set<UUID> restart_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final ModulePlayer player;
     private final KarmaSource source;
     private final BossProvider<T> boss;
     private String BAR_COLOR = "&a";
     private Runnable onEnd;
+
+    private boolean silent = false;
 
     public SessionCheck(final KarmaSource owner, final ModulePlayer client, final BossProvider<T> provider) {
         player = client;
@@ -41,6 +45,18 @@ public final class SessionCheck<T> implements Runnable {
     public SessionCheck<T> whenComplete(final Runnable task) {
         onEnd = task;
 
+        return this;
+    }
+
+    /**
+     * While on silent, no message chat, titles or boss bars
+     * will be shown
+     *
+     * @param silentStatus the silent status
+     * @return if the check is silent
+     */
+    public SessionCheck<T> silent(final boolean silentStatus) {
+        silent = silentStatus;
         return this;
     }
 
@@ -97,7 +113,7 @@ public final class SessionCheck<T> implements Runnable {
                         boss.displayTime(tmp_time);
                 }
 
-                if (boss != null) {
+                if (boss != null && !silent) {
                     boss.scheduleBar(Collections.singletonList(player.getPlayer()));
                 }
 
@@ -105,45 +121,48 @@ public final class SessionCheck<T> implements Runnable {
                 AccountManager manager = player.getAccount();
                 SimpleScheduler timer = new SourceScheduler(source, time, SchedulerUnit.SECOND, false).multiThreading(false);
                 timer.changeAction((timer_time) -> {
-                    if (!cancel_queue.contains(player.getUUID())) {
+                    SimpleScheduler stored = schedulers.getOrDefault(player.getUUID(), null);
+                    if (stored != null && stored.getId() == timer.getId()) {
                         ClientSession session = player.getSession();
                         if (!session.isLogged()) {
-                            if (boss != null) {
-                                if (timer_time == ((int) Math.round(((double) time / 2)))) {
-                                    boss.color(BossColor.YELLOW);
-                                    BAR_COLOR = "&e";
-                                }
+                            if (!silent) {
+                                if (boss != null) {
+                                    if (timer_time == ((int) Math.round(((double) time / 2)))) {
+                                        boss.color(BossColor.YELLOW);
+                                        BAR_COLOR = "&e";
+                                    }
 
-                                if (timer_time == ((int) Math.round(((double) time / 3)))) {
-                                    boss.color(BossColor.RED);
-                                    BAR_COLOR = "&c";
+                                    if (timer_time == ((int) Math.round(((double) time / 3)))) {
+                                        boss.color(BossColor.RED);
+                                        BAR_COLOR = "&c";
+                                    }
+
+                                    if (manager.isRegistered()) {
+                                        if (protection.isPanicking(player.getUUID())) {
+                                            boss.update(messages.panicLogin(), false);
+                                        } else {
+                                            boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                        }
+                                    } else {
+                                        boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                                    }
                                 }
 
                                 if (manager.isRegistered()) {
+                                    String title = messages.loginTitle(timer_time);
+                                    String subtitle = messages.loginSubtitle(timer_time);
                                     if (protection.isPanicking(player.getUUID())) {
-                                        boss.update(messages.panicLogin(), false);
-                                    } else {
-                                        boss.update(messages.loginBar(BAR_COLOR, timer_time), false);
+                                        title = messages.panicTitle();
+                                        subtitle = messages.panicSubtitle();
+                                    }
+
+                                    if (!StringUtils.isNullOrEmpty(title) || !StringUtils.isNullOrEmpty(subtitle)) {
+                                        player.sendTitle(title, subtitle, 0, 5, 0);
                                     }
                                 } else {
-                                    boss.update(messages.registerBar(BAR_COLOR, timer_time), false);
+                                    if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
+                                        player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                                 }
-                            }
-
-                            if (manager.isRegistered()) {
-                                String title = messages.loginTitle(timer_time);
-                                String subtitle = messages.loginSubtitle(timer_time);
-                                if (protection.isPanicking(player.getUUID())) {
-                                    title = messages.panicTitle();
-                                    subtitle = messages.panicSubtitle();
-                                }
-
-                                if (!StringUtils.isNullOrEmpty(title) || !StringUtils.isNullOrEmpty(subtitle)) {
-                                    player.sendTitle(title, subtitle, 0, 5, 0);
-                                }
-                            } else {
-                                if (!StringUtils.isNullOrEmpty(messages.registerTitle(timer_time)) || !StringUtils.isNullOrEmpty(messages.registerSubtitle(timer_time)))
-                                    player.sendTitle(messages.registerTitle(timer_time), messages.registerSubtitle(timer_time), 0, 5, 0);
                             }
                         } else {
                             timer.cancel();
@@ -151,49 +170,54 @@ public final class SessionCheck<T> implements Runnable {
                         }
                     } else {
                         timer.cancel();
-                        cancel_queue.remove(player.getUUID());
-                        keeper.destroy();
                     }
                 }).endAction(() -> {
                     if (restart_queue.contains(player.getUUID())) {
                         restart_queue.remove(player.getUUID());
                         run();
                     } else {
-                        if (onEnd != null)
-                            onEnd.run();
+                        SimpleScheduler stored = schedulers.getOrDefault(player.getUUID(), null);
+                        if (stored != null && stored.getId() == timer.getId()) {
+                            if (onEnd != null)
+                                onEnd.run();
 
-                        if (boss != null)
-                            boss.cancel();
+                            if (boss != null)
+                                boss.cancel();
 
-                        ClientSession session = player.getSession();
+                            ClientSession session = player.getSession();
 
-                        if (!session.isLogged())
-                            player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
+                            if (!session.isLogged())
+                                player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
 
-                        under_check.remove(player.getUUID());
-                        keeper.destroy();
+                            under_check.remove(player.getUUID());
+                            keeper.destroy();
+                        }
                     }
                 }).cancelAction((cancelTime) -> {
                     if (restart_queue.contains(player.getUUID())) {
                         restart_queue.remove(player.getUUID());
                         run();
                     } else {
-                        if (onEnd != null)
-                            onEnd.run();
+                        SimpleScheduler stored = schedulers.getOrDefault(player.getUUID(), null);
+                        if (stored != null && stored.getId() == timer.getId()) {
+                            if (onEnd != null)
+                                onEnd.run();
 
-                        if (boss != null)
-                            boss.cancel();
+                            if (boss != null)
+                                boss.cancel();
 
-                        ClientSession session = player.getSession();
+                            ClientSession session = player.getSession();
 
-                        if (!session.isLogged())
-                            player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
+                            if (!session.isLogged())
+                                player.requestKick((manager.isRegistered() ? (protection.isPanicking(player.getUUID()) ? messages.panicMode() : messages.loginTimeOut()) : messages.registerTimeOut()));
 
-                        under_check.remove(player.getUUID());
-                        keeper.destroy();
+                            under_check.remove(player.getUUID());
+                            keeper.destroy();
+                        }
                     }
                 });
 
+                schedulers.put(player.getUUID(), timer);
                 timer.start();
                 startMessageTask();
             }
@@ -219,15 +243,17 @@ public final class SessionCheck<T> implements Runnable {
         SimpleScheduler timer = new SourceScheduler(source, time, SchedulerUnit.SECOND, true);
         timer.restartAction(() -> {
             if (under_check.contains(player.getUUID())) {
-                if (!session.isLogged()) {
-                    if (manager.isRegistered()) {
-                        if (protection.isPanicking(player.getUUID())) {
-                            player.sendMessage(messages.prefix() + messages.panicLogin());
+                if (!silent) {
+                    if (!session.isLogged()) {
+                        if (manager.isRegistered()) {
+                            if (protection.isPanicking(player.getUUID())) {
+                                player.sendMessage(messages.prefix() + messages.panicLogin());
+                            } else {
+                                player.sendMessage(messages.prefix() + messages.login());
+                            }
                         } else {
-                            player.sendMessage(messages.prefix() + messages.login());
+                            player.sendMessage(messages.prefix() + messages.register());
                         }
-                    } else {
-                        player.sendMessage(messages.prefix() + messages.register());
                     }
                 }
             } else {
@@ -240,8 +266,13 @@ public final class SessionCheck<T> implements Runnable {
     /**
      * Cancel the player session check
      */
-    public void cancelCheck() {
-        cancel_queue.add(player.getUUID());
+    public void cancelCheck(final String reason) {
+        try {
+            SimpleScheduler sc = schedulers.remove(player.getUUID());
+            source.logger().scheduleLog(Level.INFO, "Cancelled session check scheduler of {0} ({1}) for {2}", player.getName(), player.getUUID(), reason);
+
+            sc.cancel();
+        } catch (NullPointerException ignored) {}
     }
 
     /**
@@ -249,7 +280,6 @@ public final class SessionCheck<T> implements Runnable {
      */
      @SuppressWarnings("unused")
     public void restart() {
-        cancel_queue.add(player.getUUID());
         restart_queue.add(player.getUUID());
     }
 

@@ -10,6 +10,8 @@ import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.common.web.services.LockLoginSocket;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -22,13 +24,17 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.plugin.PluginLicenseProvider;
+import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
+import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
-import ml.karmaconfigs.api.common.karma.KarmaAPI;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -39,15 +45,16 @@ import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
+import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public class MainBootstrap {
 
@@ -80,22 +87,26 @@ public class MainBootstrap {
             }
 
             JarManager manager = new JarManager(dependency);
-            if (pluginDependency.equals(Dependency.APACHE_COMMONS)) {
+            if (pluginDependency == Dependency.APACHE_COMMONS) {
                 if (BukkitServer.isUnder(Version.v1_8)) {
                     manager.process(false);
                     console.send("Apache Commons will be downloaded because your server version is too low. Please consider updating to at least 1.8", Level.GRAVE);
                 }
             } else {
                 manager.process(false);
+                if (dependency.isHighPriority()) {
+                    manager.downloadAndInject();
+                }
             }
         }
+
         JarManager.downloadAll();
         DependencyManager.loadDependencies();
 
-        /*console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
+        //console.send("&aInjected plugin KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
 
         STFetcher fetcher = new STFetcher();
-        fetcher.check();*/
+        fetcher.check();
 
         Consumer<MessageSender> onMessage = messageSender -> {
             if (messageSender.getSender() instanceof ModulePlayer) {
@@ -166,6 +177,11 @@ public class MainBootstrap {
                     ModulePlugin.callEvent(event);
 
                     user.send(event.getAuthMessage());
+
+                    if (CurrentPlatform.getConfiguration().takeBack()) {
+                        LastLocation last = new LastLocation(player);
+                        last.teleport();
+                    }
                 }
             }
         };
@@ -251,6 +267,52 @@ public class MainBootstrap {
                 File file = iterator.next();
                 LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
             } while (iterator.hasNext());
+        }
+
+        CurrentPlatform.setLicenseProvider(new LockLoginSocket());
+
+        Path license = plugin.getDataPath().resolve("cache").resolve("license.dat");
+        if (!Files.exists(license)) {
+            plugin.console().send("License file not found, trying to export from internal", Level.WARNING);
+            InputStream internal = getClass().getResourceAsStream("/license.dat");
+            if (internal != null) {
+                try {
+                    KarmaMain mn = new KarmaMain(internal);
+                    String data = mn.get("license").getAsString();
+
+                    byte[] real = Base64.getDecoder().decode(data);
+                    PathUtilities.create(license);
+
+                    Files.write(license, real);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+                    License installed = CurrentPlatform.getLicense();
+                    if (installed == null) {
+                        PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        if (config != null && config.isBungeeCord()) {
+                            plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
+                        }
+                    }
+                }, 0, 20 * 30);
+            }
+        }
+
+        if (Files.exists(license)) {
+            PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+            plugin.console().send("Validating plugin license, please wait...", Level.INFO);
+            License provided = provider.fetch(license);
+
+            if (provided != null) {
+                provided.setInstallLocation(plugin.getDataPath().resolve("cache"));
+                try {
+                    JarManager.changeField(CurrentPlatform.class, "current_license", provided);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
 
         AllowedCommand.scan();

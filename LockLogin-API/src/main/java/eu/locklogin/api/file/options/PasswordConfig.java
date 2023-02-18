@@ -25,6 +25,9 @@ public final class PasswordConfig {
     @Getter
     @Accessors(fluent = true)
     private final boolean warn_unsafe;
+    @Getter
+    @Accessors(fluent = true)
+    private final boolean ignore_common;
 
     @Getter
     @Accessors(fluent = true)
@@ -48,16 +51,18 @@ public final class PasswordConfig {
      * @param print_success print success messages
      * @param block_unsafe block unsafe passwords
      * @param warn_unsafe warn about unsafe passwords
+     * @param ignore_cm ignore common passwords
      * @param min_length password required length
      * @param min_characters password min amount of special characters
      * @param min_numbers password min amount of numbers
      * @param min_upper password min amount of uppercase letters
      * @param min_lower password min amount of lowercase letters
      */
-    public PasswordConfig(final boolean print_success, final boolean block_unsafe, final boolean warn_unsafe, final int min_length, final int min_characters, final int min_numbers, final int min_upper, final int min_lower) {
+    public PasswordConfig(final boolean print_success, final boolean block_unsafe, final boolean warn_unsafe, final boolean ignore_cm, final int min_length, final int min_characters, final int min_numbers, final int min_upper, final int min_lower) {
         this.printSuccess = print_success;
         this.block_unsafe = block_unsafe;
         this.warn_unsafe = warn_unsafe;
+        this.ignore_common = ignore_cm;
 
         this.min_length = Math.max(min_length, min_characters + min_numbers + min_upper + min_lower);
         this.min_characters = min_characters;
@@ -103,12 +108,14 @@ public final class PasswordConfig {
         PasswordAttribute attribute = new PasswordAttribute(length, chars, numbers, uppers, lowers);
         PluginMessages messages = CurrentPlatform.getMessages();
 
-        Password pwd = new Password(password);
-        if (pwd.isSecure()) {
-            if (printSuccess) result.add(messages.checkSuccess(CheckType.UNIQUE, attribute));
-        } else {
-            fails++;
-            result.add(messages.checkFailed(CheckType.UNIQUE, attribute));
+        if (!ignore_common) {
+            Password pwd = new Password(password);
+            if (pwd.isSecure()) {
+                if (printSuccess) result.add(messages.checkSuccess(CheckType.UNIQUE, attribute));
+            } else {
+                fails++;
+                result.add(messages.checkFailed(CheckType.UNIQUE, attribute));
+            }
         }
 
         if (length < min_length) {

@@ -156,7 +156,7 @@ public final class LoginCommand implements CommandExecutor {
                                                     if (passwordConfig.block_unsafe()) {
                                                         manager.setPassword(null);
 
-                                                        user.getChecker().cancelCheck();
+                                                        user.getChecker().cancelCheck("Logged in");
                                                         SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
                                                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
                                                         ret = true;
@@ -245,12 +245,12 @@ public final class LoginCommand implements CommandExecutor {
                                                 LoginConfig loginConfig = config.loginOptions();
 
                                                 if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
-                                                    if (StringUtils.isNullOrEmpty(manager.getPanic())) {
-                                                        protection.block(bruteForce.getBlockTime());
-                                                        user.kick(messages.ipBlocked(bruteForce.getBlockTime()));
-                                                    } else {
+                                                    if (manager.hasPanic()) {
                                                         protection.panic(player.getUniqueId());
                                                         user.kick(messages.panicMode());
+                                                    } else {
+                                                        protection.block(bruteForce.getBlockTime());
+                                                        user.kick(messages.ipBlocked(bruteForce.getBlockTime()));
                                                     }
                                                 } else {
                                                     if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {

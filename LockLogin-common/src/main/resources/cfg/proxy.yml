@@ -37,6 +37,9 @@ ID: ""
 # and like that until the list ends or the player-server-send is success.
 #
 # To use all the servers you can use '*' or add all of them manually
+#
+# Please note: Premium servers will be available only for users with /premium enabled
+#              or with "locklogin.join.limbo" permission
 Servers:
   Lobby:
     - "lobby"
@@ -44,3 +47,6 @@ Servers:
   Auth:
     - "auth"
     - "authFallBack"
+  Premium:
+    - "premiumLobby"
+    - "premiumLobbyFallback"

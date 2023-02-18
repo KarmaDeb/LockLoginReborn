@@ -27,6 +27,7 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -50,10 +51,7 @@ import net.md_5.bungee.api.event.ServerConnectEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -69,6 +67,8 @@ public final class User {
     private final static Map<UUID, SessionCheck<ProxiedPlayer>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
+    private static Set<UUID> premium_users = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     private final ProxiedPlayer player;
 
     /**
@@ -156,6 +156,19 @@ public final class User {
                         ip);
                 CurrentPlatform.connectPlayer(modulePlayer, player);
             }
+        }
+    }
+
+    /**
+     * Set the user premium status
+     *
+     * @param status the user premium status
+     */
+    public void setPremium(final boolean status) {
+        if (status) {
+            premium_users.add(player.getUniqueId());
+        } else {
+            premium_users.remove(player.getUniqueId());
         }
     }
 
@@ -256,6 +269,35 @@ public final class User {
      *
      * @param index the server try index
      */
+    public void sendToPremium(final int index) {
+        ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+        if (proxy.sendToServers()) {
+            ClientSession session = getSession();
+
+            if (session.isValid()) {
+                List<ServerInfo> premium = proxy.premiumServer(ServerInfo.class);
+                if (premium.size() > index) {
+                    ServerInfo lInfo = premium.get(index);
+                    player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                        if (error != null || result == ServerConnectRequest.Result.FAIL) {
+                            sendToPremium(index + 1);
+
+                            if (error != null) {
+                                logger.scheduleLog(Level.GRAVE, error);
+                            }
+                            logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
+                        }
+                    }).build());
+                }
+            }
+        }
+    }
+
+    /**
+     * Check the player server
+     *
+     * @param index the server try index
+     */
     public void checkServer(final int index) {
         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
         if (proxy.sendToServers()) {
@@ -263,22 +305,36 @@ public final class User {
 
             if (session.isValid()) {
                 if (session.isLogged() && session.isTempLogged()) {
-                    if (Proxy.inAuth(player) && Proxy.lobbiesValid()) {
-                        if (!hasPermission(PluginPermissions.join_limbo())) {
-                            List<ServerInfo> lobbies = proxy.lobbyServers(ServerInfo.class);
-                            if (lobbies.size() > index) {
-                                ServerInfo lInfo = lobbies.get(index);
-                                player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
-                                    if (error != null || result == ServerConnectRequest.Result.FAIL) {
-                                        checkServer(index + 1);
+                    boolean redirect = false;
+                    boolean premium = false;
+                    if (Proxy.inAuth(player)) {
+                        redirect = Proxy.lobbiesValid() && !hasPermission(PluginPermissions.join_limbo());
+                    } else {
+                        if (Proxy.inPremium(player)) {
+                            PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-                                        if (error != null) {
-                                            logger.scheduleLog(Level.GRAVE, error);
-                                        }
-                                        logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
+                            redirect = config.enablePremium() && !premium_users.contains(player.getUniqueId());
+                        }
+                    }
+
+                    if (redirect) {
+                        premium = premium_users.contains(player.getUniqueId());
+                    }
+
+                    if (redirect) {
+                        List<ServerInfo> lobbies = (premium ? proxy.premiumServer(ServerInfo.class) : proxy.lobbyServers(ServerInfo.class));
+                        if (lobbies.size() > index) {
+                            ServerInfo lInfo = lobbies.get(index);
+                            player.connect(ServerConnectRequest.builder().target(lInfo).connectTimeout(10).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                                if (error != null || result == ServerConnectRequest.Result.FAIL) {
+                                    checkServer(index + 1);
+
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
                                     }
-                                }).build());
-                            }
+                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), lInfo.getName());
+                                }
+                            }).build());
                         }
                     }
                 } else {
@@ -357,7 +413,8 @@ public final class User {
      * Remove the user session check
      */
     public void removeSessionCheck() {
-        sessionChecks.remove(player.getUniqueId());
+        SessionCheck<ProxiedPlayer> check = sessionChecks.remove(player.getUniqueId());
+        check.cancelCheck("Check cancelled");
     }
 
     /**
@@ -504,5 +561,9 @@ public final class User {
                     .replace("{player}", StringUtils.stripColor(player.getDisplayName()))
                     .replace("{ServerName}", config.serverName())};
         }
+    }
+
+    public boolean isPremium() {
+        return premium_users.contains(player.getUniqueId());
     }
 }

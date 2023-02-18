@@ -1,0 +1,325 @@
+#LockLogin message file
+#----------------------------------
+#Translation: Turkish (Official - Community based)
+#Editor: WinTone01
+#Last edited: 18 - February - 2023 0:55
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates (this means
+#   this language will be translated by the author when a new
+#   message is added)
+# - Pull requests for modifications will be ignored
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+# - The translation author is responsible for pull requests on his github
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
+
+#Plugin prefix
+Prefix: "&eLockLogin &7>> "
+
+#Permission error message
+PermissionError: "&5&o{permission} izniniz yok"
+
+#BungeeCord proxy message
+BungeeProxy: "&5&oLütfen bungee proxy üzerinden bağlanın!"
+
+#Inventories messages
+PinTitle: "&8&lLockLogin pinner"
+AltTitle: "&8&lYan hesap arama"
+InfoTitle: "&8&lBirlikte verilen oyuncu bilgisi"
+Next: "&eSonraki"
+Back: "&eGeri"
+
+#Session messages - Manager
+PlayerNotVerified: "&5&o{player} oturum açmamış/kayıtlı değilken ona karşı savaşamazsınız"
+AlreadyPlaying: "&5&oBu oyuncu zaten oynuyor"
+PlayerInfoUsage: "&5&oGeçerli playerinfo alt argümanları: &e<oyuncu|oyuncular>&7, &e<@[takma ad]>"
+ConnectionError: "&5&o{player} oyuncusu çevrimiçi değil"
+LookUpUsage: "&5&oLütfen /account alts <oyuncu> kullanın"
+AltFound: "&5&o{player}, {alts} alt hesabına sahip olabilir, daha fazla bilgi için /account alts {player} yazın"
+NeverPlayed: "&5&o{player} oyuncusu sunucuda hiç oynamadı"
+TargetAccessError: "&5&o{player} oyuncusu oturum açmamış/kayıtlı değil"
+IncorrectPassword: "&5&oSağlanan şifre doğru değil!"
+Captcha: "&7Güvenlik kodunuz: &e{captcha}"
+InvalidCaptcha: "&5&oBelirtilen captcha kodu geçerli veya doğru değil"
+SessionServerDisabled: "&5&oKalıcı oturumlar bu sunucuda devre dışı bırakıldı"
+SessionEnabled: "&dHesabınız için kalıcı oturum etkinleştirildi"
+SessionDisabled: "&5&oHesabınız için kalıcı oturum devre dışı bırakıldı"
+
+#Session messages - Register
+Register: "&5&oLütfen /register <şifre> <şifre> <captcha> kullanın"
+KarmaRegister: "&5&oLütfen /register <şifre> <captcha> <email> kullanın"
+RegisterBar: "{color}Kaydolmak için &7{time}{color} vaktiniz var"
+Registered: "&dKayıt tamamlandı, oynadığınız için teşekkürler"
+AlreadyRegistered: "&5&oZaten kayıtlısınız!"
+RegisterError: "&5&oSağlanan şifreler eşleşmiyor!"
+PasswordInsecure: "&5&oBelirtilen şifre güvenli değil!"
+RegisterOut: "&5&oKayıt olmak için çok fazla zaman harcadınız"
+RegisterTitle: "&7Giriş yapmak için"
+RegisterSubtitle: "&b{time} &7var"
+MaxRegisters:
+  - "{ServerName}"
+  - ""
+  - "&5Sunucuda maksimum kayıtlı hesaba ulaştınız"
+  - ""
+  - "&5Bunun bir hata olduğunu düşünüyorsanız lütfen bildirin"
+  - "&7https://discordexample.gg"
+
+#Session messages - Login
+Login: "&5&oLütfen /login <şifre> <captcha> kullanın"
+LoginBar: "{color}Giriş yapmak için &7{time}{color} vaktiniz var"
+Logged: "&dGiriş yaptınız, tekrar hoş geldiniz &7{player}"
+AlreadyLogged: "&5&oZaten giriş yapmışsın!"
+LoginInsecure: "&5&oParolanız güvenli değil olarak sınıflandırıldı ve değiştirmeniz gerekiyor"
+LoginOut: "&5&oOturum açmak için çok fazla zaman harcadınız"
+LoginTitle: "&7Giriş yapmak için"
+LoginSubtitle: "&b{time} &7var"
+
+#Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&dPremium modu &aetkin&d, bu şu anlama gelir:"
+  - ""
+  - "&7- &bSizden kimlik bilgileriniz istenmeyecek"
+  - "&7- &bSkinine sahip olacaksın"
+  - "&7- &bİlerlemenizi kaybedebilirsiniz"
+  - "&7- &bMojang sunucuları kapalıysa, katılamazsınız"
+  - "&7- &bMojang veya xbox üzerinden kimliğiniz doğrulanmadıysa, katılamazsınız"
+  - ""
+  - "&eRejoin the server to finish setup"
+PremiumDisabled:
+  - "{ServerName}"
+  - ""
+  - "&dPremium modu&c kapalı&d, bu şu anlama gelir:"
+  - ""
+  - "&7- &bKimlik bilgileriniz istenecek"
+  - "&7- &bSkinine sahip olmayacaksın"
+  - "&7- &bİlerlemeniz takma adınıza bağlı olacaktır"
+  - "&7- &bMojang sunucuları kapalı olsa bile katılabileceksiniz"
+  - "&7- &bMojang veya xbox üzerinden kimlik doğrulaması yapmamış olsanız bile katılabileceksiniz"
+  - ""
+  - "&eKurulumu tamamlamak için sunucuya yeniden katılın"
+PremiumError: "&5&oHesabınızda premium devre dışı bırakılırken/etkinleştirilirken bir hata oluştu"
+PremiumAuth: "&dBirinci sınıf kimlik doğrulaması kullanılarak doğrulandı"
+PremiumServer: "&5&lBu sunucu sadece premium kullanıcılar içindir!"
+PremiumWarning:
+  - "&dHey sen! Premium hesaba geçmeden önce lütfen"
+  - "&daşağıdakileri göz önünde bulundurun:"
+  - ""
+  - "&7- &bSunucuya bağlı olarak, ilerlemenizi kaybedebilirsiniz."
+  - "&7- &bMojang sunucularında veya xbox sunucularında kimliğiniz"
+  - "&b  doğrulanmamışsa, artık bu hesapla katılamazsınız."
+  - "&7- &b(Premium sunucularda olduğu gibi) Mojang auth sunucuları kapalıysa,"
+  - "&b  sunucu tekrar çevrimiçi olana kadar katılamazsınız."
+  - ""
+  - "&dHala devam etmek istiyorsanız &e/premium&d komudunu tekrar yazın"
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&oBağlantınız doğrulanamadı. Mojang aracılığıyla kimliğiniz doğrulandı mı?"
+  InternalError: "&5&oBir dahili sunucu hatası oluştu"
+  ConnectionError: "&5&oBu sunucuyla bağlantınız doğrulanamadı"
+  AddressError: "&5&oAdresiniz doğrulanamadı"
+  EncryptionError: "&5&oGeçersiz şifreleme sağlandı"
+  PrecociousEncryption: "&5&oSunucu yapmadan önce kimlik doğrulaması yapılmaya çalışıldı!"
+  SessionError: "&5&oGeçersiz oturum"
+
+#Unsafe password messages
+Password:
+  Success:
+    Unique: "&e- &aParolanız çoğunlukla kullanılmamış"
+    Length: "&e- &aŞifreniz en az {min_length} karakter içeriyor"
+    Special: "&e- &aŞifrenizde en az {min_special} özel karakter var"
+    Numbers: "&e- &aŞifrenizde en az {min_number} rakam var"
+    Uppers: "&e- &aŞifrenizde en az {min_lower} küçük harf var"
+    Lowers: "&e- &aŞifrenizde en az {min_upper} büyük harf var"
+  Failed:
+    Unique: "&e- &cParolanız bilinenlere benzer"
+    Length: "&e- &cŞifrenizde {length}/{min_length} karakter var"
+    Special: "&e- &cŞifrenizde {special}/{min_special} özel karakter var"
+    Numbers: "&e- &cŞifrenizde {number}/{min_number} numara var"
+    Uppers: "&e- &cŞifrenizde {lower}/{min_lower} küçük karakter var"
+    Lowers: "&e- &cŞifrenizde {upper}/{min_upper} büyük karakter var"
+
+#Session messages - Pin
+PinUsages: "&5&oGeçerli pin alt argümanları: &e<setup>&7, &e<remove>&7, &e<change>"
+PinSet: "&dPininiz başarıyla ayarlandı"
+PinResetted: "&5&oPin kaldırıldı, hesabınız artık daha az güvenli"
+PinChanged: "&dŞifreniz başarıyla değiştirildi"
+AlreadyPin: "&5&oPininizi zaten ayarladınız!"
+NoPin: "&5&oPininiz yok!"
+SetPin: "&5&oLütfen /pin setup <pin> kullanın"
+ResetPin: "&5&oLütfen /pin remove <pin> kullanın"
+ChangePin: "&5&oLütfen /pin change <pin> <yeni pin> kullanın"
+PinDisabled: "&5&oPinler devre dışı bırakıldı"
+PinLength: "&5&oPin 4 haneli olmalıdır"
+IncorrectPin: "&5&oBelirtilen pin doğru değil!"
+
+#Session messages - 2FA
+2FaUsages: "&5&oGeçerli 2FA alt argümanları: &e<setup>&7, &e<remove>&7, &e<2fa kodu>"
+2FaSetupUsage: "&5&oLütfen /2fa setup <şifre> kullanın"
+2FaRemoveUsage: "&5&oLütfen /2fa remove <şifre> <2fa kodu>"
+2FaAuthenticate: "&5&oLütfen oynayama başlamak için /2fa yazın"
+2FaLogged: "&d2FA kodu doğrulandı"
+2FaAlreadyLogged: "&5&oZaten 2FA ile kimliğiniz doğrulandı!"
+2FaIncorrect: "&5&oYanlış 2FA kodu"
+2FaAlready: "&5&o2FA'nızı zaten ayarladınız!"
+2FaToggleError: "&5&o2FA'yı değiştirmeye çalışırken hata oluştu ( yanlış şifre/kod )"
+Disabled2FA: "&5&o2FA devre dışı bırakıldı, hesabınız artık daha az güvenli"
+Enabled2FA: "&d2FA etkinleştirildi, hesabınız tekrar güvende"
+2FaAccountDisabled: "&5&o2FA hesabınızda devre dışı bırakıldı"
+2FAServerDisabled: "&5&o2FA şu anda bu sunucuda devre dışı"
+2FaLocked: "&5&oBu sunucu 2FA'yı etkinleştirmenizi istiyor"
+2FAScratchCodes:
+  - "&7Hey! &b{player}&7, bunlar kurtarma kodlarınız,"
+  - "&7kaybetmediğinizden emin olun çünkü bu"
+  - "&7onları son görüşünüz olacak:"
+2FaInstructions:
+  - "&fGoogle Authenticator kullanılarak kimlik doğrulaması nasıl yapılır?"
+  - "&71 - Tıkla '{message}'"
+  - "&72 - Google Authenticator uygulamasını indirin"
+  - "&73 - Uygulamanın içindeki '+' simgesine dokunun"
+  - "&74 - 'QR kodu tarayın' üzerine dokunun"
+  - "&75 - Ekranda gösterilen QR kodunu tarayın ( adım #1 )"
+  - "&77 - Google Authenticator uygulamasında {account} arayın"
+  - "&78 - /2fa <uygulamada gösterilen kod> veya <scratch code> yazın"
+2FaLink: "&b2FA QR kodunuzu almak için buraya tıklayın"
+
+#Session messages - Brute force
+PanicLogin: "&5&oLütfen /panic <token> kullanın"
+PanicTitle: "&cPANİK MODU"
+PanicSubtitle: "&4/panic <token> &cYAZ"
+PanicMode: "&5&oPanik modunda girilen hesap, IP bloke edilmeden önce 1 token giriş denemeniz var"
+PanicDisabled: "&5&oSunucu rute force saldırılarına karşı korumalı değildir"
+PanicAlready: "&dZaten bir Brute force tokeniniz var, hesabınız güvende"
+PanicUnsafeUsage: "&dPanik belirtecini devre dışı bırakmak için /account unsafe <şifre> <token> [pin] [2fa] komutunu çalıştırmalısınız."
+PanicNowUnsafe:
+  - "&eLockLogin"
+  - ""
+  - "&dPanik belirtecinizi devre dışı bıraktınız,"
+  - "&dbu, hesabınızı dağıtılmış Brute force saldırılarına"
+  - "&dkarşı savunmasız hale getirecektir. Panik belirteci,"
+  - "&dparola sormak yerine hesabınızda belirli sayıda"
+  - "&dbaşarısız giriş denemesi yapıldığında bir belirteç"
+  - "&dgerektirecektir, lütfen şimdi /accountprotect kullanarak değiştirin!"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&dSizin için bir panik belirteci oluşturduk,"
+  - "&dlütfen bu belirteci güvenli bir yerde"
+  - "&dsaklayın ve kimsenin bundan haberdar"
+  - "&dolmadığından emin olun."
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&dSunucu, LockLogin belirteç koruması"
+  - "&dkullanılarak brute force karşı korunur."
+  - "&dBu korumaya başlamak için, /accountprotect"
+  - "&dkomutunu çalıştırmalı ve oluşturulan"
+  - "&dbelirteci saklamalı ve sunucu sizden"
+  - "&distediğinde bununla oturum açmalısınız."
+TokenLink: "&bTokeni ortaya çıkarmak için tıklayın"
+
+#Session messages - Account management
+AccountArguments: "&5&oGeçerli hesap alt argümanları: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
+Change: "&5&oLütfen /account change <şifre> <yeni şifre> kullanın"
+ChangeSame: "&5&oŞifreniz eskisi gibi olamaz!"
+ChangeDone: "&dŞifreniz değişti!"
+AccountUnlock: "&5&oLütfen /account unlock <oyuncu> kullanın"
+AccountUnlocked: "&d{player} hesabının kilidi açıldı"
+AccountNotLocked: "&5&o{player} hesabı kilitli değil!"
+Close: "&5&oLütfen /account close [oyuncu] kullanın"
+Closed: "&5&oOturum kapatıldı, şimdi tekrar giriş yapın!"
+ForceClose: "&5&oOturumunuz bir yönetici tarafından kapatıldı, tekrar giriş yapın"
+ForceCloseAdmin: "&d{player} oturumu kapatıldı"
+Remove: "&5&oLütfen /account remove <şifre|oyuncu> [şifre] kullanın"
+RemoveAccountMatch: "&5&oSağlanan şifreler eşleşmiyor"
+AccountRemoved: "&5&oHesabınız silindi"
+ForcedAccountRemoval:
+  - "{ServerName}"
+  - ""
+  - "&5Hesabınız bir yönetici tarafından"
+  - "&5kaldırıldı ( &7{player}&5 )"
+  - "&5ve bir personel kilidini"
+  - "&5açana kadar veri kaybını önlemek"
+  - "&5için geçici olarak engellendin"
+  - ""
+  - "&5Bu eylemi siz yapmadıysanız, lütfen bu eylemi"
+  - "&5şu adresten bildirin:: &7https://discordexample.gg"
+ForcedAccountRemovalAdmin: "&d{player} hesabı kaldırıldı, /account unlock {player} komutunu çalıştırmayı unutmayın!"
+
+#Spawn utilities ( includes take back )
+SpawnSet: "&dOturum açma spawnı konumu ayarlandı"
+LocationsReset: "&dTüm son konumlar sıfırlandı"
+LocationReset: "&d{player} adlı oyuncunun son konumu sıfırlandı"
+LocationsFixed: "&dTüm son konumlar düzeltildi"
+LocationFixed: "&d{player} adlı oyuncunun konumu düzeltildi"
+ResetLastLocUsage: "&5&oLütfen /locations [oyuncu|@all|@me] <remove|fix> kullanın"
+
+#Alias messages
+AliasArguments: "&5&oGeçerli takma ad alt bağımsız değişkenleri: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [player(s)]"
+AliasCreated: "&d{alias} takma adı başarıyla oluşturuldu"
+AliasDestroyed: "&5&o{alias} takma adı yok edildi"
+AliasExists: "&5&o{alias} takma adı zaten var!"
+AliasNotFound: "&5&o{alias} adında herhangi bir takma ad bulunamadı"
+AddedPlayer: "&d{player} adlı oyuncuya {alias} takma adı eklendi"
+RemovedPlayer: "&d{player} adlı oyuncudan {alias} takma adı kaldırıldı"
+PlayerNotIn: "&5&o{player}, {alias} içinde değil!"
+PlayerAlreadyIn: "&5&o{player} zaten {alias} konumunda!"
+
+#Security messages
+IpBlocked:
+  - "{ServerName}"
+  - ""
+  - "&5LockLogin sistemleri IP'nizde olağandışı"
+  - "&5bir trafik algıladı ve engellendi"
+  - "&f{time} {time_format}"
+IllegalName:
+  - "{ServerName}"
+  - ""
+  - "&5Adınız şunları içeremez:"
+  - "{chars}"
+SimilarName:
+  - "{ServerName}"
+  - ""
+  - "&5Adınız oyunda olan"
+  - "&5birinin adına benziyor"
+  - "&7{player}"
+MultipleNames:
+  - "&d{player}&5 için atanmış birden fazla UUID bulduk,"
+  - "&5dolayısıyla veri almak için bunu kullanamazsınız."
+  - ""
+  - "&5Ama onun diğer isimleri ile deneyebilirsiniz:&d {players}"
+UUIDFetchError:
+  - "{ServerName}"
+  - ""
+  - "&5İstemci adıyla UUID'niz getirilirken"
+  - "&5bir şeyler ters gitti..."
+IpProxyError:
+  - "{ServerName}"
+  - ""
+  - "&5IP adresiniz biraz şüpheli görünüyor"
+  - "&5Bunun bir hata olduğunu düşünüyorsanız, lütfen"
+  - "&5personelle iletişime geçin: &7https://discordexample.gg"
+BedrockJavaError:
+  - "{ServerName}"
+  - ""
+  - "&5Görünüşe göre bedrock hesabınız zaten bir java"
+  - "&5hesabı tarafından kaydedilmiş veya tam tersi."
+  - ""
+  - "&5Bunun bir hata olduğunu düşünüyorsanız, lütfen"
+  - "&5personelle iletişime geçin: &7https://discordexample.gg"

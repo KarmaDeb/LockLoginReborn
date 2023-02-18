@@ -12,11 +12,16 @@ package eu.locklogin.plugin.bungee.util.files.client;
  */
 
 import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 public final class OfflineClient {
 
@@ -46,13 +51,13 @@ public final class OfflineClient {
      * @return the offline client account
      */
     @Nullable
-    public eu.locklogin.api.account.AccountManager getAccount() throws IllegalStateException {
+    public AccountManager getAccount() throws IllegalStateException {
         if (CurrentPlatform.isValidAccountManager()) {
-            eu.locklogin.api.account.AccountManager current = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
+            AccountManager current = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
             if (current != null) {
-                Set<eu.locklogin.api.account.AccountManager> managers = current.getAccounts();
+                Set<AccountManager> managers = current.getAccounts();
 
-                for (eu.locklogin.api.account.AccountManager manager : managers) {
+                for (AccountManager manager : managers) {
                     if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching))
                         return manager;
                 }
@@ -64,5 +69,37 @@ public final class OfflineClient {
         }
 
         return null;
+    }
+
+    /**
+     * Get the offline client account
+     *
+     * @return the offline client account
+     */
+    public LateScheduler<AccountManager> getAccountAsync() {
+        LateScheduler<AccountManager> result = new AsyncLateScheduler<>();
+
+        plugin.async().queue("fetch_account", () -> {
+            if (CurrentPlatform.isValidAccountManager()) {
+                AccountManager current = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
+                if (current != null) {
+                    Set<AccountManager> managers = current.getAccounts();
+
+                    for (AccountManager manager : managers) {
+                        if (manager.getName().equalsIgnoreCase(searching) || manager.getUUID().getId().equals(searching) || manager.getUUID().getId().replace("-", "").equals(searching)) {
+                            result.complete(manager);
+                            return;
+                        }
+                    }
+                } else {
+                    result.complete(null, new IllegalStateException("Couldn't continue with plugin task: Fetch offline accounts. Because account manager is null, maybe it doesn't has an empty constructor?"));
+                }
+            } else {
+                result.complete(null, new IllegalStateException("Couldn't continue with plugin task: Fetch offline accounts. Because account manager is not valid"));
+            }
+        });
+
+
+        return result;
     }
 }

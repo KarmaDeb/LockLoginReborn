@@ -14,6 +14,7 @@ package eu.locklogin.api.module.plugin.javamodule.sender;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.param.Parameter;
@@ -102,6 +103,15 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      */
     public UUID getUUID() {
         return uniqueId;
+    }
+
+    /**
+     * Get the player id
+     *
+     * @return the player id
+     */
+    public AccountID getId() {
+        return AccountID.fromUUID(uniqueId);
     }
 
     /**

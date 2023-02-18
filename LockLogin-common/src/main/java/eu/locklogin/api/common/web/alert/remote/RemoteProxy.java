@@ -100,4 +100,15 @@ public class RemoteProxy extends ProxyConfiguration {
     public <T> List<T> authServer(final Class<T> instance) {
         return CurrentPlatform.getRealProxyConfiguration().authServer(instance);
     }
+
+    /**
+     * Get all the premium servers
+     *
+     * @param instance the server class instance
+     * @return all the available premium servers
+     */
+    @Override
+    public <T> List<T> premiumServer(final Class<T> instance) {
+        return CurrentPlatform.getRealProxyConfiguration().premiumServer(instance);
+    }
 }

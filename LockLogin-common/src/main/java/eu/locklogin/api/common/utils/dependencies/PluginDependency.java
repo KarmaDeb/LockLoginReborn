@@ -17,11 +17,17 @@ package eu.locklogin.api.common.utils.dependencies;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import me.lucko.jarrelocator.Relocation;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 
@@ -41,6 +47,9 @@ public abstract class PluginDependency {
 
     private boolean openChecksum = true;
     private boolean module = false;
+    private boolean high_priority = false;
+
+    private final Map<String, String> relocation = new HashMap<>();
 
     /**
      * Initialize the dependency object
@@ -65,6 +74,60 @@ public abstract class PluginDependency {
 
             location = new File(pluginsFolder + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "libraries" + locBuilder, name + ".jar");
         }
+    }
+
+    /**
+     * Relocate a dependency
+     *
+     * @param packPaths the package name
+     * @param target the target
+     * @return this instance
+     */
+    public PluginDependency relocate(final String target, final String... packPaths) {
+        StringBuilder packBuilder = new StringBuilder();
+        for (String names : packPaths) {
+            packBuilder.append(names).append('.');
+        }
+        String pack = packBuilder.substring(0, packBuilder.length() - 1);
+
+        relocation.put(pack, target);
+        return this;
+    }
+
+    /**
+     * Get if the dependency has relocations
+     *
+     * @return if the dependency has relocations
+     */
+    public boolean hasRelocations() {
+        return !relocation.isEmpty();
+    }
+
+    /**
+     * Get if the dependency is high priority
+     *
+     * @return if dependency must be downloaded and
+     * loaded before any other
+     */
+    public boolean isHighPriority() {
+        return high_priority;
+    }
+
+    /**
+     * Get the relocations
+     *
+     * @return the relocations
+     */
+    public List<Relocation> relocations() {
+        List<Relocation> r = new ArrayList<>();
+        /*for (String key : relocation.keySet()) {
+            String value = relocation.getOrDefault(key, null);
+            if (!StringUtils.isNullOrEmpty(value)) {
+                r.add(new Relocation(key, value));
+            }
+        }*/
+
+        return r;
     }
 
     /**
@@ -117,6 +180,37 @@ public abstract class PluginDependency {
             temp.module = true;
         }
 
+        temp.openChecksum = openChecksum;
+
+        return temp;
+    }
+
+    /**
+     * Get a temp plugin dependency from the provided info
+     *
+     * @param name         the dependency name
+     * @param downloadURL  the download url
+     * @param openChecksum if checksum is enabled
+     * @param module       if the dependency is a module
+     * @return the temporal plugin dependency
+     */
+    public static PluginDependency of(final String name, final URL downloadURL, final boolean openChecksum, final boolean module, final boolean high_priority) {
+        PluginDependency temp = new PluginDependency(name, downloadURL) {
+            @Override
+            public String toString() {
+                return "PluginDependency@" + this.hashCode() + "{" +
+                        "name:" + name +
+                        "url:" + downloadURL +
+                        "openChecksum:" + openChecksum + "}";
+            }
+        };
+
+        if (module) {
+            temp.location = new File(pluginsFolder + File.separator + "LockLogin" + File.separator + "plugin" + File.separator + "modules", name + ".jar");
+            temp.module = true;
+        }
+
+        temp.high_priority = high_priority;
         temp.openChecksum = openChecksum;
 
         return temp;

@@ -11,6 +11,8 @@ import eu.locklogin.api.common.communication.Packet;
 import eu.locklogin.api.common.communication.queue.DataQueue;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.Main;
 import eu.locklogin.plugin.bungee.com.queue.MessageQueue;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
@@ -32,9 +34,9 @@ import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 public class BungeeDataSender extends DataSender {
 
     public BungeeDataSender() {
-        try {
-            KarmaMain main = new KarmaMain(Objects.requireNonNull(Main.class.getResourceAsStream("/license.dat")));
-            String com = main.get("key").getAsString();
+        License license = CurrentPlatform.getLicense();
+        if (license != null) {
+            String com = license.comKey();
 
             SimpleScheduler scheduler = new SourceScheduler(plugin, 250, SchedulerUnit.MILLISECOND, true).multiThreading(true);
             scheduler.restartAction(() -> {
@@ -85,9 +87,8 @@ public class BungeeDataSender extends DataSender {
             });
 
             scheduler.start();
-        } catch (IOException e) {
-            logger.scheduleLog(Level.GRAVE, e);
-            plugin.console().send("Failed to register bungeecord data sender", Level.GRAVE);
+        } else {
+            plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
         }
     }
 

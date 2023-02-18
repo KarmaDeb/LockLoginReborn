@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Chinese (Official - Community based)
 #Editor: MAX_XiaoKui, KarmaDev
-#Last edited: 10 - July - 2022 21:57
+#Last edited: 18 - February - 2023 0:55
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -15,6 +15,14 @@
 # - This language must receive a community language update（this
 #   means the author of the language pack must update the
 #   language with the new messages，LockLogin developer won't do it）
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
 
 #Plugin prefix
 Prefix: "&eLockLogin &7>> "
@@ -76,6 +84,55 @@ LoginInsecure: "&5&o你的密码被识别为不安全，你必须更改密码"
 LoginOut: "&5&o你花了太长时间来登录"
 LoginTitle: "&7你还有"
 LoginSubtitle: "&b{time} &7来登录"
+
+# Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&d高級模式&a 已啟用&d，這意味著："
+  - ""
+  - "&7- &b您將不需要輸入帳戶驗證資訊"
+  - "&7- &b您將擁有您的皮膚"
+  - "&7- &b您可能會失去進度"
+  - "&7- &b如果 Mojang 伺服器無法連線，您將無法加入伺服器"
+  - "&7- &b如果您未透過 Mojang 或 Xbox 認證，您將無法加入伺服器"
+  - ""
+  - "&e重新加入伺服器以完成設定"
+PremiumDisabled:
+  - "{ServerName}"
+  - ""
+  - "&d高級模式&c 禁用&d，這意味著："
+  - ""
+  - "&7- &b您需要輸入帳戶驗證資訊"
+  - "&7- &b您將不會擁有您的皮膚"
+  - "&7- &b您的進度將取決於您的暱稱"
+  - "&7- &b即使 Mojang 伺服器無法連線，您仍可加入伺服器"
+  - "&7- &b即使您未透過 Mojang 或 Xbox 認證，您仍可加入伺服器"
+  - ""
+  - "&e重新加入伺服器以完成設定"
+PremiumError: "&5&o在啟用或停用您的高級帳戶時發生錯誤"
+PremiumAuth: "&d透過高級驗證已認證"
+PremiumServer: "&5&l此伺服器僅限高級使用者！"
+PremiumWarning:
+  - "&d嘿！在啟用高級帳戶之前，請考慮以下事項："
+  - ""
+  - "&7- &b依據伺服器，您可能會失去進度"
+  - "&7- &b如果您未透過 Mojang 或 Xbox 認證，您將無法使用此帳戶加入伺服器"
+  - "&7- &b（就像在高級伺服器上一樣）如果 Mojang 認證伺服器無法運作"
+  - "&b   您將無法加入伺服器，直到該伺服器重新啟動"
+  - ""
+  - "&d如果您仍要繼續，請再次執行 &e/premium&d"
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&o無法驗證您的連接。您是否通過 mojang 認證？"
+  InternalError: "&5&o發生內部服務器錯誤"
+  ConnectionError: "&5&o無法驗證您在此服務器上的連接"
+  AddressError: "&5&o無法驗證您的地址"
+  EncryptionError: "&5&o提供的加密無效"
+  PrecociousEncryption: "&5&o嘗試在服務器之前進行身份驗證！"
+  SessionError: "&5&o會話無效"
 
 #Unsafe password messages
 Password:

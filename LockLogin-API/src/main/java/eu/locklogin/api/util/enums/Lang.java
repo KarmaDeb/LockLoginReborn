@@ -21,27 +21,73 @@ public enum Lang {
     /**
      * LockLogin English language
      */
-    ENGLISH,
+    ENGLISH(true, "plugin_messages"),
     /**
      * LockLogin Spanish language
      */
-    SPANISH,
+    SPANISH(),
     /**
      * LockLogin French language
      */
-    FRENCH,
+    FRENCH(),
     /**
      * LockLogin Chinese simplified language
      */
-    CHINESE_SIMPLIFIED,
+    CHINESE_SIMPLIFIED(),
     /**
      * LockLogin Hebrew language
      */
-    HEBREW,
+    HEBREW(),
+    /**
+     * LockLogin Polish language
+     */
+    POLISH(true, "plugin_messages_polish"),
+    /**
+     * LockLogin Turkish language
+     */
+    TURKISH(true, "plugin_messages_turkish"),
     /**
      * LockLogin community language
      */
-    COMMUNITY;
+    COMMUNITY();
+
+    private boolean include_properties = false;
+    private String properties_name = "";
+
+    /**
+     * Initialize the language
+     */
+    Lang() {
+        this(false, "");
+    }
+
+    /**
+     * Initialize the language
+     *
+     * @param props if the language include properties
+     */
+    Lang(final boolean props, final String props_name) {
+        include_properties = props;
+        properties_name = props_name;
+    }
+
+    /**
+     * Get if the language file includes properties
+     *
+     * @return if the language file includes properties
+     */
+    public boolean includeProperties() {
+        return include_properties;
+    }
+
+    /**
+     * Get the internal properties file name
+     *
+     * @return the internal properties file name
+     */
+    public String propertiesName() {
+        return properties_name;
+    }
 
     /**
      * Get the language friendly name
@@ -61,6 +107,8 @@ public enum Lang {
                 return "Chinese ( Simplified )";
             case HEBREW:
                 return "Hebrew";
+            case POLISH:
+                return "Polish";
             case COMMUNITY:
             default:
                 return "Community ( " + communityLang + " )";

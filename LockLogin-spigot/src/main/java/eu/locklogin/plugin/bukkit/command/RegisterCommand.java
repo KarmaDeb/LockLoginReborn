@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bukkit.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
 import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.security.client.CommandProxy;
@@ -154,6 +155,7 @@ public final class RegisterCommand implements CommandExecutor {
                                             }
 
                                             manager.setPassword(password);
+                                            PluginMetricsService.register(player.getName());
                                             user.send(messages.prefix() + messages.registered());
                                             session.setLogged(true);
 

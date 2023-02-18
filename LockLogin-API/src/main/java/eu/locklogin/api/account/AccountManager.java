@@ -15,6 +15,7 @@ package eu.locklogin.api.account;
  */
 
 import eu.locklogin.api.account.param.AccountConstructor;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +208,10 @@ public abstract class AccountManager implements Serializable {
      *
      * @return if the account has pin
      */
-    public abstract boolean hasPin();
+    public boolean hasPin() {
+        String pin = getPin();
+        return !StringUtils.isNullOrEmpty(pin);
+    }
 
     /**
      * Check if the account has 2FA
@@ -215,6 +219,16 @@ public abstract class AccountManager implements Serializable {
      * @return if the account has 2FA
      */
     public abstract boolean has2FA();
+
+    /**
+     * Get if the account has panic token
+     *
+     * @return if the account has panic token
+     */
+    public boolean hasPanic() {
+        String panic = getPanic();
+        return !StringUtils.isNullOrEmpty(panic);
+    }
 
     /**
      * Get the account creation time

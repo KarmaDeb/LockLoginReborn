@@ -14,6 +14,8 @@ import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
+import eu.locklogin.api.common.web.services.LockLoginSocket;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
@@ -27,11 +29,16 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
+import eu.locklogin.api.plugin.PluginLicenseProvider;
+import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
+import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
@@ -44,8 +51,13 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -83,6 +95,9 @@ public class MainBootstrap {
 
                 JarManager manager = new JarManager(dependency);
                 manager.process(false);
+                if (dependency.isHighPriority()) {
+                    manager.downloadAndInject();
+                }
             }
         }
         JarManager.downloadAll();
@@ -288,6 +303,57 @@ public class MainBootstrap {
                 File file = iterator.next();
                 LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
             } while (iterator.hasNext());
+        }
+
+        plugin.getProxy().getConfig().getListeners().forEach((info) -> {
+            InetSocketAddress isa = (InetSocketAddress) info.getSocketAddress();
+            CurrentPlatform.init(isa.getPort());
+        });
+
+        CurrentPlatform.setLicenseProvider(new LockLoginSocket());
+
+        Path license = plugin.getDataPath().resolve("cache").resolve("license.dat");
+        if (!Files.exists(license)) {
+            plugin.console().send("License file not found, trying to export from internal", Level.WARNING);
+            InputStream internal = getClass().getResourceAsStream("/license.dat");
+            if (internal != null) {
+                try {
+                    KarmaMain mn = new KarmaMain(internal);
+                    String data = mn.get("license").getAsString();
+
+                    byte[] real = Base64.getDecoder().decode(data);
+                    PathUtilities.create(license);
+
+                    Files.write(license, real);
+                } catch (Throwable ignored) {}
+            } else {
+                plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                    License installed = CurrentPlatform.getLicense();
+                    if (installed == null) {
+                        PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        if (config != null && config.isBungeeCord()) {
+                            plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
+                        }
+                    }
+                }, 0, 30, TimeUnit.SECONDS);
+            }
+        }
+
+        if (Files.exists(license)) {
+            PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+            plugin.console().send("Validating plugin license, please wait...", Level.INFO);
+            License provided = provider.fetch(license);
+
+            if (provided != null) {
+                provided.setInstallLocation(plugin.getDataPath().resolve("cache"));
+                try {
+                    JarManager.changeField(CurrentPlatform.class, "current_license", provided);
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } else {
+
         }
 
         AllowedCommand.scan();

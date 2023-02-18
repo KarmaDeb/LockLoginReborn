@@ -4,6 +4,7 @@ import com.google.gson.*;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
+import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.Main;
@@ -22,6 +23,7 @@ import ml.karmaconfigs.api.common.triple.consumer.TriConsumer;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.config.ServerInfo;
 
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,107 +67,106 @@ public final class ConnectionManager {
 
             socket.emit("auth", CurrentPlatform.getServerHash());
 
-            try {
-                KarmaMain license_data = new KarmaMain(Objects.requireNonNull(Main.class.getResourceAsStream("/license.dat")));
-                if (!license_data.exists())
-                    license_data.exportDefaults();
+            License license = CurrentPlatform.getLicense();
+            if (license != null) {
+                try {
+                    JsonObject message = new JsonObject();
+                    message.addProperty("name", CurrentPlatform.getConfiguration().serverName());
+                    message.addProperty("proxy", Boolean.valueOf(true));
 
-                String key = license_data.get("key").getAsString();
-
-                JsonObject message = new JsonObject();
-                message.addProperty("license", license_data.get("license").getAsString());
-                message.addProperty("keyCode", key);
-                message.addProperty("name", CurrentPlatform.getConfiguration().serverName());
-                message.addProperty("proxy", true);
-
-                socket.on("server_alive", (data) -> {
-                    try {
-                        JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
-
-                        String sv_name = response.get("server_name").getAsString();
-                        String sv_id = response.get("server_id").getAsString();
-                        String sv_hash = response.get("server_hash").getAsString();
-
-                        onceConnect.accept(sv_name, sv_id, sv_hash);
-                    } catch (Throwable ex) {
-                        logger.scheduleLog(Level.INFO, ex);
-                    }
-                });
-
-                socket.on("message", (data) -> {
-                    if (data.length >= 1) {
+                    socket.on("server_alive", (data) -> {
                         try {
                             JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
 
-                            String msg = response.get("message").getAsString();
-                            int level = response.get("level").getAsInt();
+                            String sv_name = response.get("server_name").getAsString();
+                            String sv_id = response.get("server_id").getAsString();
+                            String sv_hash = response.get("server_hash").getAsString();
 
-                            switch (level) {
-                                case 0:
-                                    plugin.console().send(" (LockLogin WS) {0}", Level.OK, msg);
-                                    break;
-                                case 1:
-                                    plugin.console().send(" (LockLogin WS) {0}", Level.INFO, msg);
-                                    break;
-                                case 2:
-                                    plugin.console().send(" (LockLogin WS) {0}", Level.WARNING, msg);
-                                    break;
-                                case 3:
-                                    plugin.console().send(" (LockLogin WS) {0}", Level.GRAVE, msg);
-                                    break;
-                                default:
-                                    plugin.console().send("Message from server: {0}", msg);
-                                    break;
-                            }
+                            onceConnect.accept(sv_name, sv_id, sv_hash);
                         } catch (Throwable ex) {
-                            plugin.console().send("Message from server: {0}", Level.INFO, data[0]);
+                            logger.scheduleLog(Level.INFO, ex);
                         }
-                    }
-                });
+                    });
 
-                socket.emit("init", message, (Ack) (dt) -> {
-                    JsonObject response = gson.fromJson(String.valueOf(dt[0]), JsonObject.class);
-                    boolean success = response.get("success").getAsBoolean();
-                    String response_message = response.get("message").getAsString();
+                    socket.on("message", (data) -> {
+                        if (data.length >= 1) {
+                            try {
+                                JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
 
-                    if (success) {
-                        plugin.console().send("Message from server: {0}", Level.INFO, response_message);
-                        action.complete(tmp_tries.get());
+                                String msg = response.get("message").getAsString();
+                                int level = response.get("level").getAsInt();
 
-                        socket.once("disconnect", (Emitter.Listener) (reason) -> {
-                            plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
-
-                            long start = System.currentTimeMillis();
-                            plugin.async().queue("check_task", () -> {
-                                boolean connected = true;
-
-                                while (!socket.connected()) {
-                                    long end = System.currentTimeMillis();
-
-                                    long diff = end - start;
-                                    if (diff > 30000) {
-                                        plugin.console().send("Failed to reconnect. Giving up", Level.GRAVE);
-                                        BungeeSender.useSocket = false;
-                                        s.sender = s.secondarySender;
-                                        connected = false;
+                                switch (level) {
+                                    case 0:
+                                        plugin.console().send(" (LockLogin WS) {0}", Level.OK, msg);
                                         break;
-                                    }
+                                    case 1:
+                                        plugin.console().send(" (LockLogin WS) {0}", Level.INFO, msg);
+                                        break;
+                                    case 2:
+                                        plugin.console().send(" (LockLogin WS) {0}", Level.WARNING, msg);
+                                        break;
+                                    case 3:
+                                        plugin.console().send(" (LockLogin WS) {0}", Level.GRAVE, msg);
+                                        break;
+                                    default:
+                                        plugin.console().send("Message from server: {0}", msg);
+                                        break;
                                 }
+                            } catch (Throwable ex) {
+                                plugin.console().send("Message from server: {0}", Level.INFO, data[0]);
+                            }
+                        }
+                    });
 
-                                if (connected) {
-                                    plugin.console().send("Successfully reconnected", Level.INFO);
-                                    invokeReconnect(tries, socket, onceConnect, s);
-                                }
+                    byte[] data = Files.readAllBytes(license.getLocation().resolve("license.dat"));
+                    socket.emit("init", message, data, (Ack) (dt) -> {
+                        JsonObject response = gson.fromJson(String.valueOf(dt[0]), JsonObject.class);
+                        boolean success = response.get("success").getAsBoolean();
+                        String response_message = response.get("message").getAsString();
+
+                        if (success) {
+                            plugin.console().send("Message from server: {0}", Level.INFO, response_message);
+                            action.complete(tmp_tries.get());
+
+                            socket.once("disconnect", (Emitter.Listener) (reason) -> {
+                                plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
+
+                                long start = System.currentTimeMillis();
+                                plugin.async().queue("check_task", () -> {
+                                    boolean connected = true;
+
+                                    while (!socket.connected()) {
+                                        long end = System.currentTimeMillis();
+
+                                        long diff = end - start;
+                                        if (diff > 30000) {
+                                            plugin.console().send("Failed to reconnect. Giving up", Level.GRAVE);
+                                            BungeeSender.useSocket = false;
+                                            s.sender = s.secondarySender;
+                                            connected = false;
+                                            break;
+                                        }
+                                    }
+
+                                    if (connected) {
+                                        plugin.console().send("Successfully reconnected", Level.INFO);
+                                        invokeReconnect(tries, socket, onceConnect, s);
+                                    }
+                                });
                             });
-                        });
-                    } else {
-                        console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
-                        action.complete(-2);
-                        socket.disconnect();
-                    }
-                });
-            } catch (Throwable ex) {
-                logger.scheduleLog(Level.GRAVE, ex);
+                        } else {
+                            console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
+                            action.complete(-2);
+                            socket.disconnect();
+                        }
+                    });
+                } catch (Throwable ex) {
+                    logger.scheduleLog(Level.GRAVE, ex);
+                }
+            } else {
+                plugin.console().send("Cannot connect to LockLogin web services with an invalid license!", Level.GRAVE);
+                action.complete(-2);
             }
 
             socket.off("kick");
@@ -218,106 +219,110 @@ public final class ConnectionManager {
             String key = main.get("key").getAsString();
 
             JsonObject message = new JsonObject();
-            message.addProperty("license", main.get("license").getAsString());
-            message.addProperty("keyCode", key);
             message.addProperty("name", CurrentPlatform.getConfiguration().serverName());
             message.addProperty("proxy", true);
 
             socket.emit("auth", CurrentPlatform.getServerHash());
 
-            socket.off("server_alive");
-            socket.on("server_alive", (data) -> {
-                try {
+            License license = CurrentPlatform.getLicense();
+            if (license != null) {
+                socket.off("server_alive");
+                socket.on("server_alive", (data) -> {
+                    try {
+                        JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
+
+                        String sv_name = response.get("server_name").getAsString();
+                        String sv_id = response.get("server_id").getAsString();
+                        String sv_hash = response.get("server_hash").getAsString();
+
+                        onceConnect.accept(sv_name, sv_id, sv_hash);
+                    } catch (Throwable ex) {
+                        logger.scheduleLog(Level.INFO, ex);
+                    }
+                });
+
+                AtomicInteger tmp_tries = new AtomicInteger(0);
+                byte[] license_data = Files.readAllBytes(license.getLocation().resolve("license.dat"));
+                socket.emit("init", message, license_data, (Ack) (data) -> {
                     JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
+                    boolean success = response.get("success").getAsBoolean();
+                    String response_message = response.get("message").getAsString();
 
-                    String sv_name = response.get("server_name").getAsString();
-                    String sv_id = response.get("server_id").getAsString();
-                    String sv_hash = response.get("server_hash").getAsString();
+                    if (success) {
+                        plugin.console().send("Successfully registered the proxy into web services", Level.INFO);
 
-                    onceConnect.accept(sv_name, sv_id, sv_hash);
-                } catch (Throwable ex) {
-                    logger.scheduleLog(Level.INFO, ex);
-                }
-            });
+                        socket.off("disconnect");
+                        socket.once("disconnect", (Emitter.Listener) (reason) -> {
+                            plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
 
-            AtomicInteger tmp_tries = new AtomicInteger(0);
-            socket.emit("init", message, (Ack) (data) -> {
-                JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
-                boolean success = response.get("success").getAsBoolean();
-                String response_message = response.get("message").getAsString();
+                            long start = System.currentTimeMillis();
+                            plugin.async().queue("check_task", () -> {
+                                boolean connected = true;
 
-                if (success) {
-                    plugin.console().send("Successfully registered the proxy into web services", Level.INFO);
+                                while (!socket.connected()) {
+                                    long end = System.currentTimeMillis();
 
-                    socket.off("disconnect");
-                    socket.once("disconnect", (Emitter.Listener) (reason) -> {
-                        plugin.console().send("Disconnected from web services. Trying to reconnect", Level.WARNING);
+                                    long diff = end - start;
+                                    if (diff > 30000) {
+                                        plugin.console().send("Failed to reconnect. Retrying in 1 minute", Level.GRAVE);
+                                        BungeeSender.useSocket = false;
+                                        s.sender = s.secondarySender;
+                                        connected = false;
 
-                        long start = System.currentTimeMillis();
-                        plugin.async().queue("check_task", () -> {
-                            boolean connected = true;
+                                        SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.MINUTE, false);
+                                        scheduler.endAction(() -> {
+                                            plugin.console().send("Trying to reconnect to web services", Level.INFO);
+                                            socket.connect();
 
-                            while (!socket.connected()) {
-                                long end = System.currentTimeMillis();
+                                            plugin.async().queue("connect_web_services", () -> {
+                                                long st = System.currentTimeMillis();
 
-                                long diff = end - start;
-                                if (diff > 30000) {
-                                    plugin.console().send("Failed to reconnect. Retrying in 1 minute", Level.GRAVE);
-                                    BungeeSender.useSocket = false;
-                                    s.sender = s.secondarySender;
-                                    connected = false;
-
-                                    SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.MINUTE, false);
-                                    scheduler.endAction(() -> {
-                                        plugin.console().send("Trying to reconnect to web services", Level.INFO);
-                                        socket.connect();
-
-                                        plugin.async().queue("connect_web_services", () -> {
-                                            long st = System.currentTimeMillis();
-
-                                            boolean co = true;
-                                            while (!socket.connected()) {
-                                                long now = System.currentTimeMillis();
-                                                if (TimeUnit.MILLISECONDS.toSeconds(now - st) >= 10) { //10 seconds timeout
-                                                    if (tmp_tries.getAndIncrement() < tries) {
-                                                        socket.disconnect(); //Avoid multiple connections from a single instance
-                                                        logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services, retrying");
-                                                        socket.connect();
-                                                        st = now;
-                                                    } else {
-                                                        socket.disconnect();
-                                                        logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services after {0} tries, giving up...", tmp_tries.get());
-                                                        co = false;
-                                                        break;
+                                                boolean co = true;
+                                                while (!socket.connected()) {
+                                                    long now = System.currentTimeMillis();
+                                                    if (TimeUnit.MILLISECONDS.toSeconds(now - st) >= 10) { //10 seconds timeout
+                                                        if (tmp_tries.getAndIncrement() < tries) {
+                                                            socket.disconnect(); //Avoid multiple connections from a single instance
+                                                            logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services, retrying");
+                                                            socket.connect();
+                                                            st = now;
+                                                        } else {
+                                                            socket.disconnect();
+                                                            logger.scheduleLog(Level.INFO, "Failed to connect to LockLogin web services after {0} tries, giving up...", tmp_tries.get());
+                                                            co = false;
+                                                            break;
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                            if (co) {
-                                                plugin.console().send("Succesfully reconnected to web services", Level.INFO);
-                                                scheduler.cancel();
+                                                if (co) {
+                                                    plugin.console().send("Succesfully reconnected to web services", Level.INFO);
+                                                    scheduler.cancel();
 
-                                                invokeReconnect(tries, socket, onceConnect, s);
-                                            }
+                                                    invokeReconnect(tries, socket, onceConnect, s);
+                                                }
+                                            });
                                         });
-                                    });
-                                    scheduler.start();
+                                        scheduler.start();
 
-                                    break;
+                                        break;
+                                    }
                                 }
-                            }
 
-                            if (connected) {
-                                plugin.console().send("Successfully reconnected", Level.INFO);
-                                invokeReconnect(tries, socket, onceConnect, s);
-                            }
+                                if (connected) {
+                                    plugin.console().send("Successfully reconnected", Level.INFO);
+                                    invokeReconnect(tries, socket, onceConnect, s);
+                                }
+                            });
                         });
-                    });
-                } else {
-                    console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
-                    socket.disconnect();
-                }
-            });
+                    } else {
+                        console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
+                        socket.disconnect();
+                    }
+                });
+            } else {
+                console.send("Cannot reconnect to LockLogin web services with an invalid license", Level.GRAVE);
+            }
         } catch (Throwable ex) {
             ex.printStackTrace();
         }

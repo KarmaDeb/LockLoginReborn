@@ -28,6 +28,7 @@ import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginIpValidationEvent;
+import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostJoinEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPreJoinEvent;
@@ -35,10 +36,12 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
+import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -67,7 +70,9 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +82,7 @@ public final class JoinListener implements Listener {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
     private final static PluginMessages messages = CurrentPlatform.getMessages();
-
+    private final static Map<UUID, UUID> offline_to_online = new ConcurrentHashMap<>();
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -133,8 +138,17 @@ public final class JoinListener implements Listener {
 
             String conn_name = e.getName();
             UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
+            UUID online_gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+            offline_to_online.put(gen_uuid, online_gen_uuid);
             if (CurrentPlatform.isOnline()) {
-                gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+                gen_uuid = online_gen_uuid;
+            } else{
+                PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+                if (pm != null && config.enablePremium()) {
+                    if (pm.isPremium(online_gen_uuid) && !config.fixUUIDs()) {
+                        gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
+                    }
+                }
             }
             UUID tar_uuid = e.getUniqueId();
 
@@ -311,6 +325,18 @@ public final class JoinListener implements Listener {
     public void onLogin(PlayerLoginEvent e) {
         if (e.getResult().equals(PlayerLoginEvent.Result.ALLOWED)) {
             Player player = e.getPlayer();
+            if (!config.isBungeeCord()) {
+                ProtocolListener.trySkin(player);
+            }
+
+            if (config.enableSpawn()) {
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    player.teleport(player.getWorld().getSpawnLocation());
+                });
+
+                Spawn spawn = new Spawn(player.getWorld());
+                spawn.load().whenComplete(() -> spawn.teleport(player));
+            }
 
             tryAsync(TaskTarget.EVENT, () -> {
                 User user = new User(player);
@@ -349,13 +375,43 @@ public final class JoinListener implements Listener {
                     }
 
                     if (!skip) {
-                        session.setPinLogged(false);
-                        session.set2FALogged(false);
-                        session.setLogged(false);
+                        PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
+                        if (database != null && config.enablePremium()) {
+                            UUID id = offline_to_online.getOrDefault(player.getUniqueId(), player.getUniqueId());
+                            offline_to_online.remove(player.getUniqueId());
 
-                        //Automatically mark players as captcha verified if captcha is disabled
-                        if (!config.captchaOptions().isEnabled())
-                            session.setCaptchaLogged(true);
+                            if (database.isPremium(id)) {
+                                session.setCaptchaLogged(true);
+                                session.setLogged(true);
+                                session.set2FALogged(true);
+                                session.setPinLogged(true);
+
+                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
+                                        UserAuthenticateEvent.Result.SUCCESS, //We will pass premium as success
+                                        user.getModule(),
+                                        messages.prefix() + messages.premiumAuth(),
+                                        null);
+                                ModulePlugin.callEvent(event);
+
+                                user.send(event.getAuthMessage());
+
+                                if (config.takeBack()) {
+                                    LastLocation last = new LastLocation(player);
+                                    last.teleport();
+                                }
+                                skip = true;
+                            }
+                        }
+
+                        if (!skip) {
+                            session.setPinLogged(false);
+                            session.set2FALogged(false);
+                            session.setLogged(false);
+
+                            //Automatically mark players as captcha verified if captcha is disabled
+                            if (!config.captchaOptions().isEnabled())
+                                session.setCaptchaLogged(true);
+                        }
                     }
                     OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
@@ -375,6 +431,7 @@ public final class JoinListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPostLogin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
+
         InetSocketAddress ip = player.getAddress();
         User user = new User(player);
 
@@ -412,47 +469,50 @@ public final class JoinListener implements Listener {
                             ClientSession session = user.getSession();
 
                             if (!config.isBungeeCord()) {
-                                user.savePotionEffects();
-                                user.applySessionEffects();
+                                if (!session.isLogged()) {
+                                    user.savePotionEffects();
+                                    user.applySessionEffects();
+                                }
 
                                 if (config.clearChat()) {
                                     for (int i = 0; i < 150; i++)
                                         player.sendMessage("");
                                 }
 
-                                String barMessage = messages.captcha(session.getCaptcha());
-                                try {
-                                    if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-                                        barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                                } catch (Throwable ignored) {}
+                                BarMessage bar = null;
+                                if (config.captchaOptions().isEnabled() && !session.isCaptchaLogged()) {
+                                    String barMessage = messages.captcha(session.getCaptcha());
+                                    try {
+                                        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                                            barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                                    } catch (Throwable ignored) {
+                                    }
 
-                                BarMessage bar = new BarMessage(player, barMessage);
-                                if (!session.isCaptchaLogged())
-                                    bar.send(true);
+                                    bar = new BarMessage(player, barMessage);
+                                    if (!session.isCaptchaLogged())
+                                        bar.send(true);
+                                }
 
+                                BarMessage finalBar = bar;
                                 SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
                                     user.restorePotionEffects();
 
-                                    bar.setMessage("");
-                                    bar.stop();
-                                });
-                                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
-
-                                if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
-                                    user.setTempSpectator(true);
-
-                                if (config.hideNonLogged()) {
-                                    ClientVisor visor = new ClientVisor(player);
-                                    if (!session.isLogged()) {
-                                        visor.toggleView();
+                                    if (finalBar != null) {
+                                        finalBar.setMessage("");
+                                        finalBar.stop();
                                     }
-                                }
+                                }).silent(session.isLogged());
+                                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+                                if (!session.isLogged()) {
+                                    if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+                                        user.setTempSpectator(true);
 
-                                if (config.enableSpawn()) {
-                                    trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
-
-                                    Spawn spawn = new Spawn(player.getWorld());
-                                    spawn.load().whenComplete(() -> spawn.teleport(player));
+                                    if (config.hideNonLogged()) {
+                                        ClientVisor visor = new ClientVisor(player);
+                                        if (!session.isLogged()) {
+                                            visor.toggleView();
+                                        }
+                                    }
                                 }
                             }
 

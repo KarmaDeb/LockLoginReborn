@@ -33,6 +33,7 @@ import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
+import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -63,6 +64,8 @@ import static eu.locklogin.plugin.bungee.LockLogin.*;
 @SuppressWarnings("UnstableApiUsage")
 public final class MessageListener implements Listener {
 
+    private boolean adviced = false;
+
     @EventHandler(priority = EventPriority.LOWEST)
     @SuppressWarnings("unchecked")
     public void onMessageReceive(PluginMessageEvent e) {
@@ -81,10 +84,15 @@ public final class MessageListener implements Listener {
 
                     boolean canRead = true;
                     if (!e.getTag().equalsIgnoreCase("ll:access")) {
-                        KarmaMain main = new KarmaMain(Objects.requireNonNull(Main.class.getResourceAsStream("/license.dat")));
-                        String com = main.get("key").getAsString();
-
-                        canRead = token.equals(com);
+                        License license = CurrentPlatform.getLicense();
+                        if (license != null) {
+                            canRead = token.equals(license.comKey());
+                        } else {
+                            if (!adviced) {
+                                adviced = true;
+                                plugin.console().send("IMPORTANT! PLEASE RUN THE COMMAND /locklogin install. OTHERWISE YOUR SERVER WILL BE EXPOSED TO BUNGEECORD CHANNEL INJECTION ATTACKS", Level.WARNING);
+                            }
+                        }
                     }
 
                     if (canRead) {

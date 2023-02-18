@@ -14,6 +14,8 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.JarManager;
+import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.PluginModule;
@@ -23,12 +25,17 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
+import eu.locklogin.api.plugin.PluginLicenseProvider;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.security.backup.BackupScheduler;
+import eu.locklogin.api.security.backup.BackupStorage;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -44,7 +51,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,6 +63,8 @@ import static eu.locklogin.plugin.bukkit.LockLogin.*;
 @SystemCommand(command = "locklogin", bungee_command = "slocklogin", bungeecord = true)
 @SuppressWarnings("unused")
 public final class LockLoginCommand implements CommandExecutor {
+
+    private boolean confirm_uninstall = false;
 
     /**
      * Executes the given command, returning its success.
@@ -385,57 +397,330 @@ public final class LockLoginCommand implements CommandExecutor {
                                 });
 
                                 break;
+                            case "backup":
+                                console.send(messages.prefix() + "&dListing backups, please wait...");
+
+                                BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
+                                scheduler.fetchAll().whenComplete((backups) -> {
+                                    if (backups.length > 0) {
+                                        for (BackupStorage storage : backups) {
+                                            String backup_id = storage.id();
+                                            Instant backup_creation = storage.creation();
+                                            InstantParser parser = new InstantParser(backup_creation);
+
+                                            console.send("&7{0} &6- &e{1} ago &8(&f{2} accounts&8)", backup_id, parser.getDifference(), storage.accounts());
+                                        }
+                                    } else {
+                                        console.send("No backups have been made yet!", Level.WARNING);
+                                    }
+                                });
+                                break;
+                            case "install": {
+                                License license = CurrentPlatform.getLicense();
+                                if (license == null) {
+                                    PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+                                    license = provider.request();
+
+                                    if (license != null && license.install()) {
+                                        console.send(messages.prefix() + "&dSuccessfully downloaded and installed license. Restart your server to apply changes");
+                                        try {
+                                            JarManager.changeField(CurrentPlatform.class, "current_license", license);
+                                        } catch (Throwable ex) {
+                                            ex.printStackTrace();
+                                        }
+
+                                        console.send("&e&lNEXT STEPS:");
+                                        console.send("&7To completely install the license in the network, you must do a final thing. In each of your other servers console, run the command &e/locklogin sync&c {0}", license.syncKey());
+                                    } else {
+                                        if (license == null) {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while generating your license");
+                                        } else {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while installing your license.");
+                                        }
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + "&5&oCannot request a license");
+                                }
+                            }
+                                break;
+                            case "sync": {
+                                License license = CurrentPlatform.getLicense();
+                                if (license == null) {
+                                    console.send(messages.prefix() + "&5&lYou don't have a license to synchronize with!");
+                                } else {
+                                    console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync with another server, remove the current license (&7/locklogin uninstall&5&l).");
+                                    console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
+                                }
+                            }
+                                break;
+                            case "uninstall": {
+                                License license = CurrentPlatform.getLicense();
+                                if (license != null) {
+                                    if (confirm_uninstall) {
+                                        Path file = license.getLocation().resolve("license.dat");
+                                        if (PathUtilities.destroyWithResults(file)) {
+                                            plugin.console().send("Successfully destroyed plugin license. Restart your server to apply changes", Level.INFO);
+
+                                            try {
+                                                JarManager.changeField(CurrentPlatform.class, "current_license", null);
+                                            } catch (Throwable ex) {
+                                                ex.printStackTrace();
+                                            }
+                                        } else {
+                                            plugin.console().send("Failed to uninstall plugin license", Level.GRAVE);
+                                        }
+                                        confirm_uninstall = false;
+                                    } else {
+                                        console.send(messages.prefix() + "&dAre you sure you want to remove the license? (Run the command again to confirm)");
+                                        confirm_uninstall = true;
+                                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                                            License current = CurrentPlatform.getLicense();
+                                            if (current != null && confirm_uninstall) {
+                                                confirm_uninstall = false;
+                                                plugin.console().send("Cancelled uninstall operation automatically", Level.WARNING);
+                                            }
+                                        }, 20 * 5);
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + "&5&oYou don't have any license to install");
+                                }
+                            }
+                                break;
                             default:
-                                console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                                console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>&7, &e<backup>");
                                 break;
                         }
                         break;
-                    case 3:
-                        if (args[0].equalsIgnoreCase("modules")) {
-                            String moduleName = args[2];
-                            File moduleFile = ModuleLoader.getModuleFile(moduleName);
+                    case 2:
+                        switch (args[0].toLowerCase()) {
+                            case "backup":
+                                String backup_name = args[1];
+                                BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
 
-                            if (moduleFile != null) {
-                                PluginModule module = getLoader().getModule(moduleFile);
+                                if (backup_name.equalsIgnoreCase("create")) {
+                                    console.send("Preparing to create backup, please wait", Level.INFO);
+                                    scheduler.performBackup().whenComplete((id, error) -> {
+                                        if (error == null) {
+                                            console.send(messages.prefix() + "&dSuccessfully created backup with id {0}", id);
+                                        } else {
+                                            plugin.logger().scheduleLog(Level.GRAVE, error);
+                                            plugin.logger().scheduleLog(Level.INFO, "Failed to create backup (command)");
+                                            console.send(messages.prefix() + "&5&lFailed to create a backup ({0}). Read logs for more information", error.fillInStackTrace());
+                                        }
+                                    });
+                                } else {
+                                    plugin.console().send("Finding backup with id: {0}. Please wait", Level.INFO, backup_name);
 
-                                if (module != null) {
-                                    switch (args[1].toLowerCase()) {
-                                        case "load":
-                                            if (!ModuleLoader.isLoaded(module) && module.load()) {
-                                                console.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
-                                            } else {
-                                                console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
-                                            }
+                                    scheduler.fetch(backup_name).whenComplete((backup) -> {
+                                        if (backup != null) {
+                                            String id = backup.id();
+                                            InstantParser parser = new InstantParser(backup.creation());
+                                            int accounts = backup.accounts();
 
-                                            break;
-                                        case "unload":
-                                            if (ModuleLoader.isLoaded(module) && module.unload()) {
-                                                console.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
-                                            } else {
-                                                console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
-                                            }
+                                            plugin.console().send("&d&m---------------------------");
+                                            plugin.console().send("");
+                                            plugin.console().send("&7Backup ID:&e {0}", id);
+                                            plugin.console().send("&7Created:&e {0}", parser.parse());
+                                            plugin.console().send("&7Age:&e {0}", parser.getDifference());
+                                            plugin.console().send("&7Accounts:&e {0}", accounts);
+                                            plugin.console().send("");
+                                            plugin.console().send("&7Run &d/locklogin backup remove {0}&7 to&c remove", id);
+                                            plugin.console().send("&7Run &d/locklogin backup restore {0}&7 to&a restore", id);
+                                        } else {
+                                            plugin.console().send("Failed to fetch backup {0}. Does it exist?", Level.GRAVE, backup_name);
+                                        }
+                                    });
+                                }
+                                break;
+                            case "sync": {
+                                License license = CurrentPlatform.getLicense();
+                                if (license == null) {
+                                    PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+                                    license = provider.sync(args[1]);
 
-                                            break;
-                                        case "reload":
-                                            module.reload();
-                                            break;
-                                        default:
-                                            console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
-
-                                            break;
+                                    if (license != null && license.install()) {
+                                        console.send(messages.prefix() + "&dSuccessfully synchronized and installed license. Restart your server to apply changes");
+                                        try {
+                                            JarManager.changeField(CurrentPlatform.class, "current_license", license);
+                                        } catch (Throwable ex) {
+                                            ex.printStackTrace();
+                                        }
+                                    } else {
+                                        if (license == null) {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while synchronizing your license");
+                                        } else {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while installing your synchronized license.");
+                                        }
                                     }
                                 } else {
-                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " does not exist!");
+                                    console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync another license, remove the current license (&7/locklogin uninstall&5&l).");
+                                    console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
                                 }
-                            } else {
-                                console.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
                             }
-                        } else {
-                            console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                        }
+                        break;
+                    case 3:
+                        switch (args[0].toLowerCase()) {
+                            case "modules":
+                                String moduleName = args[2];
+                                File moduleFile = ModuleLoader.getModuleFile(moduleName);
+
+                                if (moduleFile != null) {
+                                    PluginModule module = getLoader().getModule(moduleFile);
+
+                                    if (module != null) {
+                                        switch (args[1].toLowerCase()) {
+                                            case "load":
+                                                if (!ModuleLoader.isLoaded(module) && module.load()) {
+                                                    console.send(messages.prefix() + "&dModule " + moduleName + " has been loaded successfully");
+                                                } else {
+                                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to load, maybe is already loaded?");
+                                                }
+
+                                                break;
+                                            case "unload":
+                                                if (ModuleLoader.isLoaded(module) && module.unload()) {
+                                                    console.send(messages.prefix() + "&dModule " + moduleName + " has been unloaded successfully");
+                                                } else {
+                                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " failed to unload, maybe is not loaded?");
+                                                }
+
+                                                break;
+                                            case "reload":
+                                                module.reload();
+                                                break;
+                                            default:
+                                                console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin modules &e<load>&7, &e<unload>&7, &e<reload>&7 &e[module name]");
+                                                break;
+                                        }
+                                    } else {
+                                        console.send(messages.prefix() + "&5&oModule " + moduleName + " does not exist!");
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + "&5&oModule " + moduleName + " is not loaded or does not exist!");
+                                }
+                                break;
+                            case "backup":
+                                String backup_name = args[2];
+                                BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
+                                plugin.console().send("Finding backup with id: {0}. Please wait", Level.INFO, backup_name);
+
+                                scheduler.fetch(backup_name).whenComplete((backup) -> {
+                                    if (backup != null) {
+                                        switch (args[1].toLowerCase()) {
+                                            case "remove":
+                                                if (backup.destroy()) {
+                                                    console.send(messages.prefix() + "&dSuccessfully removed backup {0}", backup_name);
+                                                } else {
+                                                    console.send(messages.prefix() + "&5&lFailed to remove backup {0}", backup_name);
+                                                }
+                                                break;
+                                            case "restore":
+                                                console.send(messages.prefix() + "&dTrying to restore backup... please wait");
+                                                scheduler.restore(backup, true).whenComplete((result, restored, error) -> {
+                                                    if (result) {
+                                                        console.send(messages.prefix() + "&dSuccessfully restored backup and {0} accounts", restored);
+                                                    } else {
+                                                        console.send(messages.prefix() + "&5&lFailed to restore backup. {0} accounts were able to be restored", restored);
+                                                        if (error != null) {
+                                                            error.printStackTrace();
+                                                        }
+                                                    }
+                                                });
+                                                break;
+                                            case "purge":
+                                                console.send(messages.prefix() + "&dPreparing to purge all the backups before {0}", backup_name);
+                                                scheduler.purge(backup.creation()).whenComplete((removed) -> console.send(messages.prefix() + "&dSuccessfully destroyed {0} backups", removed));
+                                                break;
+                                            case "create":
+                                                scheduler.performBackup(backup_name).whenComplete((result) -> {
+                                                    if (result) {
+                                                        console.send(messages.prefix() + "&dSuccessfully created backup with id {0}", backup_name);
+                                                    } else {
+                                                        console.send(messages.prefix() + "&5&lFailed to create a backup with id {0}. Does a backup with that id already exist?", backup_name);
+                                                    }
+                                                });
+                                                break;
+                                            default:
+                                                console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin backup &e<remove>&7, &e<restore>&7, &e<purge>&7, &e<create>&7 &e[backup]");
+                                                break;
+                                        }
+                                    } else {
+                                        plugin.console().send("Failed to fetch backup {0}. Does it exist?", Level.GRAVE, backup_name);
+                                    }
+                                });
+                                break;
+                            default:
+                                console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>&7, &e<backup>");
+                                break;
+                        }
+                        break;
+                    case 4:
+                        String key = args[1];
+                        String user = args[2];
+                        String pass = args[3];
+
+                        switch (args[0].toLowerCase()) {
+                            case "install": {
+                                License license = CurrentPlatform.getLicense();
+                                if (license == null) {
+                                    try {
+                                        UUID id = UUID.fromString(key);
+                                        PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+                                        license = provider.request(id, user, pass);
+
+                                        if (license != null && license.install()) {
+                                            console.send(messages.prefix() + "&dSuccessfully downloaded and installed license. Restart your server to apply changes");
+                                            try {
+                                                JarManager.changeField(CurrentPlatform.class, "current_license", license);
+                                            } catch (Throwable ex) {
+                                                ex.printStackTrace();
+                                            }
+                                        } else {
+                                            if (license == null) {
+                                                console.send(messages.prefix() + "&5&oAn error occurred while downloading your license");
+                                            } else {
+                                                console.send(messages.prefix() + "&5&oAn error occurred while installing your license.");
+                                            }
+                                        }
+                                    } catch (IllegalArgumentException e) {
+                                        console.send(messages.prefix() + "&5&oAn invalid license ID has been provided, please provide the license ID received when purcharsed the license");
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + "&5&oCannot request a license");
+                                }
+                            }
+                            break;
+                            case "sync":{
+                                License license = CurrentPlatform.getLicense();
+                                if (license == null) {
+                                    PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
+                                    license = provider.sync(key, user, pass);
+
+                                    if (license != null && license.install()) {
+                                        console.send(messages.prefix() + "&dSuccessfully synchronized and installed license. Restart your server to apply changes");
+                                        try {
+                                            JarManager.changeField(CurrentPlatform.class, "current_license", license);
+                                        } catch (Throwable ex) {
+                                            ex.printStackTrace();
+                                        }
+                                    } else {
+                                        if (license == null) {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while synchronizing your license");
+                                        } else {
+                                            console.send(messages.prefix() + "&5&oAn error occurred while installing your synchronized license.");
+                                        }
+                                    }
+                                } else {
+                                    console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync with another server, remove the current license (&7/locklogin uninstall&5&l).");
+                                    console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
+                                }
+                            }
+                            break;
                         }
                         break;
                     default:
-                        console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>");
+                        console.send(messages.prefix() + "&5&oAvailable sub-commands:&7 /locklogin &e<reload>&7, &e<applyupdates>&7, &e<modules>&7, &e<version>&7, &e<changelog>&7, &e<check>&7, &e<backup>&7, &e<install>&7, &e<sync>&7, &e<uninstall>");
                         break;
                 }
             }

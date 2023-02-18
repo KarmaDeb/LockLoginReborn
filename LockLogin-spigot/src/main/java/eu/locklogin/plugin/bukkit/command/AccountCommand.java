@@ -236,8 +236,8 @@ public class AccountCommand implements CommandExecutor {
                                     session = user.getSession();
                                     session.setLogged(false);
                                     session.setPinLogged(false);
-                                    session.set2FALogged(false);
 
+                                    session.set2FALogged(false);
                                     user.savePotionEffects();
                                     user.applySessionEffects();
 

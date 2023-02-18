@@ -22,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum Dependency {
     /**
+     * Jar relocator
+     */
+    //JAR_RELOCATOR,
+    /**
      * LockLogin dependency
      */
     GOOGLE_AUTHENTICATOR,
@@ -42,10 +46,13 @@ public enum Dependency {
      */
     APACHE_COMMONS,
     /**
+     * LockLogin web services dependency
+     */
+    SOCKET_IO,
+    /**
      * LockLogin dependency
      */
     MANAGER;
-
 
     /**
      * Get the dependency as a dependency object
@@ -55,16 +62,45 @@ public enum Dependency {
     @NotNull
     public PluginDependency getAsDependency() {
         switch (this) {
+            /*case JAR_RELOCATOR:
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "JarRelocator.jar"),
+                        true, false, true);*/
             case GOOGLE_AUTHENTICATOR:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "GoogleAuthenticator.jar"), true);
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "GoogleAuthenticator.jar"), true)
+                        .relocate("eu.locklogin.api.shaded.googleauth", "com", "warrenstrange", "googleauth");
             case LOG4J:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Log4j.jar"), true);
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "Log4j.jar"), true)
+                        .relocate("eu.locklogin.api.shaded.log4j.core", "org", "apache", "logging", "log4j", "core");
             case LOG4J_WEB:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Log4jWeb.jar"), true);
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "Log4jWeb.jar"), true)
+                        .relocate("eu.locklogin.api.shaded.log4j.web", "org", "apache", "logging", "log4j", "web");
             case GUAVA:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "Guava.jar"), true);
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "Guava.jar"), true)
+                        .relocate("eu.locklogin.api.shaded.guava.thirdparty", "com", "google", "thirdparty", "publicsuffix")
+                        .relocate("eu.locklogin.api.shaded.guava.common", "com", "google", "common");
             case APACHE_COMMONS:
-                return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "ApacheCommons.jar"), true);
+                return PluginDependency.of(
+                        prettyName(),
+                        FileInfo.repositoryHost(null, "ApacheCommons.jar"), true);
+            case SOCKET_IO:
+                return PluginDependency.of(
+                                prettyName(),
+                                FileInfo.repositoryHost(null, "SocketIO.jar"), true)
+                        .relocate("eu.locklogin.plugin.shaded.io.socket", "io", "socket")
+                        /*.relocate("eu.locklogin.plugin.shaded.io.okhttp3", "okhttp3")
+                        .relocate("eu.locklogin.plugin.shaded.io.okio", "okio")*/
+                        .relocate("eu.locklogin.plugin.shaded.org.json", "org", "json")
+                        .relocate("eu.locklogin.plugin.shaded.org.codehaus.mojo", "org", "codehaus", "mojo", "animal_sniffer");
             /*case SOCKET_IO:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "SocketIO.jar"), true);
             */case MANAGER:
@@ -75,6 +111,8 @@ public enum Dependency {
 
     public final String prettyName() {
         switch (this) {
+            /*case JAR_RELOCATOR:
+                return "Jar Relocator";*/
             case GOOGLE_AUTHENTICATOR:
                 return "Google Authenticator";
             case LOG4J:
@@ -85,6 +123,8 @@ public enum Dependency {
                 return "Google Guava";
             case APACHE_COMMONS:
                 return "Apache Commons";
+            case SOCKET_IO:
+                return "SocketIO";
             /*case SOCKET_IO:
                 return "Socket IO";
             */case MANAGER:

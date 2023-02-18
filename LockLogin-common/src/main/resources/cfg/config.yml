@@ -43,13 +43,13 @@ Statistics:
 #
 # Backup.Enable -> Enable periodical backups (A backup is always performed on server startup and server stop)
 # Backup.Max -> The maximum amount of backups. If max limit reached, the oldest backup will be removed (Leeave to 0 to disable)
-# Backup.Period -> The period to store player accounts (in hours)
-# Backup.PurgeAfter -> The time to purge old backups (in hours). Leave to 0 to disable
+# Backup.Period -> The period to store player accounts (in minutes)
+# Backup.PurgeAfter -> The time to purge old backups (in days). Leave to 0 to disable
 Backup:
   Enable: true
   Max: 5
-  Period: 1
-  PurgeAfter: 6
+  Period: 30
+  Purge: 7
 
 #NOT IMPLEMENTED YET
 #
@@ -64,6 +64,17 @@ Backup:
 # or removing an account. If removing an account is what you want, the user must login in any
 # of the URLs provided before and remove his account manually.
 OnlineAccounts: true
+
+#Premium configuration
+#
+# Enable -> Enable the premium feature
+# ForceUUID -> This will ensure the client uses the correct UUID.
+#              For example, on an offline mode server, the client will
+#              use his offline UUID. In an online-mode server, the client
+#              will use his online UUID
+Premium:
+  Enable: true
+  ForceUUID: true
 
 #While true, if your server is in bungeecord
 #mode. The server MOTD will be replaced with
@@ -181,6 +192,13 @@ MessagesInterval:
 #Captcha options
 # Available options:
 #
+# Location -> Set the captcha location, currently only supported (NOT IMPLEMENTED)
+#             - actionbar
+#             - chat (Requires <captcha> text)
+#             - title (Requires <captcha> text)
+#             - boss (Requires <captcha> text)
+#
+# Enabled -> Enable/disable the captcha
 # Difficulty -> Captcha difficulty settings
 #   Length -> Captcha code length ( min is 8, max is 16 )
 #   Letters -> Include letters in the captcha
@@ -189,6 +207,7 @@ MessagesInterval:
 #     Random -> Randomize the characters with strikethrough
 #             effect
 Captcha:
+  Location: "actionbar"
   Enabled: false
   Difficulty:
     Length: 8
@@ -249,6 +268,7 @@ Permissions:
 #             locklogin.unsafe.warning will receive a message about the player used an unsafe password.
 #             If a discord webhook is also configured, a discord message will be also sent (A warning will
 #             be sent to staff only if BlockUnsafe is disabled)
+# IgnoreCommon: Ignore the list of common passwords when checking the password.
 #
 # Safety: Password general safety setting (Leave everything to 0 to disable)
 #   MinLength: The password minimum length, will be override if other password policy characters are more than
@@ -264,6 +284,7 @@ Password:
   PrintSuccess: true
   BlockUnsafe: true
   WarnUnsafe: true
+  IgnoreCommon: false
   Safety:
     MinLength: 10
     Characters: 1

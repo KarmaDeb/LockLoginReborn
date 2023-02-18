@@ -20,11 +20,9 @@ load: STARTUP
 depend:
   - KarmaAPI
 
-#ProtocolLib soft dependency is for modules
-#that require that plugin ( LockLoginPremium
-#as example )
+#ProtocolLib is part of the dependencies if you want LockLogin to
+#detect premium players
 softdepend:
-  - AnotherBarelyCodedKarmaPlugin
   - PlaceholderAPI
   - ProtocolLib
   - floodgate
@@ -71,6 +69,8 @@ commands:
     description: The command that allows a player to manage account
   lastloc:
     description: The command that allows a player to manage last locations
+  premium:
+    description: The command that allows a player to toggle premium mode on his account
 
 
 

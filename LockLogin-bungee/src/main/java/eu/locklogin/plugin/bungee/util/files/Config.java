@@ -28,6 +28,8 @@ import ml.karmaconfigs.api.common.string.text.TextContent;
 import ml.karmaconfigs.api.common.string.text.TextType;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
@@ -96,6 +98,63 @@ public final class Config extends PluginConfiguration {
     @Override
     public boolean bedrockLogin() {
         return cfg.getBoolean("BedrockLogin", false);
+    }
+
+    /**
+     * Get if the plugin share statistics with bStats
+     *
+     * @return if the plugin will share his statistics
+     */
+    @Override
+    public boolean shareBStats() {
+        return cfg.getBoolean("Statistics.bStats", true);
+    }
+
+    /**
+     * Get if the plugin share statistics with official server
+     *
+     * @return if the plugin will share statistics wil official web server
+     */
+    @Override
+    public boolean sharePlugin() {
+        return cfg.getBoolean("Statistics.plugin", true);
+    }
+
+    /**
+     * Get the plugin backup configuration
+     *
+     * @return the plugin backup configuration
+     */
+    @Override
+    public BackupConfig backup() {
+        boolean enable = cfg.getBoolean("Backup.Enable", true);
+        int max = cfg.getInt("Backup.Max", 5);
+        int period = cfg.getInt("Backup.Period", 30);
+        int purge = cfg.getInt("Backup.Purge", 7);
+
+        return new BackupConfig(enable, max, period, purge);
+    }
+
+    /**
+     * Get if the premium support should be
+     * enabled for this server
+     *
+     * @return if the plugin implements premium support
+     */
+    @Override
+    public boolean enablePremium() {
+        return !CurrentPlatform.isOnline() && cfg.getBoolean("Premium.Enable", true);
+    }
+
+    /**
+     * Get if the plugin should try to fix UUIDs for
+     * premium users
+     *
+     * @return if the plugin should fix UUIDs
+     */
+    @Override
+    public boolean fixUUIDs() {
+        return cfg.getBoolean("Premium.ForceUUID", true);
     }
 
     /**
@@ -328,6 +387,7 @@ public final class Config extends PluginConfiguration {
                 cfg.getBoolean("Password.PrintSuccess", true),
                 cfg.getBoolean("Password.BlockUnsafe", true),
                 cfg.getBoolean("Password.WarnUnsafe", true),
+                cfg.getBoolean("Password.IgnoreCommon", false),
                 cfg.getInt("Password.Safety.MinLength", 10),
                 cfg.getInt("Password.Safety.Characters", 1),
                 cfg.getInt("Password.Safety.Numbers", 2),
@@ -450,6 +510,14 @@ public final class Config extends PluginConfiguration {
             case "chinese simplified":
             case "simplified chinese":
                 return Lang.CHINESE_SIMPLIFIED;
+            case "polish":
+            case "poland":
+            case "pl":
+                return Lang.POLISH;
+            case "turkish":
+            case "turkey":
+            case "tr":
+                return Lang.TURKISH;
             default:
                 return Lang.COMMUNITY;
         }
@@ -672,7 +740,7 @@ public final class Config extends PluginConfiguration {
          * spigot
          */
         static String getConfiguration() {
-            return cfg.toString();
+            return Base64.getEncoder().encodeToString(cfg.toString().getBytes(StandardCharsets.UTF_8));
         }
     }
 }

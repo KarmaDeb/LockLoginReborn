@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bungee.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
 import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.utils.Channel;
@@ -128,6 +129,7 @@ public final class RegisterCommand extends Command {
                                         }
 
                                         manager.setPassword(password);
+                                        PluginMetricsService.register(player.getName());
 
                                         user.send(messages.prefix() + messages.registered());
 

@@ -25,8 +25,16 @@
 
 package eu.locklogin.api.common.utils.dependencies;
 
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.util.platform.CurrentPlatform;
+import me.lucko.jarrelocator.JarRelocator;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import ml.karmaconfigs.api.common.karma.source.APISource;
+import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
 
@@ -34,6 +42,8 @@ import java.util.EnumMap;
  * Loads and manages runtime dependencies for the plugin.
  */
 public class DependencyManager {
+
+    private final static KarmaSource source = APISource.loadProvider("LockLogin");
 
     /**
      * A map of dependencies which have already been loaded.
@@ -46,13 +56,14 @@ public class DependencyManager {
     public static void loadDependencies() {
         for (Dependency dependency : Dependency.values()) {
             PluginDependency pd = dependency.getAsDependency();
-
-            //Ignore modules, they must be loaded later...
-            if (pd.isDependency()) {
-                try {
-                    loadDependency(dependency);
-                } catch (Throwable ex) {
-                    ex.printStackTrace();
+            if (!pd.isHighPriority() && JarManager.hasBeenProcessed(pd)) {
+                //Ignore modules, they must be loaded later...
+                if (pd.isDependency()) {
+                    try {
+                        loadDependency(dependency);
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
         }
@@ -71,10 +82,32 @@ public class DependencyManager {
         Path file = dependencyFile(dependency.getAsDependency());
 
         loaded.put(dependency, file);
+        source.console().send("Loading dependency {0}", Level.INFO, dependency.prettyName());
         CurrentPlatform.getPluginAppender().add(file);
     }
 
     private static Path dependencyFile(PluginDependency pluginDependency) {
-        return pluginDependency.getLocation().toPath();
+        if (pluginDependency.relocations().isEmpty()) {
+            return pluginDependency.getLocation().toPath();
+        }
+
+        File location = pluginDependency.getLocation();
+        Path expected = source.getDataPath()
+                .resolve("plugin")
+                .resolve("libraries")
+                .resolve("relocate")
+                .resolve(location.getName());
+
+        if (!Files.exists(expected)) {
+            PathUtilities.create(expected);
+            JarRelocator relocator = new JarRelocator(pluginDependency.getLocation(), expected.toFile(), pluginDependency.relocations());
+            try {
+                relocator.run();
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return expected;
     }
 }

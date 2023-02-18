@@ -21,7 +21,7 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.MigrationManager;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.BackupTask;
+import eu.locklogin.api.common.security.backup.BackupTask;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -29,6 +29,7 @@ import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
@@ -40,6 +41,7 @@ import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
 import eu.locklogin.api.common.web.services.LockLoginSocket;
+import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
@@ -54,6 +56,10 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.plugin.license.LicenseExpiration;
+import eu.locklogin.api.plugin.license.LicenseOwner;
+import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -84,9 +90,6 @@ import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.utils.url.HttpUtil;
-import ml.karmaconfigs.api.common.utils.url.Post;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
 import ml.karmaconfigs.api.common.version.updater.VersionCheckType;
 import net.md_5.bungee.api.ChatMessageType;
@@ -106,7 +109,11 @@ import org.jetbrains.annotations.ApiStatus;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -180,15 +187,35 @@ public final class Manager {
 
         loadCache();
 
-        BackupTask.performBackup();
-        SourceScheduler backup_scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.HOUR, true);
-        backup_scheduler.restartAction(BackupTask::performBackup);
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        /*SourceScheduler backup_scheduler = new SourceScheduler(plugin, Math.max(1, config.backup().getBackupPeriod()), SchedulerUnit.MINUTE, true);
+        backup_scheduler.restartAction(() -> {
+            BackupScheduler current_scheduler = CurrentPlatform.getBackupScheduler();
+            current_scheduler.performBackup().whenComplete((id, error) -> {
+                if (error != null) {
+                    plugin.logger().scheduleLog(Level.GRAVE, error);
+                    plugin.logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                    plugin.console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                } else {
+                    plugin.console().send("Successfully created backup with id {0}", Level.INFO, id);
+                }
+            });
+
+            int purge_days = config.backup().getPurgeDays();
+            Instant today = Instant.now();
+            Instant purge_target = today.minus(purge_days + 1, ChronoUnit.DAYS);
+
+            current_scheduler.purge(purge_target).whenComplete((removed) -> {
+                if (removed > 0) {
+                    plugin.console().send("Purged {0} backups created {1} days ago", Level.INFO, removed, purge_days);
+                }
+            });
+        });*/
 
         plugin.getProxy().registerChannel(Channel.ACCOUNT.getName());
         plugin.getProxy().registerChannel(Channel.PLUGIN.getName());
         plugin.getProxy().registerChannel(Channel.ACCESS.getName());
-
-        PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (config.useVirtualID()) {
             CryptoFactory.loadVirtualID();
@@ -203,19 +230,10 @@ public final class Manager {
 
         scheduleAlertSystem();
 
-        registerMetrics();
-
         CurrentPlatform.setPrefix(config.getModulePrefix());
         Injector injector = new ModuleExecutorInjector();
-        //As off 1.13.24 injector is the same for everyone! [ NO MORE REFLECTION LOL ]
 
         injector.inject();
-
-        new SourceScheduler(plugin, 10, SchedulerUnit.SECOND, false).multiThreading(true)
-                .endAction(() -> {
-                    RemoteNotification notification = new RemoteNotification();
-                    notification.checkAlerts().whenComplete(() -> console.send(notification.getStartup()));
-                }).start();
 
         console.send("Connecting to LockLogin web services (statistics and spigot communication)", Level.INFO);
         SocketClient socket = new LockLoginSocket();
@@ -293,205 +311,224 @@ public final class Manager {
             return null;
         };
 
-        BungeeDataSender bs = new BungeeDataSender();
-        final Map<String, String> internalMap = new ConcurrentHashMap<>();
+        plugin.async().queue("connect_web_services", () -> {
+            License license = CurrentPlatform.getLicense();
+            if (license != null) {
+                String version = license.version();
+                LicenseOwner owner = license.owner();
+                LicenseExpiration expiration = license.expiration();
 
-        //TODO: Launch web services communication project. For now this will never connect
-        c_Manager.connect(5, (name, id, hash) -> {
-            ServerInfo server = plugin.getProxy().getServerInfo(name);
-            if (server != null) {
-                KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
-                if (!hash_store.exists())
-                    hash_store.create();
+                InstantParser grant_parser = new InstantParser(expiration.granted());
+                InstantParser expire_parser = new InstantParser(expiration.expiration());
 
-                ServerDataStorage.setProxyRegistered(name);
+                plugin.console().send("Successfully loaded your license: {0}", Level.INFO, version);
+                plugin.console().send("------------------------------------------------------");
+                plugin.console().send("&7License type: &e{0}", (license.isFree() ? "free" : "premium"));
+                plugin.console().send("&7Licensed under:&e {0} ({1})", owner.name(), owner.contact());
+                plugin.console().send("&7Licensed for: &e{0}&7 servers", license.max_proxies());
+                plugin.console().send("&7License storage: &e{0}&7 bytes", license.backup_storage());
+                plugin.console().send("&7Granted on: &e{0}", grant_parser.parse());
+                plugin.console().send("&7Expires on: &e{0}", expire_parser.parse());
+                if (expiration.hasExpiration()) {
+                    if (expiration.isExpired()) {
+                        plugin.console().send("&cYour license is expired; It will be marked as free until you renew it");
+                    } else {
+                        if (expiration.expireMonths() <= 0 && expiration.expireYears() <= 0) {
+                            plugin.console().send("Your license will expire in {0} days, you should renew it before it expires", Level.WARNING, expiration.expireDays());
+                        }
 
-                pds.server_maps.put(name, id);
-                pds.queue(name).unlock();
+                        plugin.console().send("&7Expiration in: &e{0}&7 years&e {1}&7 months&e {2}&7 days &8(&e{3}&7 weeks&8)&e {4}&7 hours&e {5}&7 minutes and&e {6}&7 seconds",
+                                expiration.expireYears(),
+                                expiration.expireMonths(),
+                                expiration.expireDays(),
+                                expiration.expireWeeks(),
+                                expiration.expireHours(),
+                                expiration.expireMinutes(),
+                                expiration.expireSeconds());
+                    }
+                } else {
+                    plugin.console().send("&aYour license is a lifetime license");
+                }
+                plugin.console().send("------------------------------------------------------");
+            } else {
+                long time = System.currentTimeMillis();
 
-                InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
+                plugin.console().send("Failed to validate your license. It seems that LockLogin servers doesn't know about it", Level.GRAVE);
+                Path license_file = plugin.getDataPath().resolve("cache").resolve("license.dat");
+                if (Files.exists(license_file)) {
+                    Path mod = plugin.getDataPath().resolve("cache").resolve("invalid_" + time + ".dat");
 
-                KarmaMap data = new KarmaMap();
-                data.put("name", name);
-                data.put("address", isa.getHostString());
-                data.put("port", isa.getPort());
-                //We store this information to detect changes when loading
-                hash_store.set(hash, data);
-                hash_store.save();
-
-                internalMap.put(name, hash);
-
-                console.send("Server {0} has been connected to the proxy", Level.INFO, name);
+                    try {
+                        Files.move(license_file, mod, StandardCopyOption.REPLACE_EXISTING);
+                        plugin.console().send("Invalid license has been disabled, run /locklogin setup to setup a new valid free license", Level.INFO);
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }
-        }, sender, bs).whenComplete((tries_amount) -> {
-            if (tries_amount > 0) {
-                console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
-            }
 
-            switch (tries_amount) {
-                case -1:
-                    //TODO: Allow configure tries amount from config and read that value
-                    console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
-                case -2:
-                    sender.sender = bs;
-                    sender.secondarySender = sender.sender; //For stability reasons, should never be null
-                    //BungeeSender.useSocket = false;
+            BungeeDataSender bs = new BungeeDataSender();
+            final Map<String, String> internalMap = new ConcurrentHashMap<>();
 
-                    initPlayers(sender);
-                    break;
-                case 0:
-                    console.send("Connected to LockLogin web services successfully", Level.INFO);
-                default:
-                    KarmaMain hashes = new KarmaMain(plugin, ".hashes", "cache");
-                    if (hashes.exists()) {
-                        for (String hash : hashes.getKeys()) {
-                            hash = hash.replace("main.", "");
-                            KarmaMap data = (KarmaMap) hashes.get(hash);
+            c_Manager.connect(5, (name, id, hash) -> {
+                ServerInfo server = plugin.getProxy().getServerInfo(name);
+                if (server != null) {
+                    KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
+                    if (!hash_store.exists())
+                        hash_store.create();
 
-                            String name = data.get("name").asString();
-                            String address = data.get("address").asString();
-                            int port = data.get("port").asInteger();
+                    ServerDataStorage.setProxyRegistered(name);
 
-                            ServerInfo info = plugin.getProxy().getServerInfo(name);
-                            if (info != null) {
-                                InetSocketAddress isa = (InetSocketAddress) info.getSocketAddress();
+                    pds.server_maps.put(name, id);
+                    pds.queue(name).unlock();
 
-                                if (isa.getHostString().equals(address) && isa.getPort() == port) {
-                                    Socket connection = socket.client();
-                                    JsonObject request = new JsonObject();
+                    InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
 
-                                    request.addProperty("hash", hash);
-                                    request.addProperty("name", name);
-                                    connection.emit("init_auth", request, (Ack) (response) -> {
-                                        try {
-                                            Gson gson = new GsonBuilder().create();
-                                            JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
+                    KarmaMap data = new KarmaMap();
+                    data.put("name", name);
+                    data.put("address", isa.getHostString());
+                    data.put("port", isa.getPort());
+                    //We store this information to detect changes when loading
+                    hash_store.set(hash, data);
+                    hash_store.save();
 
-                                            if (r.get("success").getAsBoolean()) {
-                                                plugin.console().send("Trying to register {0}", Level.INFO, name);
-                                            } else {
-                                                String reason = r.get("message").getAsString();
-                                                plugin.console().send("Failed to register {0} ({1})", Level.GRAVE, name, reason);
+                    internalMap.put(name, hash);
+
+                    console.send("Server {0} has been connected to the proxy", Level.INFO, name);
+                }
+            }, sender, bs).whenComplete((tries_amount) -> {
+                if (tries_amount > 0) {
+                    console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
+                }
+
+                plugin.console().send("Marking server as initialized", Level.OK);
+                initialized = true;
+
+                switch (tries_amount) {
+                    case -1:
+                        //TODO: Allow configure tries amount from config and read that value
+                        console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
+                    case -2:
+                        sender.sender = bs;
+                        sender.secondarySender = sender.sender; //For stability reasons, should never be null
+                        //BungeeSender.useSocket = false;
+
+                        initPlayers(sender);
+                        registerMetrics(null);
+                        break;
+                    case 0:
+                        console.send("Connected to LockLogin web services successfully", Level.INFO);
+                    default:
+                        registerMetrics(socket);
+                        KarmaMain hashes = new KarmaMain(plugin, ".hashes", "cache");
+                        if (hashes.exists()) {
+                            for (String hash : hashes.getKeys()) {
+                                hash = hash.replace("main.", "");
+                                KarmaMap data = (KarmaMap) hashes.get(hash);
+
+                                String name = data.get("name").asString();
+                                String address = data.get("address").asString();
+                                int port = data.get("port").asInteger();
+
+                                ServerInfo info = plugin.getProxy().getServerInfo(name);
+                                if (info != null) {
+                                    InetSocketAddress isa = (InetSocketAddress) info.getSocketAddress();
+
+                                    if (isa.getHostString().equals(address) && isa.getPort() == port) {
+                                        Socket connection = socket.client();
+                                        JsonObject request = new JsonObject();
+
+                                        request.addProperty("hash", hash);
+                                        request.addProperty("name", name);
+                                        connection.emit("init_auth", request, (Ack) (response) -> {
+                                            try {
+                                                Gson gson = new GsonBuilder().create();
+                                                JsonObject r = gson.fromJson(String.valueOf(response[0]), JsonObject.class);
+
+                                                if (r.get("success").getAsBoolean()) {
+                                                    plugin.console().send("Trying to register {0}", Level.INFO, name);
+                                                } else {
+                                                    String reason = r.get("message").getAsString();
+                                                    plugin.console().send("Failed to register {0} ({1})", Level.GRAVE, name, reason);
+                                                }
+                                            } catch (Throwable ex) {
+                                                logger.scheduleLog(Level.GRAVE, ex);
                                             }
-                                        } catch (Throwable ex) {
-                                            logger.scheduleLog(Level.GRAVE, ex);
-                                        }
-                                    });
-                                } else {
-                                    hashes.unset(hash); //Data changed, forget it
+                                        });
+                                    } else {
+                                        hashes.unset(hash); //Data changed, forget it
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    sender.sender = pds;
-                    sender.secondarySender = bs;
-                    BungeeSender.useSocket = true;
+                        sender.sender = pds;
+                        sender.secondarySender = bs;
+                        BungeeSender.useSocket = true;
 
-                    initPlayers(sender);
+                        initPlayers(sender);
 
-                    c_Manager.onServerConnected((name, id, hash) -> {
-                        ServerInfo server = plugin.getProxy().getServerInfo(name);
-                        if (server != null) {
-                            KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
-                            if (!hash_store.exists())
-                                hash_store.create();
+                        c_Manager.onServerConnected((name, id, hash) -> {
+                            ServerInfo server = plugin.getProxy().getServerInfo(name);
+                            if (server != null) {
+                                KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
+                                if (!hash_store.exists())
+                                    hash_store.create();
 
-                            ServerDataStorage.setProxyRegistered(name);
+                                ServerDataStorage.setProxyRegistered(name);
 
-                            pds.server_maps.put(name, id);
-                            pds.queue(name).unlock();
+                                pds.server_maps.put(name, id);
+                                pds.queue(name).unlock();
 
-                            InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
+                                InetSocketAddress isa = (InetSocketAddress) server.getSocketAddress();
 
-                            KarmaMap data = new KarmaMap();
-                            data.put("name", name);
-                            data.put("address", isa.getHostString());
-                            data.put("port", isa.getPort());
-                            //We store this information to detect changes when loading
-                            hash_store.set(hash, data);
-                            hash_store.save();
+                                KarmaMap data = new KarmaMap();
+                                data.put("name", name);
+                                data.put("address", isa.getHostString());
+                                data.put("port", isa.getPort());
+                                //We store this information to detect changes when loading
+                                hash_store.set(hash, data);
+                                hash_store.save();
 
-                            internalMap.put(name, hash);
+                                internalMap.put(name, hash);
 
-                            console.send("Server {0} has been connected to the proxy", Level.INFO, name);
-                        }
-                    });
-                    c_Manager.onServerDisconnected((name, reason) -> {
-                        ServerInfo server = plugin.getProxy().getServerInfo(name);
-                        if (server != null) {
-                            ServerDataStorage.removeProxyRegistered(name);
-                            console.send("Server {0} has been disconnected ({1})", Level.INFO, name, reason);
-
-                            Socket connection = socket.client();
-
-                            JsonObject request = new JsonObject();
-                            request.addProperty("hash", internalMap.remove(name));
-                            request.addProperty("name", name);
-
-                            connection.emit("init_auth", request);
-                        }
-                    });
-                    //TODO: Realize how I will make this work
-                    /*c_Manager.onProxyConnected((address) -> {
-                        try {
-                            InetAddress inet = InetAddress.getByName(address);
-                            if (inet.isReachable(15000)) {
-                                console.send("Connected proxy from {0}. Now sharing data with it", Level.INFO, address);
-                            } else {
-                                console.send("A proxy from {0} has connected the server, but we were unable to verify it's online. In a future, the connection will reset if that happens", Level.GRAVE, address);
+                                console.send("Server {0} has been connected to the proxy", Level.INFO, name);
                             }
-                        } catch (Throwable ex) {
-                            console.send("A proxy from {0} has connected the server, but we were unable to resolve its host. In a future the connection will reset if that happens", Level.GRAVE, address);
-                        }
-                    });*/
+                        });
+                        c_Manager.onServerDisconnected((name, reason) -> {
+                            ServerInfo server = plugin.getProxy().getServerInfo(name);
+                            if (server != null) {
+                                ServerDataStorage.removeProxyRegistered(name);
+                                console.send("Server {0} has been disconnected ({1})", Level.INFO, name, reason);
 
-                    console.send("Registering LockLogin web service listeners", Level.INFO);
-                    c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (server, data) -> {
-                        if (data.has("pin_input") && data.has("player")) {
-                            UUID uuid = UUID.fromString(data.get("player").getAsString());
-                            ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
+                                Socket connection = socket.client();
 
-                            if (player != null) {
-                                String pin = data.get("pin_input").getAsString();
+                                JsonObject request = new JsonObject();
+                                request.addProperty("hash", internalMap.remove(name));
+                                request.addProperty("name", name);
 
-                                User user = new User(player);
-                                ClientSession session = user.getSession();
-                                AccountManager manager = user.getManager();
-                                if (session.isValid()) {
-                                    PluginMessages messages = CurrentPlatform.getMessages();
+                                connection.emit("init_auth", request);
+                            }
+                        });
 
-                                    if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
-                                                user.getModule(),
-                                                (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                        ModulePlugin.callEvent(event);
+                        console.send("Registering LockLogin web service listeners", Level.INFO);
+                        c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (server, data) -> {
+                            if (data.has("pin_input") && data.has("player")) {
+                                UUID uuid = UUID.fromString(data.get("player").getAsString());
+                                ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
 
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                        session.setPinLogged(true);
-                                        if (manager.has2FA()) {
-                                            session.set2FALogged(false);
-                                        } else {
-                                            session.set2FALogged(true);
-                                            sender.sender.queue(server.getName())
-                                                    .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                            .getInstance().build());
+                                if (player != null) {
+                                    String pin = data.get("pin_input").getAsString();
 
-                                            user.checkServer(0);
-                                        }
+                                    User user = new User(player);
+                                    ClientSession session = user.getSession();
+                                    AccountManager manager = user.getManager();
+                                    if (session.isValid()) {
+                                        PluginMessages messages = CurrentPlatform.getMessages();
 
-                                        sender.sender.queue(server.getName())
-                                                .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                        .addProperty("pin", false).getInstance().build());
-                                    } else {
-                                        if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                            sender.sender.queue(server.getName())
-                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                            .addProperty("pin", false).getInstance().build());
-
+                                        if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                    UserAuthenticateEvent.Result.ERROR,
+                                                    (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
                                                     user.getModule(),
                                                     (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                             ModulePlugin.callEvent(event);
@@ -502,112 +539,137 @@ public final class Manager {
                                                 session.set2FALogged(false);
                                             } else {
                                                 session.set2FALogged(true);
-
                                                 sender.sender.queue(server.getName())
                                                         .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
                                                                 .getInstance().build());
 
                                                 user.checkServer(0);
                                             }
+
+                                            sender.sender.queue(server.getName())
+                                                    .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                            .addProperty("pin", false).getInstance().build());
                                         } else {
-                                            if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
+                                            if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                                sender.sender.queue(server.getName())
+                                                        .insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                .addProperty("pin", false).getInstance().build());
+
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                         UserAuthenticateEvent.Result.ERROR,
                                                         user.getModule(),
-                                                        "", null);
+                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                                 ModulePlugin.callEvent(event);
 
-                                                if (!event.getAuthMessage().isEmpty()) {
-                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                session.setPinLogged(true);
+                                                if (manager.has2FA()) {
+                                                    session.set2FALogged(false);
+                                                } else {
+                                                    session.set2FALogged(true);
+
+                                                    sender.sender.queue(server.getName())
+                                                            .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                    .getInstance().build());
+
+                                                    user.checkServer(0);
+                                                }
+                                            } else {
+                                                if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                            UserAuthenticateEvent.Result.ERROR,
+                                                            user.getModule(),
+                                                            "", null);
+                                                    ModulePlugin.callEvent(event);
+
+                                                    if (!event.getAuthMessage().isEmpty()) {
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                    });
-                    c_Manager.addListener(Channel.ACCOUNT, DataType.JOIN, (server, data) -> {
-                        if (data.has("player")) {
-                            UUID uuid = UUID.fromString(data.get("player").getAsString());
-                            ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
+                        });
+                        c_Manager.addListener(Channel.ACCOUNT, DataType.JOIN, (server, data) -> {
+                            if (data.has("player")) {
+                                UUID uuid = UUID.fromString(data.get("player").getAsString());
+                                ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
 
-                            System.out.println("Validated player: " + player.getUniqueId());
+                                System.out.println("Validated player: " + player.getUniqueId());
 
-                            if (player != null) {
-                                User user = new User(player);
-                                UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
-                                ModulePlugin.callEvent(event);
-                            }
-                        }
-                    });
-                    c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (server, data) -> {
-                        if (data.has("player_info")) {
-                            ModulePlayer modulePlayer = StringUtils.loadUnsafe(data.get("player_info").getAsString());
-                            if (modulePlayer != null) {
-                                AccountManager manager = modulePlayer.getAccount();
-
-                                if (manager != null) {
-                                    AccountManager newManager = new PlayerAccount(manager.getUUID());
-                                    MigrationManager migrationManager = new MigrationManager(manager, newManager);
-                                    migrationManager.startMigration();
+                                if (player != null) {
+                                    User user = new User(player);
+                                    UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
+                                    ModulePlugin.callEvent(event);
                                 }
                             }
+                        });
+                        c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (server, data) -> {
+                            if (data.has("player_info")) {
+                                ModulePlayer modulePlayer = StringUtils.loadUnsafe(data.get("player_info").getAsString());
+                                if (modulePlayer != null) {
+                                    AccountManager manager = modulePlayer.getAccount();
+
+                                    if (manager != null) {
+                                        AccountManager newManager = new PlayerAccount(manager.getUUID());
+                                        MigrationManager migrationManager = new MigrationManager(manager, newManager);
+                                        migrationManager.startMigration();
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                }
+            });
+
+            plugin.async().queue("setup_placeholder_data", () -> {
+                AccountManager acc_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
+                if (acc_manager != null) {
+                    Set<AccountManager> accounts = acc_manager.getAccounts();
+                    Set<AccountManager> nonLocked = new HashSet<>();
+                    for (AccountManager account : accounts) {
+                        LockedAccount locked = new LockedAccount(account.getUUID());
+                        if (!locked.isLocked())
+                            nonLocked.add(account);
+                    }
+
+                    SessionDataContainer.setRegistered(nonLocked.size());
+
+                    SessionDataContainer.onDataChange(data -> {
+                        try {
+                            Collection<ServerInfo> servers = plugin.getProxy().getServers().values();
+
+                            switch (data.getDataType()) {
+                                case LOGIN:
+                                    for (ServerInfo server : servers) {
+                                        sender.sender.queue(server.getName())
+                                                .insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                                                        .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
+                                    }
+                                    break;
+                                case REGISTER:
+                                    for (ServerInfo server : servers) {
+                                        sender.sender.queue(server.getName())
+                                                .insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                                                        .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        } catch (Throwable ignored) {
                         }
                     });
-                    break;
-            }
-
-            initialized = true;
+                }
+            });
         });
 
         end = unused -> {
             endPlayers(sender);
             return null;
         };
-
-        AccountManager acc_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
-        if (acc_manager != null) {
-            Set<AccountManager> accounts = acc_manager.getAccounts();
-            Set<AccountManager> nonLocked = new HashSet<>();
-            for (AccountManager account : accounts) {
-                LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.isLocked())
-                    nonLocked.add(account);
-            }
-
-            SessionDataContainer.setRegistered(nonLocked.size());
-
-            SessionDataContainer.onDataChange(data -> {
-                try {
-                    Collection<ServerInfo> servers = plugin.getProxy().getServers().values();
-
-                    switch (data.getDataType()) {
-                        case LOGIN:
-                            for (ServerInfo server : servers) {
-                                sender.sender.queue(server.getName())
-                                        .insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
-                                                .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
-                            }
-                            break;
-                        case REGISTER:
-                            for (ServerInfo server : servers) {
-                                sender.sender.queue(server.getName())
-                                        .insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
-                                                .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (Throwable ignored) {
-                }
-            });
-        }
-
-        /*BungeeSender.sender = new BungeeDataSender();
-        BungeeSender.useSocket = false;*/
-        initialized = true;
     }
 
     public static void terminate() {
@@ -764,7 +826,7 @@ public final class Manager {
     /**
      * Register plugin metrics
      */
-    static void registerMetrics() {
+    static void registerMetrics(final SocketClient s) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.shareBStats()) {
             Metrics metrics = new Metrics(plugin, 6512);
@@ -776,53 +838,15 @@ public final class Manager {
             metrics.addCustomChart(new SimplePie("sessions_enabled", () -> String.valueOf(config.enableSessions())
                     .replace("true", "Sessions enabled")
                     .replace("false", "Sessions disabled")));
+        } else {
+            console.send("Metrics are disabled, please note this is an open source free project and we use metrics to know if the project is being active by users. If we don't see active users using this project, the project may reach the dead line meaning no more updates or support. We highly recommend to you to share statistics, as this won't share any information of your server but the country, os and some other information that may be util for us", Level.GRAVE);
         }
+
         if (config.sharePlugin()) {
-            String[] hosts = new String[]{
-                    "https://karmadev.es/api/v2",
-                    "https://karmaconfigs.ml/api/v2",
-                    "https://karmarepo.ml/api/v2",
-                    "https://backup.karmadev.es/api/v2",
-                    "https://backup.karmaconfigs.ml/api/v2",
-                    "https://backup.karmarepo.ml/api/v2"
-            };
-
-            URL sv = null;
-            for (String host : hosts) {
-                try {
-                    URL url = new URL(host);
-                    HttpUtil util = URLUtils.extraUtils(URLUtils.append(url, "status"));
-
-                    if (util != null) {
-                        String response = util.getResponse();
-                        if (response.contains("\"status\": \"ok\"")) {
-                            sv = url;
-                            break;
-                        }
-                    }
-                } catch (Throwable ignored) {}
-            }
-
-            if (sv != null) {
-                URL server = sv;
-
-                new SourceScheduler(plugin, 5, SchedulerUnit.MINUTE, true).multiThreading(true).restartAction(() -> {
-                    HttpUtil util = URLUtils.extraUtils(URLUtils.append(server, "metrics"));
-                    if (util != null) {
-                        String id = plugin.getIdentifier();
-
-                        Post post = Post.newPost()
-                                .add("plugin", '0')
-                                .add("server", id)
-                                .add("logged", SessionDataContainer.getLogged())
-                                .add("registered", SessionDataContainer.getRegistered())
-                                .add("version", plugin.version())
-                                .add("network", BungeeSender.registered_servers);
-
-                        util.push(post);
-                    }
-                }).start();
-            }
+            PluginMetricsService service = new PluginMetricsService(plugin, s);
+            service.start();
+        } else {
+            console.send("Plugin metrics are disabled. Data will still be sent but won't be public", Level.INFO);
         }
     }
 
@@ -856,51 +880,55 @@ public final class Manager {
      */
     @SuppressWarnings("deprecation")
     static void performVersionCheck() {
-        if (updater == null)
-            updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+        try {
+            if (updater == null)
+                updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
 
-        updater.fetch(true).whenComplete((fetch, trouble) -> {
-            if (trouble == null) {
-                if (!fetch.isUpdated()) {
-                    if (changelog_requests <= 0) {
-                        changelog_requests = 3;
+            updater.fetch(true).whenComplete((fetch, trouble) -> {
+                if (trouble == null) {
+                    if (!fetch.isUpdated()) {
+                        if (changelog_requests <= 0) {
+                            changelog_requests = 3;
 
-                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, version, fetch.getLatest());
-                        for (String line : fetch.getChangelog())
-                            console.send(line);
+                            console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, version, fetch.getLatest());
+                            for (String line : fetch.getChangelog())
+                                console.send(line);
 
-                        PluginMessages messages = CurrentPlatform.getMessages();
-                        for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
-                            User user = new User(player);
-                            if (user.hasPermission(PluginPermissions.updater_apply())) {
-                                user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
-                                user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
-                            }
-                        }
-
-                        if (VersionDownloader.downloadUpdates()) {
-                            if (VersionDownloader.canDownload()) {
-                                VersionDownloader.download();
-                            }
-                        } else {
-                            console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
-
+                            PluginMessages messages = CurrentPlatform.getMessages();
                             for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                                 User user = new User(player);
                                 if (user.hasPermission(PluginPermissions.updater_apply())) {
-                                    user.send(messages.prefix() + "&dFollow console instructions to update");
+                                    user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
+                                    user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                                 }
                             }
+
+                            if (VersionDownloader.downloadUpdates()) {
+                                if (VersionDownloader.canDownload()) {
+                                    VersionDownloader.download();
+                                }
+                            } else {
+                                console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
+
+                                for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+                                    User user = new User(player);
+                                    if (user.hasPermission(PluginPermissions.updater_apply())) {
+                                        user.send(messages.prefix() + "&dFollow console instructions to update");
+                                    }
+                                }
+                            }
+                        } else {
+                            changelog_requests--;
                         }
-                    } else {
-                        changelog_requests--;
                     }
+                } else {
+                    logger.scheduleLog(Level.GRAVE, trouble);
+                    logger.scheduleLog(Level.INFO, "Failed to check for updates");
                 }
-            } else {
-                logger.scheduleLog(Level.GRAVE, trouble);
-                logger.scheduleLog(Level.INFO, "Failed to check for updates");
-            }
-        });
+            });
+        } catch (IllegalStateException error) {
+            console.send("Failed to setup plugin updater; {0}", Level.GRAVE, error.fillInStackTrace());
+        }
     }
 
     /**
@@ -971,7 +999,6 @@ public final class Manager {
         timer.start();
 
         alert_id = timer.getId();
-
     }
 
     /**
@@ -1040,9 +1067,11 @@ public final class Manager {
                         session.setCaptchaLogged(true);
 
                     SimpleScheduler tmp_timer = null;
-                    if (!session.isCaptchaLogged()) {
-                        tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
-                        tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                    if (config.captchaOptions().isEnabled()) {
+                        if (!session.isCaptchaLogged()) {
+                            tmp_timer = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true);
+                            tmp_timer.changeAction((second) -> player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor(messages.captcha(session.getCaptcha()))))).start();
+                        }
                     }
 
                     sender.sender.queue(BungeeSender.serverFromPlayer(player).getName()).insert(

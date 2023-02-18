@@ -67,6 +67,7 @@ public final class User {
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
     private static Map<UUID, GameMode> temp_spectator = new ConcurrentHashMap<>();
+
     private final Player player;
 
     /**
@@ -274,7 +275,7 @@ public final class User {
      * Restore the player potion effects
      */
     public synchronized void restorePotionEffects() {
-        trySync(TaskTarget.POTION_EFFECT, () -> {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
             player.getActivePotionEffects().forEach(effect -> {
                 try {
                     player.removePotionEffect(effect.getType());
@@ -390,7 +391,8 @@ public final class User {
      * Remove the user session check
      */
     public void removeSessionCheck() {
-        sessionChecks.remove(player.getUniqueId());
+        SessionCheck<Player> check = sessionChecks.remove(player.getUniqueId());
+        check.cancelCheck("Session check removed");
     }
 
     /**

@@ -1,7 +1,9 @@
 #LockLogin message file
 #----------------------------------
-#Translation: Hebrew (Community Language)
+#Translation: Hebrew (Official - Community based)
 #Editor: IMS - Network <https://ims-network.org>
+#
+#Last edited: 18 - February - 2023 0:55
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -14,6 +16,14 @@
 # - This language must receive a community language update ( this
 #   means the author of the language pack must update the
 #   language with the new messages, LockLogin developer won't do it )
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
 
 #Plugin prefix
 Prefix: '&eמערכת אבטחה&f>> '
@@ -75,6 +85,58 @@ LoginInsecure: '&5&oהסיסמה שלכם הוגדרה כלא בטוחה בבק�
 LoginOut: '&5&oלקח לך יותר מידי זמן להיכנס'
 LoginTitle: '&7יש לך'
 LoginSubtitle: '&b{time} &7בשביל להיכנס'
+
+#Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&dמצב פרימיום &aמופעל&d, זה מכיל:"
+  - ""
+  - "&7- &bלא יתבקשו ממך אישורי כניסה"
+  - "&7- &bיהיה לך את העור שלך"
+  - "&7- &bאתה עשוי לאבד את ההתקדמות שלך"
+  - "&7- &bאם שרתי Mojang מכובים, לא תוכל להצטרף"
+  - "&7- &bאם לא אימתת את עצמך דרך Mojang או Xbox, לא תוכל להצטרף"
+  - ""
+  - "&eהצטרף מחדש לשרת כדי לסיים את ההתקנה"
+PremiumDisabled:
+  - "{ServerName}"
+  - ""
+  - "&dמצב פרימיום &cמנוטרל&d, זה מכיל:"
+  - ""
+  - "&7- &bתתבקש לספק את האישורי כניסה שלך"
+  - "&7- &bלא יהיה לך את העור שלך"
+  - "&7- &bההתקדמות שלך תלויה בשם המשתמש שלך"
+  - "&7- &bתוכל להצטרף גם אם שרתי Mojang מכובים"
+  - "&7- &bתוכל להצטרף גם אם לא אימתת את עצמך דרך Mojang או Xbox"
+  - ""
+  - "&eהצטרף מחדש לשרת כדי לסיים את ההתקנה"
+PremiumError: "&5&oאירעה שגיאה בזמן השבתת / הפעלת פרימיום בחשבונך"
+PremiumAuth: "&dמאומת עם אימות פרימיום"
+PremiumServer: "&5&lזהו שרת פרימיום בלבד!"
+ברכישת חשבון פרימיום:
+  - "&d!טרם תבצעו את הפעולה, עליכם"
+  - "&dלשים לב לנקודות הבאות:"
+  - ""
+  - "&7- &bבהתאם לשרת, ייתכן שתאבדו את התקדמותכם"
+  - "&7- &bאם לא נכנסתם לחשבון של מואנג או של אקסבוקס"
+  - "&b לא תוכלו להיכנס לשרת עם החשבון הזה יותר"
+  - "&7- &b(כפי שקורה בשרתי פרימיום) אם השרת של מואנג מנותק"
+  - "&b לא תוכלו להיכנס עד שהשרת יחזור לפעילות"
+  - ""
+  - "&dאם עדיין ברצונכם להמשיך, הריצו את &e/premium&d שוב"
+
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&oהאימות שלכם נכשל. האם אתם מחוברים דרך מואנג?"
+  InternalError: "&5&oאירעה שגיאה פנימית בשרת"
+  ConnectionError: "&5&oאימות החיבור שלכם נכשל עם השרת"
+  AddressError: "&5&oאימות הכתובת שלכם נכשל"
+  EncryptionError: "&5&oסיפקתם הצפנה לא חוקית"
+  PrecociousEncryption: "&5&oניסיתם לאמת לפני שהשרת עשה זאת!"
+  SessionError: "&5&oהסשן שלכם אינו חוקי"
 
 #Unsafe password messages
 Password:

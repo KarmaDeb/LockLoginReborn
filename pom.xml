@@ -6,7 +6,7 @@
 
     <groupId>eu.locklogin</groupId>
     <artifactId>LockLogin</artifactId>
-    <version>1.13.45</version>
+    <version>1.13.52</version>
     <packaging>pom</packaging>
 
     <name>LockLogin</name>
@@ -59,7 +59,7 @@
         <project.author>KarmaDev</project.author>
         <project.buildType>RC</project.buildType>
         <project.karmaapi>1.3.4-SNAPSHOT</project.karmaapi>
-        <project.minimal_karmaapi>1.3.4-1</project.minimal_karmaapi>
+        <project.minimal_karmaapi>1.3.4-8</project.minimal_karmaapi>
         <project.author>KarmaDev</project.author>
         <project.description>
             LockLogin is an advanced login plugin, one of the most secure available,
@@ -114,6 +114,7 @@
                         <autoReleaseAfterClose>true</autoReleaseAfterClose>
                     </configuration>
                 </plugin>
+                -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
@@ -145,6 +146,7 @@
                         </additionalOptions>
                     </configuration>
                 </plugin>
+                <!--
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
@@ -162,6 +164,24 @@
                 -->
             </plugins>
         </pluginManagement>
+        <resources>
+            <resource>
+                <!-- Certificate should not be filtered, as it would make it invalid -->
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>yggdrasil_session_pubkey.der</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>yggdrasil_session_pubkey.der</exclude>
+                </excludes>
+                <!--Replace variables-->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
     <distributionManagement>
@@ -181,6 +201,308 @@
             <url>file:D:/Users/hetol/IdeaProjects/staging/locklogin/in</url>
         </repository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>bungeecord-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+        <repository>
+            <id>dmulloy2-repo</id>
+            <url>https://repo.dmulloy2.net/repository/public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+
+        <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
+        </repository>
+        <repository>
+            <id>codemc-repo</id>
+            <url>https://repo.codemc.org/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>me.lucko</groupId>
+                <artifactId>jar-relocator</artifactId>
+                <version>1.6</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Bukkit</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Bungee</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Common</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Bundle</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.spigotmc</groupId>
+                <artifactId>spigot-api</artifactId>
+                <version>1.17.1-R0.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.locklogin</groupId>
+                <artifactId>LockLogin-API</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-API</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bukkit</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bungee</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bundle</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>eu.locklogin</groupId>
+                <artifactId>LockLogin-common</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-API</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bukkit</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bungee</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bundle</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>23.0.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>2.19.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-web</artifactId>
+                <version>2.19.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>me.clip</groupId>
+                <artifactId>placeholderapi</artifactId>
+                <version>2.10.9</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.socket</groupId>
+                <artifactId>socket.io-client</artifactId>
+                <version>2.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.MilkBowl</groupId>
+                <artifactId>VaultAPI</artifactId>
+                <version>1.7</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>1.16-R0.5-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.locklogin</groupId>
+                <artifactId>LockLogin-spigot</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-API</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-Common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bukkit</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Common</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>eu.locklogin</groupId>
+                <artifactId>LockLogin-bungee</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-API</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>eu.locklogin</groupId>
+                        <artifactId>LockLogin-Common</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Bungee</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ml.karmaconfigs</groupId>
+                        <artifactId>KarmaAPI-Common</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>1.32</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.warrenstrange</groupId>
+                <artifactId>googleauth</artifactId>
+                <version>1.5.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.9.1</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.websocket</groupId>
+                <artifactId>javax.websocket-api</artifactId>
+                <version>1.1</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.bstats</groupId>
+                <artifactId>bstats-bukkit</artifactId>
+                <version>2.2.1</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.bstats</groupId>
+                <artifactId>bstats-bungeecord</artifactId>
+                <version>3.0.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.geysermc.floodgate</groupId>
+                <artifactId>api</artifactId>
+                <version>2.2.0-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>RELEASE</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>5.2.1</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>31.1-jre</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.comphenix.protocol</groupId>
+                <artifactId>ProtocolLib</artifactId>
+                <version>5.0.0-SNAPSHOT</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.github.games647</groupId>
+                <artifactId>craftapi</artifactId>
+                <version>0.6</version>
+                <scope>compile</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <modules>
         <module>locklogin-API</module>

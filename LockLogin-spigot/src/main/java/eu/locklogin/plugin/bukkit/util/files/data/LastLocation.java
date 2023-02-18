@@ -377,4 +377,63 @@ public final class LastLocation {
             }
         }
     }
+
+    /**
+     * Load the player last location
+     * @param player the player to teleport to
+     */
+    public void teleportTo(final Player player) {
+        if (player != null) {
+            Element<?> x_string = file.get("x");
+            Element<?> y_string = file.get("y");
+            Element<?> z_string = file.get("z");
+            Element<?> pitch_string = file.get("pitch");
+            Element<?> yaw_string = file.get("yaw");
+            Element<?> world_string = file.get("world");
+            Element<?> fall_string = file.get("falling");
+
+            if (!x_string.isPrimitive() && !y_string.isPrimitive() && !z_string.isPrimitive() && !pitch_string.isPrimitive() && !yaw_string.isPrimitive() && !world_string.isPrimitive())
+                return;
+
+            ElementPrimitive x_primitive = x_string.getAsPrimitive();
+            ElementPrimitive y_primitive = y_string.getAsPrimitive();
+            ElementPrimitive z_primitive = z_string.getAsPrimitive();
+            ElementPrimitive yaw_primitive = yaw_string.getAsPrimitive();
+            ElementPrimitive pitch_primitive = pitch_string.getAsPrimitive();
+            ElementPrimitive world_primitive = world_string.getAsPrimitive();
+            ElementPrimitive fall_primitive = fall_string.getAsPrimitive();
+
+            if (!x_primitive.isNumber() && !y_primitive.isNumber() && z_primitive.isNumber() && !yaw_primitive.isNumber() && pitch_primitive.isNumber() && !world_primitive.isString() && !fall_primitive.isNumber())
+                return;
+
+            try {
+                double x = x_primitive.asDouble();
+                double y = y_primitive.asDouble();
+                double z = z_primitive.asDouble();
+
+                float pitch = pitch_primitive.asFloat();
+                float yaw = yaw_primitive.asFloat();
+
+                World world = plugin.getServer().getWorld(world_primitive.asString());
+                float fall_distance = fall_primitive.asFloat();
+
+                if (world != null && x != Double.MIN_VALUE && y != Double.MIN_VALUE && z != Double.MIN_VALUE && yaw != Float.MIN_VALUE && pitch != Float.MIN_VALUE) {
+                    Location last_location = new Location(world, x, y, z);
+                    last_location.setPitch(pitch);
+                    last_location.setYaw(yaw);
+
+                    //Store the player fall distance so when he joins back
+                    //it gets restored and fall damage won't be prevented
+                    trySync(TaskTarget.TELEPORT, () -> {
+                        player.setFallDistance(fall_distance);
+                        player.teleport(last_location);
+                    });
+
+                    //Unset the last location
+                    remove();
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+    }
 }

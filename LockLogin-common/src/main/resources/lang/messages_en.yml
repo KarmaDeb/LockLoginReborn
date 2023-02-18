@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: English (Official)
 #Editor: KarmaDev
-#Last edited: 10 - July - 2022 21:57
+#Last edited: 18 - February - 2023 0:55
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -15,6 +15,14 @@
 # - This language must receive a community language update ( this
 #   means the author of the language pack must update the
 #   language with the new messages, LockLogin developer won't do it )
+#
+# What is a community based but official language?
+# - This language is not made by the developer of LockLogin
+# - This language will receive updates (this means this language will be
+#   translated by its author or by LockLogin developers when a new message
+#   is added)
+# - This language can be modified by any user of LockLogin and request a pull
+#   request on github
 
 #Plugin prefix
 Prefix: "&eLockLogin &7>> "
@@ -76,6 +84,57 @@ LoginInsecure: "&5&oYour password has been classified as not secure and you must
 LoginOut: "&5&oYou took too much time to log-in"
 LoginTitle: "&7You have"
 LoginSubtitle: "&b{time} &7to login"
+
+#Session messages - Premium
+PremiumEnabled:
+  - "{ServerName}"
+  - ""
+  - "&dPremium mode&a enabled&d, this implies:"
+  - ""
+  - "&7- &bYou won't be asked for your credentials"
+  - "&7- &bYou will have your skin"
+  - "&7- &bYou may lose your progress"
+  - "&7- &bIf mojang servers are down, you won't be able to join"
+  - "&7- &bIf you are not authenticated through mojang or xbox, you won't be able to join"
+  - ""
+  - "&eRejoin the server to finish setup"
+PremiumDisabled:
+  - "{ServerName}"
+  - ""
+  - "&dPremium mode&c disabled&d, this implies:"
+  - ""
+  - "&7- &bYou will be asked for your credentials"
+  - "&7- &bYou won't have your skin"
+  - "&7- &bYour progress will depend on your nickname"
+  - "&7- &bYou will be able to join even if mojang servers are down"
+  - "&7- &bYou will be able to join even if you didn't authenticate mojang or xbox"
+  - ""
+  - "&eRejoin the server to finish setup"
+PremiumError: "&5&oAn error occurred while disabling/enabling premium in your account"
+PremiumAuth: "&dAuthenticated using premium authentication"
+PremiumServer: "&5&lThis server is for premium users only!"
+PremiumWarning:
+  - "&dHey you! Before turning into a premium account, please"
+  - "&dconsider the following:"
+  - ""
+  - "&7- &bDepending on the server, you may lose your progress"
+  - "&7- &bIf you are not authenticated with mojang servers or xbox"
+  - "&b  servers, you won't be able to join with this account anymore"
+  - "&7- &b(Just as in premium servers) If mojang auth servers are down"
+  - "&b  you won't be able to join until the server goes back online"
+  - ""
+  - "&dIf you still want to proceed, run &e/premium&d again"
+#Those are only on spigot, paper, etc...
+#Yes, there are too many, but considering were are "simulating" minecraft
+#authentication, it's not actually that bad (it could be worse)
+PremiumFails:
+  AuthenticationError: "&5&oFailed to validate your connection. Are you authenticated through mojang?"
+  InternalError: "&5&oAn internal server error occurred"
+  ConnectionError: "&5&oFailed to validate your connection with this server"
+  AddressError: "&5&oFailed to authenticate your address"
+  EncryptionError: "&5&oInvalid encryption provided"
+  PrecociousEncryption: "&5&oTried to authenticate before the server does!"
+  SessionError: "&5&oInvalid session"
 
 #Unsafe password messages
 Password:

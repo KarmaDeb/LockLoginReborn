@@ -14,11 +14,12 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
+import com.comphenix.protocol.ProtocolLibrary;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.account.MigrationManager;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.BackupTask;
+import eu.locklogin.api.common.premium.DefaultPremiumDatabase;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -26,6 +27,7 @@ import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
+import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
@@ -36,6 +38,7 @@ import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
 import eu.locklogin.api.common.web.services.LockLoginSocket;
+import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
 import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
@@ -49,6 +52,10 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.plugin.license.LicenseExpiration;
+import eu.locklogin.api.plugin.license.LicenseOwner;
+import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
@@ -58,6 +65,7 @@ import eu.locklogin.plugin.bukkit.listener.*;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
 import eu.locklogin.plugin.bukkit.plugin.socket.ConnectionManager;
+import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
 import eu.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import eu.locklogin.plugin.bukkit.util.files.Config;
 import eu.locklogin.plugin.bukkit.util.files.Message;
@@ -93,6 +101,11 @@ import org.bukkit.plugin.messaging.PluginMessageListenerRegistration;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
@@ -128,6 +141,15 @@ public final class Manager {
         PlayerAccount.migrateV3();
         MessagePool.startCheckTask();
 
+        if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib")) {
+            plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
+            ProtocolListener listener = new ProtocolListener();
+            ProtocolLibrary.getProtocolManager().getAsynchronousManager()
+                    .registerAsyncHandler(listener).start();
+
+            CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
+        }
+
         setupFiles();
         //TokenGen.generate(plugin.getServer().getName());
         registerCommands();
@@ -151,11 +173,43 @@ public final class Manager {
 
         loadCache();
 
-        BackupTask.performBackup();
-        SourceScheduler backup_scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.HOUR, true);
-        backup_scheduler.restartAction(BackupTask::performBackup);
+        BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
+        scheduler.performBackup().whenComplete((id, error) -> {
+            if (error != null) {
+                plugin.logger().scheduleLog(Level.GRAVE, error);
+                plugin.logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                plugin.console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+            } else {
+                plugin.console().send("Successfully created backup with id {0}", Level.INFO, id);
+            }
+        });
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        SourceScheduler backup_scheduler = new SourceScheduler(plugin, Math.max(1, config.backup().getBackupPeriod()), SchedulerUnit.MINUTE, true);
+        backup_scheduler.restartAction(() -> {
+            BackupScheduler current_scheduler = CurrentPlatform.getBackupScheduler();
+            current_scheduler.performBackup().whenComplete((id, error) -> {
+                if (error != null) {
+                    plugin.logger().scheduleLog(Level.GRAVE, error);
+                    plugin.logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                    plugin.console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                } else {
+                    plugin.console().send("Successfully created backup with id {0}", Level.INFO, id);
+                }
+            });
+
+            int purge_days = config.backup().getPurgeDays();
+            Instant today = Instant.now();
+            Instant purge_target = today.minus(purge_days + 1, ChronoUnit.DAYS);
+
+            current_scheduler.purge(purge_target).whenComplete((removed) -> {
+                if (removed > 0) {
+                    plugin.console().send("Purged {0} backups created {1} days ago", Level.INFO, removed, purge_days);
+                }
+            });
+        });
+
         if (config.useVirtualID()) {
             CryptoFactory.loadVirtualID();
         } else {
@@ -194,65 +248,104 @@ public final class Manager {
 
         Button.preCache();
 
-        registerMetrics();
         initPlayers();
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
 
-        plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-            RemoteNotification notification = new RemoteNotification();
-            notification.checkAlerts().whenComplete(() -> console.send(notification.getStartup()));
-        }, 20 * 10);
+        plugin.async().queue("connect_web_services", () -> {
+            License license = CurrentPlatform.getLicense();
+            if (license != null) {
+                String version = license.version();
+                LicenseOwner owner = license.owner();
+                LicenseExpiration expiration = license.expiration();
 
-        initialized = true;
+                InstantParser grant_parser = new InstantParser(expiration.granted());
+                InstantParser expire_parser = new InstantParser(expiration.expiration());
 
-        console.send("Connecting to LockLogin web services (statistics and bungee communication), please wait...", Level.INFO);
-        SocketClient socket = new LockLoginSocket();
-        ConnectionManager c_Manager = new ConnectionManager(socket);
+                plugin.console().send("Successfully loaded your license: {0}", Level.INFO, version);
+                plugin.console().send("------------------------------------------------------");
+                plugin.console().send("&7License type: &e{0}", (license.isFree() ? "free" : "premium"));
+                plugin.console().send("&7Licensed under:&e {0} ({1})", owner.name(), owner.contact());
+                plugin.console().send("&7Licensed for: &e{0}&7 servers", license.max_proxies());
+                plugin.console().send("&7License storage: &e{0}&7 bytes", license.backup_storage());
+                plugin.console().send("&7Granted on: &e{0}", grant_parser.parse());
+                plugin.console().send("&7Expires on: &e{0}", expire_parser.parse());
+                if (expiration.hasExpiration()) {
+                    if (expiration.isExpired()) {
+                        plugin.console().send("&cYour license is expired; It will be marked as free until you renew it");
+                    } else {
+                        if (expiration.expireMonths() <= 0 && expiration.expireYears() <= 0) {
+                            plugin.console().send("Your license will expire in {0} days, you should renew it before it expires", Level.WARNING, expiration.expireDays());
+                        }
 
-        c_Manager.connect(5).whenComplete((tries_amount) -> {
-            if (tries_amount > 0) {
-                console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
+                        plugin.console().send("&7Expiration in: &e{0}&7 years&e {1}&7 months&e {2}&7 days &8(&e{3}&7 weeks&8)&e {4}&7 hours&e {5}&7 minutes and&e {6}&7 seconds",
+                                expiration.expireYears(),
+                                expiration.expireMonths(),
+                                expiration.expireDays(),
+                                expiration.expireWeeks(),
+                                expiration.expireHours(),
+                                expiration.expireMinutes(),
+                                expiration.expireSeconds());
+                    }
+                } else {
+                    plugin.console().send("&aYour license is a lifetime license");
+                }
+                plugin.console().send("------------------------------------------------------");
+            } else {
+                long time = System.currentTimeMillis();
+
+                plugin.console().send("Failed to validate your license. It seems that LockLogin servers doesn't know about it", Level.GRAVE);
+                Path license_file = plugin.getDataPath().resolve("cache").resolve("license.dat");
+                if (Files.exists(license_file)) {
+                    Path mod = plugin.getDataPath().resolve("cache").resolve("invalid_" + time + ".dat");
+
+                    try {
+                        Files.move(license_file, mod, StandardCopyOption.REPLACE_EXISTING);
+                        plugin.console().send("Invalid license has been disabled, run /locklogin setup to setup a new valid free license", Level.INFO);
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }
 
-            switch (tries_amount) {
-                case -1:
-                    //TODO: Allow configure tries amount from config and read that value
-                    console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
-                case -2:
-                    break;
-                case 0:
-                    console.send("Connected to LockLogin web services successfully", Level.INFO);
-                default:
-                    console.send("Registering LockLogin web service listeners", Level.INFO);
-                    c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (data) -> {
-                        if (data.has("pin_input") && data.has("player")) {
-                            UUID uuid = UUID.fromString(data.get("player").getAsString());
-                            Player player = plugin.getServer().getPlayer(uuid);
+            console.send("Connecting to LockLogin web services (statistics and bungee communication), please wait...", Level.INFO);
+            SocketClient socket = new LockLoginSocket();
+            ConnectionManager c_Manager = new ConnectionManager(socket);
 
-                            if (player != null) {
-                                String pin = data.get("pin_input").getAsString();
+            c_Manager.connect(5).whenComplete((tries_amount) -> {
+                if (tries_amount > 0) {
+                    console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
+                }
 
-                                User user = new User(player);
-                                ClientSession session = user.getSession();
-                                AccountManager manager = user.getManager();
-                                if (session.isValid()) {
-                                    PluginMessages messages = CurrentPlatform.getMessages();
+                switch (tries_amount) {
+                    case -1:
+                        //TODO: Allow configure tries amount from config and read that value
+                        console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
+                    case -2:
+                        registerMetrics(null);
+                        break;
+                    case 0:
+                        console.send("Connected to LockLogin web services successfully", Level.INFO);
+                    default:
+                        registerMetrics(socket);
+                        console.send("Registering LockLogin web service listeners", Level.INFO);
+                        c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (data) -> {
+                            if (data.has("pin_input") && data.has("player")) {
+                                UUID uuid = UUID.fromString(data.get("player").getAsString());
+                                Player player = plugin.getServer().getPlayer(uuid);
 
-                                    if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
-                                        UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
-                                                user.getModule(),
-                                                (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                        ModulePlugin.callEvent(event);
+                                if (player != null) {
+                                    String pin = data.get("pin_input").getAsString();
 
-                                        user.send(messages.prefix() + event.getAuthMessage());
-                                        session.setPinLogged(true);
-                                        session.set2FALogged(!manager.has2FA());
-                                    } else {
-                                        if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
+                                    User user = new User(player);
+                                    ClientSession session = user.getSession();
+                                    AccountManager manager = user.getManager();
+                                    if (session.isValid()) {
+                                        PluginMessages messages = CurrentPlatform.getMessages();
+
+                                        if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                    UserAuthenticateEvent.Result.ERROR,
+                                                    (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
                                                     user.getModule(),
                                                     (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                             ModulePlugin.callEvent(event);
@@ -261,67 +354,79 @@ public final class Manager {
                                             session.setPinLogged(true);
                                             session.set2FALogged(!manager.has2FA());
                                         } else {
-                                            if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
+                                            if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                         UserAuthenticateEvent.Result.ERROR,
                                                         user.getModule(),
-                                                        "", null);
+                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
                                                 ModulePlugin.callEvent(event);
 
-                                                if (!event.getAuthMessage().isEmpty()) {
-                                                    user.send(messages.prefix() + event.getAuthMessage());
+                                                user.send(messages.prefix() + event.getAuthMessage());
+                                                session.setPinLogged(true);
+                                                session.set2FALogged(!manager.has2FA());
+                                            } else {
+                                                if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
+                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
+                                                            UserAuthenticateEvent.Result.ERROR,
+                                                            user.getModule(),
+                                                            "", null);
+                                                    ModulePlugin.callEvent(event);
+
+                                                    if (!event.getAuthMessage().isEmpty()) {
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                    });
-                    c_Manager.addListener(Channel.ACCOUNT, DataType.JOIN, (data) -> {
-                        if (data.has("player")) {
-                            UUID uuid = UUID.fromString(data.get("player").getAsString());
-                            Player player = plugin.getServer().getPlayer(uuid);
+                        });
+                        c_Manager.addListener(Channel.ACCOUNT, DataType.JOIN, (data) -> {
+                            if (data.has("player")) {
+                                UUID uuid = UUID.fromString(data.get("player").getAsString());
+                                Player player = plugin.getServer().getPlayer(uuid);
 
-                            if (player != null) {
-                                User user = new User(player);
-                                UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
-                                ModulePlugin.callEvent(event);
-                            }
-                        }
-                    });
-                    c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (data) -> {
-                        if (data.has("player_info")) {
-                            ModulePlayer modulePlayer = StringUtils.loadUnsafe(data.get("player_info").getAsString());
-                            if (modulePlayer != null) {
-                                AccountManager manager = modulePlayer.getAccount();
-
-                                if (manager != null) {
-                                    AccountManager newManager = new PlayerAccount(manager.getUUID());
-                                    MigrationManager migrationManager = new MigrationManager(manager, newManager);
-                                    migrationManager.startMigration();
+                                if (player != null) {
+                                    User user = new User(player);
+                                    UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
+                                    ModulePlugin.callEvent(event);
                                 }
                             }
-                        }
-                    });
-                    break;
-            }
+                        });
+                        c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (data) -> {
+                            if (data.has("player_info")) {
+                                ModulePlayer modulePlayer = StringUtils.loadUnsafe(data.get("player_info").getAsString());
+                                if (modulePlayer != null) {
+                                    AccountManager manager = modulePlayer.getAccount();
 
-            initialized = true;
-        });
+                                    if (manager != null) {
+                                        AccountManager newManager = new PlayerAccount(manager.getUUID());
+                                        MigrationManager migrationManager = new MigrationManager(manager, newManager);
+                                        migrationManager.startMigration();
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                }
 
-        if (config.isBungeeCord())
-            registerBungee(socket, c_Manager);
+                initialized = true;
+            });
 
-        if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
-            RegisteredServiceProvider<Permission> rsp = plugin.getServer().getServicesManager().getRegistration(Permission.class);
-            if (rsp != null) {
-                Permission permission = rsp.getProvider();
-                if (permission.isEnabled()) {
-                    plugin.console().send("Detected permission provider {0}. LockLogin will remove all player permissions and OP when the client connects and restore them after a success login for better security", Level.INFO, rsp.getPlugin().getName());
+            if (config.isBungeeCord())
+                registerBungee(socket, c_Manager);
+
+            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+                RegisteredServiceProvider<Permission> rsp = plugin.getServer().getServicesManager().getRegistration(Permission.class);
+                if (rsp != null) {
+                    Permission permission = rsp.getProvider();
+                    if (permission.isEnabled()) {
+                        plugin.console().send("Detected permission provider {0}. LockLogin will remove all player permissions and OP when the client connects and restore them after a success login for better security", Level.INFO, rsp.getPlugin().getName());
+                    }
                 }
             }
-        }
+        });
     }
 
     public static void terminate() {
@@ -530,7 +635,7 @@ public final class Manager {
     /**
      * Register plugin metrics
      */
-    static void registerMetrics() {
+    static void registerMetrics(final SocketClient s) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Metrics metrics = new Metrics(plugin, 6513);
 
@@ -544,6 +649,13 @@ public final class Manager {
                     .replace("false", "Sessions disabled")));
         } else {
             console.send("Metrics are disabled, please note this is an open source free project and we use metrics to know if the project is being active by users. If we don't see active users using this project, the project may reach the dead line meaning no more updates or support. We highly recommend to you to share statistics, as this won't share any information of your server but the country, os and some other information that may be util for us", Level.GRAVE);
+        }
+
+        if (config.sharePlugin()) {
+            PluginMetricsService service = new PluginMetricsService(plugin, s);
+            service.start();
+        } else {
+            console.send("Plugin metrics are disabled. Data will still be sent but won't be public", Level.INFO);
         }
     }
 
@@ -587,51 +699,55 @@ public final class Manager {
      */
     @SuppressWarnings("deprecation")
     static void performVersionCheck() {
-        if (updater == null)
-            updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
+        try {
+            if (updater == null)
+                updater = VersionUpdater.createNewBuilder(plugin).withVersionType(VersionCheckType.RESOLVABLE_ID).withVersionResolver(versionID).build();
 
-        updater.fetch(true).whenComplete((fetch, trouble) -> {
-            if (trouble == null) {
-                if (!fetch.isUpdated()) {
-                    if (changelog_requests <= 0) {
-                        changelog_requests = 3;
+            updater.fetch(true).whenComplete((fetch, trouble) -> {
+                if (trouble == null) {
+                    if (!fetch.isUpdated()) {
+                        if (changelog_requests <= 0) {
+                            changelog_requests = 3;
 
-                        console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, version, fetch.getLatest());
-                        for (String line : fetch.getChangelog())
-                            console.send(line);
+                            console.send("LockLogin is outdated! Current version is {0} but latest is {1}", Level.INFO, version, fetch.getLatest());
+                            for (String line : fetch.getChangelog())
+                                console.send(line);
 
-                        PluginMessages messages = CurrentPlatform.getMessages();
-                        for (Player player : plugin.getServer().getOnlinePlayers()) {
-                            User user = new User(player);
-                            if (user.hasPermission(PluginPermissions.updater_apply())) {
-                                user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
-                                user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
-                            }
-                        }
-
-                        if (VersionDownloader.downloadUpdates()) {
-                            if (VersionDownloader.canDownload()) {
-                                VersionDownloader.download();
-                            }
-                        } else {
-                            console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
-
+                            PluginMessages messages = CurrentPlatform.getMessages();
                             for (Player player : plugin.getServer().getOnlinePlayers()) {
                                 User user = new User(player);
                                 if (user.hasPermission(PluginPermissions.updater_apply())) {
-                                    user.send(messages.prefix() + "&dFollow console instructions to update");
+                                    user.send(messages.prefix() + "&dNew LockLogin version available, current is " + version + ", but latest is " + fetch.getLatest());
+                                    user.send(messages.prefix() + "&dRun /locklogin changelog to view the list of changes");
                                 }
                             }
+
+                            if (VersionDownloader.downloadUpdates()) {
+                                if (VersionDownloader.canDownload()) {
+                                    VersionDownloader.download();
+                                }
+                            } else {
+                                console.send("LockLogin auto download is disabled, you must download latest LockLogin version from {0}", Level.GRAVE, fetch.getUpdateURL());
+
+                                for (Player player : plugin.getServer().getOnlinePlayers()) {
+                                    User user = new User(player);
+                                    if (user.hasPermission(PluginPermissions.updater_apply())) {
+                                        user.send(messages.prefix() + "&dFollow console instructions to update");
+                                    }
+                                }
+                            }
+                        } else {
+                            changelog_requests--;
                         }
-                    } else {
-                        changelog_requests--;
                     }
+                } else {
+                    logger.scheduleLog(Level.GRAVE, trouble);
+                    logger.scheduleLog(Level.INFO, "Failed to check for updates");
                 }
-            } else {
-                logger.scheduleLog(Level.GRAVE, trouble);
-                logger.scheduleLog(Level.INFO, "Failed to check for updates");
-            }
-        });
+            });
+        } catch (IllegalStateException error) {
+            console.send("Failed to setup plugin updater; {0}", Level.GRAVE, error.fillInStackTrace());
+        }
     }
 
     /**
@@ -731,22 +847,28 @@ public final class Manager {
                             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> player.sendMessage(""));
                     }
 
-                    String barMessage = messages.captcha(session.getCaptcha());
-                    try {
-                        if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-                            barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
-                    } catch (Throwable ignored) {
+                    BarMessage bar = null;
+                    if (config.captchaOptions().isEnabled()) {
+                        String barMessage = messages.captcha(session.getCaptcha());
+                        try {
+                            if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+                                barMessage = PlaceholderAPI.setPlaceholders(player, barMessage);
+                        } catch (Throwable ignored) {
+                        }
+
+                        bar = new BarMessage(player, barMessage);
+                        if (!session.isCaptchaLogged())
+                            bar.send(true);
                     }
 
-                    BarMessage bar = new BarMessage(player, barMessage);
-                    if (!session.isCaptchaLogged())
-                        bar.send(true);
-
+                    BarMessage finalBar = bar;
                     SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
                         user.restorePotionEffects();
 
-                        bar.setMessage("");
-                        bar.stop();
+                        if (finalBar != null) {
+                            finalBar.setMessage("");
+                            finalBar.stop();
+                        }
                     });
                     plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
                 }

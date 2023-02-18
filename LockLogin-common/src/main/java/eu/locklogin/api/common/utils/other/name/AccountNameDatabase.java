@@ -111,7 +111,7 @@ public final class AccountNameDatabase {
         }
 
         if (array == null) {
-            array = new KarmaArray(new KarmaPrimitive(name));
+            array = new KarmaArray();
         }
 
         ElementPrimitive object = new KarmaPrimitive(name);

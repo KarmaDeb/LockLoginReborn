@@ -41,6 +41,23 @@ public final class FloodGateUtil {
     }
 
     /**
+     * Remove the prefix from the name
+     *
+     * @param name the name
+     * @return the un prefixed name
+     */
+    public String removeNamePrefix(final String name) {
+        FloodgateApi api = FloodgateApi.getInstance();
+        String prefix = api.getPlayerPrefix();
+
+        if (name.startsWith(prefix)) {
+            return name.substring(prefix.length());
+        }
+
+        return null;
+    }
+
+    /**
      * Get if the java client of this player already
      * exists
      *
