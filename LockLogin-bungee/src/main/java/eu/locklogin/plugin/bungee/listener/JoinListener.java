@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bungee.listener;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.BruteForce;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
@@ -40,6 +41,7 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -50,13 +52,14 @@ import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -64,7 +67,10 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
-import net.md_5.bungee.api.event.*;
+import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PreLoginEvent;
+import net.md_5.bungee.api.event.ProxyPingEvent;
+import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
@@ -99,6 +105,7 @@ public final class JoinListener implements Listener {
 
     public final PlayerPool pool;
     public final PlayerPool switch_pool;
+    public final PlayerPool kick_pool;
 
     private final Map<UUID, String> old_servers = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> offline_to_online = new ConcurrentHashMap<>();
@@ -127,6 +134,7 @@ public final class JoinListener implements Listener {
     public JoinListener() {
         pool = new PlayerPool("playerJoinQueue");
         switch_pool = new PlayerPool("playerSwitchQueue");
+        kick_pool = new PlayerPool("preJoinKickPool");
 
         pool.whenValid((player) -> {
             User user = new User(player);
@@ -141,6 +149,7 @@ public final class JoinListener implements Listener {
                         user.getManager(),
                         (player.getSocketAddress() == null ? null : ((InetSocketAddress) player.getSocketAddress()).getAddress())
                 );
+
                 //If bungee player objects changes module player also changes
                 CurrentPlatform.connectPlayer(sender, player);
 
@@ -172,6 +181,14 @@ public final class JoinListener implements Listener {
                             if (server != null && server.getInfo() != null) {
                                 ServerInfo info = server.getInfo();
                                 ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
+
+                                TargetServer targetServer = CurrentPlatform.getServer().getServer(info.getName());
+                                try {
+                                    JarManager.changeField(sender, "server", targetServer);
+                                    plugin.console().send("Player {0} changed server to {1}", Level.INFO, player.getName(), (targetServer != null ? targetServer.getName() : "unknown"));
+                                } catch (Throwable ex) {
+                                    ex.printStackTrace();
+                                }
 
                                 if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
                                     if (BungeeSender.useSocket) {
@@ -217,7 +234,6 @@ public final class JoinListener implements Listener {
 
                             ClientSession session = user.getSession();
                             AccountManager manager = user.getManager();
-                            session.validate();
 
                             if (!config.captchaOptions().isEnabled())
                                 session.setCaptchaLogged(true);
@@ -302,7 +318,7 @@ public final class JoinListener implements Listener {
 
                                 if (timer != null)
                                     timer.cancel();
-                            }).silent(user.isPremium());
+                            });
 
                             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
@@ -311,7 +327,7 @@ public final class JoinListener implements Listener {
                                     info);
 
                             if (!Proxy.isAuth(player.getServer().getInfo())) {
-                                user.checkServer(0);
+                                user.checkServer(0, true);
                             }
 
                             Event event = new UserPostJoinEvent(user.getModule(), null);
@@ -349,9 +365,19 @@ public final class JoinListener implements Listener {
         });
         switch_pool.whenValid((player) -> {
             Server connected = player.getServer();
+            User user = new User(player);
+
             if (connected != null && old_servers.containsKey(player.getUniqueId())) {
                 ServerInfo info = connected.getInfo();
                 String old = old_servers.get(player.getUniqueId());
+
+                TargetServer targetServer = CurrentPlatform.getServer().getServer(info.getName());
+                try {
+                    JarManager.changeField(user.getModule(), "server", targetServer);
+                    plugin.console().send("Player {0} changed server to {1}", Level.INFO, player.getName(), (targetServer != null ? targetServer.getName() : "unknown"));
+                } catch (Throwable ex) {
+                    ex.printStackTrace();
+                }
 
                 if (!info.getName().equals(old)) {
                     if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
@@ -380,9 +406,7 @@ public final class JoinListener implements Listener {
                                     .addProperty("raw", Config.manager.getConfiguration()).getInstance(),
                             info);
 
-                    User user = new User(player);
-
-                    if (Proxy.isPremium(info)) {
+                    if (Proxy.isPremium(info) && !Proxy.isLobby(info)) {
                         if (config.enablePremium() && !user.isPremium()) {
                             player.connect(plugin.getProxy().getServerInfo(old));
                             user.send(messages.prefix() + messages.premiumServer());
@@ -423,7 +447,7 @@ public final class JoinListener implements Listener {
                     Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
                             .getInstance(), info);
 
-                    user.checkServer(0);
+                    user.checkServer(0, false);
                     return;
                 }
             }
@@ -469,40 +493,44 @@ public final class JoinListener implements Listener {
             ModulePlugin.callEvent(ipEvent);
 
             String conn_name = e.getConnection().getName();
-            UUID gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.OFFLINE);
-            UUID online_gen_uuid = UUIDUtil.fetch(conn_name, UUIDType.ONLINE);
+            UUID gen = UUID.nameUUIDFromBytes(("OfflinePlayer:" + conn_name).getBytes());
+
+            OKARequest oka = MineAPI.fetchAndWait(conn_name);
+
+            UUID gen_uuid = oka.getUUID(UUIDType.OFFLINE);
+            UUID online_gen_uuid = oka.getUUID(UUIDType.ONLINE);
+
+            if (gen_uuid == null) gen_uuid = gen;
+            if (online_gen_uuid == null) online_gen_uuid = gen;
+
+            boolean premium = false;
 
             offline_to_online.put(gen_uuid, online_gen_uuid);
             plugin.console().debug("Fetching offline UUID ({0})", Level.INFO, gen_uuid);
             if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
-                plugin.console().debug("Fetching online UUID", Level.INFO);
                 gen_uuid = online_gen_uuid;
-
-                plugin.console().debug("Found online UUID: {0}", Level.INFO, gen_uuid);
             } else {
                 PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
                 if (pm != null && config.enablePremium()) {
-                    if (pm.isPremium(online_gen_uuid) && !config.fixUUIDs()) {
+                    if (pm.isPremium(online_gen_uuid)) {
                         e.getConnection().setOnlineMode(true);
-                        gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
+                        if (!config.fixUUIDs()) {
+                            gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
+                        }
                     }
                 }
             }
 
             if (!ipEvent.isHandled()) {
-                plugin.console().debug("Ip event not handled", Level.INFO);
                 QuitListener.tmp_clients.remove(gen_uuid);
 
                 switch (ipEvent.getResult()) {
                     case SUCCESS:
-                        plugin.console().debug("Success IP event", Level.INFO);
                         if (!e.isCancelled()) {
                             if (config.registerOptions().maxAccounts() > 0) {
-                                plugin.console().debug("Checking for alt accounts", Level.INFO);
                                 AccountData data = new AccountData(ip, AccountID.fromUUID(gen_uuid));
 
                                 if (data.allow(config.registerOptions().maxAccounts())) {
-                                    plugin.console().debug("Passed alt check", Level.INFO);
                                     data.save();
 
                                     int amount = data.getAlts().size();
@@ -526,28 +554,19 @@ public final class JoinListener implements Listener {
                             }
 
                             if (config.bruteForceOptions().getMaxTries() > 0) {
-                                plugin.console().debug("Checking brute force", Level.INFO);
-
                                 BruteForce protection = new BruteForce(ip);
                                 if (protection.isBlocked()) {
-                                    plugin.console().debug("Failed brute force check", Level.INFO);
-
                                     e.setCancelled(true);
                                     e.setCancelReason(TextComponent.fromLegacyText(StringUtils.toColor(messages.ipBlocked(protection.getBlockLeft()))));
                                     return;
-                                } else {
-                                    plugin.console().debug("Passed brute force check", Level.INFO);
                                 }
                             }
 
                             if (config.checkNames()) {
-                                plugin.console().debug("Checking client name", Level.INFO);
                                 Name name = new Name(conn_name);
                                 name.check();
 
                                 if (name.notValid()) {
-                                    plugin.console().debug("Name not valid", Level.INFO);
-
                                     boolean r = false;
 
                                     if (FloodGateUtil.hasFloodgate()) {
@@ -658,7 +677,7 @@ public final class JoinListener implements Listener {
                         Class<?> initial_handler = Class.forName("net.md_5.bungee.connection.InitialHandler");
                         Object handler = initial_handler.cast(connection);
 
-                        HANDLE.invokeExact(handler, tar_uuid);
+                        HANDLE.invoke(handler, (Object) tar_uuid);
                     } catch (Throwable ex) {
                         ex.printStackTrace();
                     }
@@ -667,9 +686,16 @@ public final class JoinListener implements Listener {
 
             boolean check = CurrentPlatform.isOnline() || !connection.isOnlineMode();
             if (check) {
-                UUID gen_uuid = UUIDUtil.fetch(connection.getName(), UUIDType.OFFLINE);
+                OKARequest oka = MineAPI.fetchAndWait(connection.getUniqueId());
+
+                UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
+                UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
+
+                if (online_uuid == null) online_uuid = connection.getUniqueId();
+                if (offline_uuid == null) offline_uuid = connection.getUniqueId();
+                UUID gen_uuid = offline_uuid;
                 if (CurrentPlatform.isOnline() && e.getConnection().isOnlineMode()) {
-                    gen_uuid = UUIDUtil.fetch(connection.getName(), UUIDType.ONLINE);
+                    gen_uuid = online_uuid;
                 }
 
                 if (config.uuidValidator()) {

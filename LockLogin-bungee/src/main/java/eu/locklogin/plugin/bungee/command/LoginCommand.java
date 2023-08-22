@@ -17,8 +17,7 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.file.options.PasswordConfig;
-import eu.locklogin.api.security.Password;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
@@ -28,9 +27,11 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
@@ -46,6 +47,7 @@ import net.md_5.bungee.api.plugin.Command;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
 
@@ -69,16 +71,42 @@ public final class LoginCommand extends Command {
      * Execute this command with the specified sender and arguments.
      *
      * @param sender the executor of this command
-     * @param args   arguments used to invoke this command
+     * @param tmpArgs   arguments used to invoke this command
      */
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(CommandSender sender, String[] tmpArgs) {
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;
             User user = new User(player);
 
             ClientSession session = user.getSession();
             if (session.isValid()) {
+                boolean validated = false;
+
+                String[] args = new String[0];
+                if (tmpArgs.length >= 1) {
+                    String last_arg = tmpArgs[tmpArgs.length - 1];
+                    try {
+                        UUID command_id = UUID.fromString(last_arg);
+                        args = CommandProxy.getArguments(command_id);
+                        validated = true;
+                    } catch (Throwable ignored) {}
+                }
+
+                if (!validated) {
+                    if (!session.isLogged()) {
+                        user.send(messages.prefix() + messages.register());
+                    } else {
+                        if (session.isTempLogged()) {
+                            user.send(messages.prefix() + messages.gAuthenticate());
+                        } else {
+                            user.send(messages.prefix() + messages.alreadyRegistered());
+                        }
+                    }
+
+                    return;
+                }
+
                 if (!session.isLogged()) {
                     AccountManager manager = user.getManager();
                     if (!manager.exists())
@@ -89,6 +117,8 @@ public final class LoginCommand extends Command {
 
                             user.send(messages.prefix() + properties.getProperty("could_not_create_user", "&5&oWe're sorry, but we couldn't create your account"));
                         }
+
+                    SessionCheck<ProxiedPlayer> checker = user.getChecker();
 
                     if (!manager.isRegistered()) {
                         user.send(messages.prefix() + messages.register());
@@ -134,7 +164,7 @@ public final class LoginCommand extends Command {
                                                 if (passwordConfig.warn_unsafe()) {
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                                         User staff = new User(online);
-                                                        if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                        if (staff.hasPermission(PluginPermissions.warn_password())) {
                                                             staff.send(messages.prefix() + messages.passwordWarning());
                                                         }
                                                     }
@@ -210,10 +240,14 @@ public final class LoginCommand extends Command {
                                         Manager.sendFunction.apply(login, BungeeSender.serverFromPlayer(player));
 
                                         if (checkServer)
-                                            user.checkServer(0);
+                                            user.checkServer(0, true);
 
                                         if (!manager.has2FA() && config.captchaOptions().isEnabled() && user.hasPermission(PluginPermissions.force_2fa())) {
-                                            user.performCommand("2fa setup " + password);
+                                            String cmd = "2fa setup " + password;
+                                            UUID cmd_id = CommandProxy.mask(cmd, "setup", password);
+                                            String exec = CommandProxy.getCommand(cmd_id);
+
+                                            user.performCommand(exec);
                                         }
 
                                         if (!config.useVirtualID() && user.hasPermission(PluginPermissions.account())) {
@@ -266,7 +300,11 @@ public final class LoginCommand extends Command {
                                     if (session.getCaptcha().equals(captcha)) {
                                         session.setCaptchaLogged(true);
 
-                                        user.performCommand("login " + password);
+                                        String cmd = "login " + password;
+                                        UUID cmd_id = CommandProxy.mask(cmd, password);
+                                        String exec = CommandProxy.getCommand(cmd_id);
+
+                                        user.performCommand(exec);
                                         Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
                                                 .getInstance(), BungeeSender.serverFromPlayer(player));
                                     } else {

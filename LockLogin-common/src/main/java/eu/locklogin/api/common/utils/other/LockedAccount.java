@@ -15,7 +15,6 @@ package eu.locklogin.api.common.utils.other;
  */
 
 import eu.locklogin.api.account.AccountID;
-import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.LockManager;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
@@ -26,7 +25,6 @@ import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Set;
 
 /**
  * Simple LockLogin locked account

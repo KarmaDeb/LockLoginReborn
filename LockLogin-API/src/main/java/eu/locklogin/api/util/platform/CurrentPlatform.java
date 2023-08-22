@@ -22,9 +22,8 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
-import eu.locklogin.api.plugin.PluginLicenseProvider;
-import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.premium.PremiumDatabase;
+import eu.locklogin.api.security.LockLoginRuntime;
 import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
@@ -79,9 +78,12 @@ public final class CurrentPlatform {
 
                 kf.set("hash", tmp_hash);
                 kf.save();
+
+                plugin.console().send("Created new hash", Level.INFO);
             }
 
             hash = tmp_hash.getAsString();
+            plugin.console().send("Loaded server hash", Level.INFO);
         } catch (Throwable ex) {
             plugin.logger().scheduleLog(Level.GRAVE, ex);
             plugin.logger().scheduleLog(Level.INFO, "Failed to load server hash");
@@ -108,12 +110,8 @@ public final class CurrentPlatform {
     private static Class<? extends eu.locklogin.api.account.AccountManager> last_manager;
     private static Class<? extends ClientSession> sessionManager;
 
-    @SuppressWarnings("unused")
-    private static License current_license;
-
     private static BackupScheduler backupScheduler;
     private static PremiumDatabase premiumDatabase;
-    private static PluginLicenseProvider licenseProvider;
     @SuppressWarnings("unused")
     private static PluginConfiguration fake_config;
     @SuppressWarnings("unused")
@@ -142,9 +140,6 @@ public final class CurrentPlatform {
      * @param clazz the account manager class
      */
     public static void setAccountsManager(final Class<? extends eu.locklogin.api.account.AccountManager> clazz) {
-        if (default_manager == null)
-            default_manager = manager;
-
         last_manager = manager;
         manager = clazz;
     }
@@ -174,15 +169,6 @@ public final class CurrentPlatform {
      */
     public static void setPremiumDatabase(final PremiumDatabase database) {
         premiumDatabase = database;
-    }
-
-    /**
-     * Set the license provider
-     *
-     * @param provider the license provider
-     */
-    public static void setLicenseProvider(final PluginLicenseProvider provider) {
-        licenseProvider = provider;
     }
 
     /**
@@ -237,6 +223,8 @@ public final class CurrentPlatform {
      * @param player the player
      */
     public static void connectPlayer(final ModulePlayer mp, final Object player) {
+        LockLoginRuntime.checkSecurity(true);
+
         players.put(mp.getUUID(), player);
         server.connectPlayer(mp);
     }
@@ -247,6 +235,8 @@ public final class CurrentPlatform {
      * @param mp the player
      */
     public static void disconnectPlayer(final ModulePlayer mp) {
+        LockLoginRuntime.checkSecurity(true);
+
         players.remove(mp.getUUID());
         server.disconnectPlayer(mp);
     }
@@ -512,25 +502,6 @@ public final class CurrentPlatform {
      */
     public static PremiumDatabase getPremiumDatabase() {
         return premiumDatabase;
-    }
-
-    /**
-     * Get the license provider
-     *
-     * @return the license provider
-     */
-    public static PluginLicenseProvider getLicenseProvider() {
-        return licenseProvider;
-    }
-
-    /**
-     * Get the current plugin license
-     *
-     * @return the plugin license
-     */
-    @Nullable
-    public static License getLicense() {
-        return current_license;
     }
 
     /**

@@ -14,6 +14,7 @@ package eu.locklogin.api.module.plugin.javamodule;
  * the version number 2.1.]
  */
 
+import com.google.gson.JsonObject;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.command.Command;
 import eu.locklogin.api.module.plugin.api.command.CommandData;
@@ -22,6 +23,7 @@ import eu.locklogin.api.module.plugin.api.event.plugin.PluginProcessCommandEvent
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
+import eu.locklogin.api.module.plugin.javamodule.server.ModuleMessageListener;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.source.APISource;
@@ -32,6 +34,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * LockLogin java module manager
@@ -43,6 +46,7 @@ public final class ModulePlugin {
 
     private final static Map<PluginModule, Set<EventListener>> module_listeners = new LinkedHashMap<>();
     private final static Map<PluginModule, Set<Command>> module_commands = new LinkedHashMap<>();
+    private final static Map<PluginModule, Set<ModuleMessageListener>> module_message_listeners = new ConcurrentHashMap<>();
 
     private final PluginModule module;
 
@@ -77,6 +81,24 @@ public final class ModulePlugin {
     }
 
     /**
+     * Receive a message
+     *
+     * @param json the json message
+     */
+    public static void receiveMessage(final JsonObject json) {
+        try {
+            UUID id = UUID.fromString(json.remove("module").getAsString());
+            PluginModule module = ModuleLoader.getById(id);
+
+            if (ModuleLoader.isLoaded(module)) {
+                for (ModuleMessageListener listener : module_message_listeners.getOrDefault(module, new LinkedHashSet<>())) {
+                    listener.onMessageReceived(json);
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    /**
      * Call an event to all the listeners
      *
      * @param event the event to call
@@ -98,7 +120,7 @@ public final class ModulePlugin {
                     Method[] methods = handler.getClass().getMethods();
                     for (Method method : methods) {
                         if (method.isAnnotationPresent(ModuleEventHandler.class)) {
-                            if (method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
+                            if (method.getParameterTypes()[0].isInstance(event)) {
                                 ModuleEventHandler methodHandler = method.getAnnotation(ModuleEventHandler.class);
                                 switch (methodHandler.priority()) {
                                     case FIRST:
@@ -313,7 +335,26 @@ public final class ModulePlugin {
         if (command.contains(" "))
             command = command.split(" ")[0];
 
+        logger.scheduleLog(Level.DEBUG, "Validating command {0}", command);
         return availableCommands().stream().anyMatch(command::equalsIgnoreCase);
+    }
+
+    /**
+     * Get if the parser can parse the command
+     *
+     * @param message the message the player has sent
+     * @return if the module parser can parse the command
+     */
+    public static boolean parseCommand(String type, String message) {
+        if (message.startsWith("$") && CurrentPlatform.getPrefix().equals("/"))
+            message = message.replace("$", "/");
+
+        logger.scheduleLog(Level.DEBUG, "Parsing command {0} from sender {1}", message, type);
+
+        if (message.startsWith(CurrentPlatform.getPrefix()))
+            return isValid((message.contains(" ") ? message.split(" ")[0] : message));
+
+        return false;
     }
 
     /**
@@ -326,10 +367,31 @@ public final class ModulePlugin {
         if (message.startsWith("$") && CurrentPlatform.getPrefix().equals("/"))
             message = message.replace("$", "/");
 
+        logger.scheduleLog(Level.DEBUG, "Parsing command {0}", message);
+
         if (message.startsWith(CurrentPlatform.getPrefix()))
             return isValid((message.contains(" ") ? message.split(" ")[0] : message));
 
         return false;
+    }
+
+    /**
+     * Adds a module message listener
+     *
+     * @param listener the listener
+     * @throws IllegalStateException if the module tries to register
+     *                               a listener while not loaded
+     */
+    public void addMessageListener(final ModuleMessageListener listener) throws IllegalStateException {
+        if (ModuleLoader.isLoaded(module)) {
+            Set<ModuleMessageListener> registered = module_message_listeners.getOrDefault(module, Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            logger.scheduleLog(Level.INFO, "Module {0} registered a message listener", module.name());
+
+            registered.add(listener);
+            module_message_listeners.put(module, registered);
+        } else {
+            throw new IllegalStateException("Module " + module.name() + " tried to register a message listener while not registered!");
+        }
     }
 
     /**

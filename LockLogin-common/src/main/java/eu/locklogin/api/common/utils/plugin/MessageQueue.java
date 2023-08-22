@@ -1,6 +1,7 @@
 package eu.locklogin.api.common.utils.plugin;
 
 import com.google.common.annotations.Beta;
+import com.google.gson.JsonObject;
 import eu.locklogin.api.module.plugin.javamodule.server.MessageQue;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 
@@ -19,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Beta
 public final class MessageQueue extends MessageQue {
 
-    private final Map<TargetServer, Queue<byte[]>> queues = new ConcurrentHashMap<>();
+    private final Map<TargetServer, Queue<JsonObject>> queues = new ConcurrentHashMap<>();
 
     private final TargetServer server;
 
@@ -38,8 +39,8 @@ public final class MessageQueue extends MessageQue {
      * @param message the message to send
      */
     @Override
-    public void add(final byte[] message) {
-        Queue<byte[]> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
+    public void add(final JsonObject message) {
+        Queue<JsonObject> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
         current_queue.add(message);
         queues.put(server, current_queue);
     }
@@ -53,8 +54,8 @@ public final class MessageQueue extends MessageQue {
      * @return the message to send
      */
     @Override
-    public byte[] nextMessage() {
-        Queue<byte[]> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
+    public JsonObject nextMessage() {
+        Queue<JsonObject> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
         return current_queue.poll();
     }
 
@@ -64,8 +65,8 @@ public final class MessageQueue extends MessageQue {
      * @return the next message
      */
     @Override
-    public byte[] previewMessage() {
-        Queue<byte[]> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
+    public JsonObject previewMessage() {
+        Queue<JsonObject> current_queue = queues.getOrDefault(server, new LinkedBlockingQueue<>());
         return current_queue.peek();
     }
 }

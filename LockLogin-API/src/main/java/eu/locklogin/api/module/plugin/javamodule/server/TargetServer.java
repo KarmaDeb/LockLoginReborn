@@ -1,7 +1,6 @@
 package eu.locklogin.api.module.plugin.javamodule.server;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import com.google.gson.JsonObject;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -11,8 +10,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public final class TargetServer implements Iterable<ModulePlayer> {
 
@@ -21,11 +20,13 @@ public final class TargetServer implements Iterable<ModulePlayer> {
     private final InetAddress address;
     private final int port;
     private final boolean online;
+    @SuppressWarnings("FieldMayBeFinal")
+    private MessageQue que = null;
 
     @SuppressWarnings("FieldMayBeFinal")
-    private static BiConsumer<String, Set<ModulePlayer>> onPlayers = null;
+    private static Function<String, Set<ModulePlayer>> onPlayers = null;
     @SuppressWarnings("FieldMayBeFinal")
-    private static MessageQue que = null;
+
 
     /**
      * LockLogin module server
@@ -89,7 +90,7 @@ public final class TargetServer implements Iterable<ModulePlayer> {
         Set<ModulePlayer> connected = new HashSet<>();
 
         if (onPlayers != null) {
-            onPlayers.accept(name, connected);
+            connected.addAll(onPlayers.apply(name));
         }
 
         return connected;
@@ -110,14 +111,10 @@ public final class TargetServer implements Iterable<ModulePlayer> {
      * @param sender the module that is sending the message
      * @param data the data
      */
-    @SuppressWarnings("UnstableApiUsage")
-    public void sendMessage(final PluginModule sender, final byte[] data) {
+    public void sendMessage(final PluginModule sender, final JsonObject data) {
         if (que != null) {
-            ByteArrayDataOutput modified_out = ByteStreams.newDataOutput();
-            modified_out.writeUTF(sender.getID().toString());
-            modified_out.write(data); //Not sure if this would work...
-
-            que.add(modified_out.toByteArray());
+            data.addProperty("module", sender.getID().toString());
+            que.add(data);
         }
     }
 
@@ -132,7 +129,7 @@ public final class TargetServer implements Iterable<ModulePlayer> {
         Set<ModulePlayer> players = new HashSet<>();
 
         if (onPlayers != null) {
-            onPlayers.accept(name, players);
+            players.addAll(onPlayers.apply(name));
         }
 
         return players.iterator();
@@ -158,7 +155,7 @@ public final class TargetServer implements Iterable<ModulePlayer> {
         Set<ModulePlayer> players = new HashSet<>();
 
         if (onPlayers != null) {
-            onPlayers.accept(name, players);
+            players.addAll(onPlayers.apply(name));
         }
 
         if (action != null) {

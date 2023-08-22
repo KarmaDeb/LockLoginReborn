@@ -2,7 +2,7 @@
 #----------------------------------
 #Translation: Turkish (Official - Community based)
 #Editor: WinTone01
-#Last edited: 18 - February - 2023 0:55
+#Last edited: 21 - March - 2023 0:12
 #----------------------------------
 # What is an official language?
 # - This language is made by the developer of LockLogin
@@ -41,6 +41,54 @@ AltTitle: "&8&lYan hesap arama"
 InfoTitle: "&8&lBirlikte verilen oyuncu bilgisi"
 Next: "&eSonraki"
 Back: "&eGeri"
+
+#Server messages
+PlayerJoin: "&8&l[&e&o+&8&l] &f{player}"
+PlayerLeave: "&8&l[&3&o-&8&l] &f{player}"
+
+#Global account messages
+GlobalSuitable:
+  - "&cIMPORTANT MESSAGE"
+  - ""
+  - "&dYour account is suitable to be a global"
+  - "&daccount. With global account enabled, you"
+  - "&dwill not be asked to login in any server"
+  - "&drunning this authentication plugin."
+  - ""
+  - "&7To enable global account, run &a/account globalize"
+  - "&dYou can check if a server has this authentication plugin"
+  - "&dby running the same command on it"
+GlobalEnabled:
+  - "&dEnabled global account for your user."
+  - ""
+  - "&7- &aYou are now able to skip login on any server"
+  - "&awhich runs this authentication plugin."
+  - "&7- &aYou won't be asked for register anymore on any"
+  - "&aserver which runs this authentication plugin."
+GlobalDisabled:
+  - "&dDisabled global accounts for your user."
+  - ""
+  - "&7- &cYour account won't be able to skip login"
+  - "&con other servers"
+  - "&7- &cYour account will still exist on the other"
+  - "&cservers you've joined"
+  - "&7- &cYou will be asked for /register again on all"
+  - "&cservers in where your account doesn't exist"
+GlobalServerDisabled: "&5&oThis server has disabled global accounts!"
+GlobalLogged: "&dYour session has been logged by global account system"
+GlobalIpChanged: "&dAuthentication is required because your session has expired"
+GlobalRegistered:
+  - "&dYour account is already registered by"
+  - "&dglobal account system. Anyway, you can"
+  - "&drun /register in order to disable global"
+  - "&daccount only in this server"
+
+#Session message - Admin creation
+ForceRegisterUsage: "&5&oPlease, use /account register <player> <password>"
+ForceRegisterError: "&5&oAn unknown error occurred while trying to create account of {player}"
+ForceRegisterExists: "&5&oAn account for player {player} already exists on the server!"
+ForceRegisterSuccess: "&dSuccessfully registered user {player}"
+ForceRegisterOnline: "&5&oCannot register an online user!"
 
 #Session messages - Manager
 PlayerNotVerified: "&5&o{player} oturum açmamış/kayıtlı değilken ona karşı savaşamazsınız"

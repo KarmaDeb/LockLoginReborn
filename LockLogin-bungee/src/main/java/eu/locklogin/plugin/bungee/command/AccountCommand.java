@@ -17,26 +17,29 @@ package eu.locklogin.plugin.bungee.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.file.options.PasswordConfig;
-import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.security.client.AccountData;
-import eu.locklogin.api.common.session.persistence.PersistentSessionData;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.other.LockedAccount;
+import eu.locklogin.api.common.utils.other.RawPlayerAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent.ChangeResult;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.security.Password;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
@@ -55,10 +58,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.*;
@@ -82,10 +82,10 @@ public class  AccountCommand extends Command {
      * Execute this command with the specified sender and arguments.
      *
      * @param sender the executor of this command
-     * @param args   arguments used to invoke this command
+     * @param tmpArgs   arguments used to invoke this command
      */
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(CommandSender sender, String[] tmpArgs) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
@@ -94,6 +94,32 @@ public class  AccountCommand extends Command {
             User user = new User(player);
 
             if (user.getSession().isValid()) {
+                boolean validated = false;
+
+                String[] args = new String[0];
+                if (tmpArgs.length >= 1) {
+                    String last_arg = tmpArgs[tmpArgs.length - 1];
+                    try {
+                        UUID command_id = UUID.fromString(last_arg);
+                        args = CommandProxy.getArguments(command_id);
+                        validated = true;
+                    } catch (Throwable ignored) {}
+                }
+
+                if (!validated) {
+                    if (!user.getSession().isLogged()) {
+                        user.send(messages.prefix() + messages.register());
+                    } else {
+                        if (user.getSession().isTempLogged()) {
+                            user.send(messages.prefix() + messages.gAuthenticate());
+                        } else {
+                            user.send(messages.prefix() + messages.alreadyRegistered());
+                        }
+                    }
+
+                    return;
+                }
+
                 if (args.length == 0) {
                     user.send(messages.prefix() + messages.accountArguments());
                 } else {
@@ -147,7 +173,7 @@ public class  AccountCommand extends Command {
                                                     if (passwordConfig.warn_unsafe()) {
                                                         for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
                                                             User staff = new User(online);
-                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                            if (staff.hasPermission(PluginPermissions.warn_password())) {
                                                                 staff.send(messages.prefix() + messages.passwordWarning());
                                                             }
                                                         }
@@ -210,27 +236,31 @@ public class  AccountCommand extends Command {
                         case "close":
                             switch (args.length) {
                                 case 1:
-                                    user.removeSessionCheck();
-                                    session = user.getSession();
-                                    session.setLogged(false);
-                                    session.setPinLogged(false);
-                                    session.set2FALogged(false);
+                                    if (user.hasPermission(PluginPermissions.account_close_self())) {
+                                        user.removeSessionCheck();
+                                        session = user.getSession();
+                                        session.setLogged(false);
+                                        session.setPinLogged(false);
+                                        session.set2FALogged(false);
 
-                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
-                                            .getInstance(), BungeeSender.serverFromPlayer(player));
-                                    user.applySessionEffects();
+                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                .getInstance(), BungeeSender.serverFromPlayer(player));
+                                        user.applySessionEffects();
 
-                                    if (config.clearChat()) {
-                                        for (int i = 0; i < 150; i++)
-                                            plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                                        if (config.clearChat()) {
+                                            for (int i = 0; i < 150; i++)
+                                                plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                                        }
+
+                                        SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                        plugin.getProxy().getScheduler().runAsync(plugin, check);
+
+                                        user.send(messages.prefix() + messages.closed());
+                                        AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
+                                        ModulePlugin.callEvent(self);
+                                    } else {
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_close_self()));
                                     }
-
-                                    SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                    plugin.getProxy().getScheduler().runAsync(plugin, check);
-
-                                    user.send(messages.prefix() + messages.closed());
-                                    AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
-                                    ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermissions.account_close())) {
@@ -244,7 +274,12 @@ public class  AccountCommand extends Command {
 
                                             if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                                 target.send(messages.prefix() + messages.forcedClose());
-                                                target.performCommand("account close");
+
+                                                String cmd = "account close";
+                                                UUID cmd_id = CommandProxy.mask(cmd, "close");
+                                                String exec = CommandProxy.getCommand(cmd_id);
+
+                                                target.performCommand(exec);
                                                 user.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                                 AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), user.getManager().getName(), null);
@@ -329,58 +364,99 @@ public class  AccountCommand extends Command {
                                     }
                                     break;
                                 case 3:
-                                    user.removeSessionCheck();
-                                    AccountManager manager = user.getManager();
-                                    session = user.getSession();
+                                    if (user.hasPermission(PluginPermissions.account_remove_self())) {
+                                        user.removeSessionCheck();
+                                        AccountManager manager = user.getManager();
+                                        session = user.getSession();
 
-                                    String password = args[1];
-                                    String confirmation = args[2];
+                                        String password = args[1];
+                                        String confirmation = args[2];
 
-                                    if (password.equals(confirmation)) {
-                                        CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                        if (util.validate(Validation.ALL)) {
-                                            if (!manager.getPanic().isEmpty()) {
-                                                String stored = AccountCommand.confirmation.getOrDefault(player.getUniqueId().toString(), null);
-                                                if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
-                                                    user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
-                                                    AccountCommand.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
-                                                    return;
+                                        if (password.equals(confirmation)) {
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            if (util.validate(Validation.ALL)) {
+                                                if (!manager.getPanic().isEmpty()) {
+                                                    String stored = AccountCommand.confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                    if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
+                                                        user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
+                                                        AccountCommand.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
+                                                        return;
+                                                    }
                                                 }
+
+                                                AccountCommand.confirmation.remove(player.getUniqueId().toString());
+                                                user.send(messages.prefix() + messages.accountRemoved());
+                                                manager.remove(player.getName());
+
+                                                //Completely restart the client session
+                                                session.setPinLogged(false);
+                                                session.set2FALogged(false);
+                                                session.setLogged(false);
+                                                session.invalidate();
+                                                session.validate();
+
+                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                        .getInstance(), BungeeSender.serverFromPlayer(player));
+
+                                                user.applySessionEffects();
+
+                                                if (config.clearChat()) {
+                                                    for (int i = 0; i < 150; i++)
+                                                        plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
+                                                }
+
+                                                SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                                plugin.getProxy().getScheduler().runAsync(plugin, check);
+                                            } else {
+                                                user.send(messages.prefix() + messages.incorrectPassword());
                                             }
-
-                                            AccountCommand.confirmation.remove(player.getUniqueId().toString());
-                                            user.send(messages.prefix() + messages.accountRemoved());
-                                            manager.remove(player.getName());
-
-                                            //Completely restart the client session
-                                            session.setPinLogged(false);
-                                            session.set2FALogged(false);
-                                            session.setLogged(false);
-                                            session.invalidate();
-                                            session.validate();
-
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
-                                                    .getInstance(), BungeeSender.serverFromPlayer(player));
-
-                                            user.applySessionEffects();
-
-                                            if (config.clearChat()) {
-                                                for (int i = 0; i < 150; i++)
-                                                    plugin.getProxy().getScheduler().runAsync(plugin, () -> player.sendMessage(TextComponent.fromLegacyText("")));
-                                            }
-
-                                            SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                            plugin.getProxy().getScheduler().runAsync(plugin, check);
                                         } else {
-                                            user.send(messages.prefix() + messages.incorrectPassword());
+                                            user.send(messages.prefix() + messages.removeAccountMatch());
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.removeAccountMatch());
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_remove_self()));
                                     }
                                     break;
                                 default:
                                     user.send(messages.prefix() + messages.remove());
                                     break;
+                            }
+                            break;
+                        case "create":
+                        case "register":
+                            if (user.hasPermission(PluginPermissions.account_register())) {
+                                if (args.length == 3) {
+                                    String username = args[1];
+                                    String password = args[2];
+
+                                    ProxiedPlayer online = plugin.getProxy().getPlayer(username);
+                                    if (online != null) {
+                                        user.send(messages.prefix() + messages.forceRegisterOnline(username));
+                                        return;
+                                    }
+
+                                    AccountID id = AccountID.forUsername(username);
+                                    AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, id);
+                                    if (manager == null) {
+                                        user.send(messages.prefix() + messages.forceRegisterError(username));
+                                        return;
+                                    }
+
+                                    if (manager.isRegistered()) {
+                                        user.send(messages.prefix() + messages.forceRegisterExists(username));
+                                        return;
+                                    }
+
+                                    manager.setPassword(password);
+                                    manager.setName(username);
+                                    manager.saveUUID(id);
+
+                                    user.send(messages.prefix() + messages.forceRegisterSuccess(username));
+                                } else {
+                                    user.send(messages.prefix() + messages.forceRegisterUsage());
+                                }
+                            } else {
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_register()));
                             }
                             break;
                         case "alts":
@@ -416,6 +492,7 @@ public class  AccountCommand extends Command {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                                     Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
+                                                            .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                             .getInstance(),
                                                             BungeeSender.serverFromPlayer(player));
 
@@ -454,19 +531,6 @@ public class  AccountCommand extends Command {
                             }
                             break;
                         case "protect":
-                            /*
-                            TODO: I must implement LockLogin web panel into this. ( I MUST ALSO END THE PANEL TOO. I HAVE TO DO MANY THINGS NOW )
-
-                            AccountManager manager = user.getManager();
-                            if (StringUtils.isNullOrEmpty(manager.getPanic())) {
-                                String token = TokenGenerator.generateLiteral(32);
-
-                                user.send(messages.panicRequested());
-
-                            } else {
-                                user.send(messages.prefix() + messages.panicAlready());
-                            }*/
-                            //user.send(messages.prefix() + "&5TODO"); Fuck it, I'll make it local temporally
                             AccountManager manager = user.getManager();
                             if (manager.getPanic().isEmpty()) {
                                 String password = TokenGenerator.generateLiteral(32);
@@ -491,15 +555,15 @@ public class  AccountCommand extends Command {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
         } else {
-            if (args.length == 0) {
+            if (tmpArgs.length == 0) {
                 console.send(messages.prefix() + messages.accountArguments());
             } else {
                 String tar_name;
 
-                switch (args[0].toLowerCase()) {
+                switch (tmpArgs[0].toLowerCase()) {
                     case "unlock":
-                        if (args.length == 2) {
-                            tar_name = args[1];
+                        if (tmpArgs.length == 2) {
+                            tar_name = tmpArgs[1];
                             AccountNameDatabase.find(tar_name).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
                                     OfflineClient offline = new OfflineClient(tar_name);
@@ -530,8 +594,8 @@ public class  AccountCommand extends Command {
                         }
                         break;
                     case "close":
-                        if (args.length == 2) {
-                            tar_name = args[1];
+                        if (tmpArgs.length == 2) {
+                            tar_name = tmpArgs[1];
                             ProxiedPlayer tar_p = plugin.getProxy().getPlayer(tar_name);
 
                             if (tar_p != null && tar_p.isConnected()) {
@@ -541,7 +605,12 @@ public class  AccountCommand extends Command {
 
                                 if (session.isValid() && session.isLogged() && session.isTempLogged()) {
                                     target.send(messages.prefix() + messages.forcedClose());
-                                    target.performCommand("account close");
+
+                                    String cmd = "account close";
+                                    UUID cmd_id = CommandProxy.mask(cmd, "close");
+                                    String exec = CommandProxy.getCommand(cmd_id);
+
+                                    target.performCommand(exec);
                                     console.send(messages.prefix() + messages.forcedCloseAdmin(target.getModule()));
 
                                     AccountCloseEvent issuer = new AccountCloseEvent(target.getModule(), config.serverName(), null);
@@ -559,8 +628,8 @@ public class  AccountCommand extends Command {
                         break;
                     case "remove":
                     case "delete":
-                        if (args.length == 2) {
-                            String target = args[1];
+                        if (tmpArgs.length == 2) {
+                            String target = tmpArgs[1];
                             AccountNameDatabase.find(target).whenComplete((nsr) -> {
                                 if (nsr.singleResult()) {
                                     ProxiedPlayer online = plugin.getProxy().getPlayer(target);
@@ -616,6 +685,39 @@ public class  AccountCommand extends Command {
                             });
                         } else {
                             console.send(messages.prefix() + messages.remove());
+                        }
+                        break;
+                    case "create":
+                    case "register":
+                        if (tmpArgs.length == 3) {
+                            String username = tmpArgs[1];
+                            String password = tmpArgs[2];
+
+                            ProxiedPlayer online = plugin.getProxy().getPlayer(username);
+                            if (online != null) {
+                                console.send(messages.prefix() + messages.forceRegisterOnline(username));
+                                return;
+                            }
+
+                            AccountID id = AccountID.forUsername(username);
+                            AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, id);
+                            if (manager == null) {
+                                console.send(messages.prefix() + messages.forceRegisterError(username));
+                                return;
+                            }
+
+                            if (manager.isRegistered()) {
+                                console.send(messages.prefix() + messages.forceRegisterExists(username));
+                                return;
+                            }
+
+                            manager.setPassword(password);
+                            manager.setName(username);
+                            manager.saveUUID(id);
+
+                            console.send(messages.prefix() + messages.forceRegisterSuccess(username));
+                        } else {
+                            console.send(messages.prefix() + messages.forceRegisterUsage());
                         }
                         break;
                     default:

@@ -88,6 +88,16 @@ public final class DataMessage {
             return this;
         }
 
+        public DataMessageBuilder addJson(final JsonObject json) {
+            for (String key : json.keySet()) {
+                if (Arrays.stream(protect).noneMatch(key::equalsIgnoreCase)) {
+                    this.json.add(key, json.get(key));
+                }
+            }
+
+            return this;
+        }
+
         public DataMessageBuilder addProperty(final String name, final UUID value) {
             if (Arrays.stream(protect).noneMatch(name::equalsIgnoreCase)) {
                 json.addProperty(name, value.toString());

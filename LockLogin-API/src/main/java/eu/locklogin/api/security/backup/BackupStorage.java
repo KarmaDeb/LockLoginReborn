@@ -4,7 +4,6 @@ import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.security.backup.data.AccountBackup;
 
 import java.time.Instant;
-import java.util.Comparator;
 
 /**
  * A storage of all account backups

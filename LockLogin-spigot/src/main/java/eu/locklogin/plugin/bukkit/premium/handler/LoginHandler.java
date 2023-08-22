@@ -32,9 +32,9 @@ import eu.locklogin.plugin.bukkit.premium.LoginSession;
 import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
 import eu.locklogin.plugin.bukkit.premium.StartClient;
 import eu.locklogin.plugin.bukkit.premium.mojang.client.ClientKey;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
@@ -85,30 +85,37 @@ public final class LoginHandler implements Runnable {
         try {
             InetSocketAddress address = player.getAddress();
             if (address != null) {
-                UUID offline_id = UUIDUtil.fetch(username, UUIDType.OFFLINE);
-                UUID premium_uuid = UUIDUtil.fetch(username, UUIDType.ONLINE);
+                UUID gen = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
 
-                LoginSession session;
-                boolean cracked = true;
-                if (!offline_id.equals(premium_uuid)) {
-                    if (CurrentPlatform.getPremiumDatabase().isPremium(premium_uuid) && start.toggleOnline()) {
-                        byte[] verify = start.token();
-                        ClientKey key = start.key();
-                        session = new LoginSession(username, verify, key);
-                        cracked = false;
+                MineAPI.fetch(username).whenComplete((oka) -> {
+                    UUID offline_id = oka.getUUID(UUIDType.OFFLINE);
+                    UUID premium_uuid = oka.getUUID(UUIDType.ONLINE);
+
+                    if (offline_id == null) offline_id = gen;
+                    if (premium_uuid == null) premium_uuid = gen;
+
+                    LoginSession session;
+                    boolean cracked = true;
+                    if (!offline_id.equals(premium_uuid)) {
+                        if (CurrentPlatform.getPremiumDatabase().isPremium(premium_uuid) && start.toggleOnline()) {
+                            byte[] verify = start.token();
+                            ClientKey key = start.key();
+                            session = new LoginSession(username, verify, key);
+                            cracked = false;
+                        } else {
+                            session = new LoginSession(username, null, null);
+                        }
                     } else {
                         session = new LoginSession(username, null, null);
                     }
-                } else {
-                    session = new LoginSession(username, null, null);
-                }
 
-                ProtocolListener.sessions.put(address, session);
-                if (!cracked) {
-                    synchronized (packet.getAsyncMarker().getProcessingLock()) {
-                        packet.setCancelled(true);
+                    ProtocolListener.sessions.put(address, session);
+                    if (!cracked) {
+                        synchronized (packet.getAsyncMarker().getProcessingLock()) {
+                            packet.setCancelled(true);
+                        }
                     }
-                }
+                });
             } else {
                 player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
             }

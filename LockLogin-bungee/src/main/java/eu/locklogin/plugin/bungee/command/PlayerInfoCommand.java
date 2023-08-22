@@ -15,11 +15,13 @@ package eu.locklogin.plugin.bungee.command;
  */
 
 import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
+import eu.locklogin.api.common.utils.other.RawPlayerAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.pack.Alias;
@@ -103,11 +105,11 @@ public final class PlayerInfoCommand extends Command {
                                                         accounts.add(manager);
                                                 }
 
-                                                for (eu.locklogin.api.account.AccountManager account : accounts) {
+                                                for (AccountManager account : accounts) {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                                     Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                                            .addProperty("account", StringUtils.serialize(account))
+                                                            .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                             .getInstance(),
                                                             BungeeSender.serverFromPlayer(player));
                                                     sent++;
@@ -126,16 +128,16 @@ public final class PlayerInfoCommand extends Command {
                                             switch (name) {
                                                 case "everyone":
                                                     for (ProxiedPlayer online : plugin.getProxy().getPlayers()) {
-                                                        eu.locklogin.api.account.AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
+                                                        AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(online.getUniqueId()));
                                                         if (manager != null)
                                                             accounts.add(manager);
                                                     }
 
-                                                    for (eu.locklogin.api.account.AccountManager account : accounts) {
-                                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
+                                                    for (AccountManager account : accounts) {
+                                                        player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + accounts.size() + " )")));
 
                                                         Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                                                .addProperty("account", StringUtils.serialize(account))
+                                                                .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                                 .getInstance(),
                                                                 BungeeSender.serverFromPlayer(player));
                                                         sent++;
@@ -148,11 +150,11 @@ public final class PlayerInfoCommand extends Command {
                                                             BungeeSender.serverFromPlayer(player));
                                                 case "persistent":
                                                     accounts = PersistentSessionData.getPersistentAccounts();
-                                                    for (eu.locklogin.api.account.AccountManager account : accounts) {
+                                                    for (AccountManager account : accounts) {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                                         Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                                                .addProperty("account", StringUtils.serialize(account))
+                                                                .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                                 .getInstance(),
                                                                 BungeeSender.serverFromPlayer(player));
                                                         sent++;
@@ -180,7 +182,7 @@ public final class PlayerInfoCommand extends Command {
                                                         player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                                         Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                                                .addProperty("account", StringUtils.serialize(account))
+                                                                .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                                 .getInstance(),
                                                                 BungeeSender.serverFromPlayer(player));
                                                         sent++;
@@ -209,7 +211,7 @@ public final class PlayerInfoCommand extends Command {
                                                 player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                                 Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                                        .addProperty("account", StringUtils.serialize(account))
+                                                        .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                                         .getInstance(),
                                                         BungeeSender.serverFromPlayer(player));
                                                 sent++;
@@ -287,11 +289,11 @@ public final class PlayerInfoCommand extends Command {
                                 }
                             }
 
-                            for (eu.locklogin.api.account.AccountManager account : accounts) {
+                            for (AccountManager account : accounts) {
                                 player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
                                 Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
-                                        .addProperty("account", StringUtils.serialize(account))
+                                        .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
                                         .getInstance(),
                                         BungeeSender.serverFromPlayer(player));
                                 sent++;

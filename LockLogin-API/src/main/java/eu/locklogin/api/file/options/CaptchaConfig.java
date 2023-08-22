@@ -20,6 +20,7 @@ package eu.locklogin.api.file.options;
 public final class CaptchaConfig {
 
     private final boolean enabled;
+    private final CaptchaLocation location;
     private final int length;
     private final boolean letters;
     private final boolean strikethrough;
@@ -29,13 +30,15 @@ public final class CaptchaConfig {
      * Initialize the captcha configuration
      *
      * @param toggle         the captcha mode
+     * @param position       the captcha position
      * @param captchaLength  the captcha code length
      * @param includeLetters include letters in code
      * @param enableStrike   enable strikethrough effect on captcha
      * @param randomStrike   randomize characters with strike effect
      */
-    public CaptchaConfig(final boolean toggle, final int captchaLength, final boolean includeLetters, final boolean enableStrike, final boolean randomStrike) {
+    public CaptchaConfig(final boolean toggle, final CaptchaLocation position, final int captchaLength, final boolean includeLetters, final boolean enableStrike, final boolean randomStrike) {
         enabled = toggle;
+        location = position;
         length = captchaLength;
         letters = includeLetters;
         strikethrough = enableStrike;
@@ -49,6 +52,15 @@ public final class CaptchaConfig {
      */
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * Get the captcha location
+     *
+     * @return the captcha location
+     */
+    public CaptchaLocation getLocation() {
+        return location;
     }
 
     /**
@@ -88,5 +100,15 @@ public final class CaptchaConfig {
      */
     public boolean randomStrike() {
         return randomStrikethrough;
+    }
+
+    /**
+     * Captcha possible locations
+     */
+    public enum CaptchaLocation {
+        CHAT,
+        ACTIONBAR,
+        TITLE,
+        BOSS
     }
 }

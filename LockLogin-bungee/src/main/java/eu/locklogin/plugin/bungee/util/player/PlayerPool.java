@@ -92,4 +92,8 @@ public class PlayerPool {
             checkScheduler.start();
         }
     }
+
+    public boolean contains(final ProxiedPlayer player) {
+        return players.contains(player.getUniqueId());
+    }
 }

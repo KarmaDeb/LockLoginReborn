@@ -15,7 +15,6 @@ import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import me.lucko.jarrelocator.JarRelocator;
 import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
@@ -24,7 +23,6 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -64,6 +62,23 @@ public final class JarManager {
         field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(clazz, value);
+    }
+
+    /**
+     * Change the filed value of the specified class
+     *
+     * @param instance  the object instance
+     * @param fieldName the field name
+     * @param value     the field value
+     * @throws Throwable to catch any possible error
+     */
+    public synchronized static void changeField(final Object instance, final String fieldName, final Object value) throws Throwable {
+        Field field;
+
+        Class<?> clazz = instance.getClass();
+        field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(instance, value);
     }
 
     /**

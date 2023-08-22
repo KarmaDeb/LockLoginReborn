@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static eu.locklogin.plugin.bungee.LockLogin.logger;
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 public class ModuleExecutorInjector extends Injector {
@@ -66,11 +67,17 @@ public class ModuleExecutorInjector extends Injector {
                 @Override
                 public void execute(final CommandSender commandSender, final String[] strings) {
                     if (!(commandSender instanceof ProxiedPlayer)) {
-                        if (ModulePlugin.parseCommand(cmd)) {
+                        StringBuilder builder = new StringBuilder(cmd);
+                        for (String arg : strings) builder.append(" ").append(arg);
+
+                        String message = builder.toString();
+                        logger.scheduleLog(Level.INFO, "Injected command {0}", message);
+
+                        if (ModulePlugin.parseCommand(message)) {
                             PluginModule module = ModulePlugin.getCommandOwner(cmd);
 
                             if (module != null) {
-                                ModulePlugin.fireCommand(module.getConsole(), cmd, null);
+                                ModulePlugin.fireCommand(module.getConsole(), message, null);
                             }
                         }
                     }

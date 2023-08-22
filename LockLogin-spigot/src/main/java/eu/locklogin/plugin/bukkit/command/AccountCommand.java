@@ -17,23 +17,25 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.utils.plugin.ComponentFactory;
-import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.CommandProxy;
-import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.persistence.PersistentSessionData;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.name.AccountNameDatabase;
+import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCloseEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserChangePasswordEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.TaskTarget;
@@ -46,6 +48,7 @@ import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.chat.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -78,7 +81,6 @@ public class AccountCommand implements CommandExecutor {
      * @return true if a valid command, otherwise false
      */
     @Override
-    @SuppressWarnings("deprecation")
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] tmpArgs) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
@@ -166,7 +168,7 @@ public class AccountCommand implements CommandExecutor {
                                                     if (passwordConfig.warn_unsafe()) {
                                                         for (Player online : plugin.getServer().getOnlinePlayers()) {
                                                             User staff = new User(online);
-                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                            if (staff.hasPermission(PluginPermissions.warn_password())) {
                                                                 staff.send(messages.prefix() + messages.passwordWarning());
                                                             }
                                                         }
@@ -233,33 +235,45 @@ public class AccountCommand implements CommandExecutor {
                         case "close":
                             switch (args.length) {
                                 case 1:
-                                    session = user.getSession();
-                                    session.setLogged(false);
-                                    session.setPinLogged(false);
+                                    if (user.hasPermission(PluginPermissions.account_close_self())) {
+                                        session = user.getSession();
+                                        session.setLogged(false);
+                                        session.setPinLogged(false);
 
-                                    session.set2FALogged(false);
-                                    user.savePotionEffects();
-                                    user.applySessionEffects();
+                                        session.set2FALogged(false);
+                                        user.savePotionEffects();
+                                        user.applySessionEffects();
 
-                                    if (config.clearChat()) {
-                                        for (int i = 0; i < 150; i++)
-                                            LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, () -> player.sendMessage(""));
+                                        if (config.clearChat()) {
+                                            for (int i = 0; i < 150; i++)
+                                                LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, () -> player.sendMessage(""));
+                                        }
+
+                                        SessionCheck<Player> check = user.getChecker();
+                                        LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
+
+                                        if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
+                                            user.setTempSpectator(true);
+
+                                        if (config.hideNonLogged()) {
+                                            ClientVisor visor = new ClientVisor(player);
+                                            visor.toggleView();
+                                        }
+
+                                        user.send(messages.prefix() + messages.closed());
+                                        AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
+                                        ModulePlugin.callEvent(self);
+
+                                        ModulePlayer module = user.getModule();
+                                        if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                                            String message = messages.playerLeave(module);
+                                            if (!StringUtils.isNullOrEmpty(message)) {
+                                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                                            }
+                                        }
+                                    } else {
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_close_self()));
                                     }
-
-                                    SessionCheck<Player> check = user.getChecker();
-                                    LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
-
-                                    if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
-                                        user.setTempSpectator(true);
-
-                                    if (config.hideNonLogged()) {
-                                        ClientVisor visor = new ClientVisor(player);
-                                        visor.toggleView();
-                                    }
-
-                                    user.send(messages.prefix() + messages.closed());
-                                    AccountCloseEvent self = new AccountCloseEvent(user.getModule(), user.getManager().getName(), null);
-                                    ModulePlugin.callEvent(self);
                                     break;
                                 case 2:
                                     if (user.hasPermission(PluginPermissions.account_close())) {
@@ -356,47 +370,89 @@ public class AccountCommand implements CommandExecutor {
                                     }
                                     break;
                                 case 3:
-                                    AccountManager manager = user.getManager();
-                                    session = user.getSession();
+                                    if (user.hasPermission(PluginPermissions.account_remove_self())) {
+                                        AccountManager manager = user.getManager();
+                                        session = user.getSession();
 
-                                    String password = args[1];
-                                    String confirmation = args[2];
+                                        String password = args[1];
+                                        String confirmation = args[2];
 
-                                    if (password.equals(confirmation)) {
-                                        CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
-                                        if (util.validate(Validation.ALL)) {
-                                            if (!manager.getPanic().isEmpty()) {
-                                                String stored = AccountCommand.confirmation.getOrDefault(player.getUniqueId().toString(), null);
-                                                if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
-                                                    user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
-                                                    AccountCommand.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
-                                                    return false;
+                                        if (password.equals(confirmation)) {
+                                            CryptoFactory util = CryptoFactory.getBuilder().withPassword(password).withToken(manager.getPassword()).build();
+                                            if (util.validate(Validation.ALL)) {
+                                                if (!manager.getPanic().isEmpty()) {
+                                                    String stored = AccountCommand.confirmation.getOrDefault(player.getUniqueId().toString(), null);
+                                                    if (stored == null || !stored.equalsIgnoreCase(player.getUniqueId().toString())) {
+                                                        user.send(messages.prefix() + "&cYou have a panic token, removing your account will result in also removing it. Run the command again to proceed anyway");
+                                                        AccountCommand.confirmation.put(player.getUniqueId().toString(), player.getUniqueId().toString());
+                                                        return false;
+                                                    }
                                                 }
+
+                                                AccountCommand.confirmation.remove(player.getUniqueId().toString());
+                                                user.send(messages.prefix() + messages.accountRemoved());
+
+                                                manager.remove(player.getName());
+
+                                                //Completely restart the client session
+                                                session.setPinLogged(false);
+                                                session.set2FALogged(false);
+                                                session.setLogged(false);
+                                                session.invalidate();
+                                                session.validate();
+
+                                                SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
+                                                LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
+                                            } else {
+                                                user.send(messages.prefix() + messages.incorrectPassword());
                                             }
-
-                                            AccountCommand.confirmation.remove(player.getUniqueId().toString());
-                                            user.send(messages.prefix() + messages.accountRemoved());
-                                            manager.remove(player.getName());
-
-                                            //Completely restart the client session
-                                            session.setPinLogged(false);
-                                            session.set2FALogged(false);
-                                            session.setLogged(false);
-                                            session.invalidate();
-                                            session.validate();
-
-                                            SessionCheck<Player> check = user.getChecker().whenComplete(user::restorePotionEffects);
-                                            LockLogin.plugin.getServer().getScheduler().runTaskAsynchronously(LockLogin.plugin, check);
                                         } else {
-                                            user.send(messages.prefix() + messages.incorrectPassword());
+                                            user.send(messages.prefix() + messages.removeAccountMatch());
                                         }
                                     } else {
-                                        user.send(messages.prefix() + messages.removeAccountMatch());
+                                        user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_remove_self()));
                                     }
                                     break;
                                 default:
                                     user.send(messages.prefix() + messages.remove());
                                     break;
+                            }
+                            break;
+                        case "create":
+                        case "register":
+                            if (user.hasPermission(PluginPermissions.account_register())) {
+                                if (args.length == 3) {
+                                    String username = args[1];
+                                    String password = args[2];
+
+                                    Player online = plugin.getServer().getPlayer(username);
+                                    if (online != null) {
+                                        user.send(messages.prefix() + messages.forceRegisterOnline(username));
+                                        return false;
+                                    }
+
+                                    AccountID id = AccountID.forUsername(username);
+                                    AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, id);
+                                    if (manager == null) {
+                                        user.send(messages.prefix() + messages.forceRegisterError(username));
+                                        return false;
+                                    }
+
+                                    if (manager.isRegistered()) {
+                                        user.send(messages.prefix() + messages.forceRegisterExists(username));
+                                        return false;
+                                    }
+
+                                    manager.setPassword(password);
+                                    manager.setName(username);
+                                    manager.saveUUID(id);
+
+                                    user.send(messages.prefix() + messages.forceRegisterSuccess(username));
+                                } else {
+                                    user.send(messages.prefix() + messages.forceRegisterUsage());
+                                }
+                            } else {
+                                user.send(messages.prefix() + messages.permissionError(PluginPermissions.account_register()));
                             }
                             break;
                         case "alts":
@@ -441,19 +497,6 @@ public class AccountCommand implements CommandExecutor {
                             }
                             break;
                         case "protect":
-                            /*
-                            TODO: I must implement LockLogin web panel into this. ( I MUST ALSO END THE PANEL TOO. I HAVE TO DO MANY THINGS NOW )
-
-                            AccountManager manager = user.getManager();
-                            if (StringUtils.isNullOrEmpty(manager.getPanic())) {
-                                String token = TokenGenerator.generateLiteral(32);
-
-                                user.send(messages.panicRequested());
-
-                            } else {
-                                user.send(messages.prefix() + messages.panicAlready());
-                            }*/
-                            //user.send(messages.prefix() + "&5TODO"); Fuck it, I'll make it local temporally
                             AccountManager manager = user.getManager();
                             if (manager.getPanic().isEmpty()) {
                                 String password = TokenGenerator.generateLiteral(32);
@@ -602,6 +645,39 @@ public class AccountCommand implements CommandExecutor {
                             });
                         } else {
                             console.send(messages.prefix() + messages.remove());
+                        }
+                        break;
+                    case "create":
+                    case "register":
+                        if (tmpArgs.length == 3) {
+                            String username = tmpArgs[1];
+                            String password = tmpArgs[2];
+
+                            Player online = plugin.getServer().getPlayer(username);
+                            if (online != null) {
+                                console.send(messages.prefix() + messages.forceRegisterOnline(username));
+                                return false;
+                            }
+
+                            AccountID id = AccountID.forUsername(username);
+                            AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, id);
+                            if (manager == null) {
+                                console.send(messages.prefix() + messages.forceRegisterError(username));
+                                return false;
+                            }
+
+                            if (manager.isRegistered()) {
+                                console.send(messages.prefix() + messages.forceRegisterExists(username));
+                                return false;
+                            }
+
+                            manager.setPassword(password);
+                            manager.setName(username);
+                            manager.saveUUID(id);
+
+                            console.send(messages.prefix() + messages.forceRegisterSuccess(username));
+                        } else {
+                            console.send(messages.prefix() + messages.forceRegisterUsage());
                         }
                         break;
                     default:

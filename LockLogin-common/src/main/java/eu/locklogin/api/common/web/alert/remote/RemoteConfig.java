@@ -68,6 +68,17 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get if the server allows the use of
+     * global accounts
+     *
+     * @return if the server uses global accounts
+     */
+    @Override
+    public boolean globalAccounts() {
+        return manager.getBoolean("GlobalAccounts", false);
+    }
+
+    /**
      * Get if the plugin share statistics with bStats
      *
      * @return if the plugin will share his statistics
@@ -256,12 +267,13 @@ public class RemoteConfig extends PluginConfiguration {
         CaptchaConfig config = CurrentPlatform.getRealConfiguration().captchaOptions();
 
         boolean enable = manager.getBoolean("Captcha.Enabled", config.isEnabled());
+        CaptchaConfig.CaptchaLocation location = CaptchaConfig.CaptchaLocation.valueOf(manager.getString("Captcha.Location", "ACTIONBAR").toUpperCase());
         int length = manager.getInt("Captcha.Difficulty.Length", config.getLength());
         boolean letters = manager.getBoolean("Captcha.Difficulty.Letters", config.hasLetters());
         boolean strikethrough = manager.getBoolean("Captcha.Strikethrough.Enabled", config.enableStrike());
         boolean random_strikethrough = manager.getBoolean("Captcha.Strikethrough.Random", config.randomStrike());
 
-        return new CaptchaConfig(enable, length, letters, strikethrough, random_strikethrough);
+        return new CaptchaConfig(enable, location, length, letters, strikethrough, random_strikethrough);
     }
 
     /**

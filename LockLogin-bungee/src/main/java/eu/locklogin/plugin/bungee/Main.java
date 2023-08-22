@@ -14,12 +14,13 @@ package eu.locklogin.plugin.bungee;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.security.backup.BackupTask;
 import eu.locklogin.api.common.utils.FileInfo;
+import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.web.ChecksumTables;
-import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.module.plugin.javamodule.server.MessageQue;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
-import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
@@ -27,24 +28,19 @@ import eu.locklogin.api.util.platform.Platform;
 import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import ml.karmaconfigs.api.bungee.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public final class Main extends KarmaPlugin {
 
@@ -97,9 +93,11 @@ public final class Main extends KarmaPlugin {
             BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
             scheduler.performBackup().whenComplete((id, error) -> {
                if (error != null) {
-                   logger().scheduleLog(Level.GRAVE, error);
-                   logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
-                   console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                   if (!error.getMessage().equals("Cannot backup without accounts")) {
+                       logger().scheduleLog(Level.GRAVE, error);
+                       logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                       console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                   }
                } else {
                    console().send("Successfully created backup with id {0}", Level.INFO, id);
                }
@@ -116,47 +114,63 @@ public final class Main extends KarmaPlugin {
         for (String name : info.keySet()) {
             ServerInfo server = info.get(name);
             TargetServerStorage storage = new TargetServerStorage(name);
+            if (storage.load() == null) {
+                storage.save(UUID.randomUUID());
+            }
+
             UUID known = storage.load();
-            if (known != null) {
-                InetSocketAddress socket = (InetSocketAddress) server.getSocketAddress();
-                if (socket != null) {
-                    InetAddress address = socket.getAddress();
-                    if (address != null) {
-                        server.ping((result, error) -> {
-                            if (error == null && result != null) {
-                                console().send("Server {0} is online!", Level.OK, name);
-                                TargetServer target_server = new TargetServer(name, known, address, socket.getPort(), true);
-                                TargetServer stored = CurrentPlatform.getServer().getServer(name);
+            InetSocketAddress socket = (InetSocketAddress) server.getSocketAddress();
+            if (socket != null) {
+                InetAddress address = socket.getAddress();
+                if (address != null) {
+                    server.ping((result, error) -> {
+                        if (error == null && result != null) {
+                            console().send("Server {0} is online!", Level.OK, name);
+                            TargetServer target_server = new TargetServer(name, known, address, socket.getPort(), true);
+                            TargetServer stored = CurrentPlatform.getServer().getServer(name);
 
-                                try {
-                                    Field f = ModuleServer.class.getDeclaredField("servers");
-                                    f.setAccessible(true);
-                                    Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
-                                    if (stored != null) {
-                                        //Remove from stored servers
-                                        stored_set.remove(stored);
-                                    }
-                                    stored_set.add(target_server);
-                                } catch (Throwable ignored) {}
-                            } else {
-                                console().send("Server {0} is offline!", Level.WARNING, name);
+                            MessageQue que = new MessageQueue(target_server);
 
-                                TargetServer target_server = new TargetServer(name, known, address, socket.getPort(), false);
-                                TargetServer stored = CurrentPlatform.getServer().getServer(name);
+                            try {
+                                JarManager.changeField(target_server, "que", que);
+                                LockLogin.assignQueue(target_server, que);
 
-                                try {
-                                    Field f = ModuleServer.class.getDeclaredField("servers");
-                                    f.setAccessible(true);
-                                    Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
-                                    if (stored != null) {
-                                        //Remove from stored servers
-                                        stored_set.remove(stored);
-                                    }
-                                    stored_set.add(target_server);
-                                } catch (Throwable ignored) {}
+                                Field f = ModuleServer.class.getDeclaredField("servers");
+                                f.setAccessible(true);
+                                Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
+                                if (stored != null) {
+                                    //Remove from stored servers
+                                    stored_set.remove(stored);
+                                }
+                                stored_set.add(target_server);
+                            } catch (Throwable ex) {
+                                ex.printStackTrace();
                             }
-                        });
-                    }
+                        } else {
+                            console().send("Server {0} is offline!", Level.WARNING, name);
+
+                            TargetServer target_server = new TargetServer(name, known, address, socket.getPort(), false);
+                            TargetServer stored = CurrentPlatform.getServer().getServer(name);
+
+                            MessageQue que = new MessageQueue(target_server);
+
+                            try {
+                                JarManager.changeField(target_server, "que", que);
+                                LockLogin.assignQueue(target_server, que);
+
+                                Field f = ModuleServer.class.getDeclaredField("servers");
+                                f.setAccessible(true);
+                                Set<TargetServer> stored_set = (Set<TargetServer>) f.get(ModuleServer.class);
+                                if (stored != null) {
+                                    //Remove from stored servers
+                                    stored_set.remove(stored);
+                                }
+                                stored_set.add(target_server);
+                            } catch (Throwable ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    });
                 }
             }
         }

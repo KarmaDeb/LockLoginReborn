@@ -27,7 +27,6 @@ import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -67,7 +66,7 @@ public final class User {
     private final static Map<UUID, SessionCheck<ProxiedPlayer>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This could be modified by the cache loader, so it can't be final
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
-    private static Set<UUID> premium_users = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<UUID> premium_users = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ProxiedPlayer player;
 
@@ -117,7 +116,7 @@ public final class User {
 
             if (!sessions.containsKey(player.getUniqueId())) {
                 if (CurrentPlatform.isValidSessionManager()) {
-                    ClientSession session = CurrentPlatform.getSessionManager(null);
+                    ClientSession session = CurrentPlatform.getSessionManager(new Class[]{AccountID.class}, AccountID.fromUUID(player.getUniqueId()));
 
                     if (session == null) {
                         throw new IllegalStateException("Cannot initialize user with a null session manager");
@@ -274,7 +273,7 @@ public final class User {
         if (proxy.sendToServers()) {
             ClientSession session = getSession();
 
-            if (session.isValid()) {
+            if (session.isValid() && !Proxy.inPremium(player)) {
                 List<ServerInfo> premium = proxy.premiumServer(ServerInfo.class);
                 if (premium.size() > index) {
                     ServerInfo lInfo = premium.get(index);
@@ -297,28 +296,64 @@ public final class User {
      * Check the player server
      *
      * @param index the server try index
+     * @param auth was this performed after auth?
      */
-    public void checkServer(final int index) {
+    public void checkServer(final int index, final boolean auth) {
         ProxyConfiguration proxy = CurrentPlatform.getProxyConfiguration();
         if (proxy.sendToServers()) {
             ClientSession session = getSession();
+            if (session.isLogged() && session.isTempLogged()) {
+                PluginConfiguration config = CurrentPlatform.getConfiguration();
+                boolean premium = config.enablePremium() && premium_users.contains(player.getUniqueId());
 
-            if (session.isValid()) {
+                if (Proxy.inAuth(player)) {
+                    if (!hasPermission(PluginPermissions.join_limbo()) || auth) {
+                        List<ServerInfo> lobbies;
+                        if (premium) {
+                            lobbies = proxy.premiumServer(ServerInfo.class);
+                        } else {
+                            lobbies = proxy.lobbyServers(ServerInfo.class);
+                        }
+                        if (lobbies.size() > index) {
+                            ServerInfo tmpInfo = lobbies.get(index);
+                            player.connect(ServerConnectRequest.builder().target(tmpInfo).reason(ServerConnectEvent.Reason.PLUGIN).callback((result, error) -> {
+                                if (error != null || !result.equals(ServerConnectRequest.Result.SUCCESS)) {
+                                    checkServer(index + 1, auth);
+
+                                    if (error != null) {
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                    }
+                                    logger.scheduleLog(Level.INFO, "Failed to connect client {0} to server {1}", player.getUniqueId(), tmpInfo.getName());
+                                }
+                            }).build());
+                        }
+                    }
+                }
+            }
+
+            /*if (session.isValid()) {
                 if (session.isLogged() && session.isTempLogged()) {
                     boolean redirect = false;
                     boolean premium = false;
                     if (Proxy.inAuth(player)) {
+                        if (Proxy.lobbiesValid() && !hasPermission(PluginPermissions.join_limbo()))
+                    }
+
+                    if (Proxy.inAuth(player)) {
                         redirect = Proxy.lobbiesValid() && !hasPermission(PluginPermissions.join_limbo());
                     } else {
-                        if (Proxy.inPremium(player)) {
+                        if (Proxy.inPremium(player) && !Proxy.inLobby(player)) {
                             PluginConfiguration config = CurrentPlatform.getConfiguration();
-
                             redirect = config.enablePremium() && !premium_users.contains(player.getUniqueId());
                         }
                     }
 
                     if (redirect) {
                         premium = premium_users.contains(player.getUniqueId());
+
+                        if (!premium && Proxy.inLobby(player)) {
+                            redirect = false;
+                        }
                     }
 
                     if (redirect) {
@@ -355,7 +390,7 @@ public final class User {
                         }
                     }
                 }
-            }
+            }*/
         }
     }
 

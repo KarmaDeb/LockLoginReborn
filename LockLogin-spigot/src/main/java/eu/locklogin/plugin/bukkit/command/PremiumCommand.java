@@ -14,17 +14,17 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.LockLogin;
-import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -67,21 +67,30 @@ public class PremiumCommand implements CommandExecutor {
                         "&dProcessing {0} command, please wait for feedback")
                 .replace("{0}", label)));
 
-        tryAsync(TaskTarget.COMMAND_EXECUTE, () -> {
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
-                User user = new User(player);
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            User user = new User(player);
 
-                if (user.getSession().isValid()) {
-                    PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
-                    UUID online_uuid = UUIDUtil.fetch(player.getName(), UUIDType.ONLINE);
-                    UUID offline_uuid = UUIDUtil.fetch(player.getName(), UUIDType.OFFLINE);
+            if (user.getSession().isValid()) {
+                PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
+
+                MineAPI.fetch(player.getUniqueId()).whenComplete((oka) -> {
+                    UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
+                    UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
+
+                    if (online_uuid == null) online_uuid = player.getUniqueId();
+                    if (offline_uuid == null) offline_uuid = player.getUniqueId();
 
                     if (online_uuid.equals(offline_uuid)) {
                         user.send(messages.prefix() + messages.premiumFailAuth());
                     } else {
                         if (database.isPremium(online_uuid)) {
                             if (database.setPremium(online_uuid, false)) {
+                                ClientSession session = user.getSession();
+                                session.setPinLogged(false);
+                                session.set2FALogged(false);
+                                session.setLogged(false);
+
                                 user.kick(messages.premiumDisabled());
                             } else {
                                 user.send(messages.prefix() + messages.premiumError());
@@ -104,13 +113,13 @@ public class PremiumCommand implements CommandExecutor {
                             }
                         }
                     }
-                } else {
-                    user.send(messages.prefix() + LockLogin.properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
-                }
+                });
             } else {
-                console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
+                user.send(messages.prefix() + LockLogin.properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }
-        });
+        } else {
+            console.send(messages.prefix() + LockLogin.properties.getProperty("command_not_available", "&cThis command is not available for console"));
+        }
 
         return false;
     }

@@ -89,12 +89,8 @@ public final class SHA512 {
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM);
             return factory.generateSecret(spec).getEncoded();
-        } catch (InvalidKeySpecException e) {
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
             e.printStackTrace();
-            System.out.println("Invalid SecretKeyFactory: " + e.getMessage());
-        } catch (NoSuchAlgorithmException e1) {
-            e1.printStackTrace();
-            System.out.println("No such algorithm: " + ALGORITHM + " : " + e1.getMessage());
         }
         return new byte[1];
     }

@@ -1,5 +1,7 @@
 package eu.locklogin.api.module.plugin.javamodule.server;
 
+import com.google.gson.JsonObject;
+
 /**
  * Message queue for server
  */
@@ -10,7 +12,7 @@ public abstract class MessageQue {
      *
      * @param message the message to send
      */
-    public abstract void add(final byte[] message);
+    public abstract void add(final JsonObject message);
 
     /**
      * Read the next message in the queue, READING THE MESSAGE WILL
@@ -20,12 +22,12 @@ public abstract class MessageQue {
      *
      * @return the message to send
      */
-    public abstract byte[] nextMessage();
+    public abstract JsonObject nextMessage();
 
     /**
      * Preview the next message to prepare needed operations under it
      *
      * @return the next message
      */
-    public abstract byte[] previewMessage();
+    public abstract JsonObject previewMessage();
 }

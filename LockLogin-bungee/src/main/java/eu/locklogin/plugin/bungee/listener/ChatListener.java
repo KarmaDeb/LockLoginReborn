@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bungee.listener;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.AllowedCommand;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -25,6 +26,9 @@ import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
+
+import java.util.Arrays;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
 
@@ -79,16 +83,18 @@ public final class ChatListener implements Listener {
 
         PluginMessages messages = CurrentPlatform.getMessages();
 
+        String command = getCommand(e.getMessage());
         if (session.isValid()) {
-            if (!session.isLogged()) {
-                String command = getCommand(e.getMessage());
-                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !command.equals("panic") && AllowedCommand.notAllowed(command));
+            if (CommandProxy.mustMask(e.getMessage())) {
+                UUID mask_id = CommandProxy.mask(e.getMessage(), getArguments(e.getMessage()));
+                e.setMessage(CommandProxy.getCommand(mask_id) + " " + mask_id);
+            }
 
+            if (!session.isLogged()) {
+                e.setCancelled(!command.equals("register") && !command.equals("login") && !command.equals("log") && !command.equals("reg") && !command.equals("panic") && AllowedCommand.notAllowed(command));
                 return;
             } else {
                 if (!session.isTempLogged() && user.getManager().has2FA()) {
-                    String command = getCommand(e.getMessage());
-
                     if (!command.equals("2fa")) {
                         e.setCancelled(true);
                         user.send(messages.prefix() + messages.gAuthenticate());
@@ -135,5 +141,22 @@ public final class ChatListener implements Listener {
                 return cmd.replace("/", "");
             }
         }
+    }
+
+    /**
+     * Get the main command from the cmd
+     * even if it has :
+     *
+     * @param cmd the cmd
+     * @return a command ignoring ":" prefix
+     */
+    @SuppressWarnings("unused")
+    private String[] getArguments(String cmd) {
+        if (cmd.contains(" ")) {
+            String[] cmdData = cmd.split(" ");
+            return Arrays.copyOfRange(cmdData, 1, cmdData.length);
+        }
+
+        return new String[0];
     }
 }

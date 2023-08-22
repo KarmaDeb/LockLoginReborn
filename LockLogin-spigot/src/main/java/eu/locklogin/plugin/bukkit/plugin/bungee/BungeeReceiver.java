@@ -8,14 +8,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
+import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.security.LockLoginRuntime;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
@@ -27,19 +27,19 @@ import eu.locklogin.plugin.bukkit.util.inventory.AltAccountsInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.inventory.PlayersInfoInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import io.socket.client.Ack;
-import io.socket.client.Socket;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.*;
@@ -49,67 +49,49 @@ public final class BungeeReceiver implements PluginMessageListener {
 
     private static final Map<String, AccountManager> accounts = new ConcurrentHashMap<>();
 
-    static String proxy_com = "";
-    static SocketClient client;
-    static boolean usesSocket = false;
-
     public final static Map<UUID, UUID> proxies_map = new ConcurrentHashMap<>();
 
-    private static boolean use_socket = false;
+    private static boolean advised = false;
 
-    /**
-     * Initialize the bungee receiver
-     */
-    public BungeeReceiver(final SocketClient socket) {
-        client = socket;
+    static {
+        LockLoginRuntime.checkSecurity(true);
+    }
 
-        try {
-            License license = CurrentPlatform.getLicense();
-            if (license != null) {
-                proxy_com = license.comKey();
-            } else {
-                plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
-            }
-
-            BungeeDataStorager storager = new BungeeDataStorager();
-            storager.setProxyKey(proxy_com);
-        } catch (Throwable ex) {
-            logger.scheduleLog(Level.GRAVE, ex);
-            plugin.console().send("Failed to initialize bungeecord data receiver", Level.GRAVE);
-        }
-
+    public BungeeReceiver() {
+        LockLoginRuntime.checkSecurity(true);
         MessagePool.whenValid((ch, pl, b_Input) -> {
             try {
                 String raw = b_Input.readUTF();
                 Gson gson = new GsonBuilder().create();
 
+                PluginConfiguration config = CurrentPlatform.getConfiguration();
+
                 JsonObject json = gson.fromJson(raw, JsonObject.class);
-                Socket client = socket.client();
+                boolean canRead = true;
+                if (!ch.equalsIgnoreCase("ll:access")) {
+                    String token = json.get("key").getAsString();
+                    canRead = token.equals(config.comKey());
 
-                if (client.connected() && json.has("server")) {
-                    registerUnder(json.get("server").getAsString(), socket);
-                } else {
-                    boolean canRead = true;
-                    if (!ch.equalsIgnoreCase("ll:access")) {
-                        String token = json.get("key").getAsString();
-                        canRead = token.equals(proxy_com);
+                    if (config.comKey().isEmpty() && !advised) {
+                        console.send("You are using an empty communication key. It's highly recommended to define an unique key in the whole network for security communication (config.yml > BungeeKey)", Level.GRAVE);
+                        advised = true;
                     }
+                }
 
-                    if (canRead) {
-                        switch (ch.toLowerCase()) {
-                            case "ll:account":
-                                processAccountCommand(pl, json);
-                                break;
-                            case "ll:plugin":
-                                processPluginCommand(pl, json);
-                                break;
-                            case "ll:access":
-                                processAccessCommand(json);
-                                break;
-                            default:
-                                //Do nothing
-                                break;
-                        }
+                if (canRead) {
+                    switch (ch.toLowerCase()) {
+                        case "ll:account":
+                            processAccountCommand(pl, json);
+                            break;
+                        case "ll:plugin":
+                            processPluginCommand(pl, json);
+                            break;
+                        case "ll:access":
+                            processAccessCommand(json);
+                            break;
+                        default:
+                            //Do nothing
+                            break;
                     }
                 }
             } catch (Throwable ex) {
@@ -121,94 +103,6 @@ public final class BungeeReceiver implements PluginMessageListener {
     }
 
     /**
-     * Register the received under the specified server name
-     *
-     * @param server the server name
-     * @param socket the socket instance
-     */
-    public void registerUnder(final String server, final SocketClient socket) {
-        Gson gson = new GsonBuilder().create();
-        Socket client = socket.client();
-
-        License license = CurrentPlatform.getLicense();
-        if (license != null) {
-            JsonObject message = new JsonObject();
-            message.addProperty("name", server);
-
-            try {
-                byte[] license_data = Files.readAllBytes(license.getLocation().resolve("license.dat"));
-                client.emit("init", message, license_data, (Ack) (ackData) -> {
-                    //for (Object o : data) console.send("{0}", Level.INFO, o);
-                    try {
-                        JsonObject ackResponse = gson.fromJson(String.valueOf(ackData[0]), JsonObject.class);
-                        boolean success = ackResponse.get("success").getAsBoolean();
-                        String response_message = ackResponse.get("message").getAsString();
-
-                        if (success) {
-                            plugin.console().send("Successfully registered this server", Level.INFO);
-                            use_socket = true;
-
-                            client.on("proxy_leave", (data) -> {
-                                try {
-                                    JsonObject j = gson.fromJson(data[0].toString(), JsonObject.class);
-
-                                    plugin.console().send("Disconnected from proxy {0} ({1})", Level.GRAVE, j.get("server").getAsString(), j.get("cause").getAsString());
-                                } catch (Throwable ex) {
-                                    plugin.console().send("Some of the proxies you were connected with went offline", Level.WARNING);
-                                }
-                            });
-
-                            client.on("proxy_alive", (name) -> plugin.console().send("Some of the proxies that disconnected ({0}) is online again", Level.INFO, name[0]));
-
-                            client.on("in", (data) -> {
-                                JsonObject response = gson.fromJson(String.valueOf(data[0]), JsonObject.class);
-                                String ch_name = response.get("channel").getAsString();
-
-                                Channel channel = Channel.fromName(ch_name);
-                                if (channel != null) {
-                                    JsonObject message_data = response.get("data").getAsJsonObject();
-                                    message_data.addProperty("data_type", response.get("type").getAsString());
-                                    int id = response.get("id").getAsInt();
-
-                                    client.emit("confirm", id);
-
-                                    Player player = null;
-                                    if (response.has("player")) {
-                                        player = plugin.getServer().getPlayer(UUID.fromString(response.get("player").getAsString()));
-                                    } else {
-                                        if (message_data.has("player")) {
-                                            player = plugin.getServer().getPlayer(UUID.fromString(message_data.get("player").getAsString()));
-                                        }
-                                    }
-
-                                    switch (channel) {
-                                        case ACCOUNT:
-                                            processAccountCommand(player, message_data);
-                                            break;
-                                        case PLUGIN:
-                                            processPluginCommand(player, message_data);
-                                            break;
-                                        case ACCESS:
-                                            break;
-                                    }
-                                }
-                            });
-                        } else {
-                            console.send("LockLogin web services denied our connection ({0})", Level.GRAVE, response_message);
-                        }
-                    } catch (Throwable ex) {
-                        logger.scheduleLog(Level.GRAVE, ex);
-                    }
-                });
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
-        } else {
-            console.send("Cannot register this server because its license is invalid", Level.GRAVE);
-        }
-    }
-
-    /**
      * Listens for incoming plugin messages
      *
      * @param channel the channel
@@ -217,30 +111,30 @@ public final class BungeeReceiver implements PluginMessageListener {
      */
     @Override
     public void onPluginMessageReceived(@NotNull String channel, @Nullable Player player, byte[] bytes) {
-        if (!use_socket) {
-            ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
-            String json_raw = input.readUTF();
+        ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
+        String json_raw = input.readUTF();
 
-            Gson gson = new GsonBuilder().create();
+        Gson gson = new GsonBuilder().create();
 
-            JsonObject bungee_data = gson.fromJson(json_raw, JsonObject.class);
-            UUID id = (player != null ? player.getUniqueId() : UUID.randomUUID());
-            if (bungee_data.has("player")) {
-                Player tmp = plugin.getServer().getPlayer(UUID.fromString(bungee_data.get("player").getAsString()));
-                if (tmp != null) {
-                    id = tmp.getUniqueId();
-                }
-            }
-
-            ByteArrayDataOutput i_copy = ByteStreams.newDataOutput();
-            i_copy.writeUTF(json_raw);
-            input = ByteStreams.newDataInput(i_copy.toByteArray());
-
-            if (channel.equals("ll:access")) {
-                MessagePool.trigger(channel, plugin.getServer().getPlayer(id), input); //We want an instant read for these
+        JsonObject bungee_data = gson.fromJson(json_raw, JsonObject.class);
+        UUID id = (player != null ? player.getUniqueId() : UUID.randomUUID());
+        if (bungee_data.has("player")) {
+            Player tmp = plugin.getServer().getPlayer(UUID.fromString(bungee_data.get("player").getAsString()));
+            if (tmp != null) {
+                id = tmp.getUniqueId();
             } else {
-                MessagePool.addPlayer(channel, id, input);
+                logger.scheduleLog(Level.WARNING, "Received player message for non online player: {0}", bungee_data.get("player").getAsString());
             }
+        }
+
+        ByteArrayDataOutput i_copy = ByteStreams.newDataOutput();
+        i_copy.writeUTF(json_raw);
+        input = ByteStreams.newDataInput(i_copy.toByteArray());
+
+        if (channel.equals("ll:access")) {
+            MessagePool.trigger(channel, plugin.getServer().getPlayer(id), input); //We want an instant read for these
+        } else {
+            MessagePool.addPlayer(channel, id, input);
         }
     }
 
@@ -258,6 +152,7 @@ public final class BungeeReceiver implements PluginMessageListener {
         if (player != null && player.isOnline()) {
             User user = new User(player);
             ClientSession session = user.getSession();
+            PluginMessages messages = CurrentPlatform.getMessages();
 
             switch (sub) {
                 case JOIN:
@@ -265,11 +160,10 @@ public final class BungeeReceiver implements PluginMessageListener {
                         user.applyLockLoginUser();
                     }
 
-                    if (!session.isValid()) {
-                        //Validate BungeeCord/Velocity session
-                        BungeeSender.validatePlayer(player);
-                        session.validate();
-                    }
+                    BungeeSender.validatePlayer(player);
+                    session.validate();
+
+                    plugin.logger().scheduleLog(Level.INFO, "Validated bungeecord join session of {0}", player.getUniqueId());
 
                     if (config.enableSpawn()) {
                         trySync(TaskTarget.TELEPORT, () -> player.teleport(player.getWorld().getSpawnLocation()));
@@ -283,6 +177,16 @@ public final class BungeeReceiver implements PluginMessageListener {
                     session.setPinLogged(bungee_data.get("pin_login").getAsBoolean());
                     user.setRegistered(bungee_data.get("registered").getAsBoolean());
 
+                    if (bungee_data.get("2fa_login").getAsBoolean()) {
+                        ModulePlayer module = user.getModule();
+                        if (!module.hasPermission(PluginPermissions.join_silent())) {
+                            String message = messages.playerJoin(module);
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
+                    }
+
                     //proxies_map.put(player.getUniqueId(), UUID.fromString(emitter));
                     break;
                 case QUIT:
@@ -294,19 +198,34 @@ public final class BungeeReceiver implements PluginMessageListener {
                         LastLocation last_loc = new LastLocation(player);
                         last_loc.save();
 
-                        session.invalidate();
+                        ModulePlayer module = user.getModule();
+                        if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                            String message = messages.playerLeave(module);
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
+
+                        //session.invalidate();
                         session.setLogged(false);
                         session.setPinLogged(false);
                         session.set2FALogged(false);
 
                         user.removeLockLoginUser();
+
+                        plugin.logger().scheduleLog(Level.INFO, "Invalidating bungeecord session of {0}", player.getUniqueId());
                     }
+
+                    TransientMap.apply(player);
 
                     user.setTempSpectator(false);
                     proxies_map.remove(player.getUniqueId());
                     break;
                 case VALIDATION:
+                    BungeeSender.validatePlayer(player);
                     session.validate();
+
+                    plugin.logger().scheduleLog(Level.INFO, "Validated bungeecord session of {0}", player.getUniqueId());
                     break;
                 case CAPTCHA:
                     if (!session.isCaptchaLogged()) {
@@ -316,11 +235,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                 case SESSION:
                     if (!session.isLogged()) {
                         session.setLogged(true);
-                    }
-
-                    if (config.takeBack()) {
-                        LastLocation location = new LastLocation(player);
-                        location.teleport();
                     }
                     break;
                 case PIN:
@@ -341,8 +255,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                             storager.setPinConfirmation(player, false);
 
                             InventoryView view = player.getOpenInventory();
-                            PluginMessages messages = CurrentPlatform.getMessages();
-
                             if (StringUtils.stripColor(view.getTitle()).equals(StringUtils.stripColor(messages.pinTitle()))) {
                                 PinInventory inventory = new PinInventory(player);
                                 inventory.close();
@@ -351,14 +263,44 @@ public final class BungeeReceiver implements PluginMessageListener {
                     }
                     break;
                 case GAUTH:
-                    session.set2FALogged(true);
                     TransientMap.apply(player);
+
+                    if (!session.is2FALogged()) {
+                        session.set2FALogged(true);
+
+                        ModulePlayer module = user.getModule();
+                        if (!module.hasPermission(PluginPermissions.join_silent())) {
+                            String message = messages.playerJoin(module);
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
+
+                        if (config.takeBack()) {
+                            LastLocation location = new LastLocation(player);
+                            location.teleport();
+                        }
+                    }
                     break;
                 case CLOSE:
-                    if (session.isLogged()) {
+                    boolean closeOperated = false;
+
+                    if (session.isLogged() || session.is2FALogged() || session.isPinLogged()) {
+                        closeOperated = true;
+
                         session.setLogged(false);
                         session.set2FALogged(false);
                         session.setPinLogged(false);
+                    }
+
+                    if (closeOperated) {
+                        ModulePlayer module = user.getModule();
+                        if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                            String message = messages.playerLeave(module);
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
                     }
 
                     break;
@@ -372,9 +314,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                         user.restorePotionEffects();
                     }
 
-                    break;
-                case INVALIDATION:
-                    session.invalidate();
                     break;
                 default:
                     logger.scheduleLog(Level.GRAVE, "Unknown account sub channel message: " + sub);
@@ -442,7 +381,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                     }
 
                     accounts.put(manager.getUUID().getId().replace("-", "").toLowerCase(), manager);
-                    BungeeSender.sendPlayerInstance(serialized, id);
+                    BungeeSender.sendPlayerInstance(serialized);
                 } else {
                     console.send("Received null serialized player account from proxy with id {0}", Level.INFO, id);
                 }
@@ -456,6 +395,7 @@ public final class BungeeReceiver implements PluginMessageListener {
                 Config.manager.loadBungee(configString);
                 break;
             case LISTENER:
+                ModulePlugin.receiveMessage(bungee_data);
                 break;
             default:
                 logger.scheduleLog(Level.GRAVE, "Unknown plugin sub channel message: " + sub);

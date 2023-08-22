@@ -62,7 +62,7 @@ public @interface SystemCommand {
                     SetSpawnCommand.class
             ));
 
-            if (CurrentPlatform.getPremiumDatabase() != null && CurrentPlatform.getConfiguration().enablePremium()) {
+            if (CurrentPlatform.getConfiguration().enablePremium() && CurrentPlatform.getConfiguration().enablePremium()) {
                 classes.add(PremiumCommand.class);
                 plugin.console().send("Registered premium command as a premium database has been registered", Level.INFO);
             }

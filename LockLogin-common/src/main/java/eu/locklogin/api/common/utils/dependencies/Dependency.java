@@ -48,7 +48,7 @@ public enum Dependency {
     /**
      * LockLogin web services dependency
      */
-    SOCKET_IO,
+    //SOCKET_IO,
     /**
      * LockLogin dependency
      */
@@ -92,15 +92,13 @@ public enum Dependency {
                 return PluginDependency.of(
                         prettyName(),
                         FileInfo.repositoryHost(null, "ApacheCommons.jar"), true);
-            case SOCKET_IO:
+            /*case SOCKET_IO:
                 return PluginDependency.of(
                                 prettyName(),
                                 FileInfo.repositoryHost(null, "SocketIO.jar"), true)
                         .relocate("eu.locklogin.plugin.shaded.io.socket", "io", "socket")
-                        /*.relocate("eu.locklogin.plugin.shaded.io.okhttp3", "okhttp3")
-                        .relocate("eu.locklogin.plugin.shaded.io.okio", "okio")*/
                         .relocate("eu.locklogin.plugin.shaded.org.json", "org", "json")
-                        .relocate("eu.locklogin.plugin.shaded.org.codehaus.mojo", "org", "codehaus", "mojo", "animal_sniffer");
+                        .relocate("eu.locklogin.plugin.shaded.org.codehaus.mojo", "org", "codehaus", "mojo", "animal_sniffer");*/
             /*case SOCKET_IO:
                 return PluginDependency.of(prettyName(), FileInfo.repositoryHost(null, "SocketIO.jar"), true);
             */case MANAGER:
@@ -123,8 +121,8 @@ public enum Dependency {
                 return "Google Guava";
             case APACHE_COMMONS:
                 return "Apache Commons";
-            case SOCKET_IO:
-                return "SocketIO";
+            /*case SOCKET_IO:
+                return "SocketIO";*/
             /*case SOCKET_IO:
                 return "Socket IO";
             */case MANAGER:

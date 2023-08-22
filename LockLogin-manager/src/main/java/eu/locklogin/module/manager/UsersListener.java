@@ -3,7 +3,6 @@ package eu.locklogin.module.manager;
 import eu.locklogin.api.account.AccountID;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.common.session.online.SessionDataContainer;
-import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
 import eu.locklogin.api.module.plugin.api.event.ModuleEventHandler;
 import eu.locklogin.api.module.plugin.api.event.user.*;
 import eu.locklogin.api.module.plugin.api.event.util.EventListener;
@@ -34,7 +33,7 @@ public class UsersListener implements EventListener {
             created.setName(StringUtils.stripColor(player.getName()));
 
         created.saveUUID(AccountID.fromUUID(player.getUUID()));
-        PluginMetricsService.register(e.getPlayer().getName());
+        //PluginMetricsService.register(e.getPlayer().getName());
     }
 
     @ModuleEventHandler(priority = ModuleEventHandler.Priority.LAST)

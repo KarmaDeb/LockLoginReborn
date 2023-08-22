@@ -14,12 +14,9 @@ package eu.locklogin.api.file.options;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.util.enums.UpdateChannel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Updater configuration

@@ -17,6 +17,7 @@ package eu.locklogin.plugin.bukkit.util.files;
 import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.options.*;
+import eu.locklogin.api.security.LockLoginRuntime;
 import eu.locklogin.api.util.enums.Lang;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
@@ -142,6 +143,17 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the server allows the use of
+     * global accounts
+     *
+     * @return if the server uses global accounts
+     */
+    @Override
+    public boolean globalAccounts() {
+        return false;
+    }
+
+    /**
      * Get if the plugin share statistics with bStats
      *
      * @return if the plugin will share his statistics
@@ -227,6 +239,7 @@ public final class Config extends PluginConfiguration {
      */
     @Override
     public String comKey() {
+        LockLoginRuntime.checkSecurity(true);
         return cfg.getString("BungeeKey", "");
     }
 
@@ -318,12 +331,13 @@ public final class Config extends PluginConfiguration {
     @Override
     public CaptchaConfig captchaOptions() {
         boolean enabled = cfg.getBoolean("Captcha.Enabled", true);
+        CaptchaConfig.CaptchaLocation location = CaptchaConfig.CaptchaLocation.valueOf(cfg.getString("Captcha.Location", "ACTIONBAR").toUpperCase());
         int length = cfg.getInt("Captcha.Difficulty.Length", 8);
         boolean letters = cfg.getBoolean("Captcha.Difficulty.Letters", true);
         boolean strike = cfg.getBoolean("Captcha.Strikethrough.Enabled", true);
         boolean randomStrike = cfg.getBoolean("Captcha.Strikethrough.Random", true);
 
-        return new CaptchaConfig(enabled, length, letters, strike, randomStrike);
+        return new CaptchaConfig(enabled, location, length, letters, strike, randomStrike);
     }
 
     @Override
@@ -410,9 +424,9 @@ public final class Config extends PluginConfiguration {
     @Override
     public PermissionConfig permissionConfig() {
         return new PermissionConfig(
-                cfg.getBoolean("Permission.BlockOperator", true),
-                cfg.getBoolean("Permission.RemoveEverything", true),
-                cfg.getBoolean("Permission.AllowWildcard", false)
+                cfg.getBoolean("Permissions.BlockOperator", true),
+                cfg.getBoolean("Permissions.RemoveEverything", true),
+                cfg.getBoolean("Permissions.AllowWildcard", false)
         );
     }
 
@@ -548,13 +562,11 @@ public final class Config extends PluginConfiguration {
             case "chinese simplified":
             case "simplified chinese":
                 return Lang.CHINESE_SIMPLIFIED;
+            case "pl_pl":
             case "polish":
-            case "poland":
-            case "pl":
                 return Lang.POLISH;
+            case "tr_tr":
             case "turkish":
-            case "turkey":
-            case "tr":
                 return Lang.TURKISH;
             default:
                 return Lang.COMMUNITY;

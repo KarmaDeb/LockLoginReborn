@@ -56,7 +56,7 @@ public @interface SystemCommand {
                     RegisterCommand.class
             ));
 
-            if (CurrentPlatform.getConfiguration().enablePremium()) {
+            if (CurrentPlatform.getConfiguration().enablePremium() && !CurrentPlatform.isOnline()) {
                 classes.add(PremiumCommand.class);
                 plugin.console().send("Enabled premium support for BungeeCord", Level.INFO);
             }

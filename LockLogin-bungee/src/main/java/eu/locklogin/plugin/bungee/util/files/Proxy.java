@@ -72,6 +72,16 @@ public final class Proxy extends ProxyConfiguration {
     }
 
     /**
+     * Check if the player is in a lobby server
+     *
+     * @param player the player
+     * @return if the player is in a lobby server
+     */
+    public static boolean inLobby(final ProxiedPlayer player) {
+        return isLobby(player.getServer().getInfo());
+    }
+
+    /**
      * Get if the lobby servers are valid
      *
      * @return if the lobby servers are valid
@@ -121,6 +131,25 @@ public final class Proxy extends ProxyConfiguration {
             List<String> premium = cfg.getStringList("Servers.Premium");
             if (arrayValid(premium)) {
                 return premium.contains(server.getName());
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Get if the specified server is a lobby server
+     *
+     * @param server the server to check
+     * @return if the server is a lobby server
+     */
+    public static boolean isLobby(final ServerInfo server) {
+        if (server != null) {
+            List<String> lobbies = cfg.getStringList("Servers.Lobby");
+            if (arrayValid(lobbies)) {
+                return lobbies.contains(server.getName());
             } else {
                 return true;
             }

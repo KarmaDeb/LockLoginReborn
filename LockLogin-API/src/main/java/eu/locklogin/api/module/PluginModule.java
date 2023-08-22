@@ -65,7 +65,7 @@ import java.util.zip.ZipFile;
  * LockLogin plugin module
  */
 @SuppressWarnings("unused")
-public abstract class PluginModule implements KarmaSource {
+public abstract class PluginModule implements SourcePlugin, KarmaSource {
 
     private BruteLoader appender;
     private final Map<String, List<APICard<?>>> cards = new ConcurrentHashMap<>();
@@ -408,9 +408,9 @@ public abstract class PluginModule implements KarmaSource {
     }
 
     /**
-     * Get the module name
+     * Get source name
      *
-     * @return the module name
+     * @return the source name
      */
     @Override
     public final @NotNull String name() {

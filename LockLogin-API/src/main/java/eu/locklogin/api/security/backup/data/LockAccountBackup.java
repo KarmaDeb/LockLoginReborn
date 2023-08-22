@@ -1,7 +1,5 @@
 package eu.locklogin.api.security.backup.data;
 
-import eu.locklogin.api.account.AccountID;
-
 import java.time.Instant;
 
 /**

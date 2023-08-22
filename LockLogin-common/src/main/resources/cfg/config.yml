@@ -17,25 +17,9 @@ ServerName: ""
 #they already have an account on LockLogin
 BedrockLogin: false
 
-#This will share statistics with LockLogin web services, the statistics we
-#recopilate are:
-######################
-# PLEASE NOTE: bStats option will only toggle bStats statistics, and not official ones
-######################
-#
-# - Amount of registered accounts
-# - Amount of active players
-# - Fidelity (time the plugin has been used in this server)
-# - Server address
-#
-#Any of this data will be public, except:
-# - Amount of registered accounts
-# - Amount of active players
-#
-# WARNING: plugin statistics won't work for now, so no data will be sent to LockLogin servers
+#This will share statistics with statistics servers
 Statistics:
   bStats: true
-  plugin: true
 
 #Account backups configuration
 #
@@ -50,20 +34,6 @@ Backup:
   Max: 5
   Period: 30
   Purge: 7
-
-#NOT IMPLEMENTED YET
-#
-# This is the KarmaAPI panel service. When enabled, the server
-# won't store any account, instead, users will be authenticated and
-# registered using the KarmaPanel ( https://karmadev.es | https://karmaconfigs.ml | https://karmarepo.ml ).
-#
-# ( IF ANY OF THE URLS WORK, TRY WITH https://backup.[karmadev.es|karmaconfigs.ml|karmarepo.ml] )
-#
-# By enabling this you accept that player accounts won't pertain to you so you won't
-# be able to perform actions under them like requesting info about them. ( /playerinfo )
-# or removing an account. If removing an account is what you want, the user must login in any
-# of the URLs provided before and remove his account manually.
-OnlineAccounts: true
 
 #Premium configuration
 #
@@ -84,11 +54,6 @@ Premium:
 #
 #LockLogin | Starting server
 BungeeMotd: true
-
-#This is used by LockLogin panel to
-#make sure the communication gets at least
-#encrypted
-PanelKey: ""
 
 #The communication key, leave empty to disable (not recommended)
 #
@@ -192,12 +157,6 @@ MessagesInterval:
 #Captcha options
 # Available options:
 #
-# Location -> Set the captcha location, currently only supported (NOT IMPLEMENTED)
-#             - actionbar
-#             - chat (Requires <captcha> text)
-#             - title (Requires <captcha> text)
-#             - boss (Requires <captcha> text)
-#
 # Enabled -> Enable/disable the captcha
 # Difficulty -> Captcha difficulty settings
 #   Length -> Captcha code length ( min is 8, max is 16 )
@@ -207,7 +166,6 @@ MessagesInterval:
 #     Random -> Randomize the characters with strikethrough
 #             effect
 Captcha:
-  Location: "actionbar"
   Enabled: false
   Difficulty:
     Length: 8

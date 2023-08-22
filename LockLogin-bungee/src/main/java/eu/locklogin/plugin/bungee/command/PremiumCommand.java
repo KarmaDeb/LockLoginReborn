@@ -14,15 +14,18 @@ package eu.locklogin.plugin.bungee.command;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.command.util.SystemCommand;
 import eu.locklogin.plugin.bungee.util.player.User;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -61,42 +64,57 @@ public class PremiumCommand extends Command {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
+        sender.sendMessage(TextComponent.fromLegacyText(StringUtils.toColor(messages.prefix() + properties.
+                getProperty(
+                        "processing_async",
+                        "&dProcessing {0} command, please wait for feedback")
+                .replace("{0}", "locklogin"))));
         if (sender instanceof ProxiedPlayer) {
             ProxiedPlayer player = (ProxiedPlayer) sender;
             User user = new User(player);
 
             if (user.getSession().isValid()) {
                 PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
-                UUID online_uuid = UUIDUtil.fetch(player.getName(), UUIDType.ONLINE);
-                UUID offline_uuid = UUIDUtil.fetch(player.getName(), UUIDType.OFFLINE);
+                MineAPI.fetch(player.getUniqueId()).whenComplete((oka) -> {
+                    UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
+                    UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
 
-                if (online_uuid.equals(offline_uuid)) {
-                    user.send(messages.prefix() + messages.premiumFailAuth());
-                } else {
-                    if (database.isPremium(online_uuid)) {
-                        if (database.setPremium(online_uuid, false)) {
-                            user.kick(messages.premiumDisabled());
-                        } else {
-                            user.send(messages.prefix() + messages.premiumError());
-                        }
+                    if (online_uuid == null) online_uuid = player.getUniqueId();
+                    if (offline_uuid == null) offline_uuid = player.getUniqueId();
+
+                    if (online_uuid.equals(offline_uuid)) {
+                        user.send(messages.prefix() + messages.premiumFailAuth());
                     } else {
-                        if (confirmation.contains(player.getUniqueId())) {
-                            confirmation.remove(player.getUniqueId());
+                        if (database.isPremium(online_uuid)) {
+                            if (database.setPremium(online_uuid, false)) {
+                                ClientSession session = user.getSession();
+                                session.setPinLogged(false);
+                                session.set2FALogged(false);
+                                session.setLogged(false);
 
-                            if (database.setPremium(online_uuid, true)) {
-                                user.kick(messages.premiumEnabled());
+                                user.kick(messages.premiumDisabled());
                             } else {
                                 user.send(messages.prefix() + messages.premiumError());
                             }
                         } else {
-                            user.send(messages.premiumWarning());
-                            confirmation.add(player.getUniqueId());
-                            plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                            if (confirmation.contains(player.getUniqueId())) {
                                 confirmation.remove(player.getUniqueId());
-                            }, 10, TimeUnit.SECONDS);
+
+                                if (database.setPremium(online_uuid, true)) {
+                                    user.kick(messages.premiumEnabled());
+                                } else {
+                                    user.send(messages.prefix() + messages.premiumError());
+                                }
+                            } else {
+                                user.send(messages.premiumWarning());
+                                confirmation.add(player.getUniqueId());
+                                plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                                    confirmation.remove(player.getUniqueId());
+                                }, 10, TimeUnit.SECONDS);
+                            }
                         }
                     }
-                }
+                });
             } else {
                 user.send(messages.prefix() + properties.getProperty("session_not_valid", "&5&oYour session is invalid, try leaving and joining the server again"));
             }

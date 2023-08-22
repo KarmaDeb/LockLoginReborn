@@ -7,18 +7,16 @@ import lombok.experimental.Accessors;
 /**
  * Permissions configuration
  */
+@Getter
 @AllArgsConstructor
 public class PermissionConfig {
 
-    @Getter
     @Accessors(fluent = true)
     private final boolean block_operator;
 
-    @Getter
     @Accessors(fluent = true)
     private final boolean remove_permissions;
-
-    @Getter
+    
     @Accessors(fluent = true)
     private final boolean allow_wildcard;
 }

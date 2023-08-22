@@ -10,22 +10,16 @@ import eu.locklogin.api.common.utils.dependencies.DependencyManager;
 import eu.locklogin.api.common.utils.dependencies.PluginDependency;
 import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.common.web.STFetcher;
-import eu.locklogin.api.common.web.services.LockLoginSocket;
-import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.module.LoadRule;
 import eu.locklogin.api.module.plugin.api.event.plugin.PluginStatusChangeEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.OpContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
-import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.plugin.PluginLicenseProvider;
-import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
@@ -33,8 +27,6 @@ import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -45,23 +37,23 @@ import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
 
 public class MainBootstrap {
 
     private final Main loader;
 
     public MainBootstrap(final JavaPlugin main) {
-
         loader = (Main) main;
 
         try {
@@ -197,12 +189,9 @@ public class MainBootstrap {
                 player.performCommand(exec + cmd_id + " ");
             }
         };
-        Consumer<PermissionContainer> hasPermission = container -> {
-            UUID id = container.getAttachment().getUUID();
-
+        BiFunction<UUID, PermissionObject, Boolean> hasPermission = (id, permission) -> {
             Player player = loader.getServer().getPlayer(id);
             if (player != null) {
-                PermissionObject permission = container.getPermission();
                 Permission tmp;
 
                 switch (permission.getCriteria()) {
@@ -217,16 +206,18 @@ public class MainBootstrap {
                         tmp = new Permission(permission.getPermission(), PermissionDefault.OP);
                 }
 
-                container.setResult(player.hasPermission(tmp));
+                return player.hasPermission(tmp);
             }
-        };
-        Consumer<OpContainer> opContainer = container -> {
-            UUID id = container.getAttachment().getUUID();
 
+            return false;
+        };
+        Function<UUID, Boolean> opContainer = id -> {
             Player player = loader.getServer().getPlayer(id);
             if (player != null) {
-                container.setResult(player.isOp() || player.hasPermission("*") || player.hasPermission("'*'"));
+                return player.isOp() || player.hasPermission("*") || player.hasPermission("'*'");
             }
+
+            return false;
         };
         @SuppressWarnings("unused")
         BiConsumer<String, byte[]> onDataSend = BungeeSender::sendModule; //I may use this in a future
@@ -268,53 +259,7 @@ public class MainBootstrap {
                 LockLogin.getLoader().loadModule(file, LoadRule.POSTPLUGIN);
             } while (iterator.hasNext());
         }
-
-        CurrentPlatform.setLicenseProvider(new LockLoginSocket());
-
-        Path license = plugin.getDataPath().resolve("cache").resolve("license.dat");
-        if (!Files.exists(license)) {
-            plugin.console().send("License file not found, trying to export from internal", Level.WARNING);
-            InputStream internal = getClass().getResourceAsStream("/license.dat");
-            if (internal != null) {
-                try {
-                    KarmaMain mn = new KarmaMain(internal);
-                    String data = mn.get("license").getAsString();
-
-                    byte[] real = Base64.getDecoder().decode(data);
-                    PathUtilities.create(license);
-
-                    Files.write(license, real);
-                } catch (Throwable ex) {
-                    ex.printStackTrace();
-                }
-            } else {
-                plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-                    License installed = CurrentPlatform.getLicense();
-                    if (installed == null) {
-                        PluginConfiguration config = CurrentPlatform.getConfiguration();
-                        if (config != null && config.isBungeeCord()) {
-                            plugin.console().send("IMPORTANT! Please synchronize this server with your proxy license (/locklogin sync) or install a license (/locklogin install) and synchronize the installed license with your network to enable LockLogin BungeeCord", Level.GRAVE);
-                        }
-                    }
-                }, 0, 20 * 30);
-            }
-        }
-
-        if (Files.exists(license)) {
-            PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
-            plugin.console().send("Validating plugin license, please wait...", Level.INFO);
-            License provided = provider.fetch(license);
-
-            if (provided != null) {
-                provided.setInstallLocation(plugin.getDataPath().resolve("cache"));
-                try {
-                    JarManager.changeField(CurrentPlatform.class, "current_license", provided);
-                } catch (Throwable ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }
-
+        
         AllowedCommand.scan();
         Manager.initialize();
     }

@@ -13,6 +13,7 @@ package eu.locklogin.plugin.bukkit.util.files.data;
 
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
+import eu.locklogin.api.security.LockLoginRuntime;
 import eu.locklogin.plugin.bukkit.LockLogin;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.BungeeDataStorager;
 import eu.locklogin.plugin.bukkit.util.player.User;
@@ -35,6 +36,14 @@ import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 public final class RestartCache {
 
     private final KarmaMain cache = new KarmaMain(LockLogin.plugin, "plugin.cache", "plugin", "updater", "cache");
+
+    static {
+        LockLoginRuntime.checkSecurity(false);
+    }
+
+    public RestartCache() {
+        LockLoginRuntime.checkSecurity(false);
+    }
 
     /**
      * Store the sessions into the cache file

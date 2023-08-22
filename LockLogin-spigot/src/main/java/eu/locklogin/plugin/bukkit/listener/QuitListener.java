@@ -17,9 +17,12 @@ package eu.locklogin.plugin.bukkit.listener;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserQuitEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
+import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
@@ -28,8 +31,10 @@ import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import eu.locklogin.plugin.bukkit.util.player.UserDatabase;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.worker.AsyncLateScheduler;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -51,11 +56,17 @@ public final class QuitListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
+        PluginMessages messages = CurrentPlatform.getMessages();
+
         if (!kicked.contains(player.getUniqueId())) {
             User user = new User(player);
             ClientSession session = user.getSession();
 
             LateScheduler<Event> result = new AsyncLateScheduler<>();
+
+            ModulePlayer module = user.getModule();
+            String message = messages.playerLeave(module);
+            if (!StringUtils.isNullOrEmpty(message)) e.setQuitMessage("");
 
             user.restorePotionEffects();
             tryAsync(TaskTarget.EVENT, () -> {
@@ -67,10 +78,8 @@ public final class QuitListener implements Listener {
                     }
 
                     if (user.isLockLoginUser()) {
-                        if (!config.isBungeeCord()) {
-                            SessionKeeper keeper = new SessionKeeper(user.getModule());
-                            keeper.store();
-                        }
+                        SessionKeeper keeper = new SessionKeeper(user.getModule());
+                        keeper.store();
 
                         //Last location will always be saved since if the server
                         //owner wants to enable it, it would be good to see
@@ -79,6 +88,14 @@ public final class QuitListener implements Listener {
                         if (Spawn.isAway(player)) {
                             LastLocation last_loc = new LastLocation(player);
                             last_loc.save();
+                        }
+
+                        if (session.isLogged() && session.isTempLogged()) {
+                            if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                                if (!StringUtils.isNullOrEmpty(message)) {
+                                    Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                                }
+                            }
                         }
 
                         session.invalidate();
@@ -108,6 +125,14 @@ public final class QuitListener implements Listener {
                         LastLocation last_loc = new LastLocation(player);
                         last_loc.save();
 
+                        if (session.isLogged() && session.isTempLogged()) {
+                            if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                                if (!StringUtils.isNullOrEmpty(message)) {
+                                    Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                                }
+                            }
+                        }
+
                         session.invalidate();
                         session.setLogged(false);
                         session.setPinLogged(false);
@@ -131,12 +156,18 @@ public final class QuitListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onKick(PlayerKickEvent e) {
         Player player = e.getPlayer();
+        PluginMessages messages = CurrentPlatform.getMessages();
+
+        User user = new User(player);
+        ModulePlayer module = user.getModule();
+        String message = messages.playerLeave(module);
+        if (!StringUtils.isNullOrEmpty(message)) e.setLeaveMessage("");
+
         kicked.add(player.getUniqueId());
 
         LateScheduler<Event> result = new AsyncLateScheduler<>();
         tryAsync(TaskTarget.EVENT, () -> {
             PluginConfiguration config = CurrentPlatform.getConfiguration();
-            User user = new User(player);
 
             user.restorePotionEffects();
             if (!config.isBungeeCord()) {
@@ -145,10 +176,8 @@ public final class QuitListener implements Listener {
                 }
 
                 if (user.isLockLoginUser()) {
-                    if (!config.isBungeeCord()) {
-                        SessionKeeper keeper = new SessionKeeper(user.getModule());
-                        keeper.store();
-                    }
+                    SessionKeeper keeper = new SessionKeeper(user.getModule());
+                    keeper.store();
 
                     //Last location will always be saved since if the server
                     //owner wants to enable it, it would be good to see
@@ -160,6 +189,15 @@ public final class QuitListener implements Listener {
                     }
 
                     ClientSession session = user.getSession();
+
+                    if (session.isLogged() && session.isTempLogged()) {
+                        if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
+                    }
+
                     session.invalidate();
                     session.setLogged(false);
                     session.setPinLogged(false);
@@ -187,6 +225,14 @@ public final class QuitListener implements Listener {
                     //location problems
                     LastLocation last_loc = new LastLocation(player);
                     last_loc.save();
+
+                    if (session.isLogged() && session.isTempLogged()) {
+                        if (!module.hasPermission(PluginPermissions.leave_silent())) {
+                            if (!StringUtils.isNullOrEmpty(message)) {
+                                Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                            }
+                        }
+                    }
 
                     session.invalidate();
                     session.setLogged(false);

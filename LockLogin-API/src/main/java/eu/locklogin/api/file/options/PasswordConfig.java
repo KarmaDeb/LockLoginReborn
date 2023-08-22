@@ -9,7 +9,10 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Password configuration

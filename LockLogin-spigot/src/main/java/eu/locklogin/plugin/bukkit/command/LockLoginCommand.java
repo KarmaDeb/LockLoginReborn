@@ -14,7 +14,6 @@ package eu.locklogin.plugin.bukkit.command;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.plugin.ComponentFactory;
 import eu.locklogin.api.file.PluginMessages;
@@ -25,8 +24,6 @@ import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.updater.JavaModuleVersion;
-import eu.locklogin.api.plugin.PluginLicenseProvider;
-import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.security.backup.BackupStorage;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -35,7 +32,6 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.plugin.FileReloader;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
 import eu.locklogin.plugin.bukkit.util.player.User;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -51,10 +47,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -416,7 +410,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                 });
                                 break;
                             case "install": {
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license == null) {
                                     PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
                                     license = provider.request();
@@ -440,21 +434,23 @@ public final class LockLoginCommand implements CommandExecutor {
                                     }
                                 } else {
                                     console.send(messages.prefix() + "&5&oCannot request a license");
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                                 break;
                             case "sync": {
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license == null) {
                                     console.send(messages.prefix() + "&5&lYou don't have a license to synchronize with!");
                                 } else {
                                     console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync with another server, remove the current license (&7/locklogin uninstall&5&l).");
                                     console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                                 break;
                             case "uninstall": {
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license != null) {
                                     if (confirm_uninstall) {
                                         Path file = license.getLocation().resolve("license.dat");
@@ -483,7 +479,8 @@ public final class LockLoginCommand implements CommandExecutor {
                                     }
                                 } else {
                                     console.send(messages.prefix() + "&5&oYou don't have any license to install");
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                                 break;
                             default:
@@ -533,7 +530,7 @@ public final class LockLoginCommand implements CommandExecutor {
                                 }
                                 break;
                             case "sync": {
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license == null) {
                                     PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
                                     license = provider.sync(args[1]);
@@ -555,7 +552,8 @@ public final class LockLoginCommand implements CommandExecutor {
                                 } else {
                                     console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync another license, remove the current license (&7/locklogin uninstall&5&l).");
                                     console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                         }
                         break;
@@ -662,7 +660,7 @@ public final class LockLoginCommand implements CommandExecutor {
 
                         switch (args[0].toLowerCase()) {
                             case "install": {
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license == null) {
                                     try {
                                         UUID id = UUID.fromString(key);
@@ -688,11 +686,12 @@ public final class LockLoginCommand implements CommandExecutor {
                                     }
                                 } else {
                                     console.send(messages.prefix() + "&5&oCannot request a license");
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                             break;
                             case "sync":{
-                                License license = CurrentPlatform.getLicense();
+                                /*License license = CurrentPlatform.getLicense();
                                 if (license == null) {
                                     PluginLicenseProvider provider = CurrentPlatform.getLicenseProvider();
                                     license = provider.sync(key, user, pass);
@@ -714,7 +713,8 @@ public final class LockLoginCommand implements CommandExecutor {
                                 } else {
                                     console.send(messages.prefix() + "&5&lYou already have a license! If you want to sync with another server, remove the current license (&7/locklogin uninstall&5&l).");
                                     console.send(messages.prefix() + "&aIf you want to sync this server license with another one, run the command &7/locklogin sync&f {0}&a on the other server", license.syncKey());
-                                }
+                                }*/
+                                console.send(messages.prefix() + "&5&oLockLogin web services has been shutdown");
                             }
                             break;
                         }

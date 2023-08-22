@@ -34,7 +34,7 @@ import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -48,9 +48,8 @@ import java.util.Base64;
 import java.util.Random;
 import java.util.UUID;
 
-import static java.util.Base64.Encoder;
-
 import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
+import static java.util.Base64.Encoder;
 
 /**
  * Part of the code of this class is from:

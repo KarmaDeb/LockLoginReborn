@@ -6,5 +6,6 @@ description: ${project.description}
 softDepends:
   - RedisBungee
   - floodgate
+  - LuckPerms
 depends:
   - KarmaAPI

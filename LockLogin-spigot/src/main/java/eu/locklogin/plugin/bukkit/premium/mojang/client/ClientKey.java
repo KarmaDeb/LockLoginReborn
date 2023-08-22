@@ -24,6 +24,7 @@
 
 package eu.locklogin.plugin.bukkit.premium.mojang.client;
 
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -32,6 +33,7 @@ import java.time.Instant;
 
 @Accessors(fluent = true)
 @Value(staticConstructor = "newInstance")
+@AllArgsConstructor(staticName = "newInstance")
 /**
  * Part of the code of this class is from:
  * <a href="https://github.com/games647/FastLogin/blob/main/bukkit/src/main/java/com/github/games647/fastlogin/bukkit/listener/protocollib/packet/ClientPublicKey.java">FastLogin</a>

@@ -25,7 +25,7 @@ public enum Lang {
     /**
      * LockLogin Spanish language
      */
-    SPANISH(),
+    SPANISH(true, "plugin_messages_spanish"),
     /**
      * LockLogin French language
      */
@@ -51,8 +51,8 @@ public enum Lang {
      */
     COMMUNITY();
 
-    private boolean include_properties = false;
-    private String properties_name = "";
+    private final boolean include_properties;
+    private final String properties_name;
 
     /**
      * Initialize the language
@@ -109,6 +109,8 @@ public enum Lang {
                 return "Hebrew";
             case POLISH:
                 return "Polish";
+            case TURKISH:
+                return "Turkish";
             case COMMUNITY:
             default:
                 return "Community ( " + communityLang + " )";
@@ -133,6 +135,10 @@ public enum Lang {
                 return "zh_CN";
             case HEBREW:
                 return "he_IL";
+            case POLISH:
+                return "pl_PL";
+            case TURKISH:
+                return "tr_TR";
             case COMMUNITY:
             default:
                 return "community_" + communityLang;

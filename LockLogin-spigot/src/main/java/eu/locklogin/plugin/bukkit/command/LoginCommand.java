@@ -17,8 +17,6 @@ package eu.locklogin.plugin.bukkit.command;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.BruteForce;
-import eu.locklogin.api.file.options.PasswordConfig;
-import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.encryption.CryptoFactory;
@@ -27,9 +25,12 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.options.BruteForceConfig;
 import eu.locklogin.api.file.options.LoginConfig;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
@@ -39,6 +40,7 @@ import eu.locklogin.plugin.bukkit.util.inventory.PinInventory;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -129,11 +131,6 @@ public final class LoginCommand implements CommandExecutor {
                                     if (session.isCaptchaLogged()) {
                                         password = args[0];
 
-                                        Password tmp = new Password(null);
-                                        tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
-                                        PasswordConfig passwordConfig = config.passwordConfig();
-                                        Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
-
                                         BruteForce protection = null;
                                         if (player.getAddress() != null)
                                             protection = new BruteForce(player.getAddress().getAddress());
@@ -142,6 +139,46 @@ public final class LoginCommand implements CommandExecutor {
                                             user.send(messages.prefix() + "&cError 52");
                                             return;
                                         }
+
+                                        /*GlobalAccount global = User.getAccount(player.getUniqueId());
+                                        if (global != null && global.enabled() && global.hasPassword()) {
+                                            if (global.authPassword(password)) {
+                                                manager.setPassword(password);
+                                                user.send(messages.prefix() + messages.logged());
+                                            } else {
+                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
+                                                ModulePlugin.callEvent(event);
+
+                                                protection.fail();
+
+                                                BruteForceConfig bruteForce = config.bruteForceOptions();
+                                                LoginConfig loginConfig = config.loginOptions();
+
+                                                if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
+                                                    if (manager.hasPanic()) {
+                                                        protection.panic(player.getUniqueId());
+                                                        user.kick(messages.panicMode());
+                                                    } else {
+                                                        protection.block(bruteForce.getBlockTime());
+                                                        user.kick(messages.ipBlocked(bruteForce.getBlockTime()));
+                                                    }
+                                                } else {
+                                                    if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
+                                                        protection.success();
+                                                        user.kick(event.getAuthMessage());
+                                                    } else {
+                                                        user.send(messages.prefix() + event.getAuthMessage());
+                                                    }
+                                                }
+                                            }
+
+                                            return;
+                                        }*/
+
+                                        Password tmp = new Password(null);
+                                        tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
+                                        PasswordConfig passwordConfig = config.passwordConfig();
+                                        Map.Entry<Boolean, String[]> rs = passwordConfig.check(password);
 
                                         if (protection.isPanicking(player.getUniqueId())) {
                                             user.send(messages.prefix() + messages.panicLogin());
@@ -164,7 +201,7 @@ public final class LoginCommand implements CommandExecutor {
                                                         if (passwordConfig.warn_unsafe()) {
                                                             for (Player online : plugin.getServer().getOnlinePlayers()) {
                                                                 User staff = new User(online);
-                                                                if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                                if (staff.hasPermission(PluginPermissions.warn_password())) {
                                                                     staff.send(messages.prefix() + messages.passwordWarning());
                                                                 }
                                                             }
@@ -189,6 +226,15 @@ public final class LoginCommand implements CommandExecutor {
                                                             config.passwordEncryption().name());
                                                 }
 
+                                                /*if (global != null && global.enabled() && !global.hasPassword()) {
+                                                    String token = "";
+                                                    if (manager.has2FA() && !global.has2FA()) {
+                                                        token = manager.getGAuth();
+                                                    }
+
+                                                    global.define(player.getAddress(), password, "", token, "");
+                                                }*/
+
                                                 if (!manager.has2FA() && !manager.hasPin()) {
                                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, user.getModule(), messages.logged(), null);
                                                     ModulePlugin.callEvent(event);
@@ -205,6 +251,14 @@ public final class LoginCommand implements CommandExecutor {
 
                                                     user.send(messages.prefix() + event.getAuthMessage());
                                                     TransientMap.apply(player);
+
+                                                    ModulePlayer module = user.getModule();
+                                                    if (!module.hasPermission(PluginPermissions.join_silent())) {
+                                                        String message = messages.playerJoin(module);
+                                                        if (!StringUtils.isNullOrEmpty(message)) {
+                                                            Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                                                        }
+                                                    }
                                                 } else {
                                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS_TEMP, user.getModule(), messages.logged(), null);
                                                     ModulePlugin.callEvent(event);

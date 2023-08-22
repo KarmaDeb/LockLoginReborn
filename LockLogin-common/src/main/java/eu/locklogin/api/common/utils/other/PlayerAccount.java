@@ -9,10 +9,12 @@ import eu.locklogin.api.encryption.CryptTarget;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.HashType;
 import eu.locklogin.api.file.PluginConfiguration;
+import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.api.event.user.AccountRemovedEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.security.LockLoginRuntime;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.console.Console;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
@@ -22,10 +24,11 @@ import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,84 +63,6 @@ public final class PlayerAccount extends AccountManager {
     private final static Console console = source.console();
 
     private final KarmaMain manager;
-
-    static {
-        /*Path backup = source.getDataPath().resolve("data").resolve("accounts_backup");
-        Path original = source.getDataPath().resolve("data").resolve("accounts");
-
-        if (Files.exists(original) && !Files.exists(backup)) {
-            boolean success = false;
-            try(Stream<Path> files = Files.list(original)) {
-                AtomicBoolean error = new AtomicBoolean(false);
-                files.forEachOrdered((sub) -> {
-                    Path newPath = backup.resolve(sub.getFileName().toString());
-
-                    try {
-                        PathUtilities.create(newPath);
-                        Files.copy(sub, newPath, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (Throwable fcE) {
-                        error.set(true);
-                    }
-                });
-
-                success = !error.get();
-            } catch (Throwable ex) {
-                source.logger().scheduleLog(Level.GRAVE, ex);
-                source.logger().scheduleLog(Level.INFO, "Failed to copy accounts data to backup");
-            }
-
-            ASCIIArtGenerator generator = new ASCIIArtGenerator();
-            if (success) {
-                generator.print("&c", "ATTENTION", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
-
-                source.console().send("-------------------------------------------");
-                source.console().send("");
-                source.console().send("&eDue to the new file system KarmaAPI introduced");
-                source.console().send("&eand which LockLogin is now using. A backup of all");
-                source.console().send("&ethe player data has been made. If something breaks");
-                source.console().send("&edo not say you lost all your player data. Just restore");
-                source.console().send("&ethe backup data and report the problem to RedDo discord");
-                source.console().send("");
-                source.console().send("&dDiscord: &7{0}", "https://discord.gg/jRFfsdxnJR");
-                source.console().send("&dBackup: &7{0}", PathUtilities.getPrettyPath(backup));
-                source.console().send("");
-                source.console().send("-------------------------------------------");
-            } else {
-                generator.print("&c", "ERROR", 20, ASCIIArtGenerator.ASCIIArtFont.ART_FONT_SANS_SERIF, "*");
-
-                source.console().send("-------------------------------------------");
-                source.console().send("");
-                source.console().send("&eDue to the new file system KarmaAPI introduced");
-                source.console().send("&eand which LockLogin is now using. A backup of all");
-                source.console().send("&ethe player data should have been done automatically");
-                source.console().send("&ebut the plugin couldn't do it. Do it manually by copying");
-                source.console().send("&e{0} &7to&e {1}.", PathUtilities.getPrettyPath(original), PathUtilities.getPrettyPath(backup));
-                source.console().send("&eIf you need help, ask for support in our discord");
-                source.console().send("");
-                source.console().send("&dDiscord: &7{0}", "https://discord.gg/jRFfsdxnJR");
-                source.console().send("");
-                source.console().send("-------------------------------------------");
-
-                source.console().send("");
-                source.console().send("Exiting server as backup couldn't be done", Level.GRAVE);
-
-                try {
-                    Method unload;
-                    if (CurrentPlatform.getPlatform().equals(Platform.BUKKIT)) {
-                        Class<?> bukkitManager = Class.forName("eu.locklogin.module.manager.bukkit.manager.BukkitManager");
-                        unload = bukkitManager.getDeclaredMethod("unload");
-                    } else {
-                        Class<?> bungeeManager = Class.forName("eu.locklogin.module.manager.bungee.manager.BungeeManager");
-                        unload = bungeeManager.getDeclaredMethod("unload");
-                    }
-
-                    unload.invoke(null);
-                } catch (Throwable ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }*/
-    }
 
     /**
      * Initialize the player file
@@ -247,20 +172,29 @@ public final class PlayerAccount extends AccountManager {
                 return false;
             }
         }
+        manager.preCache();
 
         return false;
     }
 
     @Override
-    public boolean remove(final @NotNull String issuer) {
+    public boolean remove(final @NotNull String issuer) throws SecurityException {
+        LockLoginRuntime.checkSecurity(false);
+
         try {
             Event event = new AccountRemovedEvent(this, issuer, null);
             ModulePlugin.callEvent(event);
+            manager.clearCache();
 
-            return Files.deleteIfExists(manager.getDocument());
+            PluginModule module = LockLoginRuntime.getMethodCaller();
+            if (module == null) {
+                return Files.deleteIfExists(manager.getDocument());
+            }
         } catch (Throwable ex) {
             return false;
         }
+
+        return false;
     }
 
     /**
@@ -269,7 +203,9 @@ public final class PlayerAccount extends AccountManager {
      * @param key the key
      * @param value the value
      */
-    public void setRaw(final String key, final String value) {
+    public void setRaw(final String key, final String value) throws SecurityException {
+        LockLoginRuntime.checkSecurity(true);
+
         manager.setRaw(key, value);
         manager.save();
     }
@@ -280,13 +216,25 @@ public final class PlayerAccount extends AccountManager {
      * @param key the key
      * @param value the value
      */
-    public void setRaw(final String key, final boolean value) {
+    public void setRaw(final String key, final boolean value) throws SecurityException {
+        LockLoginRuntime.checkSecurity(true);
+
         manager.setRaw(key, value);
         manager.save();
     }
 
     @Override
-    public void saveUUID(final @NotNull AccountID id) {
+    public void saveUUID(final @NotNull AccountID id) throws SecurityException {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client UUID from {0} to {1}",
+                    module.name(),
+                    getUUID().getId(),
+                    id.getId());
+        }
+
         manager.setRaw("uuid", id.getId());
         manager.save();
     }
@@ -298,6 +246,17 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void set2FA(final boolean status) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client status of {1} from {2} to {3}",
+                    module.name(),
+                    getUUID().getId(),
+                    has2FA(),
+                    status);
+        }
+
         manager.setRaw("2fa", status);
         manager.save();
     }
@@ -309,16 +268,21 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     protected void importFrom(final @NotNull AccountManager account) {
-        if (exists()) {
-            manager.setRaw("player", account.getName());
-            manager.setRaw("uuid", account.getUUID().getId());
-            manager.setRaw("password",account.getPassword());
-            manager.setRaw("token", account.getGAuth());
-            manager.setRaw("pin", account.getPin());
-            manager.setRaw("2fa", account.has2FA());
+        LockLoginRuntime.checkSecurity(false);
 
-            manager.save();
+        manager.setRaw("player", account.getName());
+        manager.setRaw("uuid", account.getUUID().getId());
+        manager.setRaw("password",account.getPassword());
+        manager.setRaw("token", account.getGAuth());
+        manager.setRaw("pin", account.getPin());
+        manager.setRaw("2fa", account.has2FA());
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.console().send("Module {0} called method PlayerAccount#importFrom which has protected access. LockLogin will prevent this from happening in a future", Level.GRAVE, module.name());
         }
+
+        manager.save();
     }
 
     /**
@@ -348,6 +312,17 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setName(final @NotNull String name) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client name of {1} from {2} to {3}",
+                    module.name(),
+                    getUUID().getId(),
+                    getName(),
+                    name);
+        }
+
         manager.setRaw("player", name);
         manager.save();
     }
@@ -370,16 +345,27 @@ public final class PlayerAccount extends AccountManager {
                     if (StringUtils.isNullOrEmpty(id)) {
                         String name = PathUtilities.getName(manager.getDocument(), false);
                         String extension = FileUtilities.getExtension(name);
-                        UUID fixed = UUIDUtil.fromTrimmed(name.replace("." + extension, ""));
+                        UUID fixed = MineAPI.fromTrimmed(name.replace("." + extension, ""));
+                        assert fixed != null;
 
-                        String nick = UUIDUtil.fetchNick(fixed);
+                        String nick = MineAPI.fetchAndWait(fixed).getNick();
                         if (nick != null && !nick.startsWith("Ratelimited")) {
                             setName(nick);
 
+                            UUID gen =  UUID.nameUUIDFromBytes(("OfflinePlayer:" + nick).getBytes());
+
+                            OKARequest oka = MineAPI.fetchAndWait(nick);
+
+                            UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
+                            UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
+
+                            if (online_uuid == null) online_uuid = gen;
+                            if (offline_uuid == null) offline_uuid = gen;
+
                             if (CurrentPlatform.isOnline()) {
-                                id = UUIDUtil.fetch(nick, UUIDType.ONLINE).toString();
+                                id = online_uuid.toString();
                             } else {
-                                id = UUIDUtil.fetch(nick, UUIDType.OFFLINE).toString();
+                                id = offline_uuid.toString();
                             }
 
                             manager.setRaw("uuid", id);
@@ -408,6 +394,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getPassword() {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module =LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} requested password of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         if (manager.isSet("password")) {
             Element<?> element = manager.get("password");
             if (element.isPrimitive()) {
@@ -426,6 +421,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPassword(final String newPassword) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client password of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -450,6 +454,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setUnsafePassword(final @Nullable String newPassword) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client password of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(newPassword).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -464,6 +477,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getGAuth() {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module =LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} requested google auth token of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         if (manager.isSet("token")) {
             Element<?> element = manager.get("token");
             if (element.isPrimitive()) {
@@ -471,7 +493,6 @@ public final class PlayerAccount extends AccountManager {
                 if (primitive.isString()) return primitive.asString();
             }
         }
-
         return "";
     }
 
@@ -482,6 +503,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setGAuth(final String token) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client google auth token of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.setRaw("token", util.toBase64(CryptTarget.PASSWORD));
         manager.save();
@@ -494,6 +524,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setUnsafeGAuth(final @Nullable String token) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client google auth token of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         manager.setRaw("token", util.toBase64(CryptTarget.PASSWORD));
         manager.save();
@@ -506,6 +545,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getPin() {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module =LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} requested pin of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             if (manager.isSet("pin")) {
@@ -527,6 +575,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPin(final String pin) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client pin of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -541,6 +598,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setUnsafePanic(@Nullable String token) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client panic of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(token).unsafe();
         HashType hash = HashType.pickRandom();
 
@@ -555,6 +621,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public @NotNull String getPanic() {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module =LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} requested panic token of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         PluginConfiguration configuration = CurrentPlatform.getConfiguration();
         if (configuration.enablePin()) {
             if (manager.isSet("panic")) {
@@ -576,6 +651,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setPanic(@Nullable String token) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client panic of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory factory = CryptoFactory.getBuilder().withToken(token).withPassword(token).unsafe();
         HashType detected = factory.getTokenHash();
         if (detected.equals(HashType.NONE) || detected.equals(HashType.UNKNOWN)) {
@@ -604,6 +688,15 @@ public final class PlayerAccount extends AccountManager {
      */
     @Override
     public void setUnsafePin(@Nullable String pin) {
+        LockLoginRuntime.checkSecurity(false);
+
+        PluginModule module = LockLoginRuntime.getMethodCaller();
+        if (module != null) {
+            source.logger().scheduleLog(Level.INFO, "Module {0} changed client pin of {1}",
+                    module.name(),
+                    getUUID().getId());
+        }
+
         CryptoFactory util = CryptoFactory.getBuilder().withPassword(pin).unsafe();
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 

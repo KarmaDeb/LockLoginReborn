@@ -21,9 +21,7 @@ import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
 import eu.locklogin.api.module.plugin.client.ActionBarSender;
 import eu.locklogin.api.module.plugin.client.MessageSender;
-import eu.locklogin.api.module.plugin.client.OpContainer;
 import eu.locklogin.api.module.plugin.client.TitleSender;
-import eu.locklogin.api.module.plugin.client.permission.PermissionContainer;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -34,10 +32,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
-import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * ModulePlayer class
@@ -58,15 +57,17 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
     @SuppressWarnings("FieldMayBeFinal")
     private static Consumer<ModulePlayer> onClose = null;
     @SuppressWarnings("FieldMayBeFinal")
-    private static Consumer<PermissionContainer> hasPermission = null;
+    private static BiFunction<UUID, PermissionObject, Boolean> hasPermission = null;
     @SuppressWarnings("FieldMayBeFinal")
-    private static Consumer<OpContainer> opContainer = null;
+    private static Function<UUID, Boolean> opContainer = null;
 
     private final String name;
     private final UUID uniqueId;
     private final ClientSession session;
     private final AccountManager manager;
     private final InetAddress address;
+
+    private TargetServer server;
 
     /**
      * Initialize the player object
@@ -224,13 +225,11 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @return if the player has the specified permission
      */
     public boolean hasPermission(final PermissionObject permission) {
-        PermissionContainer container = new PermissionContainer(this, permission);
-
         if (hasPermission != null) {
-            hasPermission.accept(container);
+            return hasPermission.apply(uniqueId, permission);
         }
 
-        return container.getResult();
+        return false;
     }
 
     /**
@@ -239,12 +238,11 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @return if the player is an operator
      */
     public boolean isOp() {
-        OpContainer container = new OpContainer(this);
         if (opContainer != null) {
-            opContainer.accept(container);
+            return opContainer.apply(uniqueId);
         }
 
-        return container.getResult();
+        return false;
     }
 
     /**
@@ -253,19 +251,9 @@ public final class ModulePlayer extends ModuleSender implements Serializable {
      * @return the player server
      */
     public @Nullable TargetServer getServer() {
-        TargetServer current = null;
-        Collection<TargetServer> servers = CurrentPlatform.getServer().getServers();
-
-        for (TargetServer server : servers) {
-            if (server.getOnlinePlayers().contains(this)) {
-                current = server;
-                break;
-            }
-        }
-
-        return current;
+        return server;
     }
-    
+
     /**
      * Send a message to the player
      *

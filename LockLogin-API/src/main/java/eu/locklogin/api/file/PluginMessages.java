@@ -4,6 +4,7 @@ import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.file.pack.Alias;
 import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.client.permission.PermissionObject;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModuleSender;
 import eu.locklogin.api.security.PasswordAttribute;
 import eu.locklogin.api.util.enums.CheckType;
@@ -202,6 +203,229 @@ public abstract class PluginMessages {
         String str = msg.getString("Back", "&eBack");
 
         return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param player message replace
+     * @return plugin message
+     */
+    public final String playerJoin(final ModulePlayer player) {
+        String str = msg.getString("PlayerJoin", "&8&l[&e&o+&8&l] &f{player}");
+        return parse(str.replace("{player}", player.getName()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param player message replace
+     * @return plugin message
+     */
+    public final String playerLeave(final ModulePlayer player) {
+        String str = msg.getString("PlayerLeave", "&8&l[&3&o-&8&l] &f{player}");
+        return parse(str.replace("{player}", player.getName()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalSuitable() {
+        List<String> messages = msg.getStringList("GlobalSuitable");
+        StringBuilder builder = new StringBuilder();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        for (String str : messages) {
+            builder.append(str
+                    .replace("{ServerName}", config.serverName())).append("\n");
+        }
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalEnabled() {
+        List<String> messages = msg.getStringList("GlobalEnabled");
+        StringBuilder builder = new StringBuilder();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        for (String str : messages) {
+            builder.append(str
+                    .replace("{ServerName}", config.serverName())).append("\n");
+        }
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalDisabled() {
+        List<String> messages = msg.getStringList("GlobalDisabled");
+        StringBuilder builder = new StringBuilder();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        for (String str : messages) {
+            builder.append(str
+                    .replace("{ServerName}", config.serverName())).append("\n");
+        }
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalServerDisabled() {
+        String str = msg.getString("GlobalServerDisabled", "&5&oThis server has disabled global accounts!");
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalLogged() {
+        String str = msg.getString("GlobalLogged", "&dYour session has been logged by global account system");
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalIpChanged() {
+        String str = msg.getString("GlobalIpChanged", "&dAuthentication is required because your session has expired");
+        return parse(str);
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalRegister() {
+        List<String> messages = msg.getStringList("GlobalRegistered");
+        StringBuilder builder = new StringBuilder();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+        for (String str : messages) {
+            builder.append(str
+                    .replace("{ServerName}", config.serverName())).append("\n");
+        }
+
+        return parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalTitle(final long time) {
+        String str = msg.getString("GlobalTitle", "&eGlobal Account");
+
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (time <= 59) {
+            format = time + " " + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + " " + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String globalSubtitle(final long time) {
+        String str = msg.getString("GlobalSubtitle", "&7{time}&e to login");
+
+        long minutes = TimeUnit.SECONDS.toMinutes(time);
+        long hours = TimeUnit.SECONDS.toHours(time);
+
+        String format;
+        if (time <= 59) {
+            format = time + " " + StringUtils.stripColor(properties.getProperty("second", "second(s)"));
+        } else {
+            if (minutes <= 59) {
+                format = minutes + " " + StringUtils.stripColor(properties.getProperty("minute", "minute(s)")) + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor(properties.getProperty("second_short", "sec(s)"));
+            } else {
+                format = hours + " " + StringUtils.stripColor(properties.getProperty("hour", "hour(s)")) + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor(properties.getProperty("minute_short", "min(s)"));
+            }
+        }
+
+        return parse(str.replace("{time}", format));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String forceRegisterUsage() {
+        return parse(msg.getString("ForceRegisterUsage", "&5&oPlease, use /account register <player> <password>"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String forceRegisterError(final String player) {
+        String str = msg.getString("ForceRegisterError", "&5&oAn unknown error occurred while trying to create account of {player}");
+        return parse(str.replace("{player}", player));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String forceRegisterExists(final String player) {
+        String str = msg.getString("ForceRegisterExists", "&5&oAn account for player {player} already exists on the server!");
+        return parse(str.replace("{player}", player));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String forceRegisterSuccess(final String player) {
+        String str = msg.getString("ForceRegisterSuccess", "&dSuccessfully registered user {player}");
+        return parse(str.replace("{player}", player));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    public final String forceRegisterOnline(final String player) {
+        String str = msg.getString("ForceRegisterOnline", "&5&oCannot register an online user!");
+        return parse(str.replace("{player}", player));
     }
 
     /**
@@ -556,7 +780,6 @@ public abstract class PluginMessages {
      */
     public String login() {
         String str = msg.getString("Login", "&5&oPlease, use /login <password> <captcha>");
-
         return parse(str.replace("{captcha}", "<captcha>"));
     }
 

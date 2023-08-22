@@ -31,6 +31,14 @@ public abstract class PluginConfiguration {
     public abstract boolean bedrockLogin();
 
     /**
+     * Get if the server allows the use of
+     * global accounts
+     *
+     * @return if the server uses global accounts
+     */
+    public abstract boolean globalAccounts();
+
+    /**
      * Get if the plugin share statistics with bStats
      *
      * @return if the plugin will share his statistics

@@ -26,6 +26,7 @@ softdepend:
   - PlaceholderAPI
   - ProtocolLib
   - floodgate
+  - LuckPerms
 
 
 
@@ -96,6 +97,12 @@ permissions:
         default: false
     description: The permission required to reload configuration/messages files
     default: false
+  locklogin.user.join:
+    description: The permission to hide the join message
+    default: op
+  locklogin.user.leave:
+    description: The permission to hide the exit message
+    default: op
   locklogin.location:
     children:
       locklogin.location.spawn:
@@ -125,9 +132,17 @@ permissions:
       locklogin.account.close:
         description: The permission required to close a client session
         default: false
+        children:
+          locklogin.account.close.self:
+            description: The permission required to close your own session
+            default: true
       locklogin.account.remove:
         description: The permission required to remove a client account
         default: false
+        children:
+          locklogin.account.remove.self:
+            description: The permission required to remove your own account
+            default: true
       locklogin.account.unlock:
         description: The permission required to unlock a client account after being removed
         default: false
@@ -187,6 +202,13 @@ permissions:
         default: false
     description: The permission required for web related options in LockLogin
     default: false
-  locklogin.unsafe.warning:
-    description: The permission required to be notified when a player uses an unsafe password
+  locklogin.unsafe:
+    description: The permissions required to see unsafe warnings
     default: op
+    children:
+      locklogin.unsafe.password:
+        description: The permissions to see a warning when a client sets an unsafe password
+        default: false
+      locklogin.unsafe.bungee:
+        description: The permissions to see a warning when the bungeecord communication key is empty
+        default: op

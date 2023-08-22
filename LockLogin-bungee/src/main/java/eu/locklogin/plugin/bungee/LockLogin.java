@@ -16,10 +16,10 @@ package eu.locklogin.plugin.bungee;
 
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
-import eu.locklogin.api.common.utils.plugin.MessageQueue;
 import eu.locklogin.api.common.utils.version.VersionID;
 import eu.locklogin.api.file.pack.PluginProperties;
 import eu.locklogin.api.module.plugin.javamodule.ModuleLoader;
+import eu.locklogin.api.module.plugin.javamodule.server.MessageQue;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.console.Console;
@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LockLogin {
 
-    private final static Map<String, MessageQueue> queues = new ConcurrentHashMap<>();
+    private final static Map<String, MessageQue> queues = new ConcurrentHashMap<>();
 
     public static Main plugin = (Main) ProxyServer.getInstance().getPluginManager().getPlugin("LockLogin");
 
@@ -47,14 +47,12 @@ public class LockLogin {
     public static String name = plugin.name();
     public static String update = FileInfo.getUpdateName(null);
 
-    public static MessageQueue fetchQueue(final TargetServer server) {
-        MessageQueue stored = queues.getOrDefault(server.getName(), null);
-        if (stored == null) {
-            stored = new MessageQueue(server);
-            queues.put(server.getName(), stored);
-        }
+    public static MessageQue fetchQueue(final TargetServer server) {
+        return queues.getOrDefault(server.getName(), null);
+    }
 
-        return stored;
+    public static void assignQueue(final TargetServer server, final MessageQue queue) {
+        queues.put(server.getName(), queue);
     }
 
     public static VersionID versionID = new VersionID(plugin.version(), update).generate();

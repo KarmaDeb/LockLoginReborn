@@ -23,6 +23,7 @@ import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import org.bukkit.command.BlockCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -41,7 +42,7 @@ import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
 public final class ChatListener implements Listener {
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
         User user = new User(player);
@@ -77,7 +78,7 @@ public final class ChatListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent e) {
         Player player = e.getPlayer();
         User user = new User(player);
@@ -88,7 +89,7 @@ public final class ChatListener implements Listener {
 
         String command = getCommand(e.getMessage());
         if (session.isValid()) {
-            if (CommandProxy.mustMask(command)) {
+            if (CommandProxy.mustMask(e.getMessage())) {
                 UUID mask_id = CommandProxy.mask(e.getMessage(), getArguments(e.getMessage()));
                 e.setMessage(CommandProxy.getCommand(mask_id) + " " + mask_id);
             }
@@ -119,17 +120,19 @@ public final class ChatListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onConsoleCommand(ServerCommandEvent e) {
+        if (e == null) return;
+        if (e.getSender() instanceof BlockCommandSender) return;
+
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (!config.isBungeeCord()) {
-            if (ModulePlugin.parseCommand(e.getCommand())) {
+            if (ModulePlugin.parseCommand(e.getSender().getClass().toString(), e.getCommand())) {
                 PluginModule module = ModulePlugin.getCommandOwner(e.getCommand());
 
                 if (module != null) {
                     try {
                         e.setCancelled(true);
-
                         ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
                     } catch (Throwable ex) {
                         //This is on legacy spigot, I hate doing that honestly
@@ -143,7 +146,6 @@ public final class ChatListener implements Listener {
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             //I hate doing that...
                             System.setOut(original);
-
                             ModulePlugin.fireCommand(module.getConsole(), e.getCommand(), e);
                         }, 5);
                     }
@@ -167,16 +169,25 @@ public final class ChatListener implements Listener {
     private String getCommand(final String cmd) {
         String tmpCmd = cmd;
 
-        if (tmpCmd.contains(":")) {
-            try {
-                String[] cmdData = tmpCmd.split(":");
 
-                if (cmdData[0] != null && !cmdData[0].isEmpty()) {
-                    if (cmdData[1] != null && !cmdData[1].isEmpty()) {
-                        tmpCmd = cmdData[1];
+        if (tmpCmd.contains(":")) {
+            String preData = tmpCmd;
+
+            if (tmpCmd.contains(" ")) {
+                preData = tmpCmd.split(" ")[0];
+            }
+
+            if (preData.contains(":")) {
+                try {
+                    String[] cmdData = preData.split(":");
+
+                    if (cmdData[0] != null && !cmdData[0].isEmpty()) {
+                        if (cmdData[1] != null && !cmdData[1].isEmpty()) {
+                            tmpCmd = cmdData[1];
+                        }
                     }
+                } catch (Throwable ignored) {
                 }
-            } catch (Throwable ignored) {
             }
         }
 

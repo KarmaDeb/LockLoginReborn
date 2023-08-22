@@ -65,150 +65,171 @@ public abstract class AccountManager implements Serializable {
      *
      * @param issuer the account removal issuer
      * @return if the account could be removed
+     * @throws SecurityException if unauthorized access
      */
-    public abstract boolean remove(final @NotNull String issuer);
+    public abstract boolean remove(final @NotNull String issuer) throws SecurityException;
 
     /**
      * Save the account id
      *
      * @param id the account id
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void saveUUID(final @NotNull AccountID id);
+    public abstract void saveUUID(final @NotNull AccountID id) throws SecurityException;
 
     /**
      * Save the account 2FA status
      *
      * @param status the account 2FA status
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void set2FA(final boolean status);
+    public abstract void set2FA(final boolean status) throws SecurityException;
 
     /**
      * Import the values from the specified account manager
      *
      * @param account the account
+     * @throws SecurityException if unauthorized access
      */
-    protected abstract void importFrom(final @NotNull AccountManager account);
+    protected abstract void importFrom(final @NotNull AccountManager account) throws SecurityException;
 
     /**
      * Get the account id
      *
      * @return the account id
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull AccountID getUUID();
+    public abstract @NotNull AccountID getUUID() throws SecurityException;
 
     /**
      * Get the account name
      *
      * @return the account name
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull String getName();
+    public abstract @NotNull String getName() throws SecurityException;
 
     /**
      * Save the account name
      *
      * @param name the account name
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setName(final @NotNull String name);
+    public abstract void setName(final @NotNull String name) throws SecurityException;
 
     /**
      * Save the account password unsafely
      *
      * @param password the account password
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setUnsafePassword(final @Nullable String password);
+    public abstract void setUnsafePassword(final @Nullable String password) throws SecurityException;
 
     /**
      * Get the account password
      *
      * @return the account password
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull String getPassword();
+    public abstract @NotNull String getPassword() throws SecurityException;
 
     /**
      * Save the account password
      *
      * @param password the account password
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setPassword(final @Nullable String password);
+    public abstract void setPassword(final @Nullable String password) throws SecurityException;
 
     /**
      * Get if the account is registered
      *
      * @return if the account is registered
+     * @throws SecurityException if unauthorized access
      */
-    public abstract boolean isRegistered();
+    public abstract boolean isRegistered() throws SecurityException;
 
     /**
      * Save the account unsafe google auth token
      *
      * @param token the account google auth token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setUnsafeGAuth(final @Nullable String token);
+    public abstract void setUnsafeGAuth(final @Nullable String token) throws SecurityException;
 
     /**
      * Get the account google auth token
      *
      * @return the account google auth
      * token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull String getGAuth();
+    public abstract @NotNull String getGAuth() throws SecurityException;
 
     /**
      * Save the account google auth token
      *
      * @param token the account google auth
      *              token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setGAuth(final @Nullable String token);
+    public abstract void setGAuth(final @Nullable String token) throws SecurityException;
 
     /**
      * Save the account unsafe pin
      *
      * @param pin the account pin
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setUnsafePin(final @Nullable String pin);
+    public abstract void setUnsafePin(final @Nullable String pin) throws SecurityException;
 
     /**
      * Get the account pin
      *
      * @return the account pin
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull String getPin();
+    public abstract @NotNull String getPin() throws SecurityException;
 
     /**
      * Save the account pin
      *
      * @param pin the account pin
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setPin(final @Nullable String pin);
+    public abstract void setPin(final @Nullable String pin) throws SecurityException;
 
     /**
      * Save the account panic unsafe token
      *
      * @param token the account panic token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setUnsafePanic(final @Nullable String token);
+    public abstract void setUnsafePanic(final @Nullable String token) throws SecurityException;
 
     /**
      * Get the account panic token
      *
      * @return the account panic token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull String getPanic();
+    public abstract @NotNull String getPanic() throws SecurityException;
 
     /**
      * Save the account panic token
      *
      * @param token the panic token
+     * @throws SecurityException if unauthorized access
      */
-    public abstract void setPanic(final @Nullable String token);
+    public abstract void setPanic(final @Nullable String token) throws SecurityException;
 
     /**
      * Get if the account has pin
      *
      * @return if the account has pin
+     * @throws SecurityException if unauthorized access
      */
-    public boolean hasPin() {
+    public boolean hasPin() throws SecurityException {
         String pin = getPin();
         return !StringUtils.isNullOrEmpty(pin);
     }
@@ -217,15 +238,17 @@ public abstract class AccountManager implements Serializable {
      * Check if the account has 2FA
      *
      * @return if the account has 2FA
+     * @throws SecurityException if unauthorized access
      */
-    public abstract boolean has2FA();
+    public abstract boolean has2FA() throws SecurityException;
 
     /**
      * Get if the account has panic token
      *
      * @return if the account has panic token
+     * @throws SecurityException if unauthorized access
      */
-    public boolean hasPanic() {
+    public boolean hasPanic() throws SecurityException {
         String panic = getPanic();
         return !StringUtils.isNullOrEmpty(panic);
     }
@@ -234,16 +257,18 @@ public abstract class AccountManager implements Serializable {
      * Get the account creation time
      *
      * @return the account created time
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull Instant getCreationTime();
+    public abstract @NotNull Instant getCreationTime() throws SecurityException;
 
     /**
      * Get a list of accounts
      *
-     * @return a list of all the
-     * available accounts
+     * @return a set of all the
+     *         available accounts
+     * @throws SecurityException if unauthorized access
      */
-    public abstract @NotNull Set<AccountManager> getAccounts();
+    public abstract @NotNull Set<AccountManager> getAccounts() throws SecurityException;
 
     /**
      * Get the manager constructor instance

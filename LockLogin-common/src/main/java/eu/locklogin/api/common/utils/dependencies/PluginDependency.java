@@ -18,7 +18,6 @@ import eu.locklogin.api.common.web.ChecksumTables;
 import eu.locklogin.api.module.PluginModule;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import me.lucko.jarrelocator.Relocation;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.io.File;
 import java.net.URL;

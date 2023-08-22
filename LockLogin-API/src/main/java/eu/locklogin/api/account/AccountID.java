@@ -17,8 +17,10 @@ package eu.locklogin.api.account;
 import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
+import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -57,10 +59,27 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      * @return a new account id object
      */
     public static AccountID fromString(final String stringUUID) {
-        UUID result = UUIDUtil.fromTrimmed(stringUUID);
+        UUID result = MineAPI.fromTrimmed(stringUUID);
         assert result != null;
 
         return new AccountID(result);
+    }
+
+    /**
+     * Get an account id object from a string name
+     *
+     * @param username the username
+     * @return the account id object
+     */
+    public static AccountID forUsername(final String username) {
+        OKARequest request = MineAPI.fetchAndWait(username);
+        UUID id = (CurrentPlatform.isOnline() ? request.getUUID(UUIDType.ONLINE) : request.getUUID(UUIDType.OFFLINE));
+
+        if (id == null) {
+            id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
+        }
+
+        return new AccountID(id);
     }
 
     /**

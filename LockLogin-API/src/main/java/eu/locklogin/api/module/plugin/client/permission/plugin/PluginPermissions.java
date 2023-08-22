@@ -38,6 +38,14 @@ public final class PluginPermissions {
         return permission;
     }
 
+    public static PermissionObject join_silent() {
+        return new AdvancedPermission("locklogin.user.join", PermissionDefault.OP, false);
+    }
+
+    public static PermissionObject leave_silent() {
+        return new AdvancedPermission("locklogin.user.leave", PermissionDefault.OP, false);
+    }
+
     public static PermissionObject location() {
         PermissionObject permission = new AdvancedPermission("locklogin.location");
         permission.addChildren(new AdvancedPermission("locklogin.location.spawn", PermissionDefault.FALSE, true));
@@ -94,9 +102,12 @@ public final class PluginPermissions {
     public static PermissionObject account() {
         PermissionObject permission = new AdvancedPermission("locklogin.account");
         permission.addChildren(new AdvancedPermission("locklogin.account.close", PermissionDefault.FALSE, true));
+        permission.addChildren(new AdvancedPermission("locklogin.account.close.self", PermissionDefault.TRUE, true));
         permission.addChildren(new AdvancedPermission("locklogin.account.remove", PermissionDefault.FALSE, true));
+        permission.addChildren(new AdvancedPermission("locklogin.account.remove.self", PermissionDefault.TRUE, true));
         permission.addChildren(new AdvancedPermission("locklogin.account.unlock", PermissionDefault.FALSE, true));
-        permission.addParent(new AdvancedPermission("locklogin.account.switch", PermissionDefault.OP, false));
+        permission.addChildren(new AdvancedPermission("locklogin.account.create", PermissionDefault.OP, true));
+        //permission.addParent(new AdvancedPermission("locklogin.account.switch", PermissionDefault.OP, false));
 
         return permission;
     }
@@ -104,6 +115,15 @@ public final class PluginPermissions {
     public static PermissionObject account_close() {
         PermissionObject permission = new AdvancedPermission("locklogin.account.close", PermissionDefault.FALSE, true);
         permission.addParent(new AdvancedPermission("locklogin.account"));
+        permission.addChildren(new AdvancedPermission("locklogin.account.close.self"));
+
+        return permission;
+    }
+
+    public static PermissionObject account_close_self() {
+        PermissionObject permission = new AdvancedPermission("locklogin.account.close.self", PermissionDefault.TRUE, true);
+        permission.addParent(new AdvancedPermission("locklogin.account"));
+        permission.addParent(new AdvancedPermission("locklogin.account.close"));
 
         return permission;
     }
@@ -115,15 +135,23 @@ public final class PluginPermissions {
         return permission;
     }
 
-    public static PermissionObject account_unlock() {
-        PermissionObject permission = new AdvancedPermission("locklogin.account.unlock", PermissionDefault.FALSE, true);
-        permission.addParent(new AdvancedPermission("locklogin.account.unlock"));
+    public static PermissionObject account_remove_self() {
+        PermissionObject permission = new AdvancedPermission("locklogin.account.remove.self", PermissionDefault.TRUE, true);
+        permission.addParent(new AdvancedPermission("locklogin.account"));
+        permission.addParent(new AdvancedPermission("locklogin.account.remove"));
 
         return permission;
     }
 
-    public static PermissionObject session_switch() {
-        PermissionObject permission = new AdvancedPermission("locklogin.account.switch", PermissionDefault.OP, false);
+    public static PermissionObject account_unlock() {
+        PermissionObject permission = new AdvancedPermission("locklogin.account.unlock", PermissionDefault.FALSE, true);
+        permission.addParent(new AdvancedPermission("locklogin.account"));
+
+        return permission;
+    }
+
+    public static PermissionObject account_register() {
+        PermissionObject permission = new AdvancedPermission("locklogin.account.create", PermissionDefault.OP, true);
         permission.addParent(new AdvancedPermission("locklogin.account"));
 
         return permission;
@@ -259,7 +287,25 @@ public final class PluginPermissions {
         return permission;
     }
 
-    public static PermissionObject warn_unsafe() {
-        return new AdvancedPermission("locklogin.unsafe.warning", PermissionDefault.OP, false);
+    public static PermissionObject warn() {
+        PermissionObject permission = new AdvancedPermission("locklogin.unsafe", PermissionDefault.OP, true);
+        permission.addChildren(new AdvancedPermission("locklogin.unsafe.password", PermissionDefault.FALSE, true));
+        permission.addChildren(new AdvancedPermission("locklogin.unsafe.bungee", PermissionDefault.OP, true));
+
+        return permission;
+    }
+
+    public static PermissionObject warn_password() {
+        PermissionObject permission = new AdvancedPermission("locklogin.unsafe.password", PermissionDefault.FALSE, true);
+        permission.addParent(new AdvancedPermission("locklogin.unsafe"));
+
+        return permission;
+    }
+
+    public static PermissionObject warn_comkey() {
+        PermissionObject permission = new AdvancedPermission("locklogin.unsafe.bungee", PermissionDefault.OP, true);
+        permission.addParent(new AdvancedPermission("locklogin.unsafe"));
+
+        return permission;
     }
 }

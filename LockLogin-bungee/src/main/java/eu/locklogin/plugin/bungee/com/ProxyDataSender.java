@@ -1,39 +1,20 @@
 package eu.locklogin.plugin.bungee.com;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import eu.locklogin.api.common.communication.DataSender;
-import eu.locklogin.api.common.communication.Packet;
 import eu.locklogin.api.common.communication.queue.DataQueue;
-import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
-import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.plugin.bungee.com.queue.MessageQueue;
-import io.socket.client.Ack;
-import io.socket.client.Socket;
-import ml.karmaconfigs.api.common.timer.SchedulerUnit;
-import ml.karmaconfigs.api.common.timer.SourceScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static eu.locklogin.plugin.bungee.LockLogin.*;
 
 @SuppressWarnings("UnstableApiUsage")
 public class ProxyDataSender extends DataSender {
 
     public final Map<String, String> server_maps = new ConcurrentHashMap<>();
 
-    public ProxyDataSender(final SocketClient socket) {
-        SimpleScheduler scheduler = new SourceScheduler(plugin, 1, SchedulerUnit.SECOND, true).multiThreading(true);
-        final Map<Integer, String> pending_confirmation = new ConcurrentHashMap<>();
+    /*public ProxyDataSender(final SocketClient socket) {
+        SimpleScheduler scheduler = new SourceScheduler(plugin, 200, SchedulerUnit.MILLISECOND, true).multiThreading(true);
+        final Set<Integer> pending_confirmation = Collections.newSetFromMap(new ConcurrentHashMap<>());
         final Set<Integer> pre_confirmed = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         Gson gson = new GsonBuilder().setLenient().create();
@@ -46,7 +27,7 @@ public class ProxyDataSender extends DataSender {
                 if (next_data == null) {
                     queue.cancel();
                 } else {
-                    if (ServerDataStorage.needsProxyKnowledge(server) || pending_confirmation.containsValue(server)) {
+                    if (ServerDataStorage.needsProxyKnowledge(server)) {
                         queue.cancel();
                     } else {
                         ByteArrayDataInput in = ByteStreams.newDataInput(next_data.packetData());
@@ -69,7 +50,18 @@ public class ProxyDataSender extends DataSender {
                                         int id = object.get("message").getAsInt();
 
                                         if (!pre_confirmed.contains(id)) { //There may be the case that the confirmation arrives before the ACK
-                                            pending_confirmation.put(id, server);
+                                            pending_confirmation.add(id);
+                                            queue.consume();
+
+                                            SimpleScheduler waiter = new SourceScheduler(plugin, 10, SchedulerUnit.SECOND, false);
+                                            waiter.endAction(() -> {
+                                                if (pending_confirmation.contains(id)) {
+                                                    plugin.console().send("Packet with ID: {0} didn't got a confirmation, re-sending", Level.INFO);
+                                                    queue.insert(next_data);
+
+                                                    pending_confirmation.remove(id);
+                                                }
+                                            });
                                         } else {
                                             queue.consume();
                                             pre_confirmed.remove(id);
@@ -87,10 +79,9 @@ public class ProxyDataSender extends DataSender {
                                     JsonObject response = gson.fromJson(data[0].toString(), JsonObject.class);
 
                                     int id = response.get("message").getAsInt();
-                                    if (!pending_confirmation.containsKey(id)) {
+                                    if (!pending_confirmation.contains(id)) {
                                         pre_confirmed.add(id);
                                     } else {
-                                        queue.consume();
                                         pending_confirmation.remove(id);
                                         pre_confirmed.remove(id); //Just in case
                                     }
@@ -105,7 +96,7 @@ public class ProxyDataSender extends DataSender {
         });
 
         scheduler.start();
-    }
+    }*/
 
     /**
      * Get the data queue

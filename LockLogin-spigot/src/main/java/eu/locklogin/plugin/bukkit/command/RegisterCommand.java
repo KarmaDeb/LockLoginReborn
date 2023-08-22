@@ -16,16 +16,14 @@ package eu.locklogin.plugin.bukkit.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
-import eu.locklogin.api.file.options.PasswordConfig;
-import eu.locklogin.api.security.Password;
 import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.file.options.PasswordConfig;
 import eu.locklogin.api.module.plugin.api.event.user.AccountCreatedEvent;
-import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.security.Password;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
@@ -111,7 +109,9 @@ public final class RegisterCommand implements CommandExecutor {
                             }
                         }
 
-                        if (manager.isRegistered()) {
+                        //GlobalAccount global = User.getAccount(player.getUniqueId());
+
+                        if (manager.isRegistered()/* && (global == null || !global.enabled())*/) {
                             user.send(messages.alreadyRegistered());
                         } else {
                             switch (args.length) {
@@ -136,7 +136,7 @@ public final class RegisterCommand implements CommandExecutor {
                                                     if (passwordConfig.warn_unsafe()) {
                                                         for (Player online : plugin.getServer().getOnlinePlayers()) {
                                                             User staff = new User(online);
-                                                            if (staff.hasPermission(PluginPermissions.warn_unsafe())) {
+                                                            if (staff.hasPermission(PluginPermissions.warn_password())) {
                                                                 staff.send(messages.prefix() + messages.passwordWarning());
                                                             }
                                                         }
@@ -154,8 +154,9 @@ public final class RegisterCommand implements CommandExecutor {
                                                 if (ret) return;
                                             }
 
+                                            //if (global != null) global.disable();
                                             manager.setPassword(password);
-                                            PluginMetricsService.register(player.getName());
+                                            //PluginMetricsService.register(player.getName());
                                             user.send(messages.prefix() + messages.registered());
                                             session.setLogged(true);
 
@@ -173,7 +174,7 @@ public final class RegisterCommand implements CommandExecutor {
                                             if (!manager.hasPin())
                                                 session.setPinLogged(true);
 
-                                            Event event = new AccountCreatedEvent(user.getModule(), null);
+                                            AccountCreatedEvent event = new AccountCreatedEvent(user.getModule(), null);
                                             ModulePlugin.callEvent(event);
 
                                             if (!config.useVirtualID() && player.hasPermission("locklogin.account")) {

@@ -27,6 +27,7 @@ import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
@@ -35,6 +36,7 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 import net.md_5.bungee.api.chat.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -250,6 +252,13 @@ public final class GoogleAuthCommand implements CommandExecutor {
                                                 }
 
                                                 TransientMap.apply(player);
+                                                ModulePlayer module = user.getModule();
+                                                if (!module.hasPermission(PluginPermissions.join_silent())) {
+                                                    String message = messages.playerJoin(module);
+                                                    if (!StringUtils.isNullOrEmpty(message)) {
+                                                        Bukkit.getServer().broadcastMessage(StringUtils.toColor(message));
+                                                    }
+                                                }
                                             } else {
                                                 UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.FA_2,
                                                         UserAuthenticateEvent.Result.FAILED,

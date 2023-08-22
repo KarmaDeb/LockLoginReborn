@@ -7,11 +7,16 @@
     <parent>
         <groupId>eu.locklogin</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>1.13.52</version>
+        <version>1.13.67</version>
     </parent>
 
     <artifactId>LockLogin-common</artifactId>
     <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <build>
         <finalName>LockLogin-Common</finalName>
@@ -57,6 +62,7 @@
         <dependency>
             <groupId>eu.locklogin</groupId>
             <artifactId>LockLogin-API</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>

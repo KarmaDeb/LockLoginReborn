@@ -14,10 +14,8 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
-import com.comphenix.protocol.ProtocolLibrary;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.account.MigrationManager;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.premium.DefaultPremiumDatabase;
 import eu.locklogin.api.common.security.client.ProxyCheck;
@@ -25,9 +23,6 @@ import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
-import eu.locklogin.api.common.utils.Channel;
-import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
@@ -37,24 +32,14 @@ import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
-import eu.locklogin.api.common.web.services.LockLoginSocket;
-import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
-import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
-import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
-import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.plugin.license.License;
-import eu.locklogin.api.plugin.license.LicenseExpiration;
-import eu.locklogin.api.plugin.license.LicenseOwner;
 import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
@@ -64,7 +49,6 @@ import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.listener.*;
 import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeReceiver;
 import eu.locklogin.plugin.bukkit.plugin.bungee.data.MessagePool;
-import eu.locklogin.plugin.bukkit.plugin.socket.ConnectionManager;
 import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
 import eu.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import eu.locklogin.plugin.bukkit.util.files.Config;
@@ -101,9 +85,6 @@ import org.bukkit.plugin.messaging.PluginMessageListenerRegistration;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -141,15 +122,6 @@ public final class Manager {
         PlayerAccount.migrateV3();
         MessagePool.startCheckTask();
 
-        if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib")) {
-            plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
-            ProtocolListener listener = new ProtocolListener();
-            ProtocolLibrary.getProtocolManager().getAsynchronousManager()
-                    .registerAsyncHandler(listener).start();
-
-            CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
-        }
-
         setupFiles();
         //TokenGen.generate(plugin.getServer().getName());
         registerCommands();
@@ -158,6 +130,11 @@ public final class Manager {
         console.send(" ");
         console.send("&e-----------------------");
 
+        try {
+            JarManager.changeField(CurrentPlatform.class, "default_manager", PlayerAccount.class);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
         if (!CurrentPlatform.isValidAccountManager()) {
             CurrentPlatform.setAccountsManager(PlayerAccount.class);
             console.send("Loaded native player account manager", Level.INFO);
@@ -172,17 +149,6 @@ public final class Manager {
         }
 
         loadCache();
-
-        BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
-        scheduler.performBackup().whenComplete((id, error) -> {
-            if (error != null) {
-                plugin.logger().scheduleLog(Level.GRAVE, error);
-                plugin.logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
-                plugin.console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
-            } else {
-                plugin.console().send("Successfully created backup with id {0}", Level.INFO, id);
-            }
-        });
 
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
@@ -252,7 +218,7 @@ public final class Manager {
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
 
-        plugin.async().queue("connect_web_services", () -> {
+        /*plugin.async().queue("connect_web_services", () -> {
             License license = CurrentPlatform.getLicense();
             if (license != null) {
                 String version = license.version();
@@ -426,7 +392,37 @@ public final class Manager {
                     }
                 }
             }
-        });
+            if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib") && !CurrentPlatform.isOnline()) {
+                plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
+                try {
+                    ProtocolListener.register();
+                    CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
+                } catch (Throwable ignored) {}
+            }
+        });*/
+
+        registerMetrics();
+        if (config.isBungeeCord())
+            registerBungee();
+
+        if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
+            RegisteredServiceProvider<Permission> rsp = plugin.getServer().getServicesManager().getRegistration(Permission.class);
+            if (rsp != null) {
+                Permission permission = rsp.getProvider();
+                if (permission.isEnabled()) {
+                    plugin.console().send("Detected permission provider {0}. LockLogin will remove all player permissions and OP when the client connects and restore them after a success login for better security", Level.INFO, rsp.getPlugin().getName());
+                }
+            }
+        }
+        if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib") && !CurrentPlatform.isOnline()) {
+            plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
+            try {
+                ProtocolListener.register();
+                CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
+            } catch (Throwable ignored) {}
+        }
+
+        initialized = true;
     }
 
     public static void terminate() {
@@ -474,9 +470,9 @@ public final class Manager {
         console.send("&e-----------------------");
     }
 
-    static void registerBungee(final SocketClient client, final ConnectionManager manager) {
+    static void registerBungee() {
         Messenger messenger = plugin.getServer().getMessenger();
-        BungeeReceiver receiver = new BungeeReceiver(client);
+        BungeeReceiver receiver = new BungeeReceiver();
 
         PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
         messenger.registerOutgoingPluginChannel(plugin, "ll:account");
@@ -489,11 +485,6 @@ public final class Manager {
         } else {
             console.send("Something went wrong while trying to register message listeners, things may not work properly", Level.GRAVE);
         }
-
-        manager.onProxyInitialization((name) -> {
-            console.send("Received initialization request from proxy", Level.WARNING);
-            receiver.registerUnder(name, client);
-        });
     }
 
     /**
@@ -555,9 +546,9 @@ public final class Manager {
             console.send(properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
 
             try {
+                Logger coreLogger = (Logger) LogManager.getRootLogger();
                 ConsoleFilter filter = new ConsoleFilter(registered);
 
-                Logger coreLogger = (Logger) LogManager.getRootLogger();
                 coreLogger.addFilter(filter);
             } catch (Throwable ex) {
                 logger.scheduleLog(Level.GRAVE, ex);
@@ -632,10 +623,7 @@ public final class Manager {
         CurrentPlatform.setPluginMessages(messages);
     }
 
-    /**
-     * Register plugin metrics
-     */
-    static void registerMetrics(final SocketClient s) {
+    static void registerMetrics() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         Metrics metrics = new Metrics(plugin, 6513);
 
@@ -649,13 +637,6 @@ public final class Manager {
                     .replace("false", "Sessions disabled")));
         } else {
             console.send("Metrics are disabled, please note this is an open source free project and we use metrics to know if the project is being active by users. If we don't see active users using this project, the project may reach the dead line meaning no more updates or support. We highly recommend to you to share statistics, as this won't share any information of your server but the country, os and some other information that may be util for us", Level.GRAVE);
-        }
-
-        if (config.sharePlugin()) {
-            PluginMetricsService service = new PluginMetricsService(plugin, s);
-            service.start();
-        } else {
-            console.send("Plugin metrics are disabled. Data will still be sent but won't be public", Level.INFO);
         }
     }
 

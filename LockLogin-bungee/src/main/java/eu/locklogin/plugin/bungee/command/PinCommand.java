@@ -16,6 +16,7 @@ package eu.locklogin.plugin.bungee.command;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.security.client.CommandProxy;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
 import eu.locklogin.api.encryption.CryptoFactory;
@@ -33,6 +34,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.List;
+import java.util.UUID;
 
 import static eu.locklogin.plugin.bungee.LockLogin.console;
 import static eu.locklogin.plugin.bungee.LockLogin.properties;
@@ -55,10 +57,10 @@ public class PinCommand extends Command {
      * Execute this command with the specified sender and arguments.
      *
      * @param sender the executor of this command
-     * @param args   arguments used to invoke this command
+     * @param tmpArgs   arguments used to invoke this command
      */
     @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute(CommandSender sender, String[] tmpArgs) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         PluginMessages messages = CurrentPlatform.getMessages();
 
@@ -69,6 +71,32 @@ public class PinCommand extends Command {
             AccountManager manager = user.getManager();
 
             if (session.isValid()) {
+                boolean validated = false;
+
+                String[] args = new String[0];
+                if (tmpArgs.length >= 1) {
+                    String last_arg = tmpArgs[tmpArgs.length - 1];
+                    try {
+                        UUID command_id = UUID.fromString(last_arg);
+                        args = CommandProxy.getArguments(command_id);
+                        validated = true;
+                    } catch (Throwable ignored) {}
+                }
+
+                if (!validated) {
+                    if (!session.isLogged()) {
+                        user.send(messages.prefix() + messages.register());
+                    } else {
+                        if (session.isTempLogged()) {
+                            user.send(messages.prefix() + messages.gAuthenticate());
+                        } else {
+                            user.send(messages.prefix() + messages.alreadyRegistered());
+                        }
+                    }
+
+                    return;
+                }
+
                 if (config.enablePin()) {
                     if (session.isCaptchaLogged() && session.isLogged() && session.isTempLogged()) {
                         if (args.length == 0) {

@@ -16,7 +16,6 @@
 # AuthServers -> Allows LockLogin to send players to auth-lobby or main-lobby
 #                depending on their session status
 Options:
-  MultiBungee: false
   SendToServers: true
 
 #This must be the same for all

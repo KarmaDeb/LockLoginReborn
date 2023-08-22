@@ -14,14 +14,9 @@ package eu.locklogin.plugin.bungee.plugin;
  * the version number 2.1.]
  */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.account.MigrationManager;
 import eu.locklogin.api.common.JarManager;
-import eu.locklogin.api.common.security.backup.BackupTask;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -29,7 +24,6 @@ import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.common.utils.Channel;
 import eu.locklogin.api.common.utils.DataType;
-import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
@@ -40,26 +34,15 @@ import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
 import eu.locklogin.api.common.web.alert.Notification;
 import eu.locklogin.api.common.web.alert.RemoteNotification;
-import eu.locklogin.api.common.web.services.LockLoginSocket;
-import eu.locklogin.api.common.web.services.metric.PluginMetricsService;
-import eu.locklogin.api.common.web.services.socket.SocketClient;
 import eu.locklogin.api.encryption.CryptoFactory;
-import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.file.ProxyConfiguration;
-import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserHookEvent;
-import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserUnHookEvent;
 import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
-import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
-import eu.locklogin.api.plugin.license.License;
-import eu.locklogin.api.plugin.license.LicenseExpiration;
-import eu.locklogin.api.plugin.license.LicenseOwner;
-import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bungee.BungeeSender;
@@ -74,16 +57,11 @@ import eu.locklogin.plugin.bungee.listener.MessageListener;
 import eu.locklogin.plugin.bungee.listener.QuitListener;
 import eu.locklogin.plugin.bungee.plugin.injector.Injector;
 import eu.locklogin.plugin.bungee.plugin.injector.ModuleExecutorInjector;
-import eu.locklogin.plugin.bungee.plugin.socket.ConnectionManager;
 import eu.locklogin.plugin.bungee.util.files.Config;
 import eu.locklogin.plugin.bungee.util.files.Message;
 import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.data.RestartCache;
 import eu.locklogin.plugin.bungee.util.player.User;
-import io.socket.client.Ack;
-import io.socket.client.Socket;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.multi.KarmaMap;
 import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
@@ -109,14 +87,8 @@ import org.jetbrains.annotations.ApiStatus;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -172,6 +144,11 @@ public final class Manager {
         console.send(" ");
         console.send("&e-----------------------");
 
+        try {
+            JarManager.changeField(CurrentPlatform.class, "default_manager", PlayerAccount.class);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
         if (!CurrentPlatform.isValidAccountManager()) {
             CurrentPlatform.setAccountsManager(PlayerAccount.class);
             console.send("Loaded native player account manager", Level.INFO);
@@ -236,9 +213,9 @@ public final class Manager {
         injector.inject();
 
         console.send("Connecting to LockLogin web services (statistics and spigot communication)", Level.INFO);
-        SocketClient socket = new LockLoginSocket();
-        ProxyDataSender pds = new ProxyDataSender(socket);
-        ConnectionManager c_Manager = new ConnectionManager(socket, pds);
+        //SocketClient socket = new LockLoginSocket();
+        //ProxyDataSender pds = new ProxyDataSender(socket);
+        //ConnectionManager c_Manager = new ConnectionManager(socket, pds);
 
         BungeeSender sender = new BungeeSender();
 
@@ -312,7 +289,7 @@ public final class Manager {
         };
 
         plugin.async().queue("connect_web_services", () -> {
-            License license = CurrentPlatform.getLicense();
+            /*License license = CurrentPlatform.getLicense();
             if (license != null) {
                 String version = license.version();
                 LicenseOwner owner = license.owner();
@@ -365,12 +342,20 @@ public final class Manager {
                         ex.printStackTrace();
                     }
                 }
-            }
+            }*/
 
-            BungeeDataSender bs = new BungeeDataSender();
-            final Map<String, String> internalMap = new ConcurrentHashMap<>();
+            //final Map<String, String> internalMap = new ConcurrentHashMap<>();
 
-            c_Manager.connect(5, (name, id, hash) -> {
+            sender.sender = new BungeeDataSender();
+            sender.secondarySender = sender.sender; //For stability reasons, should never be null
+            //BungeeSender.useSocket = false;
+
+            initPlayers(sender);
+            registerMetrics();
+
+            initialized = true;
+
+            /*c_Manager.connect(5, (name, id, hash) -> {
                 ServerInfo server = plugin.getProxy().getServerInfo(name);
                 if (server != null) {
                     KarmaMain hash_store = new KarmaMain(plugin, ".hashes", "cache");
@@ -378,6 +363,11 @@ public final class Manager {
                         hash_store.create();
 
                     ServerDataStorage.setProxyRegistered(name);
+
+                    TargetServerStorage storage = new TargetServerStorage(name);
+                    if (storage.load() == null) {
+                        storage.save(UUID.randomUUID());
+                    }
 
                     pds.server_maps.put(name, id);
                     pds.queue(name).unlock();
@@ -403,6 +393,10 @@ public final class Manager {
 
                 plugin.console().send("Marking server as initialized", Level.OK);
                 initialized = true;
+
+                if (!CurrentPlatform.isOnline()) {
+                    CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
+                }
 
                 switch (tries_amount) {
                     case -1:
@@ -476,6 +470,10 @@ public final class Manager {
                                     hash_store.create();
 
                                 ServerDataStorage.setProxyRegistered(name);
+                                TargetServerStorage storage = new TargetServerStorage(name);
+                                if (storage.load() == null) {
+                                    storage.save(UUID.randomUUID());
+                                }
 
                                 pds.server_maps.put(name, id);
                                 pds.queue(name).unlock();
@@ -543,7 +541,7 @@ public final class Manager {
                                                         .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
                                                                 .getInstance().build());
 
-                                                user.checkServer(0);
+                                                user.checkServer(0, false);
                                             }
 
                                             sender.sender.queue(server.getName())
@@ -572,7 +570,7 @@ public final class Manager {
                                                             .insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
                                                                     .getInstance().build());
 
-                                                    user.checkServer(0);
+                                                    user.checkServer(0, false);
                                                 }
                                             } else {
                                                 if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
@@ -597,13 +595,9 @@ public final class Manager {
                                 UUID uuid = UUID.fromString(data.get("player").getAsString());
                                 ProxiedPlayer player = plugin.getProxy().getPlayer(uuid);
 
-                                System.out.println("Validated player: " + player.getUniqueId());
-
-                                if (player != null) {
-                                    User user = new User(player);
-                                    UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
-                                    ModulePlugin.callEvent(event);
-                                }
+                                User user = new User(player);
+                                UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
+                                ModulePlugin.callEvent(event);
                             }
                         });
                         c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (server, data) -> {
@@ -622,7 +616,7 @@ public final class Manager {
                         });
                         break;
                 }
-            });
+            });*/
 
             plugin.async().queue("setup_placeholder_data", () -> {
                 AccountManager acc_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
@@ -743,9 +737,9 @@ public final class Manager {
             console.send(properties.getProperty("plugin_filter_initialize", "Initializing console filter to protect user data"), Level.INFO);
 
             try {
+                Logger coreLogger = (Logger) LogManager.getRootLogger();
                 ConsoleFilter filter = new ConsoleFilter(registered);
 
-                Logger coreLogger = (Logger) LogManager.getRootLogger();
                 coreLogger.addFilter(filter);
             } catch (Throwable ex) {
                 console.send("LockLogin tried to hook into console filter, but as expected, BungeeCord or this BungeeCord fork doesn't has a valid logger, please do not report the commands are being shown in console", Level.GRAVE);
@@ -826,7 +820,7 @@ public final class Manager {
     /**
      * Register plugin metrics
      */
-    static void registerMetrics(final SocketClient s) {
+    static void registerMetrics() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         if (config.shareBStats()) {
             Metrics metrics = new Metrics(plugin, 6512);
@@ -840,13 +834,6 @@ public final class Manager {
                     .replace("false", "Sessions disabled")));
         } else {
             console.send("Metrics are disabled, please note this is an open source free project and we use metrics to know if the project is being active by users. If we don't see active users using this project, the project may reach the dead line meaning no more updates or support. We highly recommend to you to share statistics, as this won't share any information of your server but the country, os and some other information that may be util for us", Level.GRAVE);
-        }
-
-        if (config.sharePlugin()) {
-            PluginMetricsService service = new PluginMetricsService(plugin, s);
-            service.start();
-        } else {
-            console.send("Plugin metrics are disabled. Data will still be sent but won't be public", Level.INFO);
         }
     }
 
@@ -1094,7 +1081,7 @@ public final class Manager {
 
                     plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                    user.checkServer(0);
+                    user.checkServer(0, false);
 
                     Event event = new UserHookEvent(user.getModule(), null);
                     ModulePlugin.callEvent(event);

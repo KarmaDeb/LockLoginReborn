@@ -28,10 +28,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -45,6 +44,7 @@ public final class ModuleLoader {
     private final static KarmaSource source = APISource.loadProvider("LockLogin");
 
     private final static Map<String, PluginModule> loaded = new ConcurrentHashMap<>();
+    private final static Map<PluginModule, List<String>> module_classes = new ConcurrentHashMap<>();
     private final static Map<Class<? extends PluginModule>, PluginModule> clazz_map = new ConcurrentHashMap<>();
 
     private final static File modulesFolder = new File(FileUtilities.getProjectFolder("plugins") + File.separator + "LockLogin" + File.separator + "plugin", "modules");
@@ -87,6 +87,7 @@ public final class ModuleLoader {
                 File[] files = modulesFolder.listFiles();
                 if (files != null) {
                     for (File file : files) {
+                        moduleFile = file;
                         if (file.isFile() && file.getName().endsWith(".jar")) {
                             try(JarFile jar = new JarFile(file)) {
                                 ZipEntry entry = jar.getEntry("module.yml");
@@ -138,6 +139,22 @@ public final class ModuleLoader {
         }
 
         return loadedModule;
+    }
+
+    /**
+     * Get a module by its unique identifier
+     *
+     * @param id the module ID
+     * @return the module
+     */
+    public static PluginModule getById(final UUID id) {
+        for (PluginModule module : loaded.values()) {
+            if (module.getID().equals(id)) {
+                return module;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -195,8 +212,26 @@ public final class ModuleLoader {
                                     Class<? extends PluginModule> module_class = appender.getLoader().loadClass(class_name).asSubclass(PluginModule.class);
 
                                     PluginModule module = null;
+                                    Enumeration<JarEntry> entries = jar.entries();
+
                                     try {
                                         module = module_class.getDeclaredConstructor().newInstance();
+                                        source.console().send("Scanning module {0}. Please wait", Level.INFO, name);
+                                        int found = 0;
+                                        while (entries.hasMoreElements()) {
+                                            JarEntry entry = entries.nextElement();
+                                            if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                                                String className = entry.getName().replace('/', '.').substring(0, entry.getName().length() - 6);
+                                                List<String> moduleClasses = module_classes.getOrDefault(module, new ArrayList<>());
+                                                moduleClasses.add(className);
+
+                                                module_classes.put(module, moduleClasses);
+                                                found++;
+                                            }
+                                        }
+                                        source.console().send("Finished scanning of {0}, found {1} classes", Level.INFO, name, found);
+
+                                        source.logger().scheduleLog(Level.INFO, "Loaded module {0} from plugin module loader", name);
                                     } catch (InvocationTargetException ex) {
                                         source.logger().scheduleLog(Level.GRAVE, ex);
                                         source.logger().scheduleLog(Level.INFO, "Failed to load module {0}", name);
@@ -234,8 +269,8 @@ public final class ModuleLoader {
             String name = FileUtilities.getName(moduleFile, false);
 
             try {
-                if (moduleFile.getName().endsWith(".jar")) {
-                    try(JarFile jar = new JarFile(moduleFile)) {
+                if (moduleFile.getName().toLowerCase().endsWith(".jar")) {
+                    try (JarFile jar = new JarFile(moduleFile)) {
                         JarEntry plugin = jar.getJarEntry("module.yml");
 
                         if (plugin != null) {
@@ -253,10 +288,11 @@ public final class ModuleLoader {
                                 PluginModule module = null;
                                 try {
                                     module = module_class.getDeclaredConstructor().newInstance();
-                                } catch (InvocationTargetException ignored) {
+                                } catch (InvocationTargetException ex) {
+                                    ex.printStackTrace();
                                 }
 
-                                if (module != null && !isLoaded(module)) {
+                                if (module != null) {
                                     module.getAppender().add(CurrentPlatform.getMain().getProtectionDomain().getCodeSource().getLocation());
                                     return module;
                                 }
@@ -282,6 +318,7 @@ public final class ModuleLoader {
      *
      * @param moduleFile the module file
      */
+    @SuppressWarnings("unchecked")
     public void unloadModule(final File moduleFile) {
         PluginModule loadedModule = loaded.getOrDefault(FileUtilities.getPrettyFile(moduleFile), null);
 
@@ -293,7 +330,23 @@ public final class ModuleLoader {
             loaded.remove(FileUtilities.getPrettyFile(moduleFile));
             clazz_map.remove(loadedModule.getClass());
 
-            System.gc();
+            ClassLoader cl = source.getClass().getClassLoader();
+            try {
+                Field classes = cl.getClass().getField("classes");
+                Vector<Class<?>> vector = (Vector<Class<?>>) classes.get(cl);
+
+                List<Class<?>> remove = new ArrayList<>();
+                for (String clazz : module_classes.getOrDefault(loadedModule, new ArrayList<>())) {
+                    for (Class<?> loader : vector) {
+                        if (loader.getName().equals(clazz) || loader.getCanonicalName().equals(clazz)) {
+                            remove.add(loader);
+                        }
+                    }
+                }
+
+                source.console().send("Unloaded module {0} classes ({1})", Level.INFO, loadedModule.name(), remove.size());
+                vector.removeAll(remove);
+            } catch (Throwable ignored) {}
         }
     }
 

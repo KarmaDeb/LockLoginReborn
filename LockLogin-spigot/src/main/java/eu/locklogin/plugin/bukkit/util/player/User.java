@@ -12,6 +12,7 @@ package eu.locklogin.plugin.bukkit.util.player;
  */
 
 import eu.locklogin.api.account.AccountID;
+import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.security.google.GoogleAuthFactory;
 import eu.locklogin.api.common.session.SessionCheck;
@@ -61,7 +62,7 @@ public final class User {
     private final static Set<UUID> registered = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Set<UUID> panicking = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Map<UUID, Collection<PotionEffect>> effects = new ConcurrentHashMap<>();
-    private final static Map<UUID, eu.locklogin.api.account.AccountManager> managers = new ConcurrentHashMap<>();
+    private final static Map<UUID, AccountManager> managers = new ConcurrentHashMap<>();
     private final static Map<UUID, SessionCheck<Player>> sessionChecks = new ConcurrentHashMap<>();
     @SuppressWarnings("FieldMayBeFinal") //This is modified by cache loader
     private static Map<UUID, ClientSession> sessions = new ConcurrentHashMap<>();
@@ -84,7 +85,7 @@ public final class User {
         User loaded = UserDatabase.loadUser(player);
         if (loaded == null) {
             if (CurrentPlatform.isValidAccountManager()) {
-                eu.locklogin.api.account.AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
+                AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, AccountID.fromUUID(player.getUniqueId()));
 
                 if (manager == null) {
                     plugin.getPluginLoader().disablePlugin(plugin);
@@ -117,7 +118,7 @@ public final class User {
 
             if (!sessions.containsKey(player.getUniqueId())) {
                 if (CurrentPlatform.isValidSessionManager()) {
-                    ClientSession session = CurrentPlatform.getSessionManager(null);
+                    ClientSession session = CurrentPlatform.getSessionManager(new Class[]{AccountID.class}, AccountID.fromUUID(player.getUniqueId()));
 
                     if (session == null) {
                         plugin.getPluginLoader().disablePlugin(plugin);
@@ -392,7 +393,9 @@ public final class User {
      */
     public void removeSessionCheck() {
         SessionCheck<Player> check = sessionChecks.remove(player.getUniqueId());
-        check.cancelCheck("Session check removed");
+        if (check != null) {
+            check.cancelCheck("Session check removed");
+        }
     }
 
     /**
@@ -425,8 +428,7 @@ public final class User {
      * @return the client session checker
      */
     public SessionCheck<Player> getChecker() {
-        SessionCheck<Player> checker = sessionChecks.getOrDefault(player.getUniqueId(), null);
-        if (checker == null) {
+        return sessionChecks.computeIfAbsent(player.getUniqueId(), (checker) -> {
             ModulePlayer sender = getModule();
 
             if (sender == null) {
@@ -465,11 +467,8 @@ public final class User {
                 }
             }
 
-            checker = new SessionCheck<>(plugin, sender, message);
-            sessionChecks.put(player.getUniqueId(), checker);
-        }
-
-        return checker;
+            return new SessionCheck<>(plugin, sender, message);
+        });
     }
 
     /**
@@ -488,7 +487,7 @@ public final class User {
      * @throws IllegalStateException if the current manager is null
      */
     @NotNull
-    public eu.locklogin.api.account.AccountManager getManager() throws IllegalStateException {
+    public AccountManager getManager() throws IllegalStateException {
         return managers.get(player.getUniqueId());
     }
 

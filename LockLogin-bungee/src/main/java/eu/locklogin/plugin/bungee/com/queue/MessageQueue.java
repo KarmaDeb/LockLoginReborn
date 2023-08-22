@@ -5,7 +5,6 @@ import eu.locklogin.api.common.communication.queue.DataQueue;
 
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.function.Consumer;
 
 /**
  * Proxy message queue

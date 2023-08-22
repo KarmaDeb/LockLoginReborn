@@ -25,6 +25,7 @@
 package eu.locklogin.plugin.bukkit.premium;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
@@ -45,10 +46,13 @@ import eu.locklogin.plugin.bukkit.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.string.StringUtils;
+import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -79,11 +83,17 @@ public class ProtocolListener extends PacketAdapter {
                 .optionAsync());
     }
 
+    public static void register() {
+        LockLogin.plugin.console().send("Registering ProtocolLib listener", Level.OK);
+        ProtocolLibrary.getProtocolManager().getAsynchronousManager()
+                .registerAsyncHandler(new ProtocolListener()).start();
+    }
+
     @Override
     public void onPacketReceiving(final PacketEvent event) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        if (event.isCancelled() || !Manager.isInitialized() || keyPair == null || !config.enablePremium()) {
+        if (event.isCancelled() || !Manager.isInitialized() || keyPair == null || !config.enablePremium() || config.isBungeeCord()) {
             /*
             We will ignore if the plugin is not fully started or the
             packet got cancelled in order to avoid errors
@@ -101,23 +111,25 @@ public class ProtocolListener extends PacketAdapter {
             String name = getUsername(container);
 
             Optional<ClientKey> client = Optional.empty();
-            if (BukkitServer.isUnder(Version.v1_19)) {
-                Optional<Optional<WrappedProfilePublicKey.WrappedProfileKeyData>> profile = container.getOptionals(BukkitConverters.getWrappedPublicKeyDataConverter()).optionRead(0);
-                client = profile.flatMap(Function.identity()).flatMap((data) -> {
-                    Instant expiration = data.getExpireTime();
-                    PublicKey key = data.getKey();
-                    byte[] sign = data.getSignature();
-                    return Optional.of(ClientKey.newInstance(expiration, key, sign));
-                });
+            if (BukkitServer.isUnder(Version.v1_19_3)) {
+                try {
+                    Optional<Optional<WrappedProfilePublicKey.WrappedProfileKeyData>> profile = container.getOptionals(BukkitConverters.getWrappedPublicKeyDataConverter()).optionRead(0);
+                    client = profile.flatMap(Function.identity()).flatMap((data) -> {
+                        Instant expiration = data.getExpireTime();
+                        PublicKey key = data.getKey();
+                        byte[] sign = data.getSignature();
+                        return Optional.of(ClientKey.newInstance(expiration, key, sign));
+                    });
 
-                Optional<UUID> clientId = container.getOptionals(Converters.passthrough(UUID.class)).readSafely(1);
-                if (clientId.isPresent() && client.isPresent()) {
-                    ClientKey key = client.get();
-                    if (!MojangEncryption.isValidClient(key, key.expiration(), clientId.get())) {
-                        player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
-                        return;
+                    Optional<UUID> clientId = container.getOptionals(Converters.passthrough(UUID.class)).readSafely(1);
+                    if (clientId.isPresent() && client.isPresent()) {
+                        ClientKey key = client.get();
+                        if (!MojangEncryption.isValidClient(key, key.expiration(), clientId.get())) {
+                            player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
+                            return;
+                        }
                     }
-                }
+                } catch (Throwable ignored) {}
             }
 
             event.getAsyncMarker().incrementProcessingDelay();
@@ -145,10 +157,11 @@ public class ProtocolListener extends PacketAdapter {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean verifyNonce(Player sender, PacketContainer packet,
-                                ClientKey clientPublicKey, byte[] expectedToken) {
-        if (MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 0))
-                && !MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 3))) {
+    private boolean verifyNonce(Player sender, PacketContainer packet, ClientKey clientPublicKey, byte[] expectedToken) {
+        MinecraftVersion c = new MinecraftVersion("1.19.0");
+        MinecraftVersion c2 = new MinecraftVersion("1.19.3");
+        if (c.atOrAbove()
+                && !c2.atOrAbove()) {
             Either<byte[], ?> either = packet.getSpecificModifier(Either.class).read(0);
             if (clientPublicKey == null) {
                 Optional<byte[]> left = either.left();
@@ -189,7 +202,7 @@ public class ProtocolListener extends PacketAdapter {
     public static void trySkin(final Player player) {
         for (InetSocketAddress address : sessions.keySet()) {
             LoginSession session = sessions.get(address);
-            if (session.getId().equals(player.getUniqueId())) {
+            if (session.getId() != null && session.getId().equals(player.getUniqueId())) {
                 sessions.remove(address);
 
                 SkinProperty skin = session.getSkin();

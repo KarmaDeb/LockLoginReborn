@@ -1,7 +1,5 @@
 package eu.locklogin.api.common.security.client;
 
-import ml.karmaconfigs.api.common.string.StringUtils;
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +21,19 @@ public final class CommandProxy {
             "2fa"
     };
 
+    private final static String[] subArguments = new String[]{
+            "change",
+            "unlock",
+            "close",
+            "remove",
+            "delete",
+            "alts",
+            "session",
+            "protect",
+            "setup",
+            "change"
+    };
+
     private final static Map<UUID, String[]> args = new ConcurrentHashMap<>();
     private final static Map<UUID, String> commands = new ConcurrentHashMap<>();
 
@@ -33,7 +44,31 @@ public final class CommandProxy {
      * @return if the command should be masked
      */
     public static boolean mustMask(final String cmd) {
-        return Arrays.stream(filter).anyMatch(cmd::equalsIgnoreCase);
+        String cmdName = cmd.toLowerCase();
+        if (cmdName.startsWith("/")) cmdName = cmdName.substring(1);
+
+        if (cmdName.contains(":")) {
+            String pluginName;
+
+            if (cmdName.contains(" ")) {
+                String[] preData = cmdName.split(" ");
+                String origin = preData[0];
+
+                if (origin.contains(":")) {
+                    String[] cmdData = cmd.split(":");
+                    pluginName = cmdData[0];
+
+                    cmdName = cmd.replaceFirst(pluginName + ":", "");
+                }
+            } else {
+                String[] cmdData = cmd.split(":");
+                pluginName = cmdData[0];
+
+                cmdName = cmd.replaceFirst(pluginName + ":", "");
+            }
+        }
+
+        return Arrays.stream(filter).anyMatch(cmdName::startsWith);
     }
 
     /**
@@ -46,12 +81,38 @@ public final class CommandProxy {
         UUID id = UUID.randomUUID();
         String command = cmd;
         for (String arg : arguments) {
-            command = command.replace(arg, hide(arg, '*'));
+            if (Arrays.stream(subArguments).noneMatch(arg::equalsIgnoreCase)) {
+                command = command.replace(arg, hide(arg, '*'));
+            }
         }
 
         args.put(id, arguments);
         commands.put(id, command);
         return id;
+    }
+
+    /**
+     * Mask a command silently, without storing
+     * any information about it
+     *
+     * @param cmd the command
+     * @param arguments the command arguments
+     * @return the masked command
+     */
+    public static String maksSilent(final String cmd, final String... arguments) {
+        StringBuilder builder = new StringBuilder(cmd).append(" ");
+        int index = 0;
+        for (String arg : arguments) {
+            if (Arrays.stream(subArguments).noneMatch(arg::equalsIgnoreCase)) {
+                String masked = hide(arg, '*');
+                builder.append(masked);
+                if (index++ != arguments.length - 1) {
+                    builder.append(" ");
+                }
+            }
+        }
+
+        return builder.toString();
     }
 
     /**

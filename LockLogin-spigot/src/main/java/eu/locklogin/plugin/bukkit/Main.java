@@ -17,28 +17,19 @@ package eu.locklogin.plugin.bukkit;
 import eu.locklogin.api.common.security.backup.BackupTask;
 import eu.locklogin.api.common.utils.FileInfo;
 import eu.locklogin.api.common.web.ChecksumTables;
-import eu.locklogin.api.file.PluginConfiguration;
-import eu.locklogin.api.plugin.license.License;
+import eu.locklogin.api.module.SourcePlugin;
 import eu.locklogin.api.security.backup.BackupScheduler;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.Platform;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Objects;
 
-import static eu.locklogin.plugin.bukkit.LockLogin.plugin;
-
-public final class Main extends KarmaPlugin {
+public final class Main extends KarmaPlugin implements SourcePlugin {
 
     private final MainBootstrap plugin;
 
@@ -82,9 +73,11 @@ public final class Main extends KarmaPlugin {
                 BackupScheduler scheduler = CurrentPlatform.getBackupScheduler();
                 scheduler.performBackup().whenComplete((id, error) -> {
                     if (error != null) {
-                        logger().scheduleLog(Level.GRAVE, error);
-                        logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
-                        console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                        if (!error.getMessage().equals("Cannot backup without accounts")) {
+                            logger().scheduleLog(Level.GRAVE, error);
+                            logger().scheduleLog(Level.INFO, "Failed to save backup {0}", id);
+                            console().send("Failed to save backup {0}. See logs for more information", Level.GRAVE, id);
+                        }
                     } else {
                         console().send("Successfully created backup with id {0}", Level.INFO, id);
                     }

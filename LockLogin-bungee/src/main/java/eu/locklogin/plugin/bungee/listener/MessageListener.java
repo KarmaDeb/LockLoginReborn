@@ -27,22 +27,20 @@ import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.utils.plugin.ServerDataStorage;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.module.plugin.api.event.user.UserAuthenticateEvent;
 import eu.locklogin.api.module.plugin.api.event.user.UserPostValidationEvent;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
 import eu.locklogin.api.module.plugin.javamodule.server.TargetServer;
-import eu.locklogin.api.plugin.license.License;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.api.util.platform.ModuleServer;
 import eu.locklogin.plugin.bungee.BungeeSender;
-import eu.locklogin.plugin.bungee.Main;
-import eu.locklogin.plugin.bungee.com.BungeeDataSender;
 import eu.locklogin.plugin.bungee.com.message.DataMessage;
 import eu.locklogin.plugin.bungee.plugin.Manager;
+import eu.locklogin.plugin.bungee.util.files.cache.TargetServerStorage;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -55,7 +53,6 @@ import net.md_5.bungee.event.EventPriority;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -84,7 +81,7 @@ public final class MessageListener implements Listener {
 
                     boolean canRead = true;
                     if (!e.getTag().equalsIgnoreCase("ll:access")) {
-                        License license = CurrentPlatform.getLicense();
+                        /*License license = CurrentPlatform.getLicense();
                         if (license != null) {
                             canRead = token.equals(license.comKey());
                         } else {
@@ -92,7 +89,9 @@ public final class MessageListener implements Listener {
                                 adviced = true;
                                 plugin.console().send("IMPORTANT! PLEASE RUN THE COMMAND /locklogin install. OTHERWISE YOUR SERVER WILL BE EXPOSED TO BUNGEECORD CHANNEL INJECTION ATTACKS", Level.WARNING);
                             }
-                        }
+                        }*/
+                        PluginConfiguration config = CurrentPlatform.getConfiguration();
+                        canRead = token.equals(config.comKey());
                     }
 
                     if (canRead) {
@@ -130,7 +129,7 @@ public final class MessageListener implements Listener {
                                                                     .getInstance(),
                                                                     server.getInfo());
 
-                                                            user.checkServer(0);
+                                                            user.checkServer(0, true);
                                                         }
 
                                                         Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
@@ -158,7 +157,7 @@ public final class MessageListener implements Listener {
                                                                 Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
                                                                         .getInstance(), server.getInfo());
 
-                                                                user.checkServer(0);
+                                                                user.checkServer(0, true);
                                                             }
                                                         } else {
                                                             if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
@@ -218,7 +217,11 @@ public final class MessageListener implements Listener {
                                     InetSocketAddress socket = getSocketIp(server.getSocketAddress());
 
                                     if (address != null && socket != null) {
-                                        TargetServer target_server = new TargetServer(name, /*TokenGen.find(name)*/ UUID.randomUUID(), address, socket.getPort(), true);
+                                        TargetServerStorage storage = new TargetServerStorage(name);
+                                        if (storage.load() == null) {
+                                            storage.save(UUID.randomUUID());
+                                        }
+                                        TargetServer target_server = new TargetServer(name, storage.load(), address, socket.getPort(), true);
                                         TargetServer stored = CurrentPlatform.getServer().getServer(name);
 
                                         Field f = ModuleServer.class.getDeclaredField("servers");
