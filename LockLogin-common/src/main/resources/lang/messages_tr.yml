@@ -1,0 +1,239 @@
+#LockLogin message file
+#----------------------------------
+#Translation: English (Community Language)
+#Editor: WinTone01
+#Last edited: 25 - August - 2023 00:56
+#----------------------------------
+# What is an official language?
+# - This language is made by the developer of LockLogin
+# - This language will receive language updates ( this means
+#   this language will be translated by the author when a new
+#   message is added )
+#
+# What is a community language?
+# - This language is made by a LockLogin community member
+# - This language must receive a community language update ( this
+#   means the author of the language pack must update the
+#   language with the new messages, LockLogin developer won't do it )
+
+#Plugin prefix
+Prefix: "&eLockLogin &7>> "
+
+#Permission error message
+PermissionError: "&5&o{permission} izniniz yok"
+
+#BungeeCord proxy message
+BungeeProxy: "&5&oLütfen bungee proxy üzerinden bağlanın!"
+
+#Inventories messages
+PinTitle: "&8&lLockLogin pin"
+AltTitle: "&8&lAlternatif hesap arama"
+InfoTitle: "&8&lPaket oyuncu bilgileri"
+Next: "&eSonraki"
+Back: "&eÖnceki"
+
+#Session messages - Manager
+PlayerNotVerified: "&5&o{player} giriş yapmamış/kayıtlı değilken ona karşı savaşamazsınız"
+AlreadyPlaying: "&5&oBu oyuncu zaten oynuyor"
+PlayerInfoUsage: "&5&oGeçerli oyuncu bilgileri alt argümanları: &e<oyuncu|oyuncular>&7, &e<@[alias]>"
+ConnectionError: "&5&o{player} adlı oyuncu çevrimiçi değil"
+LookUpUsage: "&5&oLütfen şunu kullanın: /account alts <oyuncu>"
+AltFound: "&5&o{player} adlı oyuncunun {alts} alt hesabı olabilir, daha fazla bilgi için /account alts {player} yazın"
+NeverPlayed: "&5&o{player} oyuncusu sunucuda hiç oynamadı"
+TargetAccessError: "&5&oThe player {player} isn't logged in/registered"
+IncorrectPassword: "&5&oThe provided password is not correct!"
+Captcha: "&7Your captcha code is: &e{captcha}"
+InvalidCaptcha: "&5&oThe specified captcha code is not valid or correct"
+SessionServerDisabled: "&5&oPersistent sessions are disabled in this server"
+SessionEnabled: "&dEnabled persistent session for your account"
+SessionDisabled: "&5&oDisabled persistent session for your account"
+
+#Session messages - Register
+Register: "&5&oPlease, use /register <password> <password> <captcha>"
+KarmaRegister: "&5&oPlease, use /register <password> <captcha> <email>"
+RegisterBar: "{color}You have &7{time}{color} to register"
+Registered: "&dRegister completed, thank for playing"
+AlreadyRegistered: "&5&oYou are already registered!"
+RegisterError: "&5&oThe provided passwords does not match!"
+PasswordInsecure: "&5&oThe specified password is not secure!"
+RegisterOut: "&5&oYou took too much time to register"
+RegisterTitle: "&7You have"
+RegisterSubtitle: "&b{time} &7to register"
+MaxRegisters:
+  - "{ServerName}"
+  - ""
+  - "&5You've reached max registered accounts in the server"
+  - ""
+  - "&5If you think this is an error, please, report it on"
+  - "&7https://discordexample.gg"
+
+#Session messages - Login
+Login: "&5&oPlease, use /login <password> <captcha>"
+LoginBar: "{color}You have &7{time}{color} to login"
+Logged: "&dLogged-in, welcome back &7{player}"
+AlreadyLogged: "&5&oYou are already logged!"
+LoginInsecure: "&5&oYour password has been classified as not secure and you must change it"
+LoginOut: "&5&oYou took too much time to log-in"
+LoginTitle: "&7You have"
+LoginSubtitle: "&b{time} &7to login"
+
+#Session messages - Pin
+PinUsages: "&5&oValid pin sub-arguments: &e<setup>&7, &e<remove>&7, &e<change>"
+PinSet: "&dYour pin has been set successfully"
+PinResetted: "&5&oPin removed, your account is now less secure"
+PinChanged: "&dYour pin has been changed successfully"
+AlreadyPin: "&5&oYou already have set your pin!"
+NoPin: "&5&oYou don't have a pin!"
+SetPin: "&5&oPlease, use /pin setup <pin>"
+ResetPin: "&5&oPlease, use /pin remove <pin>"
+ChangePin: "&5&oPlease, use /pin change <pin> <new pin>"
+PinDisabled: "&5&oPins are disabled"
+PinLength: "&5&oPin must have 4 digits"
+IncorrectPin: "&5&oThe specified pin is not correct!"
+
+#Session messages - 2FA
+2FaUsages: "&5&oValid 2FA sub-arguments: &e<setup>&7, &e<remove>&7, &e<2fa code>"
+2FaSetupUsage: "&5&oPlease, use /2fa setup <password>"
+2FaRemoveUsage: "&5&oPlease, use /2fa remove <password> <2fa code>"
+2FaAuthenticate: "&5&oPlease, use /2fa to start playing"
+2FaLogged: "&d2FA code validated"
+2FaAlreadyLogged: "&5&oYou are already authenticated with 2FA!"
+2FaIncorrect: "&5&oIncorrect 2FA code"
+2FaAlready: "&5&oYou already have setup your 2FA!"
+2FaToggleError: "&5&oError while trying to toggle 2FA ( incorrect password/code )"
+Disabled2FA: "&5&o2FA disabled, your account is now less secure"
+Enabled2FA: "&d2FA enabled, your account is secure again"
+2FaAccountDisabled: "&5&o2FA is disabled in your account"
+2FAServerDisabled: "&5&o2FA is currently disabled in this server"
+2FaLocked: "&5&oThis server wants you to have 2FA enabled"
+2FAScratchCodes:
+  - "&7Hey! &b{player}&7, these are your recovery codes,"
+  - "&7make sure to not lose them as this will be the last"
+  - "&7time you see them:"
+2FaInstructions:
+  - "&fHow to authenticate using the google authenticator?"
+  - "&71 - Click '{message}'"
+  - "&72 - Download Google Authenticator app"
+  - "&73 - Tap on '+' inside the app"
+  - "&74 - Tap on 'Scan a QR code'"
+  - "&75 - Scan the QR code shown in screen ( step #1 )"
+  - "&77 - Search for {account} in Google Auth app"
+  - "&78 - Type /2fa <code shown in app> or <scratch code>"
+2FaLink: "&bClick here to get your 2FA QR code"
+
+#Session messages - Brute force
+PanicLogin: "&5&oPlease, use /panic <token>"
+PanicTitle: "&cPANIC MODE"
+PanicSubtitle: "&cRUN &4/panic <token>"
+PanicMode: "&5&oThe account entered in panic mode, you have 1 token login try before being IP-blocked"
+PanicDisabled: "&5&oThe server is not protected against brute force attacks"
+PanicAlready: "&dYou already have a brute force token, your account is secure"
+PanicUnsafeUsage: "&dTo disable panic token you must run /account unsafe <password> <token> [pin] [2fa]"
+PanicNowUnsafe:
+  - "&eLockLogin"
+  - ""
+  - "&dYou've disabled your panic token, this will"
+  - "&dmake your account vulnerable to distributed"
+  - "&dbrute force attacks. Panic token will require a token"
+  - "&donce an specified amount of failed login attempts are done"
+  - "&din your account instead of asking the password, please"
+  - "&dtoggle it now using /account protect!"
+PanicRequested:
+  - "&eLockLogin"
+  - ""
+  - "&dWe generated a panic token for you"
+  - "&dplease store that token in a safe"
+  - "&dplace and make sure no one knows about"
+  - "&dit"
+PanicEnabled:
+  - "&eLockLogin"
+  - ""
+  - "&dThe server is protected against"
+  - "&dbrute force using LockLogin token"
+  - "&dprotection. To start with that protection"
+  - "&dyou must run /account protect and store the"
+  - "&dgenerated token, and login with it when the"
+  - "&dserver asks you for it"
+TokenLink: "&bClick to reveal the token"
+
+#Session messages - Account management
+AccountArguments: "&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<alts>"
+Change: "&5&oPlease, use /account change <password> <new password>"
+ChangeSame: "&5&oYour password can't be the same as old!"
+ChangeDone: "&dYour password has changed!"
+AccountUnlock: "&5&oPlease, use /account unlock <player>"
+AccountUnlocked: "&dAccount of {player} has been unlocked"
+AccountNotLocked: "&5&oAccount of {player} is not locked!"
+Close: "&5&oPlease, use /account close [player]"
+Closed: "&5&oSession closed, re-login now!"
+ForceClose: "&5&oYour session have been closed by an admin, login again"
+ForceCloseAdmin: "&dSession of {player} closed"
+Remove: "&5&oPlease, use /account remove <password|player> [password]"
+RemoveAccountMatch: "&5&oThe provided passwords does not match"
+AccountRemoved: "&5&oYour account have been deleted"
+ForcedAccountRemoval:
+  - "{ServerName}"
+  - ""
+  - "&5Your account has been removed by"
+  - "&5an administrator ( &7{player}&5 )"
+  - "&5and has been blocked temporally"
+  - "&5to avoid data lost, until a staff member"
+  - "&5unlocks it"
+  - ""
+  - "&5If you didn't call this action, please"
+  - "&5report this action at: &7https://discordexample.gg"
+ForcedAccountRemovalAdmin: "&dAccount of {player} removed, don't forget to run /account unlock {player}!"
+
+#Spawn utilities ( includes take back )
+SpawnSet: "&dThe login spawn location have been set"
+LocationsReset: "&dAll last locations have been reset"
+LocationReset: "&dLast location of {player} has been reset"
+LocationsFixed: "&dAll last locations have been fixed"
+LocationFixed: "&dLocation of {player} has been fixed"
+ResetLastLocUsage: "&5&oPlease, use /locations [player|@all|@me] <remove|fix>"
+
+#Alias messages
+AliasArguments: "&5&oValid alias sub-arguments: &e<create>&7, &e<destroy>&7, &e<add>&7, &e<remove> [alias] [player(s)]"
+AliasCreated: "&dAlias {alias} created successfully"
+AliasDestroyed: "&5&oAlias {alias} has been destroyed"
+AliasExists: "&5&oAlias {alias} already exists!"
+AliasNotFound: "&5&oCouldn't find any alias called {alias}"
+AddedPlayer: "&dAdded {player} to {alias}"
+RemovedPlayer: "&dRemoved {player} from {alias}"
+PlayerNotIn: "&5&o{player} is not in {alias}!"
+PlayerAlreadyIn: "&5&o{player} is already in {alias}!"
+
+#Security messages
+IpBlocked:
+  - "{ServerName}"
+  - ""
+  - "&5LockLogin systems have detected an"
+  - "&5unusual traffic on your IP and has been blocked"
+  - "&f{time} {time_format}"
+IllegalName:
+  - "{ServerName}"
+  - ""
+  - "&5Your name can't contain:"
+  - "{chars}"
+SimilarName:
+  - "{ServerName}"
+  - ""
+  - "&5Your name is similar to an"
+  - "&5already registered one"
+  - "&7{player}"
+MultipleNames:
+  - "&5We found more than one UUID assigned to"
+  - "&d{player}&5, so you can't use it to fetch data."
+  - ""
+  - "&5But you can try with his other names:&d {players}"
+UUIDFetchError:
+  - "{ServerName}"
+  - ""
+  - "&5Something went wrong while fetching your UUID"
+  - "&5with client name..."
+IpProxyError:
+  - "{ServerName}"
+  - ""
+  - "&5Your IP address seems a bit suspicious"
+  - "&5If you think this is an error, please contact"
+  - "&5the staff at: &7https://discordexample.gg"
