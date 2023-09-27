@@ -1,9 +1,12 @@
 package eu.locklogin.api.common.security.client;
 
+import eu.locklogin.api.common.session.SessionCheck;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * A proxy for commands, to avoid chat-spy plugins
@@ -64,11 +67,19 @@ public final class CommandProxy {
                 String[] cmdData = cmd.split(":");
                 pluginName = cmdData[0];
 
-                cmdName = cmd.replaceFirst(pluginName + ":", "");
+                try {
+                    cmdName = cmd.replaceFirst(pluginName + ":", "");
+                } catch (PatternSyntaxException ignored) {}
             }
         }
 
-        return Arrays.stream(filter).anyMatch(cmdName::startsWith);
+        String match = cmdName;
+        if (match.contains(" ")) {
+            String[] data = cmdName.split(" ");
+            match = data[0];
+        }
+
+        return Arrays.stream(filter).anyMatch(match::equalsIgnoreCase);
     }
 
     /**

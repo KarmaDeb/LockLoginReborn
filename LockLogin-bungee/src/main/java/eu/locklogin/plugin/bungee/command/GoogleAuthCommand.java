@@ -227,13 +227,11 @@ public final class GoogleAuthCommand extends Command {
                                             ScratchCodes codes = new ScratchCodes(user.getManager().getUUID());
 
                                             if (factory.validate(manager.getGAuth(), code) || codes.validate(code)) {
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                                .addProperty("pin", false).getInstance(),
-                                                        BungeeSender.serverFromPlayer(player));
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                .addProperty("pin", false).getInstance().build());
 
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                        .getInstance(),
-                                                        BungeeSender.serverFromPlayer(player));
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                        .getInstance().build());
 
                                                 session.set2FALogged(true);
                                                 session.setPinLogged(true);

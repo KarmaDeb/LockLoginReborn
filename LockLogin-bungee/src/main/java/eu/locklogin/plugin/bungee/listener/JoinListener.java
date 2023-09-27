@@ -52,8 +52,8 @@ import eu.locklogin.plugin.bungee.util.files.Proxy;
 import eu.locklogin.plugin.bungee.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bungee.util.player.PlayerPool;
 import eu.locklogin.plugin.bungee.util.player.User;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
+
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -108,7 +108,6 @@ public final class JoinListener implements Listener {
     public final PlayerPool kick_pool;
 
     private final Map<UUID, String> old_servers = new ConcurrentHashMap<>();
-    private final Map<UUID, UUID> offline_to_online = new ConcurrentHashMap<>();
 
     private final static MethodHandle HANDLE;
 
@@ -122,7 +121,7 @@ public final class JoinListener implements Listener {
             uniqueId.setAccessible(true);
             handle = lookup.unreflectSetter(uniqueId);
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            logger.scheduleLog(Level.GRAVE, ex);
         }
 
         HANDLE = handle;
@@ -187,43 +186,34 @@ public final class JoinListener implements Listener {
                                     JarManager.changeField(sender, "server", targetServer);
                                     plugin.console().send("Player {0} changed server to {1}", Level.INFO, player.getName(), (targetServer != null ? targetServer.getName() : "unknown"));
                                 } catch (Throwable ex) {
-                                    ex.printStackTrace();
+                                    plugin.logger().scheduleLog(Level.GRAVE, ex);
                                 }
 
                                 if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                                    if (BungeeSender.useSocket) {
-                                        Manager.sendSecondaryTopFunction
-                                                .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
-                                                                .addProperty("key", proxy.proxyKey())
-                                                                .addProperty("server", info.getName())
-                                                                .addProperty("socket", BungeeSender.useSocket).getInstance(),
-                                                        info);
-                                    } else {
-                                        Manager.sendTopFunction
-                                                .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
-                                                                .addProperty("key", proxy.proxyKey())
-                                                                .addProperty("server", info.getName())
-                                                                .addProperty("socket", BungeeSender.useSocket).getInstance(),
-                                                        info);
-                                    }
+                                    Manager.sender.queue(info)
+                                            .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                            .addProperty("key", proxy.proxyKey())
+                                                            .addProperty("server", info.getName())
+                                                            .addProperty("socket", false).getInstance().build(), true);
                                 }
 
-                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
-                                                .addProperty("raw", CurrentPlatform.getMessages().toString()).getInstance(),
-                                        info);
+                                Manager.sender.queue(info).insert(
+                                        DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
+                                                .addProperty("raw", CurrentPlatform.getMessages().toString())
+                                                .getInstance().build());
 
-                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
-                                                .addProperty("raw", Config.manager.getConfiguration()).getInstance(),
-                                        info);
+                                Manager.sender.queue(info).insert(
+                                        DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
+                                                .addProperty("raw", Config.manager.getConfiguration())
+                                                .getInstance().build());
                             }
 
                             CurrentPlatform.requestDataContainerUpdate();
 
                             ServerInfo info = BungeeSender.serverFromPlayer(player);
 
-                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
-                                    .getInstance(),
-                                    info);
+                            Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
+                                    .getInstance().build());
 
                             user.applySessionEffects();
 
@@ -268,10 +258,7 @@ public final class JoinListener implements Listener {
                             if (!skip) {
                                 PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
                                 if (database != null && config.enablePremium()) {
-                                    UUID id = offline_to_online.getOrDefault(player.getUniqueId(), player.getUniqueId());
-                                    offline_to_online.remove(player.getUniqueId());
-
-                                    if (database.isPremium(id)) {
+                                    if (database.isPremium(getOffline(player.getPendingConnection()))) {
                                         user.setPremium(true);
                                         session.setCaptchaLogged(true);
                                         session.setLogged(true);
@@ -288,6 +275,7 @@ public final class JoinListener implements Listener {
                                         user.send(event.getAuthMessage());
                                         skip = true;
 
+                                        //plugin.console().send("Logged automatically {0} because he's premium", Level.INFO, player.getName());
                                         user.sendToPremium(0);
                                     }
                                 }
@@ -303,13 +291,12 @@ public final class JoinListener implements Listener {
                                 }
                             }
 
-                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
+                            Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
                                     .addProperty("pass_login", session.isLogged())
                                     .addProperty("2fa_login", session.is2FALogged())
                                     .addProperty("pin_login", session.isPinLogged())
                                     .addProperty("registered", manager.isRegistered())
-                                    .getInstance(),
-                                    info);
+                                    .getInstance().build());
 
                             SimpleScheduler timer = tmp_timer;
                             SessionCheck<ProxiedPlayer> check = user.getChecker().whenComplete(() -> {
@@ -319,12 +306,10 @@ public final class JoinListener implements Listener {
                                 if (timer != null)
                                     timer.cancel();
                             });
-
                             plugin.getProxy().getScheduler().runAsync(plugin, check);
 
-                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
-                                            .getInstance(),
-                                    info);
+                            Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                            .getInstance().build());
 
                             if (!Proxy.isAuth(player.getServer().getInfo())) {
                                 user.checkServer(0, true);
@@ -376,35 +361,27 @@ public final class JoinListener implements Listener {
                     JarManager.changeField(user.getModule(), "server", targetServer);
                     plugin.console().send("Player {0} changed server to {1}", Level.INFO, player.getName(), (targetServer != null ? targetServer.getName() : "unknown"));
                 } catch (Throwable ex) {
-                    ex.printStackTrace();
+                    plugin.logger().scheduleLog(Level.GRAVE, ex);
                 }
 
                 if (!info.getName().equals(old)) {
                     if (ServerDataStorage.needsProxyKnowledge(info.getName())) {
-                        if (BungeeSender.useSocket) {
-                            Manager.sendSecondaryTopFunction
-                                    .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
-                                                    .addProperty("key", proxy.proxyKey())
-                                                    .addProperty("server", info.getName())
-                                                    .addProperty("socket", BungeeSender.useSocket).getInstance(),
-                                            info);
-                        } else {
-                            Manager.sendTopFunction
-                                    .apply(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
-                                                    .addProperty("key", proxy.proxyKey())
-                                                    .addProperty("server", info.getName())
-                                                    .addProperty("socket", BungeeSender.useSocket).getInstance(),
-                                            info);
-                        }
+                        Manager.sender.queue(info)
+                                .insert(DataMessage.newInstance(DataType.REGISTER, Channel.ACCESS, player)
+                                                .addProperty("key", proxy.proxyKey())
+                                                .addProperty("server", info.getName())
+                                                .addProperty("socket", false).getInstance()
+                                                .build(),
+                                        true);
                     }
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
-                                    .addProperty("raw", CurrentPlatform.getMessages().toString()).getInstance(),
-                            info);
+                    Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.MESSAGES, Channel.PLUGIN, player)
+                                    .addProperty("raw", CurrentPlatform.getMessages().toString())
+                            .getInstance().build());
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
-                                    .addProperty("raw", Config.manager.getConfiguration()).getInstance(),
-                            info);
+                    Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.CONFIG, Channel.PLUGIN, player)
+                                    .addProperty("raw", Config.manager.getConfiguration())
+                            .getInstance().build());
 
                     if (Proxy.isPremium(info) && !Proxy.isLobby(info)) {
                         if (config.enablePremium() && !user.isPremium()) {
@@ -413,8 +390,10 @@ public final class JoinListener implements Listener {
                         }
                     }
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
-                            .getInstance(), info);
+                    Manager.sender.queue(info)
+                            .insert(DataMessage.newInstance(
+                                    DataType.VALIDATION, Channel.ACCOUNT, player)
+                                    .getInstance().build());
 
                     CurrentPlatform.requestDataContainerUpdate();
 
@@ -437,15 +416,15 @@ public final class JoinListener implements Listener {
                         }
                     }
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
+                    Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.JOIN, Channel.ACCOUNT, player)
                             .addProperty("pass_login", session.isLogged())
                             .addProperty("2fa_login", session.is2FALogged())
                             .addProperty("pin_login", session.isPinLogged())
                             .addProperty("registered", manager.isRegistered())
-                            .getInstance(), info);
+                            .getInstance().build());
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
-                            .getInstance(), info);
+                    Manager.sender.queue(info).insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                            .getInstance().build());
 
                     user.checkServer(0, false);
                     return;
@@ -495,29 +474,38 @@ public final class JoinListener implements Listener {
             String conn_name = e.getConnection().getName();
             UUID gen = UUID.nameUUIDFromBytes(("OfflinePlayer:" + conn_name).getBytes());
 
-            OKARequest oka = MineAPI.fetchAndWait(conn_name);
+            UUID gen_uuid = UUIDFetcher.fetchUUID(conn_name, UUIDType.OFFLINE);
+            UUID online_gen_uuid = UUIDFetcher.fetchUUID(conn_name, UUIDType.ONLINE);
 
-            UUID gen_uuid = oka.getUUID(UUIDType.OFFLINE);
-            UUID online_gen_uuid = oka.getUUID(UUIDType.ONLINE);
+            boolean premium = online_gen_uuid != null;
+            PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+
+            if (premium && config.autoPremium() && config.enablePremium()) {
+                if (!pm.exists(gen_uuid)) {
+                    pm.setPremium(gen_uuid, true);
+                }
+            }
 
             if (gen_uuid == null) gen_uuid = gen;
             if (online_gen_uuid == null) online_gen_uuid = gen;
 
-            boolean premium = false;
-
-            offline_to_online.put(gen_uuid, online_gen_uuid);
-            plugin.console().debug("Fetching offline UUID ({0})", Level.INFO, gen_uuid);
             if (CurrentPlatform.isOnline() || e.getConnection().isOnlineMode()) {
                 gen_uuid = online_gen_uuid;
             } else {
-                PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
-                if (pm != null && config.enablePremium()) {
-                    if (pm.isPremium(online_gen_uuid)) {
+                if (config.enablePremium()) {
+                    if (pm.isPremium(gen_uuid)) {
                         e.getConnection().setOnlineMode(true);
                         if (!config.fixUUIDs()) {
                             gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
                         }
                     }
+                }
+            }
+
+            if (config.enablePremium() && !CurrentPlatform.isOnline() && e.getConnection().isOnlineMode()) {
+                if (pm.isPremium(gen_uuid) && online_gen_uuid == null) {
+                    pm.setPremium(gen_uuid, false);
+                    e.getConnection().setOnlineMode(false);
                 }
             }
 
@@ -669,7 +657,7 @@ public final class JoinListener implements Listener {
 
             PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
             if (pm != null && config.enablePremium()) {
-                boolean premium = pm.isPremium(offline_to_online.getOrDefault(tar_uuid, tar_uuid)) || pm.isPremium(tar_uuid);
+                boolean premium = pm.isPremium(getOffline(connection));
 
                 if (premium && config.fixUUIDs()) {
                     tar_uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + connection.getName()).getBytes());
@@ -679,20 +667,19 @@ public final class JoinListener implements Listener {
 
                         HANDLE.invoke(handler, (Object) tar_uuid);
                     } catch (Throwable ex) {
-                        ex.printStackTrace();
+                        logger.scheduleLog(Level.GRAVE, ex);
                     }
                 }
             }
 
             boolean check = CurrentPlatform.isOnline() || !connection.isOnlineMode();
             if (check) {
-                OKARequest oka = MineAPI.fetchAndWait(connection.getUniqueId());
-
-                UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
-                UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
+                UUID online_uuid = UUIDFetcher.fetchUUID(connection.getName(), UUIDType.ONLINE);
+                UUID offline_uuid = UUIDFetcher.fetchUUID(connection.getName(), UUIDType.OFFLINE);
 
                 if (online_uuid == null) online_uuid = connection.getUniqueId();
                 if (offline_uuid == null) offline_uuid = connection.getUniqueId();
+
                 UUID gen_uuid = offline_uuid;
                 if (CurrentPlatform.isOnline() && e.getConnection().isOnlineMode()) {
                     gen_uuid = online_uuid;
@@ -770,5 +757,9 @@ public final class JoinListener implements Listener {
         } catch (Throwable ex) {
             return PluginIpValidationEvent.ValidationResult.ERROR.withReason("Failed to check IP: " + ex.fillInStackTrace());
         }
+    }
+
+    private UUID getOffline(final PendingConnection connection) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + connection.getName()).getBytes());
     }
 }

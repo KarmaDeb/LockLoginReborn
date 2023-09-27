@@ -116,8 +116,8 @@ public class PinCommand extends Command {
 
                                                     session.setPinLogged(false);
 
-                                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                            .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
+                                                    Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                            .addProperty("pin", true).getInstance().build());
 
                                                     CurrentPlatform.requestDataContainerUpdate();
                                                 } else {

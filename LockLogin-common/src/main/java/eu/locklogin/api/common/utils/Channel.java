@@ -14,9 +14,12 @@ package eu.locklogin.api.common.utils;
  * the version number 2.1.]
  */
 
+import lombok.Getter;
+
 /**
  * Valid channels
  */
+@Getter
 public enum Channel {
     /**
      * Account channel
@@ -33,6 +36,9 @@ public enum Channel {
 
     /**
      * Channel name
+     * -- GETTER --
+     *  Get the channel name
+     *
      */
     private final String name;
 
@@ -43,15 +49,6 @@ public enum Channel {
      */
     Channel(final String n) {
         name = n;
-    }
-
-    /**
-     * Get the channel name
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
     }
 
     public static Channel fromName(final String name) {

@@ -26,6 +26,7 @@ import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
+import org.bukkit.Bukkit;
 
 import java.net.URL;
 
@@ -100,6 +101,8 @@ public final class Main extends KarmaPlugin implements SourcePlugin {
         }
 
         stopTasks();
+        Bukkit.getScheduler().cancelTasks(this); //Ensure we cancel all our tasks
+
         unloaded = true;
     }
 

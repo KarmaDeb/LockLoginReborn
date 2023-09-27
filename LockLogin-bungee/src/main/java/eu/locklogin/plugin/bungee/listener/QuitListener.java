@@ -106,8 +106,8 @@ public final class QuitListener implements Listener {
             session.setPinLogged(false);
             session.set2FALogged(false);
 
-            Manager.sendFunction.apply(DataMessage.newInstance(DataType.QUIT, Channel.ACCOUNT, player)
-                    .getInstance(), BungeeSender.serverFromPlayer(player));
+            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.QUIT, Channel.ACCOUNT, player)
+                    .getInstance().build());
 
             user.removeSessionCheck();
             UserDatabase.removeUser(player);

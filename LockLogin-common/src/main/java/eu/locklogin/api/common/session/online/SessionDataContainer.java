@@ -14,26 +14,28 @@ package eu.locklogin.api.common.session.online;
  * the version number 2.1.]
  */
 
-import java.util.function.Consumer;
+import eu.locklogin.api.account.AccountManager;
+import eu.locklogin.api.account.ClientSession;
+import eu.locklogin.api.common.utils.other.LockedAccount;
+import eu.locklogin.api.module.plugin.javamodule.sender.ModulePlayer;
+import eu.locklogin.api.premium.PremiumDatabase;
+import eu.locklogin.api.util.enums.ManagerType;
+import eu.locklogin.api.util.platform.CurrentPlatform;
+import eu.locklogin.api.util.platform.ModuleServer;
+import eu.locklogin.api.util.platform.Platform;
+import ml.karmaconfigs.api.common.string.StringUtils;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * LockLogin logged/registered data container
  */
 public final class SessionDataContainer {
 
-    private static Consumer<SessionChangeData> onDataChange = null;
-
-    private static int logged = 0;
-    private static int registered = 0;
-
-    /**
-     * Set an action to perform when the data change
-     *
-     * @param onChange the new on change consumer
-     */
-    public static void onDataChange(final Consumer<SessionChangeData> onChange) {
-        onDataChange = onChange;
-    }
+    private static int remoteLogged;
+    private static int remoteRegistered;
 
     /**
      * Get the logged users amount
@@ -41,7 +43,26 @@ public final class SessionDataContainer {
      * @return the logged users amount
      */
     public static int getLogged() {
-        return logged;
+        if (!CurrentPlatform.getPlatform().equals(Platform.BUNGEE) &&
+                CurrentPlatform.getConfiguration().isBungeeCord()) {
+            return remoteLogged;
+        }
+
+        ModuleServer server = CurrentPlatform.getServer();
+
+        int amount = 0;
+        for (ModulePlayer player : server.getOnlinePlayers()) {
+            if (player != null && player.isPlaying()) {
+                ClientSession session = player.getSession();
+                if (session == null) continue;
+
+                if (session.isLogged() && session.isTempLogged()) {
+                    amount++;
+                }
+            }
+        }
+
+        return amount;
     }
 
     /**
@@ -50,21 +71,7 @@ public final class SessionDataContainer {
      * @param amount the logged users amount
      */
     public static void setLogged(final int amount) {
-        int before = logged;
-        logged = Math.max(0, amount);
-
-        if (onDataChange != null) {
-            SessionChangeData.DataChange change = SessionChangeData.DataChange.SAME;
-            int size = 0;
-
-            if (before != logged) {
-                change = (before > logged ? SessionChangeData.DataChange.DECREASE : SessionChangeData.DataChange.INCREASE);
-                size = Math.abs(before - logged);
-            }
-
-            SessionChangeData data = new SessionChangeData(SessionChangeData.DataType.LOGIN, change, size);
-            onDataChange.accept(data);
-        }
+        remoteLogged = amount;
     }
 
     /**
@@ -73,7 +80,35 @@ public final class SessionDataContainer {
      * @return the registered users amount
      */
     public static int getRegistered() {
-        return registered;
+        if (!CurrentPlatform.getPlatform().equals(Platform.BUNGEE) &&
+                CurrentPlatform.getConfiguration().isBungeeCord()) {
+            return remoteRegistered;
+        }
+
+        AccountManager manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
+        if (manager != null) {
+            int amount = 0;
+
+            PremiumDatabase pdb = CurrentPlatform.getPremiumDatabase();
+
+            Set<UUID> processed = new HashSet<>();
+            for (AccountManager m : manager.getAccounts()) {
+                LockedAccount locked = new LockedAccount(m.getUUID());
+                String name = m.getName();
+
+                if (!StringUtils.isNullOrEmpty(name)) {
+                    UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
+
+                    if (processed.add(offline) && !locked.isLocked() && (m.isRegistered() || pdb.isPremium(offline))) {
+                        amount++;
+                    }
+                }
+            }
+
+            return amount;
+        }
+
+        return -1;
     }
 
     /**
@@ -82,20 +117,6 @@ public final class SessionDataContainer {
      * @param amount the registered users amount
      */
     public static void setRegistered(final int amount) {
-        int before = registered;
-        registered = Math.max(0, amount);;
-
-        if (onDataChange != null) {
-            SessionChangeData.DataChange change = SessionChangeData.DataChange.SAME;
-            int size = 0;
-
-            if (before != logged) {
-                change = (before > logged ? SessionChangeData.DataChange.DECREASE : SessionChangeData.DataChange.INCREASE);
-                size = Math.abs(before - logged);
-            }
-
-            SessionChangeData data = new SessionChangeData(SessionChangeData.DataType.REGISTER, change, size);
-            onDataChange.accept(data);
-        }
+        remoteRegistered = amount;
     }
 }

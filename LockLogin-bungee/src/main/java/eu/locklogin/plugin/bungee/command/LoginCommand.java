@@ -201,12 +201,11 @@ public final class LoginCommand extends Command {
                                                     null);
                                             ModulePlugin.callEvent(event);
 
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                    .addProperty("pin", false).getInstance(),
-                                                    BungeeSender.serverFromPlayer(player));
+                                            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                    .addProperty("pin", false).getInstance().build());
 
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                    .getInstance(), BungeeSender.serverFromPlayer(player));
+                                            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                    .getInstance().build());
 
                                             session.set2FALogged(true);
                                             session.setPinLogged(true);
@@ -224,8 +223,8 @@ public final class LoginCommand extends Command {
                                             if (manager.hasPin()) {
                                                 session.setPinLogged(false);
 
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                        .addProperty("pin", true).getInstance(), BungeeSender.serverFromPlayer(player));
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                        .addProperty("pin", true).getInstance().build());
                                             } else {
                                                 user.send(messages.prefix() + event.getAuthMessage());
                                                 user.send(messages.prefix() + messages.gAuthInstructions());
@@ -237,7 +236,7 @@ public final class LoginCommand extends Command {
 
                                         user.restorePotionEffects();
 
-                                        Manager.sendFunction.apply(login, BungeeSender.serverFromPlayer(player));
+                                        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(login.build());
 
                                         if (checkServer)
                                             user.checkServer(0, true);
@@ -305,8 +304,8 @@ public final class LoginCommand extends Command {
                                         String exec = CommandProxy.getCommand(cmd_id);
 
                                         user.performCommand(exec);
-                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
-                                                .getInstance(), BungeeSender.serverFromPlayer(player));
+                                        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                                .getInstance().build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

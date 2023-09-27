@@ -14,19 +14,16 @@ package eu.locklogin.plugin.bukkit.plugin;
  * the version number 2.1.]
  */
 
-import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.JarManager;
 import eu.locklogin.api.common.premium.DefaultPremiumDatabase;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.Session;
 import eu.locklogin.api.common.session.SessionCheck;
-import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.session.persistence.SessionKeeper;
 import eu.locklogin.api.common.utils.filter.ConsoleFilter;
 import eu.locklogin.api.common.utils.filter.PluginFilter;
 import eu.locklogin.api.common.utils.other.ASCIIArtGenerator;
-import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.other.PlayerAccount;
 import eu.locklogin.api.common.web.STFetcher;
 import eu.locklogin.api.common.web.VersionDownloader;
@@ -41,7 +38,6 @@ import eu.locklogin.api.module.plugin.api.event.util.Event;
 import eu.locklogin.api.module.plugin.client.permission.plugin.PluginPermissions;
 import eu.locklogin.api.module.plugin.javamodule.ModulePlugin;
 import eu.locklogin.api.security.backup.BackupScheduler;
-import eu.locklogin.api.util.enums.ManagerType;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.Main;
 import eu.locklogin.plugin.bukkit.TaskTarget;
@@ -182,19 +178,6 @@ public final class Manager {
             console.send("Virtual ID ( disabled by default) is disabled. You should enable it to enforce you clients security against database leaks", Level.GRAVE);
         }
 
-        AccountManager t_manager = CurrentPlatform.getAccountManager(ManagerType.CUSTOM, null);
-        if (t_manager != null) {
-            Set<AccountManager> accounts = t_manager.getAccounts();
-            Set<AccountManager> nonLocked = new HashSet<>();
-            for (AccountManager account : accounts) {
-                LockedAccount locked = new LockedAccount(account.getUUID());
-                if (!locked.isLocked() && account.isRegistered())
-                    nonLocked.add(account);
-            }
-
-            SessionDataContainer.setRegistered(nonLocked.size());
-        }
-
         trySync(TaskTarget.PLUGIN_HOOK, () -> {
             if (plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
                 LockLoginPlaceholder placeholder = new LockLoginPlaceholder();
@@ -218,190 +201,8 @@ public final class Manager {
 
         CurrentPlatform.setPrefix(config.getModulePrefix());
 
-        /*plugin.async().queue("connect_web_services", () -> {
-            License license = CurrentPlatform.getLicense();
-            if (license != null) {
-                String version = license.version();
-                LicenseOwner owner = license.owner();
-                LicenseExpiration expiration = license.expiration();
-
-                InstantParser grant_parser = new InstantParser(expiration.granted());
-                InstantParser expire_parser = new InstantParser(expiration.expiration());
-
-                plugin.console().send("Successfully loaded your license: {0}", Level.INFO, version);
-                plugin.console().send("------------------------------------------------------");
-                plugin.console().send("&7License type: &e{0}", (license.isFree() ? "free" : "premium"));
-                plugin.console().send("&7Licensed under:&e {0} ({1})", owner.name(), owner.contact());
-                plugin.console().send("&7Licensed for: &e{0}&7 servers", license.max_proxies());
-                plugin.console().send("&7License storage: &e{0}&7 bytes", license.backup_storage());
-                plugin.console().send("&7Granted on: &e{0}", grant_parser.parse());
-                plugin.console().send("&7Expires on: &e{0}", expire_parser.parse());
-                if (expiration.hasExpiration()) {
-                    if (expiration.isExpired()) {
-                        plugin.console().send("&cYour license is expired; It will be marked as free until you renew it");
-                    } else {
-                        if (expiration.expireMonths() <= 0 && expiration.expireYears() <= 0) {
-                            plugin.console().send("Your license will expire in {0} days, you should renew it before it expires", Level.WARNING, expiration.expireDays());
-                        }
-
-                        plugin.console().send("&7Expiration in: &e{0}&7 years&e {1}&7 months&e {2}&7 days &8(&e{3}&7 weeks&8)&e {4}&7 hours&e {5}&7 minutes and&e {6}&7 seconds",
-                                expiration.expireYears(),
-                                expiration.expireMonths(),
-                                expiration.expireDays(),
-                                expiration.expireWeeks(),
-                                expiration.expireHours(),
-                                expiration.expireMinutes(),
-                                expiration.expireSeconds());
-                    }
-                } else {
-                    plugin.console().send("&aYour license is a lifetime license");
-                }
-                plugin.console().send("------------------------------------------------------");
-            } else {
-                long time = System.currentTimeMillis();
-
-                plugin.console().send("Failed to validate your license. It seems that LockLogin servers doesn't know about it", Level.GRAVE);
-                Path license_file = plugin.getDataPath().resolve("cache").resolve("license.dat");
-                if (Files.exists(license_file)) {
-                    Path mod = plugin.getDataPath().resolve("cache").resolve("invalid_" + time + ".dat");
-
-                    try {
-                        Files.move(license_file, mod, StandardCopyOption.REPLACE_EXISTING);
-                        plugin.console().send("Invalid license has been disabled, run /locklogin setup to setup a new valid free license", Level.INFO);
-                    } catch (Throwable ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-
-            console.send("Connecting to LockLogin web services (statistics and bungee communication), please wait...", Level.INFO);
-            SocketClient socket = new LockLoginSocket();
-            ConnectionManager c_Manager = new ConnectionManager(socket);
-
-            c_Manager.connect(5).whenComplete((tries_amount) -> {
-                if (tries_amount > 0) {
-                    console.send("Connected to LockLogin web services after {0} tries", Level.WARNING, tries_amount);
-                }
-
-                switch (tries_amount) {
-                    case -1:
-                        //TODO: Allow configure tries amount from config and read that value
-                        console.send("Failed to connect to LockLogin web services after 5 tries, giving up...", Level.WARNING);
-                    case -2:
-                        registerMetrics(null);
-                        break;
-                    case 0:
-                        console.send("Connected to LockLogin web services successfully", Level.INFO);
-                    default:
-                        registerMetrics(socket);
-                        console.send("Registering LockLogin web service listeners", Level.INFO);
-                        c_Manager.addListener(Channel.ACCOUNT, DataType.PIN, (data) -> {
-                            if (data.has("pin_input") && data.has("player")) {
-                                UUID uuid = UUID.fromString(data.get("player").getAsString());
-                                Player player = plugin.getServer().getPlayer(uuid);
-
-                                if (player != null) {
-                                    String pin = data.get("pin_input").getAsString();
-
-                                    User user = new User(player);
-                                    ClientSession session = user.getSession();
-                                    AccountManager manager = user.getManager();
-                                    if (session.isValid()) {
-                                        PluginMessages messages = CurrentPlatform.getMessages();
-
-                                        if (manager.hasPin() && CryptoFactory.getBuilder().withPassword(pin).withToken(manager.getPin()).build().validate(Validation.ALL) && !pin.equalsIgnoreCase("error")) {
-                                            UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                    (manager.has2FA() ? UserAuthenticateEvent.Result.SUCCESS_TEMP : UserAuthenticateEvent.Result.SUCCESS),
-                                                    user.getModule(),
-                                                    (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                            ModulePlugin.callEvent(event);
-
-                                            user.send(messages.prefix() + event.getAuthMessage());
-                                            session.setPinLogged(true);
-                                            session.set2FALogged(!manager.has2FA());
-                                        } else {
-                                            if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                        UserAuthenticateEvent.Result.ERROR,
-                                                        user.getModule(),
-                                                        (manager.has2FA() ? messages.gAuthInstructions() : messages.logged()), null);
-                                                ModulePlugin.callEvent(event);
-
-                                                user.send(messages.prefix() + event.getAuthMessage());
-                                                session.setPinLogged(true);
-                                                session.set2FALogged(!manager.has2FA());
-                                            } else {
-                                                if (!pin.equalsIgnoreCase("error") && manager.hasPin()) {
-                                                    UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
-                                                            UserAuthenticateEvent.Result.ERROR,
-                                                            user.getModule(),
-                                                            "", null);
-                                                    ModulePlugin.callEvent(event);
-
-                                                    if (!event.getAuthMessage().isEmpty()) {
-                                                        user.send(messages.prefix() + event.getAuthMessage());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        c_Manager.addListener(Channel.ACCOUNT, DataType.JOIN, (data) -> {
-                            if (data.has("player")) {
-                                UUID uuid = UUID.fromString(data.get("player").getAsString());
-                                Player player = plugin.getServer().getPlayer(uuid);
-
-                                if (player != null) {
-                                    User user = new User(player);
-                                    UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
-                                    ModulePlugin.callEvent(event);
-                                }
-                            }
-                        });
-                        c_Manager.addListener(Channel.PLUGIN, DataType.PLAYER, (data) -> {
-                            if (data.has("player_info")) {
-                                ModulePlayer modulePlayer = StringUtils.loadUnsafe(data.get("player_info").getAsString());
-                                if (modulePlayer != null) {
-                                    AccountManager manager = modulePlayer.getAccount();
-
-                                    if (manager != null) {
-                                        AccountManager newManager = new PlayerAccount(manager.getUUID());
-                                        MigrationManager migrationManager = new MigrationManager(manager, newManager);
-                                        migrationManager.startMigration();
-                                    }
-                                }
-                            }
-                        });
-                        break;
-                }
-
-                initialized = true;
-            });
-
-            if (config.isBungeeCord())
-                registerBungee(socket, c_Manager);
-
-            if (plugin.getServer().getPluginManager().isPluginEnabled("Vault")) {
-                RegisteredServiceProvider<Permission> rsp = plugin.getServer().getServicesManager().getRegistration(Permission.class);
-                if (rsp != null) {
-                    Permission permission = rsp.getProvider();
-                    if (permission.isEnabled()) {
-                        plugin.console().send("Detected permission provider {0}. LockLogin will remove all player permissions and OP when the client connects and restore them after a success login for better security", Level.INFO, rsp.getPlugin().getName());
-                    }
-                }
-            }
-            if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib") && !CurrentPlatform.isOnline()) {
-                plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
-                try {
-                    ProtocolListener.register();
-                    CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
-                } catch (Throwable ignored) {}
-            }
-        });*/
-
         registerMetrics();
+
         if (config.isBungeeCord())
             registerBungee();
 
@@ -414,15 +215,19 @@ public final class Manager {
                 }
             }
         }
+
+        CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
         if (plugin.getServer().getPluginManager().isPluginEnabled("ProtocolLib") && !CurrentPlatform.isOnline()) {
             plugin.console().send("ProtocolLib detected, trying to toggle premium mode support", Level.INFO);
             try {
-                ProtocolListener.register();
-                CurrentPlatform.setPremiumDatabase(new DefaultPremiumDatabase());
+                ProtocolListener.register(plugin);
             } catch (Throwable ignored) {}
         }
 
         initialized = true;
+
+        RemoteNotification notification = new RemoteNotification();
+        notification.checkAlerts().whenComplete(() -> plugin.console().send(notification.getStartup()));
     }
 
     public static void terminate() {
@@ -476,7 +281,10 @@ public final class Manager {
 
         PluginMessageListenerRegistration registration_account = messenger.registerIncomingPluginChannel(plugin, "ll:account", receiver);
         messenger.registerOutgoingPluginChannel(plugin, "ll:account");
+
         PluginMessageListenerRegistration registration_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:plugin", receiver);
+        messenger.registerOutgoingPluginChannel(plugin, "ll:plugin");
+
         PluginMessageListenerRegistration access_plugin = messenger.registerIncomingPluginChannel(plugin, "ll:access", receiver);
         messenger.registerOutgoingPluginChannel(plugin, "ll:access");
 
@@ -737,7 +545,7 @@ public final class Manager {
     static void scheduleVersionCheck() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
-        SimpleScheduler timer = new SourceScheduler(plugin, config.getUpdaterOptions().getInterval(), SchedulerUnit.SECOND, true).multiThreading(true).endAction(Manager::performVersionCheck);
+        SimpleScheduler timer = new SourceScheduler(plugin, config.getUpdaterOptions().getInterval(), SchedulerUnit.SECOND, true).multiThreading(true).restartAction(Manager::performVersionCheck);
         if (config.getUpdaterOptions().isEnabled())
             timer.start();
 
@@ -749,7 +557,7 @@ public final class Manager {
      * Schedule the alert system
      */
     static void scheduleAlertSystem() {
-        SimpleScheduler timer = new SourceScheduler(plugin, 30, SchedulerUnit.SECOND, true).multiThreading(true).endAction(() -> {
+        SimpleScheduler timer = new SourceScheduler(plugin, 30, SchedulerUnit.SECOND, true).multiThreading(true).restartAction(() -> {
             RemoteNotification system = new RemoteNotification();
             system.checkAlerts();
 
@@ -757,7 +565,7 @@ public final class Manager {
             String text = notification.getNotification();
             int level = notification.getLevel();
 
-            if (!last_notification_text.equals(text) && last_notification_level != level) {
+            if (!last_notification_text.equals(text) || last_notification_level != level) {
                 last_notification_text = text;
                 last_notification_level = level;
 
@@ -783,12 +591,6 @@ public final class Manager {
                     }
                     console.send("The current alert system requires some configuration options to be in a specified value. Custom config will be ignored for some variables", Level.WARNING);
                 }
-                /*
-                Spigot. Just ignore proxy configuration
-
-                if (notification.forceProxy()) {
-
-                }*/
             }
         });
         timer.start();

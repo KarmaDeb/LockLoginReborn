@@ -46,8 +46,10 @@ commands:
     description: The command to manage the plugin, such as reload, or apply updates
   slocklogin:
     description: Spigot version of the locklogin command for bungeecord mode
-  setloginspawn:
-    description: The command to set login spawn, must be enabled in config.yml!
+  loginspawn:
+    description: The command to set login spawn
+    aliases:
+      - setloginspawn #Will be an alias for now, but is scheduled for removal
   register:
     description: The command that allows a player to register
     aliases:

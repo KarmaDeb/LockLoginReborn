@@ -61,8 +61,6 @@ import static eu.locklogin.plugin.bungee.LockLogin.*;
 @SuppressWarnings("UnstableApiUsage")
 public final class MessageListener implements Listener {
 
-    private boolean adviced = false;
-
     @EventHandler(priority = EventPriority.LOWEST)
     @SuppressWarnings("unchecked")
     public void onMessageReceive(PluginMessageEvent e) {
@@ -125,21 +123,18 @@ public final class MessageListener implements Listener {
                                                         } else {
                                                             session.set2FALogged(true);
 
-                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                                    .getInstance(),
-                                                                    server.getInfo());
+                                                            Manager.sender.queue(server.getInfo()).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                    .getInstance().build());
 
                                                             user.checkServer(0, true);
                                                         }
 
-                                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                                .addProperty("pin", false).getInstance(),
-                                                                server.getInfo());
+                                                        Manager.sender.queue(server.getInfo()).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                .addProperty("pin", false).getInstance().build());
                                                     } else {
                                                         if (pin.equalsIgnoreCase("error") || !manager.hasPin()) {
-                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                                    .addProperty("pin", false).getInstance(),
-                                                                    server.getInfo());
+                                                            Manager.sender.queue(server.getInfo()).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                                    .addProperty("pin", false).getInstance().build());
 
                                                             UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PIN,
                                                                     UserAuthenticateEvent.Result.ERROR,
@@ -154,8 +149,8 @@ public final class MessageListener implements Listener {
                                                             } else {
                                                                 session.set2FALogged(true);
 
-                                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                                        .getInstance(), server.getInfo());
+                                                                Manager.sender.queue(server.getInfo()).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                                        .getInstance().build());
 
                                                                 user.checkServer(0, true);
                                                             }
@@ -181,6 +176,10 @@ public final class MessageListener implements Listener {
                                             User user = new User(player);
                                             UserPostValidationEvent event = new UserPostValidationEvent(user.getModule(), name, null);
                                             ModulePlugin.callEvent(event);
+                                            break;
+                                        case VALIDATION:
+                                            Manager.sender.queue(server.getInfo()).insert(DataMessage.newInstance(DataType.VALIDATION, Channel.ACCOUNT, player)
+                                                            .getInstance().build());
                                             break;
                                         default:
                                             break;
@@ -234,21 +233,11 @@ public final class MessageListener implements Listener {
                                         stored_set.add(target_server);
 
                                         if (ServerDataStorage.needsProxyKnowledge(name)) {
-                                            Manager.unlockFunction.apply(name);
-                                            if (BungeeSender.useSocket) {
-                                                Manager.unlockSecondaryFunction.apply(name);
-                                            }
-
+                                            Manager.sender.queue(server.getInfo()).unlock();
                                             BungeeSender.registered_servers++;
 
                                             console.send("Registered proxy key into server {0}", Level.INFO, name);
                                             ServerDataStorage.setProxyRegistered(name);
-                                            BungeeSender.forceBungee(server.getInfo());
-                                        } else {
-                                            if (json.get("socket").getAsBoolean() && BungeeSender.useSocket) {
-                                                BungeeSender.useProxy(server.getInfo());
-                                                console.send("Server {0} is now using web service communication", Level.INFO, name);
-                                            }
                                         }
                                     }
                                 }

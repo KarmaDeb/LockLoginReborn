@@ -37,12 +37,14 @@ Backup:
 
 #Premium configuration
 #
+# Auto -> Enables premium mode automatically
 # Enable -> Enable the premium feature
 # ForceUUID -> This will ensure the client uses the correct UUID.
 #              For example, on an offline mode server, the client will
 #              use his offline UUID. In an online-mode server, the client
 #              will use his online UUID
 Premium:
+  Auto: false
   Enable: true
   ForceUUID: true
 

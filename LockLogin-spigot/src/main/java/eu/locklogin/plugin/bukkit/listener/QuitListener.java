@@ -122,8 +122,10 @@ public final class QuitListener implements Listener {
                         //owner wants to enable it, it would be good to see
                         //the player last location has been stored to avoid
                         //location problems
-                        LastLocation last_loc = new LastLocation(player);
-                        last_loc.save();
+                        if (Spawn.isAway(player)) {
+                            LastLocation last_loc = new LastLocation(player);
+                            last_loc.save();
+                        }
 
                         if (session.isLogged() && session.isTempLogged()) {
                             if (!module.hasPermission(PluginPermissions.leave_silent())) {
@@ -223,8 +225,10 @@ public final class QuitListener implements Listener {
                     //owner wants to enable it, it would be good to see
                     //the player last location has been stored to avoid
                     //location problems
-                    LastLocation last_loc = new LastLocation(player);
-                    last_loc.save();
+                    if (Spawn.isAway(player)) {
+                        LastLocation last_loc = new LastLocation(player);
+                        last_loc.save();
+                    }
 
                     if (session.isLogged() && session.isTempLogged()) {
                         if (!module.hasPermission(PluginPermissions.leave_silent())) {

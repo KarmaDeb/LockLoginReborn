@@ -50,7 +50,6 @@ public final class BungeeDataStorager {
                 return CryptoFactory.getBuilder().withPassword(key).withToken(proxyKey).build().validate(Validation.ALL);
             }
         } catch (Throwable ex) {
-            ex.printStackTrace();
             return false;
         }
     }

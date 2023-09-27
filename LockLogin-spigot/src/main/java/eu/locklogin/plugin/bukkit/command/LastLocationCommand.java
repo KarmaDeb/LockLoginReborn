@@ -22,6 +22,7 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
+import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.command.Command;
@@ -66,9 +67,6 @@ public final class LastLocationCommand implements CommandExecutor {
                         LastLocation location;
 
                         switch (target.toLowerCase()) {
-                            case "@spawn":
-
-                                break;
                             case "@all":
                                 switch (action.toLowerCase()) {
                                     case "remove":

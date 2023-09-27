@@ -15,11 +15,9 @@ package eu.locklogin.api.encryption;
  */
 
 import eu.locklogin.api.encryption.argon.Argon2Util;
+import eu.locklogin.api.encryption.libraries.DigestTester;
 import eu.locklogin.api.encryption.libraries.bcrypt.BCryptLib;
-import eu.locklogin.api.encryption.libraries.sha.LSSHA256;
-import eu.locklogin.api.encryption.libraries.sha.SHA256;
-import eu.locklogin.api.encryption.libraries.sha.SHA512;
-import eu.locklogin.api.encryption.libraries.sha.SHA512X;
+import eu.locklogin.api.encryption.libraries.sha.*;
 import eu.locklogin.api.encryption.libraries.wordpress.WordPressCrypt;
 import eu.locklogin.api.encryption.plugin.AuthMeAuth;
 import eu.locklogin.api.encryption.plugin.LoginSecurityAuth;
@@ -316,6 +314,7 @@ public final class CryptoFactory {
                     boolean try_result = false;
 
                     SHA512X sha512X = new SHA512X(password_try);
+                    SHA256X sha256X = new SHA256X(password_try);
                     Argon2Util argon2id = new Argon2Util(password_try);
                     WordPressCrypt wordPress = new WordPressCrypt(password_try);
 
@@ -338,7 +337,9 @@ public final class CryptoFactory {
                             break;
                         case BCrypt:
                         case BCryptPHP:
-                            try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                            try {
+                                try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                            } catch (IllegalArgumentException ignored) {}
                             break;
                         case ARGON2I:
                             try_result = argon2id.checkPassword(key, HashType.ARGON2I);
@@ -353,7 +354,7 @@ public final class CryptoFactory {
                             try_result = wordPress.validate(key);
                             break;
                         case UNKNOWN:
-                            try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt());
+                            try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt()) || sha256X.validate(key, data.getSalt()) || DigestTester.check(key, password_try);
                             break;
                         case NONE:
                         default:
@@ -365,6 +366,7 @@ public final class CryptoFactory {
                         password_try = password;
 
                         sha512X = new SHA512X(password_try);
+                        sha256X = new SHA256X(password_try);
                         argon2id = new Argon2Util(password_try);
                         wordPress = new WordPressCrypt(password_try);
 
@@ -387,7 +389,9 @@ public final class CryptoFactory {
                                 break;
                             case BCrypt:
                             case BCryptPHP:
-                                try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                                try {
+                                    try_result = BCryptLib.checkpw(password_try, key.replaceFirst("2y", "2a"));
+                                } catch (IllegalArgumentException ignored) {}
                                 break;
                             case ARGON2I:
                                 try_result = argon2id.checkPassword(key, HashType.ARGON2I);
@@ -402,7 +406,7 @@ public final class CryptoFactory {
                                 try_result = wordPress.validate(key);
                                 break;
                             case UNKNOWN:
-                                try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt());
+                                try_result = AuthMeAuth.check(password_try, key) || LoginSecurityAuth.check(password_try, key) || sha512X.validate(key, data.getSalt()) || sha256X.validate(key, data.getSalt()) || DigestTester.check(key, password_try);
                                 break;
                             case NONE:
                             default:
@@ -424,6 +428,7 @@ public final class CryptoFactory {
             String usePassword = pwd;
 
             SHA512X sha512X = new SHA512X(usePassword);
+            SHA256X sha256X = new SHA256X(usePassword);
             Argon2Util argon2id = new Argon2Util(usePassword);
             WordPressCrypt wordPress = new WordPressCrypt(usePassword);
 
@@ -445,7 +450,9 @@ public final class CryptoFactory {
                     return lssha256.check(key);
                 case BCrypt:
                 case BCryptPHP:
-                    return BCryptLib.checkpw(usePassword, key.replaceFirst("2y", "2a"));
+                    try {
+                        return BCryptLib.checkpw(usePassword, key.replaceFirst("2y", "2a"));
+                    } catch (IllegalArgumentException ignored) {}
                 case ARGON2I:
                     return argon2id.checkPassword(key, HashType.ARGON2I);
                 case ARGON2ID:
@@ -455,7 +462,7 @@ public final class CryptoFactory {
                 case WORDPRESS:
                     return wordPress.validate(key);
                 case UNKNOWN:
-                    return AuthMeAuth.check(usePassword, key) || LoginSecurityAuth.check(usePassword, key) || sha512X.validate(key, data.getSalt());
+                    return AuthMeAuth.check(usePassword, key) || LoginSecurityAuth.check(usePassword, key) || sha512X.validate(key, data.getSalt()) || sha256X.validate(key, data.getSalt()) || DigestTester.check(key, usePassword);
                 case NONE:
                 default:
                     APISource.loadProvider("LockLogin").console().send("&cError while getting current token hash type: " + current_type.name());

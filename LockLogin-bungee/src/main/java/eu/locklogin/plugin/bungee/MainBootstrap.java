@@ -42,6 +42,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -63,7 +64,7 @@ public class MainBootstrap {
         try {
             JarManager.changeField(CurrentPlatform.class, "current_appender", new BruteLoader((URLClassLoader) main.getClass().getClassLoader()));
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            logger.scheduleLog(Level.GRAVE, ex);
         }
     }
 
@@ -93,22 +94,7 @@ public class MainBootstrap {
         JarManager.downloadAll();
         DependencyManager.loadDependencies();
 
-        SimpleScheduler check_scheduler = new SourceScheduler(plugin, 10, SchedulerUnit.SECOND, true);
-        check_scheduler.restartAction(() -> {
-            for (ServerInfo server : plugin.getProxy().getServers().values()) {
-                if (BungeeSender.isForceBungee(server) || !BungeeSender.useSocket) {
-                    if (!ServerDataStorage.needsProxyKnowledge(server.getName())) {
-                        server.ping((result, error) -> {
-                            if (error != null) {
-                                ServerDataStorage.removeProxyRegistered(server.getName());
-                                plugin.console().send("Failed to ping server {0}. Marking it as offline", Level.WARNING, server.getName());
-                            }
-                        });
-                    }
-                }
-            }
-        });
-
+        SimpleScheduler check_scheduler = createServerChecker();
         check_scheduler.start();
 
         console.send("&aUsing KarmaAPI version {0}, compiled at {1} for jdk {2}", KarmaAPI.getVersion(), KarmaAPI.getBuildDate(), KarmaAPI.getCompilerVersion());
@@ -118,11 +104,11 @@ public class MainBootstrap {
 
         CurrentPlatform.setOnDataContainerUpdate(() -> {
             for (ServerInfo server : plugin.getProxy().getServers().values()) {
-                Manager.sendFunction.apply(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
-                        .addProperty("login_count", SessionDataContainer.getLogged()).getInstance(), server);
+                Manager.sender.queue(server).insert(DataMessage.newInstance(DataType.LOGGED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                        .addProperty("login_count", SessionDataContainer.getLogged()).getInstance().build());
 
-                Manager.sendFunction.apply(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
-                        .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance(), server);
+                Manager.sender.queue(server).insert(DataMessage.newInstance(DataType.REGISTERED, Channel.PLUGIN, server.getPlayers().stream().findAny().orElse(null))
+                        .addProperty("register_count", SessionDataContainer.getRegistered()).getInstance().build());
             }
         });
         Consumer<MessageSender> onMessage = messageSender -> {
@@ -191,14 +177,14 @@ public class MainBootstrap {
                     session.setPinLogged(true);
                     session.set2FALogged(true);
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
-                            .getInstance(), BungeeSender.serverFromPlayer(player));
+                    Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
+                            .getInstance().build());
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                            .addProperty("pin", false).getInstance(), BungeeSender.serverFromPlayer(player));
+                    Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                            .addProperty("pin", false).getInstance().build());
 
-                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                            .getInstance(), BungeeSender.serverFromPlayer(player));
+                    Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                            .getInstance().build());
 
                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.API,
                             UserAuthenticateEvent.Result.SUCCESS,
@@ -319,28 +305,16 @@ public class MainBootstrap {
                     if (data != null) {
                         data = queue.nextMessage();
 
-                        if (BungeeSender.useSocket) {
-                            if (data != null) {
-                                ServerInfo info = plugin.getProxy().getServerInfo(server.getName());
-                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.LISTENER, Channel.PLUGIN, null)
-                                        .addJson(data).getInstance(), info);
+                        for (ModulePlayer player : server.getOnlinePlayers()) {
+                            if (player.isPlaying()) {
+                                if (data != null) {
+                                    Manager.sender.queue(BungeeSender.serverFromPlayer(player.getPlayer()))
+                                            .insert(DataMessage.newInstance(DataType.LISTENER, Channel.PLUGIN, player.getPlayer())
+                                                    .addJson(data).getInstance().build());
 
-                                queue.nextMessage();
-                                plugin.console().send("Forwarding module message to server {0}", Level.INFO, server.getName());
-                                break;
-                            }
-                        } else {
-                            for (ModulePlayer player : server.getOnlinePlayers()) {
-                                if (player.isPlaying()) {
-                                    if (data != null) {
-                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.LISTENER, Channel.PLUGIN, player.getPlayer())
-                                                        .addJson(data).getInstance(),
-                                                BungeeSender.serverFromPlayer(player.getPlayer()));
-
-                                        queue.nextMessage();
-                                        plugin.console().send("Forwarding module message to server {0}", Level.INFO, server.getName());
-                                        break;
-                                    }
+                                    queue.nextMessage();
+                                    plugin.console().send("Forwarding module message to server {0}", Level.INFO, server.getName());
+                                    break;
                                 }
                             }
                         }
@@ -348,6 +322,24 @@ public class MainBootstrap {
                 }
             }
         }).start();
+    }
+
+    @NotNull
+    private static SimpleScheduler createServerChecker() {
+        SimpleScheduler check_scheduler = new SourceScheduler(plugin, 10, SchedulerUnit.SECOND, true);
+        check_scheduler.restartAction(() -> {
+            for (ServerInfo server : plugin.getProxy().getServers().values()) {
+                if (!ServerDataStorage.needsProxyKnowledge(server.getName())) {
+                    server.ping((result, error) -> {
+                        if (error != null) {
+                            ServerDataStorage.removeProxyRegistered(server.getName());
+                            plugin.console().send("Failed to ping server {0}. Marking it as offline", Level.WARNING, server.getName());
+                        }
+                    });
+                }
+            }
+        });
+        return check_scheduler;
     }
 
     public void disable() {

@@ -100,6 +100,7 @@ public class ConsoleFilter implements Filter {
 
                                     String lastArgument = args[args.length - 1];
                                     try {
+                                        //noinspection ResultOfMethodCallIgnored
                                         UUID.fromString(lastArgument);
                                         return Result.ACCEPT; //Already masked, allow
                                     } catch (IllegalArgumentException ignored) {

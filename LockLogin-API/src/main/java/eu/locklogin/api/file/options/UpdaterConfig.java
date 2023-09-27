@@ -36,7 +36,7 @@ public final class UpdaterConfig {
      *                      interval
      */
     public UpdaterConfig(final String updateChannel, final boolean chekUpdates, final int checkTime) {
-        channel = UpdateChannel.valueOf(updateChannel);
+        channel = UpdateChannel.valueOf(updateChannel.toUpperCase());
         enabled = chekUpdates;
         time = checkTime;
     }

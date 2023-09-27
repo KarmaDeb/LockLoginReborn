@@ -20,17 +20,24 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.command.util.SystemCommand;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
 import eu.locklogin.plugin.bukkit.util.player.User;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import static eu.locklogin.plugin.bukkit.LockLogin.console;
 import static eu.locklogin.plugin.bukkit.LockLogin.properties;
 
-@SystemCommand(command = "setloginspawn", bungeecord = true)
+@SystemCommand(command = "loginspawn", bungeecord = true, aliases = "setloginspawn")
 public final class SetSpawnCommand implements CommandExecutor {
+
+    private final Map<UUID, Location> preSpawnLocations = new HashMap<>();
 
     /**
      * Executes the given command, returning its success.
@@ -54,9 +61,47 @@ public final class SetSpawnCommand implements CommandExecutor {
 
             if (user.hasPermission(PluginPermissions.location_spawn())) {
                 Spawn spawn = new Spawn(player.getWorld());
-                spawn.save(player.getLocation());
 
-                user.send(messages.prefix() + messages.spawnSet());
+                if (args.length == 1 && args[0].equals("go")) {
+                    spawn.teleport(player);
+                } else {
+                    spawn.save(player.getLocation());
+                    user.send(messages.prefix() + messages.spawnSet());
+                }
+                //TODO: Deprecate all of the above
+
+                if (args.length == 1) {
+                    String sub = args[0].toLowerCase();
+                    switch (sub) {
+                        case "back":
+                            Location preLocation = preSpawnLocations.remove(player.getUniqueId());
+                            if (preLocation == null) {
+                                //TODO: Create no back location message
+                                return false;
+                            }
+
+                            player.teleport(preLocation);
+                            //TODO: Create spawn teleported back message
+                            break;
+                        case "teleport":
+                            Location location = player.getLocation();
+                            if (Spawn.isAway(location, 15)) {
+                                preSpawnLocations.put(player.getUniqueId(), location);
+                            }
+
+                            spawn.teleport(player);
+                            //TODO: Create spawn teleported message
+                            break;
+                        case "remove":
+                            spawn.remove();
+                            //TODO: Create spawn removed message
+                            break;
+                        case "set":
+                            spawn.save(player.getLocation());
+                            user.send(messages.prefix() + messages.spawnSet());
+                            break;
+                    }
+                }
             } else {
                 user.send(messages.prefix() + messages.permissionError(PluginPermissions.location_spawn()));
             }

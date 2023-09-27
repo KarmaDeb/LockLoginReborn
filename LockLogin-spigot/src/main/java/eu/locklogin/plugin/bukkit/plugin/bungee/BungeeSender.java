@@ -65,6 +65,31 @@ public final class BungeeSender {
     }
 
     /**
+     * Asks bungeecord to validate the player
+     *
+     * @param player the player
+     */
+    public static void askPlayerValidation(final Player player) {
+        JsonObject json = new JsonObject();
+        Gson gson = new GsonBuilder().create();
+
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        BungeeDataStorager storager = new BungeeDataStorager();
+
+        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+        json.addProperty("key", config.comKey());
+        json.addProperty("channel", Channel.ACCOUNT.getName());
+        json.addProperty("server", storager.getServerName());
+        json.addProperty("data_type", DataType.VALIDATION.name());
+        json.addProperty("player", player.getUniqueId().toString());
+
+        output.writeUTF(gson.toJson(json));
+
+        plugin.getServer().sendPluginMessage(plugin, "ll:account", output.toByteArray());
+    }
+
+    /**
      * Send the player validation to BungeeCord
      *
      * @param player the player that has been validated

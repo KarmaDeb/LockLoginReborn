@@ -181,20 +181,17 @@ public final class RegisterCommand extends Command {
                                         user.restorePotionEffects();
 
                                         if (session.isPinLogged()) {
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
-                                                    .getInstance(),
-                                                    BungeeSender.serverFromPlayer(player));
+                                            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.SESSION, Channel.ACCOUNT, player)
+                                                    .getInstance().build());
                                         }
 
                                         if (session.is2FALogged()) {
-                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
-                                                    .addProperty("pin", false).getInstance(),
-                                                    BungeeSender.serverFromPlayer(player));
+                                            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PIN, Channel.ACCOUNT, player)
+                                                    .addProperty("pin", false).getInstance().build());
                                         }
 
-                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
-                                                .getInstance(),
-                                                BungeeSender.serverFromPlayer(player));
+                                        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.GAUTH, Channel.ACCOUNT, player)
+                                                .getInstance().build());
 
                                         user.checkServer(0, true);
 
@@ -227,9 +224,8 @@ public final class RegisterCommand extends Command {
                                         String exec = CommandProxy.getCommand(cmd_id);
                                         user.performCommand(exec);
 
-                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
-                                                .getInstance(),
-                                                BungeeSender.serverFromPlayer(player));
+                                        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.CAPTCHA, Channel.ACCOUNT, player)
+                                                .getInstance().build());
                                     } else {
                                         user.send(messages.prefix() + messages.invalidCaptcha());
                                     }

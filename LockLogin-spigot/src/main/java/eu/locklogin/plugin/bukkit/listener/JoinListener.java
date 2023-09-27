@@ -22,6 +22,7 @@ import eu.locklogin.api.common.security.client.AccountData;
 import eu.locklogin.api.common.security.client.Name;
 import eu.locklogin.api.common.security.client.ProxyCheck;
 import eu.locklogin.api.common.session.SessionCheck;
+import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.utils.InstantParser;
 import eu.locklogin.api.common.utils.other.LockedAccount;
 import eu.locklogin.api.common.utils.plugin.FloodGateUtil;
@@ -41,7 +42,9 @@ import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import eu.locklogin.plugin.bukkit.listener.data.TransientMap;
 import eu.locklogin.plugin.bukkit.plugin.Manager;
+import eu.locklogin.plugin.bukkit.plugin.bungee.BungeeSender;
 import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
+import eu.locklogin.plugin.bukkit.util.LockLoginPlaceholder;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.files.data.LastLocation;
 import eu.locklogin.plugin.bukkit.util.files.data.Spawn;
@@ -49,8 +52,8 @@ import eu.locklogin.plugin.bukkit.util.player.ClientVisor;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
+
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
@@ -67,14 +70,13 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.plugin.java.JavaPluginLoader;
 
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,7 +87,6 @@ public final class JoinListener implements Listener {
 
     private final static PluginConfiguration config = CurrentPlatform.getConfiguration();
     private final static PluginMessages messages = CurrentPlatform.getMessages();
-    private final static Map<UUID, UUID> offline_to_online = new ConcurrentHashMap<>();
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -140,39 +141,32 @@ public final class JoinListener implements Listener {
             }
 
             String conn_name = e.getName();
-            OKARequest oka = MineAPI.fetchAndWait(conn_name);
+            UUID gen = e.getUniqueId();
 
-            UUID online_gen_uuid = oka.getUUID(UUIDType.ONLINE);
-            UUID gen_uuid = oka.getUUID(UUIDType.OFFLINE);
+            UUID online_gen_uuid = UUIDFetcher.fetchUUID(conn_name, UUIDType.ONLINE);
+            UUID gen_uuid = UUIDFetcher.fetchUUID(conn_name, UUIDType.OFFLINE);
 
-            /*if (online_gen_uuid != null) {
-                GlobalAccount global = new GlobalAccount(conn_name, online_gen_uuid);
-                try {
-                    if (global.exists()) {
-                        User.setGlobalAccount(online_gen_uuid, global);
-                        User.setGlobalAccount(gen_uuid, global);
-                        User.setGlobalAccount(e.getUniqueId(), global);
-                    }
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+            boolean premium = online_gen_uuid != null;
+            PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+
+            if (premium && config.autoPremium() && config.enablePremium()) {
+                if (!pm.exists(gen_uuid)) {
+                    pm.setPremium(gen_uuid, true);
                 }
-            }*/
+            }
 
-            if (gen_uuid == null) gen_uuid = e.getUniqueId();
-            if (online_gen_uuid == null) online_gen_uuid = e.getUniqueId();
+            if (gen_uuid == null) gen_uuid = gen;
+            if (online_gen_uuid == null) online_gen_uuid = gen;
 
-            offline_to_online.put(gen_uuid, online_gen_uuid);
             if (CurrentPlatform.isOnline()) {
                 gen_uuid = online_gen_uuid;
             } else{
-                PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
-                if (pm != null && config.enablePremium()) {
-                    if (pm.isPremium(online_gen_uuid) && !config.fixUUIDs()) {
+                if (config.enablePremium()) {
+                    if (pm.isPremium(gen_uuid) && !config.fixUUIDs()) {
                         gen_uuid = online_gen_uuid; //We want to allow online mode clients with their online mode UUIDs
                     }
                 }
             }
-            UUID tar_uuid = e.getUniqueId();
 
             if (!ipEvent.isHandled()) {
                 switch (ipEvent.getResult()) {
@@ -180,7 +174,7 @@ public final class JoinListener implements Listener {
                         if (e.getLoginResult().equals(AsyncPlayerPreLoginEvent.Result.ALLOWED)) {
                             if (!config.isBungeeCord()) {
                                 if (config.registerOptions().maxAccounts() > 0) {
-                                    AccountData data = new AccountData(ip, AccountID.fromUUID(tar_uuid));
+                                    AccountData data = new AccountData(ip, AccountID.fromUUID(gen));
 
                                     if (data.allow(config.registerOptions().maxAccounts())) {
                                         data.save();
@@ -212,17 +206,17 @@ public final class JoinListener implements Listener {
                                 }
 
                                 if (config.uuidValidator()) {
-                                    if (!gen_uuid.equals(tar_uuid)) {
+                                    if (!gen_uuid.equals(gen)) {
                                         boolean r = false;
                                         if (FloodGateUtil.hasFloodgate()) {
-                                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                            FloodGateUtil util = new FloodGateUtil(gen);
                                             if (util.isBedrockClient()) {
                                                 r = true;
                                             }
                                         }
 
                                         if (!r) {
-                                            logger.scheduleLog(Level.GRAVE, "Denied connection from {0} because its UUID ( {1} ) doesn't match with generated one ( {2} )", conn_name, tar_uuid, gen_uuid);
+                                            logger.scheduleLog(Level.GRAVE, "Denied connection from {0} because its UUID ( {1} ) doesn't match with generated one ( {2} )", conn_name, gen, gen_uuid);
 
                                             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
                                             return;
@@ -238,7 +232,7 @@ public final class JoinListener implements Listener {
                                         boolean r = false;
 
                                         if (FloodGateUtil.hasFloodgate()) {
-                                            FloodGateUtil util = new FloodGateUtil(tar_uuid);
+                                            FloodGateUtil util = new FloodGateUtil(gen);
                                             if (util.isBedrockClient()) {
                                                 r = true;
                                                 plugin.console().send("Connected player {0} from bedrock", Level.WARNING, conn_name);
@@ -252,7 +246,7 @@ public final class JoinListener implements Listener {
                                     }
                                 }
 
-                                Player player = plugin.getServer().getPlayer(tar_uuid);
+                                Player player = plugin.getServer().getPlayer(gen);
                                 if (player != null) {
                                     if (config.allowSameIP()) {
                                         InetSocketAddress playerIP = player.getAddress();
@@ -297,7 +291,7 @@ public final class JoinListener implements Listener {
                             }
 
                             if (!config.isBungeeCord()) {
-                                Event event = new UserPreJoinEvent(ip, tar_uuid, conn_name, e);
+                                Event event = new UserPreJoinEvent(ip, gen, conn_name, e);
                                 ModulePlugin.callEvent(event);
 
                                 if (event.isHandled()) {
@@ -347,18 +341,18 @@ public final class JoinListener implements Listener {
                 spawn.load().whenComplete(() -> spawn.teleport(player));
             }
 
-            tryAsync(TaskTarget.EVENT, () -> {
-                User user = new User(player);
-                ModulePlayer sender = new ModulePlayer(
-                        player.getName(),
-                        player.getUniqueId(),
-                        user.getSession(),
-                        user.getManager(),
-                        (player.getAddress() == null ? null : player.getAddress().getAddress())
-                );
-                //If bukkit player objects changes module player also changes
-                CurrentPlatform.connectPlayer(sender, player);
+            User user = new User(player);
+            ModulePlayer sender = new ModulePlayer(
+                    player.getName(),
+                    player.getUniqueId(),
+                    user.getSession(),
+                    user.getManager(),
+                    (player.getAddress() == null ? null : player.getAddress().getAddress())
+            );
+            //If bukkit player objects changes module player also changes
+            CurrentPlatform.connectPlayer(sender, player);
 
+            tryAsync(TaskTarget.EVENT, () -> {
                 if (!user.isLockLoginUser())
                     user.applyLockLoginUser();
 
@@ -390,12 +384,11 @@ public final class JoinListener implements Listener {
                         }
                     }
 
+                    OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
                     if (!skip) {
                         PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
                         if (database != null && config.enablePremium()) {
-                            UUID id = offline_to_online.getOrDefault(player.getUniqueId(), player.getUniqueId());
-
-                            if (database.isPremium(id)) {
+                            if (database.isPremium(getOffline(offline.getName()))) {
                                 session.setCaptchaLogged(true);
                                 session.setLogged(true);
                                 session.set2FALogged(true);
@@ -406,6 +399,8 @@ public final class JoinListener implements Listener {
                                         user.getModule(),
                                         messages.prefix() + messages.premiumAuth(),
                                         null);
+
+                                //SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
                                 ModulePlugin.callEvent(event);
 
                                 user.send(event.getAuthMessage());
@@ -435,7 +430,6 @@ public final class JoinListener implements Listener {
                                 session.setCaptchaLogged(true);
                         }
                     }
-                    OfflinePlayer offline = plugin.getServer().getOfflinePlayer(player.getUniqueId());
 
                     Event event = new UserJoinEvent(e.getAddress(), player.getUniqueId(), offline.getName(), e);
                     if (!config.isBungeeCord()) {
@@ -462,15 +456,15 @@ public final class JoinListener implements Listener {
         SimpleScheduler timer = new SourceScheduler(plugin, 2, SchedulerUnit.SECOND, true);
         timer.restartAction(() -> {
             if (player.isOnline()) {
-                if (tries.getAndIncrement() == 3) {
-                    User user = new User(player);
-                    if (!user.getSession().isValid()) {
+                User user = new User(player);
+                if (!user.getSession().isValid()) {
+                    if (tries.getAndIncrement() == 3) {
                         user.kick(messages.bungeeProxy());
+                        timer.cancel();
+                    } else {
+                        BungeeSender.askPlayerValidation(player);
+                        logger.scheduleLog(Level.WARNING, "Failed proxy check #{0} for {1}", tries.get(), player.getUniqueId());
                     }
-
-                    timer.cancel();
-                } else {
-                    logger.scheduleLog(Level.WARNING, "Failed proxy check #{0} for {1}", tries.get(), player.getUniqueId());
                 }
             } else {
                 timer.cancel();
@@ -481,7 +475,7 @@ public final class JoinListener implements Listener {
         User user = new User(player);
 
         ModulePlayer module = user.getModule();
-        String message = messages.playerLeave(module);
+        String message = messages.playerJoin(module);
         if (!StringUtils.isNullOrEmpty(message)) e.setJoinMessage("");
 
         if (ip != null) {
@@ -539,30 +533,6 @@ public final class JoinListener implements Listener {
                                         bar.send(true);
                                 }
 
-                                /*GlobalAccount global = null;
-                                if (config.globalAccounts()) {
-                                    global = User.getAccount(player.getUniqueId());
-                                    if (global != null && global.enabled() && !session.isLogged()) {
-                                        AccountManager manager = user.getManager();
-                                        if (!manager.isRegistered()) {
-                                            String tmp = TokenGenerator.generateLiteral(16);
-                                            manager.setPassword(tmp);
-                                        }
-
-                                        if (global.isSameAddress(player.getAddress())) {
-                                            session.setLogged(true);
-                                            session.set2FALogged(true);
-                                            session.setPinLogged(true);
-
-                                            user.send(messages.prefix() + messages.globalLogged());
-                                        } else {
-                                            for (int i = 0; i < 10; i++)
-                                                player.sendMessage(""); //We do this to make it easier to read the IP changed message
-                                            user.send(messages.prefix() + messages.globalIpChanged());
-                                        }
-                                    }
-                                }*/
-
                                 BarMessage finalBar = bar;
                                 SessionCheck<Player> check = user.getChecker().whenComplete(() -> {
                                     user.restorePotionEffects();
@@ -574,6 +544,7 @@ public final class JoinListener implements Listener {
                                 });
 
                                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, check);
+
                                 if (!session.isLogged()) {
                                     if (player.getLocation().getBlock().getType().name().contains("PORTAL"))
                                         user.setTempSpectator(true);
@@ -614,7 +585,7 @@ public final class JoinListener implements Listener {
                     default:
                         if (!ipEvent.getResult().equals(validationResult)) {
                             logger.scheduleLog(Level.WARNING, "Module {0} changed the plugin IP validation result from {1} to {2} with reason {3}",
-                                    ipEvent.getHandleOwner().name(), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
+                                    (ipEvent.getHandleOwner() == null ? "[unknown]" : ipEvent.getHandleOwner().name()), validationResult.name(), ipEvent.getResult().name(), ipEvent.getResult().getReason());
                         }
 
                         logger.scheduleLog(Level.INFO, "Denied player {0} to join with reason: {1}", StringUtils.stripColor(player.getDisplayName()), ipEvent.getResult().getReason());
@@ -654,5 +625,9 @@ public final class JoinListener implements Listener {
         } catch (Throwable ex) {
             return PluginIpValidationEvent.ValidationResult.ERROR.withReason("Failed to check IP: " + ex.fillInStackTrace());
         }
+    }
+
+    private UUID getOffline(final String name) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
     }
 }

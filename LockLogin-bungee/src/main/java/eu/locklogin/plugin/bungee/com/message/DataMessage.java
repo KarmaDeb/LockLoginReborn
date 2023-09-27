@@ -69,7 +69,7 @@ public final class DataMessage {
             json = new JsonObject();
 
             json.addProperty("proxy", CurrentPlatform.getProxyConfiguration().getProxyID().toString());
-            json.addProperty("socket", BungeeSender.useSocket);
+            json.addProperty("socket", false);
             json.addProperty("data_type", t.name());
             json.addProperty("channel", channel.getName());
             if (player != null) {

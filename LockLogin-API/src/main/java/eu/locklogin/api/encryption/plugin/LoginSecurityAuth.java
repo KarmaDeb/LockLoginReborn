@@ -29,6 +29,10 @@ public final class LoginSecurityAuth {
      * @return if the password is correct
      */
     public static boolean check(String password, String token) {
-        return BCryptLib.checkpw(password, token);
+        try {
+            return BCryptLib.checkpw(password, token);
+        } catch (IllegalArgumentException ignored) {}
+
+        return false;
     }
 }

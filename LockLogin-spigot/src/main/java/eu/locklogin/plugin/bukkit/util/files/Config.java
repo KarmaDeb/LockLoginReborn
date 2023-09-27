@@ -189,6 +189,21 @@ public final class Config extends PluginConfiguration {
     }
 
     /**
+     * Get if the premium mode should be
+     * enabled to each player by default when
+     * available
+     *
+     * @return if the premium mode should be enabled by
+     * default for each player
+     */
+    @Override
+    public boolean autoPremium() {
+        return !CurrentPlatform.isOnline() &&
+                Bukkit.getServer().getPluginManager().isPluginEnabled("ProtocolLib") &&
+                cfg.getBoolean("Premium.Auto", false);
+    }
+
+    /**
      * Get if the premium support should be
      * enabled for this server
      *
@@ -196,7 +211,9 @@ public final class Config extends PluginConfiguration {
      */
     @Override
     public boolean enablePremium() {
-        return !CurrentPlatform.isOnline() &&  cfg.getBoolean("Premium.Enable", true);
+        return !CurrentPlatform.isOnline() &&
+                Bukkit.getServer().getPluginManager().isPluginEnabled("ProtocolLib") &&
+                cfg.getBoolean("Premium.Enable", true);
     }
 
     /**

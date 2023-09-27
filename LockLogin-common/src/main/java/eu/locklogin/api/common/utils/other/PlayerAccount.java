@@ -24,8 +24,7 @@ import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
@@ -345,38 +344,12 @@ public final class PlayerAccount extends AccountManager {
                     if (StringUtils.isNullOrEmpty(id)) {
                         String name = PathUtilities.getName(manager.getDocument(), false);
                         String extension = FileUtilities.getExtension(name);
-                        UUID fixed = MineAPI.fromTrimmed(name.replace("." + extension, ""));
-                        assert fixed != null;
+                        UUID fixed = UUIDFetcher.fromSimple(name.replace("." + extension, ""));
 
-                        String nick = MineAPI.fetchAndWait(fixed).getNick();
-                        if (nick != null && !nick.startsWith("Ratelimited")) {
-                            setName(nick);
+                        id = fixed.toString();
 
-                            UUID gen =  UUID.nameUUIDFromBytes(("OfflinePlayer:" + nick).getBytes());
-
-                            OKARequest oka = MineAPI.fetchAndWait(nick);
-
-                            UUID online_uuid = oka.getUUID(UUIDType.ONLINE);
-                            UUID offline_uuid = oka.getUUID(UUIDType.OFFLINE);
-
-                            if (online_uuid == null) online_uuid = gen;
-                            if (offline_uuid == null) offline_uuid = gen;
-
-                            if (CurrentPlatform.isOnline()) {
-                                id = online_uuid.toString();
-                            } else {
-                                id = offline_uuid.toString();
-                            }
-
-                            manager.setRaw("uuid", id);
-                            manager.save();
-                        } else {
-                            if (fixed != null) {
-                                manager.setRaw("uuid", fixed.toString());
-                                id = fixed.toString();
-                                manager.save();
-                            }
-                        }
+                        manager.setRaw("uuid", id);
+                        manager.save();
                     }
 
                     return AccountID.fromString(id);

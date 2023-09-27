@@ -430,18 +430,16 @@ public final class User {
      * types
      */
     public synchronized void applySessionEffects() {
-        Manager.sendFunction.apply(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
-                .addProperty("effects", true).getInstance(),
-                BungeeSender.serverFromPlayer(player));
+        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
+                .addProperty("effects", true).getInstance().build());
     }
 
     /**
      * Restore the player potion effects
      */
     public synchronized void restorePotionEffects() {
-        Manager.sendFunction.apply(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
-                .addProperty("effects", false).getInstance(),
-                BungeeSender.serverFromPlayer(player));
+        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.EFFECTS, Channel.ACCOUNT, player)
+                .addProperty("effects", false).getInstance().build());
     }
 
     /**

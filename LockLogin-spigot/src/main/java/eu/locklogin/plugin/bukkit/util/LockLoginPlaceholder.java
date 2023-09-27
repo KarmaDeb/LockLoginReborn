@@ -18,6 +18,8 @@ import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
 import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.common.utils.InstantParser;
+import eu.locklogin.api.premium.PremiumDatabase;
+import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.util.files.client.OfflineClient;
 import eu.locklogin.plugin.bukkit.util.player.User;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -25,6 +27,7 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public final class LockLoginPlaceholder extends PlaceholderExpansion {
 
@@ -107,13 +110,13 @@ public final class LockLoginPlaceholder extends PlaceholderExpansion {
                     ClientSession session = user.getSession();
 
                     return String.valueOf((session.isValid() && session.isValid() && session.isTempLogged()))
-                            .replace("true", "&ayes").replace("false", "&cno");
+                            .replace("true", "§ayes").replace("false", "§cno");
                 } else {
                     return "&cno";
                 }
             case "isregistered":
                 return String.valueOf((manager != null && manager.exists() && !manager.getPassword().replaceAll("\\s", "").isEmpty()))
-                        .replace("true", "&ayes").replace("false", "&cno");
+                        .replace("true", "§ayes").replace("false", "§cno");
             case "creation":
                 if (manager != null && manager.exists())
                     parser = new InstantParser(manager.getCreationTime());
@@ -124,6 +127,11 @@ public final class LockLoginPlaceholder extends PlaceholderExpansion {
                     parser = new InstantParser(manager.getCreationTime());
 
                 return parser.getDifference();
+            case "premium":
+                PremiumDatabase pdb = CurrentPlatform.getPremiumDatabase();
+                UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + player.getName()).getBytes());
+
+                return (pdb.isPremium(offline) ? "§ayes" : "§no");
             default:
                 return "404 ( " + identifier + " )";
         }

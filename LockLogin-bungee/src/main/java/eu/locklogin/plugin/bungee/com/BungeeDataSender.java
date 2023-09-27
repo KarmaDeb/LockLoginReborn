@@ -21,33 +21,41 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eu.locklogin.plugin.bungee.LockLogin.plugin;
 
 @SuppressWarnings("UnstableApiUsage")
-public class BungeeDataSender extends DataSender {
+public class BungeeDataSender extends DataSender<ServerInfo> {
+
+    private final static Map<ServerInfo, DataQueue> serverQues = new ConcurrentHashMap<>();;
 
     public BungeeDataSender() {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
         String com = config.comKey();
 
         SimpleScheduler scheduler = new SourceScheduler(plugin, 250, SchedulerUnit.MILLISECOND, true).multiThreading(true);
-        scheduler.restartAction(() -> {
-            Gson gson = new GsonBuilder().setLenient().create();
+        Gson gson = new GsonBuilder().setLenient().create();
 
-            for (ServerInfo server : QueueHandler.bungee_server_queues.keySet()) {
-                DataQueue queue = QueueHandler.bungee_server_queues.get(server);
+        scheduler.restartAction(() -> {
+            for (ServerInfo server : serverQues.keySet()) {
+                if (server == null || server.getPlayers().isEmpty()) {
+                    continue;
+                }
+
+                DataQueue queue = serverQues.get(server);
                 Packet next_data = queue.next();
 
-                if (next_data == null || server == null) {
+                if (next_data == null) {
                     queue.cancel();
-                    return;
+                    continue;
                 }
 
                 Collection<ProxiedPlayer> players = server.getPlayers();
                 if (players.isEmpty()) {
                     queue.cancel();
-                    return;
+                    continue;
                 }
 
                 ByteArrayDataInput in = ByteStreams.newDataInput(next_data.packetData());
@@ -58,13 +66,13 @@ public class BungeeDataSender extends DataSender {
 
                 if (channel == null) {
                     queue.consume();
-                    return;
+                    continue;
                 }
 
                 if (!channel.equals(Channel.ACCESS)) {
                     if (ServerDataStorage.needsProxyKnowledge(server.getName()) || queue.locked()) {
                         queue.shift();
-                        return;
+                        continue;
                     }
                 }
 
@@ -85,15 +93,13 @@ public class BungeeDataSender extends DataSender {
     /**
      * Get the data queue
      *
-     * @param name the queue name
+     * @param info the queue name
      * @return the data queue
      */
     @Override
-    public DataQueue queue(final String name) {
-        ServerInfo info = plugin.getProxy().getServerInfo(name);
-
+    public DataQueue queue(final ServerInfo info) {
         if (info != null) {
-            return QueueHandler.bungee_server_queues.computeIfAbsent(info, (nm) -> new MessageQueue());
+            return serverQues.computeIfAbsent(info, (nm) -> new MessageQueue());
         }
 
         return new MessageQueue();

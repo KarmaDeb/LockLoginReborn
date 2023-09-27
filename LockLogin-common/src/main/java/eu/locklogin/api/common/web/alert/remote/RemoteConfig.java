@@ -109,6 +109,19 @@ public class RemoteConfig extends PluginConfiguration {
     }
 
     /**
+     * Get if the premium mode should be
+     * enabled to each player by default when
+     * available
+     *
+     * @return if the premium mode should be enabled by
+     * default for each player
+     */
+    @Override
+    public boolean autoPremium() {
+        return false;
+    }
+
+    /**
      * Get if the premium support should be
      * enabled for this server
      *

@@ -243,8 +243,8 @@ public class  AccountCommand extends Command {
                                         session.setPinLogged(false);
                                         session.set2FALogged(false);
 
-                                        Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
-                                                .getInstance(), BungeeSender.serverFromPlayer(player));
+                                        Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                .getInstance().build());
                                         user.applySessionEffects();
 
                                         if (config.clearChat()) {
@@ -340,9 +340,8 @@ public class  AccountCommand extends Command {
                                                                 StringUtils.stripColor(player.getName()));
 
                                                         if (online != null) {
-                                                            Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
-                                                                            .getInstance(),
-                                                                     BungeeSender.serverFromPlayer(player));
+                                                            Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                                            .getInstance().build());
 
                                                             User onlineUser = new User(online);
                                                             onlineUser.removeSessionCheck();
@@ -395,8 +394,8 @@ public class  AccountCommand extends Command {
                                                 session.invalidate();
                                                 session.validate();
 
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
-                                                        .getInstance(), BungeeSender.serverFromPlayer(player));
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, player)
+                                                        .getInstance().build());
 
                                                 user.applySessionEffects();
 
@@ -491,18 +490,17 @@ public class  AccountCommand extends Command {
                                                 for (AccountManager account : accounts) {
                                                     player.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(StringUtils.toColor("&aSending player accounts ( " + sent + " of " + max + " )")));
 
-                                                    Manager.sendFunction.apply(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
+                                                    Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.PLAYER, Channel.PLUGIN, player)
                                                             .addProperty("account", StringUtils.serialize(RawPlayerAccount.fromPlayerAccount(account)))
-                                                            .getInstance(),
-                                                            BungeeSender.serverFromPlayer(player));
+                                                            .getInstance().build());
 
                                                     sent++;
                                                 }
 
                                                 AccountParser parser = new AccountParser(accounts);
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.LOOKUPGUI, Channel.PLUGIN, player)
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(player)).insert(DataMessage.newInstance(DataType.LOOKUPGUI, Channel.PLUGIN, player)
                                                         .addProperty("player_info", parser.toString())
-                                                        .getInstance(), BungeeSender.serverFromPlayer(player));
+                                                        .getInstance().build());
                                             } else {
                                                 user.send(messages.prefix() + messages.neverPlayer(target));
                                             }
@@ -665,8 +663,8 @@ public class  AccountCommand extends Command {
                                                    config.serverName());
 
                                             if (online != null) {
-                                                Manager.sendFunction.apply(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, online)
-                                                        .getInstance(), BungeeSender.serverFromPlayer(online));
+                                                Manager.sender.queue(BungeeSender.serverFromPlayer(online)).insert(DataMessage.newInstance(DataType.CLOSE, Channel.ACCOUNT, online)
+                                                        .getInstance().build());
 
                                                 User onlineUser = new User(online);
                                                 onlineUser.removeSessionCheck();

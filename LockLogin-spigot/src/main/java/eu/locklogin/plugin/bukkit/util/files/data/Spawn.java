@@ -15,6 +15,7 @@ import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.TaskTarget;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
+import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
@@ -46,25 +47,36 @@ public final class Spawn {
         spawn_location = world.getSpawnLocation();
     }
 
-    /**
-     * Get if the player is near the spawn
-     *
-     * @param player the player
-     * @return if the player is near spawn
-     */
     public static boolean isAway(final Player player) {
+        PluginConfiguration configuration = CurrentPlatform.getConfiguration();
+        return isAway(player.getLocation().clone(), configuration.spawnDistance());
+    }
+
+    /**
+     * Get if the location is near the spawn
+     *
+     * @param location the location
+     * @param radius the max radius
+     * @return if the location is near spawn
+     */
+    public static boolean isAway(final Location location, final int radius) {
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (config.enableSpawn()) {
             Location spawn_location;
-            Element<?> x_string = spawnFile.get("y");
-            Element<?> y_string = spawnFile.get("x");
+            Element<?> x_string = spawnFile.get("x");
+            Element<?> y_string = spawnFile.get("y");
             Element<?> z_string = spawnFile.get("z");
             Element<?> pitch_string = spawnFile.get("pitch");
             Element<?> yaw_string = spawnFile.get("yaw");
             Element<?> world_string = spawnFile.get("world");
 
-            if (!x_string.isPrimitive() && !y_string.isPrimitive() && !z_string.isPrimitive() && !pitch_string.isPrimitive() && !yaw_string.isPrimitive() && !world_string.isPrimitive())
+            if (!x_string.isPrimitive() ||
+                    !y_string.isPrimitive() ||
+                    !z_string.isPrimitive() ||
+                    !pitch_string.isPrimitive() ||
+                    !yaw_string.isPrimitive() ||
+                    !world_string.isPrimitive())
                 return true;
 
             ElementPrimitive x_primitive = x_string.getAsPrimitive();
@@ -74,28 +86,32 @@ public final class Spawn {
             ElementPrimitive pitch_primitive = pitch_string.getAsPrimitive();
             ElementPrimitive world_primitive = world_string.getAsPrimitive();
 
-            if (!x_primitive.isNumber() && !y_primitive.isNumber() && z_primitive.isNumber() && !yaw_primitive.isNumber() && pitch_primitive.isNumber() && !world_primitive.isString())
+            if (!x_primitive.isNumber() ||
+                    !y_primitive.isNumber() ||
+                    !z_primitive.isNumber() ||
+                    !yaw_primitive.isNumber() ||
+                    !pitch_primitive.isNumber() ||
+                    !world_primitive.isString())
                 return true;
 
             try {
-                double x = x_primitive.asDouble();
-                double y = y_primitive.asDouble();
-                double z = z_primitive.asDouble();
+                double x = x_primitive.getAsDouble();
+                double y = y_primitive.getAsDouble();
+                double z = z_primitive.getAsDouble();
 
-                float pitch = pitch_primitive.asFloat();
-                float yaw = yaw_primitive.asFloat();
+                float pitch = pitch_primitive.getAsFloat();
+                float yaw = yaw_primitive.getAsFloat();
 
-                World world = plugin.getServer().getWorld(world_primitive.asString());
+                World world = plugin.getServer().getWorld(world_primitive.getAsString());
 
                 if (world != null) {
                     spawn_location = new Location(world, x, y, z);
                     spawn_location.setPitch(pitch);
                     spawn_location.setYaw(yaw);
 
-                    return player.getLocation().distance(spawn_location) >= config.spawnDistance();
+                    return location.distance(spawn_location) >= radius;
                 }
-            } catch (Throwable ignored) {
-            }
+            } catch (Throwable ignored) {}
         }
 
         return true;
@@ -137,6 +153,21 @@ public final class Spawn {
                 spawnFile.save();
             }
         });
+    }
+
+    /**
+     * Remove the spawn location
+     */
+    public void remove() {
+        spawn_location = null; //Unset the location
+        spawnFile.set("x", KarmaPrimitive.forNull());
+        spawnFile.set("y", KarmaPrimitive.forNull());
+        spawnFile.set("z", KarmaPrimitive.forNull());
+        spawnFile.set("pitch", KarmaPrimitive.forNull());
+        spawnFile.set("yaw", KarmaPrimitive.forNull());
+        spawnFile.set("world", KarmaPrimitive.forNull());
+
+        spawnFile.save();
     }
 
     /**

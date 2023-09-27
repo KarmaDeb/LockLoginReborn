@@ -9,6 +9,14 @@ import java.util.UUID;
 public interface PremiumDatabase {
 
     /**
+     * Get if the UUID exists in the records
+     *
+     * @param id the UUID
+     * @return if the id exists
+     */
+    boolean exists(final UUID id);
+
+    /**
      * Get if the UUID is premium
      *
      * @param id the uuid

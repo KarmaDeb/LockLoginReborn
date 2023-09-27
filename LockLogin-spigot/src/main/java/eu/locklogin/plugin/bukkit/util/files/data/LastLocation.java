@@ -74,8 +74,8 @@ public final class LastLocation {
                     if (FileUtilities.isKarmaFile(file)) {
                         KarmaMain database = new KarmaMain(file.toPath());
 
-                        Element<?> x_string = database.get("y");
-                        Element<?> y_string = database.get("x");
+                        Element<?> x_string = database.get("x");
+                        Element<?> y_string = database.get("y");
                         Element<?> z_string = database.get("z");
                         Element<?> pitch_string = database.get("pitch");
                         Element<?> yaw_string = database.get("yaw");
@@ -243,8 +243,8 @@ public final class LastLocation {
      * Fix the player location
      */
     public void fix() {
-        Element<?> x_string = file.get("y");
-        Element<?> y_string = file.get("x");
+        Element<?> x_string = file.get("x");
+        Element<?> y_string = file.get("y");
         Element<?> z_string = file.get("z");
         Element<?> pitch_string = file.get("pitch");
         Element<?> yaw_string = file.get("yaw");
@@ -371,7 +371,13 @@ public final class LastLocation {
                     });
 
                     //Unset the last location
-                    remove();
+                    //remove();
+
+                    /*
+                    No need to unset the last location, for real; why?
+                    It causes the client to not teleport to his last location
+                    if he disconnected near the spawn.
+                     */
                 }
             } catch (Throwable ignored) {
             }
@@ -430,7 +436,7 @@ public final class LastLocation {
                     });
 
                     //Unset the last location
-                    remove();
+                    //remove();
                 }
             } catch (Throwable ignored) {
             }

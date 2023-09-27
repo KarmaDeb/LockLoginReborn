@@ -32,9 +32,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +41,7 @@ import java.util.List;
  */
 public final class RemoteNotification {
 
-    private final static KarmaSource plugin = /*APISource.loadProvider("LockLogin");*/ APISource.getOriginal(false);
-
+    private final static KarmaSource plugin = APISource.loadProvider("LockLogin");;
     private static String simple_json = "{}";
 
     /**
@@ -57,52 +54,21 @@ public final class RemoteNotification {
 
         plugin.async().queue("fetch_notification", () -> {
             URL url = URLUtils.getOrBackup(
-                    "https://karmaconfigs.ml/locklogin/alert.json",
-                    "https://karmarepo.ml/locklogin/alert.json",
                     "https://karmadev.es/locklogin/alert.json",
-                    "https://backup.karmaconfigs.ml/locklogin/alert.json",
-                    "https://backup.karmarepo.ml/locklogin/alert.json",
-                    "https://backup.karmadev.es/locklogin/alert.json",
-                    "https://karmaconfigs.github.io/updates/LockLogin/alert.json");
+                    "https://raw.githubusercontent.com/KarmaDeb/updates/master/LockLogin/alert.json");
 
             if (url != null) {
-                ReadableByteChannel rbc = null;
-                InputStream stream = null;
-                FileOutputStream out = null;
-                Path alert = null;
+                Path alertFile = plugin.getDataPath().resolve("cache").resolve("alert.json");
 
-                try {
-                    stream = url.openStream();
-                    rbc = Channels.newChannel(stream);
-
-                    alert = Files.createTempFile("alert_" + Instant.now().toEpochMilli(), ".json");
-                    out = new FileOutputStream(alert.toFile());
-
+                try (InputStream stream = url.openStream();
+                     ReadableByteChannel rbc = Channels.newChannel(stream);
+                     FileOutputStream out = new FileOutputStream(alertFile.toFile())) {
                     out.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
                 } catch (Throwable ex) {
                     plugin.logger().scheduleLog(Level.GRAVE, ex);
                     plugin.logger().scheduleLog(Level.INFO, "Failed to retrieve plugin notifications");
                 } finally {
-                    try {
-                        if (rbc != null)
-                            rbc.close();
-
-                        if (stream != null)
-                            stream.close();
-
-                        if (out != null)
-                            out.close();
-                    } catch (Throwable ignored) {}
-
-                    if (alert != null) {
-                        /*
-                        Read the file, store its info and then remove it.
-                         */
-                        simple_json = StringUtils.listToString(PathUtilities.readAllLines(alert), ListTransformation.NEW_LINES);
-
-                        PathUtilities.destroy(alert);
-                    }
-
+                    simple_json = StringUtils.listToString(PathUtilities.readAllLines(alertFile), ListTransformation.NEW_LINES);
                     result.complete(null);
                 }
             }
@@ -129,7 +95,7 @@ public final class RemoteNotification {
                     if (subMessage.isJsonPrimitive()) {
                         JsonPrimitive primitive = subMessage.getAsJsonPrimitive();
                         if (primitive.isString()) {
-                            messages.add(primitive.getAsString());
+                            messages.add(primitive.getAsString() + "&r");
                         }
                     }
                 }
@@ -223,7 +189,7 @@ public final class RemoteNotification {
                                         Number level = noLP.getAsNumber();
                                         String message = noMP.getAsString();
 
-                                        notification = new Notification(level.intValue(), message, force_config, force_proxy);
+                                        notification = new Notification(level.intValue(), message + "&r", force_config, force_proxy);
                                     }
                                 }
                             }

@@ -48,6 +48,7 @@ import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
@@ -76,17 +77,17 @@ public class ProtocolListener extends PacketAdapter {
     public final static Map<InetSocketAddress, LoginSession> sessions = new ConcurrentHashMap<>();
 
 
-    public ProtocolListener() {
+    public ProtocolListener(final Plugin plugin) {
         super(params()
-                .plugin(LockLogin.plugin)
+                .plugin(plugin)
                 .types(START, ENCRYPTION_BEGIN)
                 .optionAsync());
     }
 
-    public static void register() {
+    public static void register(final Plugin plugin) {
         LockLogin.plugin.console().send("Registering ProtocolLib listener", Level.OK);
         ProtocolLibrary.getProtocolManager().getAsynchronousManager()
-                .registerAsyncHandler(new ProtocolListener()).start();
+                .registerAsyncHandler(new ProtocolListener(plugin)).start();
     }
 
     @Override
@@ -133,6 +134,7 @@ public class ProtocolListener extends PacketAdapter {
             }
 
             event.getAsyncMarker().incrementProcessingDelay();
+
             Runnable task = new LoginHandler(random, player, event, name, client.orElse(null), keyPair.getPublic());
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, task);
         } else {

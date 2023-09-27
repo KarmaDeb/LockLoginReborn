@@ -14,11 +14,13 @@ package eu.locklogin.plugin.bukkit.util.files;
  * the version number 2.1.]
  */
 
+import eu.locklogin.api.common.session.SessionCheck;
 import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.minecraft.rgb.RGBTextComponent;
+import sun.reflect.Reflection;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

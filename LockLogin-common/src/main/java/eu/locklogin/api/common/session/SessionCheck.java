@@ -90,20 +90,28 @@ public final class SessionCheck<T> implements Runnable {
                         player.sendMessage(messages.prefix() + messages.panicLogin());
                         boss.update(messages.panicLogin(), true);
                     } else {
-                        player.sendMessage(messages.prefix() + messages.login());
+                        if (!player.getSession().isLogged()) {
+                            player.sendMessage(messages.prefix() + messages.login());
+                        }
                     }
 
                     if (config.loginOptions().hasBossBar())
                         boss.displayTime(tmp_time);
                 } else {
-                    player.sendMessage(messages.prefix() + messages.register());
+                    if (!player.getSession().isLogged()) {
+                        player.sendMessage(messages.prefix() + messages.register());
+                    }
 
                     if (config.registerOptions().hasBossBar())
                         boss.displayTime(tmp_time);
                 }
 
-                if (boss != null) {
+                if (boss != null && !player.getSession().isLogged()) {
                     boss.scheduleBar(Collections.singletonList(player.getPlayer()));
+                }
+
+                if (player.getSession().isLogged() && boss != null) {
+                    boss.cancel();
                 }
 
                 int time = tmp_time;

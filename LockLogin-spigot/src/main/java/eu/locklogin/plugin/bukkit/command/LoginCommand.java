@@ -140,41 +140,6 @@ public final class LoginCommand implements CommandExecutor {
                                             return;
                                         }
 
-                                        /*GlobalAccount global = User.getAccount(player.getUniqueId());
-                                        if (global != null && global.enabled() && global.hasPassword()) {
-                                            if (global.authPassword(password)) {
-                                                manager.setPassword(password);
-                                                user.send(messages.prefix() + messages.logged());
-                                            } else {
-                                                UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.ERROR, user.getModule(), messages.incorrectPassword(), null);
-                                                ModulePlugin.callEvent(event);
-
-                                                protection.fail();
-
-                                                BruteForceConfig bruteForce = config.bruteForceOptions();
-                                                LoginConfig loginConfig = config.loginOptions();
-
-                                                if (bruteForce.getMaxTries() > 0 && protection.tries() >= bruteForce.getMaxTries()) {
-                                                    if (manager.hasPanic()) {
-                                                        protection.panic(player.getUniqueId());
-                                                        user.kick(messages.panicMode());
-                                                    } else {
-                                                        protection.block(bruteForce.getBlockTime());
-                                                        user.kick(messages.ipBlocked(bruteForce.getBlockTime()));
-                                                    }
-                                                } else {
-                                                    if (loginConfig.maxTries() > 0 && protection.tries() >= loginConfig.maxTries()) {
-                                                        protection.success();
-                                                        user.kick(event.getAuthMessage());
-                                                    } else {
-                                                        user.send(messages.prefix() + event.getAuthMessage());
-                                                    }
-                                                }
-                                            }
-
-                                            return;
-                                        }*/
-
                                         Password tmp = new Password(null);
                                         tmp.addInsecure(player.getDisplayName(), player.getName(), StringUtils.stripColor(player.getDisplayName()), StringUtils.stripColor(player.getName()));
                                         PasswordConfig passwordConfig = config.passwordConfig();
@@ -225,15 +190,6 @@ public final class LoginCommand implements CommandExecutor {
                                                             utils.getTokenHash().name(),
                                                             config.passwordEncryption().name());
                                                 }
-
-                                                /*if (global != null && global.enabled() && !global.hasPassword()) {
-                                                    String token = "";
-                                                    if (manager.has2FA() && !global.has2FA()) {
-                                                        token = manager.getGAuth();
-                                                    }
-
-                                                    global.define(player.getAddress(), password, "", token, "");
-                                                }*/
 
                                                 if (!manager.has2FA() && !manager.hasPin()) {
                                                     UserAuthenticateEvent event = new UserAuthenticateEvent(UserAuthenticateEvent.AuthType.PASSWORD, UserAuthenticateEvent.Result.SUCCESS, user.getModule(), messages.logged(), null);

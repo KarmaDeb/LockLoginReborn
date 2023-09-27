@@ -18,8 +18,8 @@ import eu.locklogin.api.account.param.AccountConstructor;
 import eu.locklogin.api.account.param.Parameter;
 import eu.locklogin.api.account.param.SimpleParameter;
 import eu.locklogin.api.util.platform.CurrentPlatform;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
+import lombok.Getter;
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 
 import java.io.Serializable;
@@ -29,8 +29,13 @@ import java.util.UUID;
 /**
  * LockLogin account id
  */
+@Getter
 public final class AccountID extends AccountConstructor<AccountID> implements Serializable {
 
+    /**
+     * -- GETTER --
+     *  Get the account id
+     */
     private final String id;
 
     /**
@@ -59,10 +64,7 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      * @return a new account id object
      */
     public static AccountID fromString(final String stringUUID) {
-        UUID result = MineAPI.fromTrimmed(stringUUID);
-        assert result != null;
-
-        return new AccountID(result);
+        return new AccountID(UUIDFetcher.fromSimple(stringUUID));
     }
 
     /**
@@ -72,23 +74,16 @@ public final class AccountID extends AccountConstructor<AccountID> implements Se
      * @return the account id object
      */
     public static AccountID forUsername(final String username) {
-        OKARequest request = MineAPI.fetchAndWait(username);
-        UUID id = (CurrentPlatform.isOnline() ? request.getUUID(UUIDType.ONLINE) : request.getUUID(UUIDType.OFFLINE));
+        UUID id = UUIDFetcher.fetchUUID(username, UUIDType.OFFLINE);
+        if (CurrentPlatform.isOnline()) {
+            id = UUIDFetcher.fetchUUID(username, UUIDType.ONLINE);
+        }
 
         if (id == null) {
             id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
         }
 
         return new AccountID(id);
-    }
-
-    /**
-     * Get the account id
-     *
-     * @return the account id
-     */
-    public String getId() {
-        return id;
     }
 
     /**

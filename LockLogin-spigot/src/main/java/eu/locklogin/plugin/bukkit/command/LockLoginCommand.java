@@ -35,11 +35,13 @@ import eu.locklogin.plugin.bukkit.util.player.User;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
 import ml.karmaconfigs.api.common.timer.SourceScheduler;
+import ml.karmaconfigs.api.common.timer.scheduler.LateScheduler;
 import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.checker.VersionUpdater;
 import ml.karmaconfigs.api.common.version.updater.VersionType;
 import net.md_5.bungee.api.chat.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.time.Instant;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -168,12 +171,15 @@ public final class LockLoginCommand implements CommandExecutor {
                                 if (user.hasPermission(PluginPermissions.updater_version())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
-                                    updater.get().whenComplete((result, error) -> {
+                                    updater.fetch(false).whenComplete((result, error) -> {
                                         if (error == null) {
                                             user.send(messages.prefix() + "&7Current version:&e " + result.resolve(VersionType.CURRENT));
                                             user.send(messages.prefix() + "&7Latest version:&e " + result.resolve(VersionType.LATEST));
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to fetch latest version");
+
+                                            logger.scheduleLog(Level.GRAVE, error);
+                                            logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin version");
                                         }
                                     });
                                 } else {
@@ -184,13 +190,16 @@ public final class LockLoginCommand implements CommandExecutor {
                                 if (user.hasPermission(PluginPermissions.updater_changelog())) {
                                     user.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
-                                    updater.get().whenComplete((result, error) -> {
+                                    updater.fetch(false).whenComplete((result, error) -> {
                                         if (error == null) {
                                             for (String str : result.getChangelog()) {
                                                 user.send(str);
                                             }
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to fetch latest changelog");
+
+                                            logger.scheduleLog(Level.GRAVE, error);
+                                            logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin changelog");
                                         }
                                     });
                                 } else {
@@ -215,6 +224,9 @@ public final class LockLoginCommand implements CommandExecutor {
                                             user.send(messages.prefix() + "&dChecked for updates successfully");
                                         } else {
                                             user.send(messages.prefix() + "&5&oFailed to check for updates");
+
+                                            logger.scheduleLog(Level.GRAVE, error);
+                                            logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin updates");
                                         }
                                     });
                                 } else {
@@ -352,25 +364,32 @@ public final class LockLoginCommand implements CommandExecutor {
                             case "version":
                                 console.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
-                                updater.get().whenComplete((result, error) -> {
+                                updater.fetch(false).whenComplete((result, error) -> {
                                     if (error == null) {
                                         console.send(messages.prefix() + "&7Current version:&e {0}", result.resolve(VersionType.CURRENT));
                                         console.send(messages.prefix() + "&7Latest version:&e {0}", result.resolve(VersionType.LATEST));
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest version");
+
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                        logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin version");
                                     }
                                 });
+
                                 break;
                             case "changelog":
                                 console.send(messages.prefix() + "&dTrying to communicate with LockLogin website, please wait. This could take some seconds...");
 
-                                updater.get().whenComplete((result, error) -> {
+                                updater.fetch(false).whenComplete((result, error) -> {
                                     if (error == null) {
                                         for (String str : result.getChangelog()) {
                                             console.send(str);
                                         }
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to fetch latest changelog");
+
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                        logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin changelog");
                                     }
                                 });
                                 break;
@@ -387,6 +406,9 @@ public final class LockLoginCommand implements CommandExecutor {
                                         console.send(messages.prefix() + "&dChecked for updates successfully");
                                     } else {
                                         console.send(messages.prefix() + "&5&oFailed to check for updates");
+
+                                        logger.scheduleLog(Level.GRAVE, error);
+                                        logger.scheduleLog(Level.INFO, "An error occurred while fetching LockLogin updates");
                                     }
                                 });
 

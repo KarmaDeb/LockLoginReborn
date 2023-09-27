@@ -95,7 +95,6 @@ public final class BungeeReceiver implements PluginMessageListener {
                     }
                 }
             } catch (Throwable ex) {
-                ex.printStackTrace();
                 logger.scheduleLog(Level.GRAVE, ex);
                 logger.scheduleLog(Level.INFO, "Failed to read bungeecord message");
             }
@@ -146,7 +145,6 @@ public final class BungeeReceiver implements PluginMessageListener {
      */
     private void processAccountCommand(final Player player, final JsonObject bungee_data) {
         DataType sub = DataType.valueOf(bungee_data.get("data_type").getAsString());
-
         PluginConfiguration config = CurrentPlatform.getConfiguration();
 
         if (player != null && player.isOnline()) {

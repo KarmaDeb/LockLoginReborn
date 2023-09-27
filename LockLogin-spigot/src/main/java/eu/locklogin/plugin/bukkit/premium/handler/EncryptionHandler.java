@@ -51,7 +51,7 @@ import eu.locklogin.plugin.bukkit.premium.mojang.MojangEncryption;
 import eu.locklogin.plugin.bukkit.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import org.bukkit.entity.Player;
@@ -167,52 +167,51 @@ public final class EncryptionHandler implements Runnable {
                         }
 
                         session.setVerified(true);
-                        MineAPI.fetch(name).whenComplete((oka) -> {
-                            UUID online_id = oka.getUUID(UUIDType.ONLINE);
-                            PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
+                        UUID online_id = UUIDFetcher.fetchUUID(name, UUIDType.ONLINE);
 
-                            PluginConfiguration config = CurrentPlatform.getConfiguration();
-                            if ((!config.fixUUIDs() || CurrentPlatform.isOnline()) && online_id != null && database.isPremium(online_id)) {
-                                session.setId(online_id);
+                        PremiumDatabase database = CurrentPlatform.getPremiumDatabase();
+                        PluginConfiguration config = CurrentPlatform.getConfiguration();
+
+                        if ((!config.fixUUIDs() || CurrentPlatform.isOnline()) && online_id != null && database.isPremium(online_id)) {
+                            session.setId(online_id);
+                        } else {
+                            session.setId(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes()));
+                        }
+
+                        if (networkManager != null) {
+                            if (!config.fixUUIDs() || CurrentPlatform.isOnline()) {
+                                Class<?> managerClazz = networkManager.getClass();
+                                FieldAccessor accessor = Accessors.getFieldAccessorOrNull(managerClazz, "spoofedUUID", UUID.class);
+                                accessor.set(networkManager, verification.getId());
                             } else {
-                                session.setId(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes()));
+                                Class<?> managerClazz = networkManager.getClass();
+                                FieldAccessor accessor = Accessors.getFieldAccessorOrNull(managerClazz, "spoofedUUID", UUID.class);
+                                accessor.set(networkManager, UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes()));
                             }
+                        }
 
-                            if (networkManager != null) {
-                                if (!config.fixUUIDs() || CurrentPlatform.isOnline()) {
-                                    Class<?> managerClazz = networkManager.getClass();
-                                    FieldAccessor accessor = Accessors.getFieldAccessorOrNull(managerClazz, "spoofedUUID", UUID.class);
-                                    accessor.set(networkManager, verification.getId());
-                                } else {
-                                    Class<?> managerClazz = networkManager.getClass();
-                                    FieldAccessor accessor = Accessors.getFieldAccessorOrNull(managerClazz, "spoofedUUID", UUID.class);
-                                    accessor.set(networkManager, UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes()));
-                                }
-                            }
+                        PacketContainer start;
+                        if (BukkitServer.isOver(Version.v1_19)) {
+                            start = new PacketContainer(START);
+                            start.getStrings().write(0, name);
 
-                            PacketContainer start;
-                            if (BukkitServer.isOver(Version.v1_19)) {
-                                start = new PacketContainer(START);
-                                start.getStrings().write(0, name);
+                            ClientKey cl_key = session.getKey();
+                            EquivalentConverter<WrappedProfilePublicKey.WrappedProfileKeyData> converter = BukkitConverters.getWrappedPublicKeyDataConverter();
+                            Optional<WrappedProfilePublicKey.WrappedProfileKeyData> wrapped = Optional.ofNullable(cl_key).map(key ->
+                                    new WrappedProfilePublicKey.WrappedProfileKeyData(cl_key.expiration(), cl_key.key(), cl_key.sign())
+                            );
 
-                                ClientKey cl_key = session.getKey();
-                                EquivalentConverter<WrappedProfilePublicKey.WrappedProfileKeyData> converter = BukkitConverters.getWrappedPublicKeyDataConverter();
-                                Optional<WrappedProfilePublicKey.WrappedProfileKeyData> wrapped = Optional.ofNullable(cl_key).map(key ->
-                                        new WrappedProfilePublicKey.WrappedProfileKeyData(cl_key.expiration(), cl_key.key(), cl_key.sign())
-                                );
+                            start.getOptionals(converter).write(0, wrapped);
+                        } else {
+                            WrappedGameProfile fake = new WrappedGameProfile(UUID.randomUUID(), name);
 
-                                start.getOptionals(converter).write(0, wrapped);
-                            } else {
-                                WrappedGameProfile fake = new WrappedGameProfile(UUID.randomUUID(), name);
+                            Class<?> profileHandler = fake.getHandleType();
+                            Class<?> packetHandler = PacketRegistry.getPacketClassFromType(START);
+                            ConstructorAccessor startConstructor = Accessors.getConstructorAccessorOrNull(packetHandler, profileHandler);
+                            start = new PacketContainer(START, startConstructor.invoke(fake));
+                        }
 
-                                Class<?> profileHandler = fake.getHandleType();
-                                Class<?> packetHandler = PacketRegistry.getPacketClassFromType(START);
-                                ConstructorAccessor startConstructor = Accessors.getConstructorAccessorOrNull(packetHandler, profileHandler);
-                                start = new PacketContainer(START, startConstructor.invoke(fake));
-                            }
-
-                            ProtocolLibrary.getProtocolManager().receiveClientPacket(player, start, false);
-                        });
+                        ProtocolLibrary.getProtocolManager().receiveClientPacket(player, start, false);
                     } else {
                         kick(StringUtils.toColor(messages.premiumFailAuth()));
                     }

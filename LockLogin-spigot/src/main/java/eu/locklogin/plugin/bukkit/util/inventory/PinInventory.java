@@ -2,7 +2,6 @@ package eu.locklogin.plugin.bukkit.util.inventory;
 
 import eu.locklogin.api.account.AccountManager;
 import eu.locklogin.api.account.ClientSession;
-import eu.locklogin.api.common.session.online.SessionDataContainer;
 import eu.locklogin.api.encryption.CryptoFactory;
 import eu.locklogin.api.encryption.Validation;
 import eu.locklogin.api.file.PluginConfiguration;
@@ -198,7 +197,7 @@ public final class PinInventory implements InventoryHolder {
                             session.setPinLogged(true);
                             session.set2FALogged(true);
 
-                            SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
+                            //SessionDataContainer.setLogged(SessionDataContainer.getLogged() + 1);
                             TransientMap.apply(player);
 
                             ModulePlayer module = user.getModule();

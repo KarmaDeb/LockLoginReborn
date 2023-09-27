@@ -60,6 +60,16 @@ public abstract class PluginConfiguration {
     public abstract BackupConfig backup();
 
     /**
+     * Get if the premium mode should be
+     * enabled to each player by default when
+     * available
+     *
+     * @return if the premium mode should be enabled by
+     * default for each player
+     */
+    public abstract boolean autoPremium();
+
+    /**
      * Get if the premium support should be
      * enabled for this server
      *

@@ -26,13 +26,16 @@ package eu.locklogin.plugin.bukkit.premium.handler;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketEvent;
+import eu.locklogin.api.file.PluginConfiguration;
 import eu.locklogin.api.file.PluginMessages;
+import eu.locklogin.api.premium.PremiumDatabase;
 import eu.locklogin.api.util.platform.CurrentPlatform;
 import eu.locklogin.plugin.bukkit.premium.LoginSession;
 import eu.locklogin.plugin.bukkit.premium.ProtocolListener;
 import eu.locklogin.plugin.bukkit.premium.StartClient;
 import eu.locklogin.plugin.bukkit.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+
+import ml.karmaconfigs.api.common.minecraft.UUIDFetcher;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import org.bukkit.entity.Player;
@@ -87,35 +90,42 @@ public final class LoginHandler implements Runnable {
             if (address != null) {
                 UUID gen = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
 
-                MineAPI.fetch(username).whenComplete((oka) -> {
-                    UUID offline_id = oka.getUUID(UUIDType.OFFLINE);
-                    UUID premium_uuid = oka.getUUID(UUIDType.ONLINE);
+                UUID offline_id = UUIDFetcher.fetchUUID(username, UUIDType.OFFLINE);
+                UUID premium_uuid = UUIDFetcher.fetchUUID(username, UUIDType.ONLINE);
 
-                    if (offline_id == null) offline_id = gen;
-                    if (premium_uuid == null) premium_uuid = gen;
+                if (offline_id == null) offline_id = gen;
+                if (premium_uuid == null) premium_uuid = gen;
 
-                    LoginSession session;
-                    boolean cracked = true;
-                    if (!offline_id.equals(premium_uuid)) {
-                        if (CurrentPlatform.getPremiumDatabase().isPremium(premium_uuid) && start.toggleOnline()) {
-                            byte[] verify = start.token();
-                            ClientKey key = start.key();
-                            session = new LoginSession(username, verify, key);
-                            cracked = false;
-                        } else {
-                            session = new LoginSession(username, null, null);
-                        }
+                LoginSession session;
+                boolean cracked = true;
+                if (!offline_id.equals(premium_uuid)) {
+                    PluginConfiguration config = CurrentPlatform.getConfiguration();
+                    PremiumDatabase pm = CurrentPlatform.getPremiumDatabase();
+
+                    boolean setPremium = false;
+                    if (config.autoPremium() && !pm.exists(offline_id)) {
+                        pm.setPremium(offline_id, true);
+                        setPremium = true;
+                    }
+
+                    if ((pm.isPremium(offline_id) && start.toggleOnline()) || (setPremium && start.toggleOnline())) {
+                        byte[] verify = start.token();
+                        ClientKey key = start.key();
+                        session = new LoginSession(username, verify, key);
+                        cracked = false;
                     } else {
                         session = new LoginSession(username, null, null);
                     }
+                } else {
+                    session = new LoginSession(username, null, null);
+                }
 
-                    ProtocolListener.sessions.put(address, session);
-                    if (!cracked) {
-                        synchronized (packet.getAsyncMarker().getProcessingLock()) {
-                            packet.setCancelled(true);
-                        }
+                ProtocolListener.sessions.put(address, session);
+                if (!cracked) {
+                    synchronized (packet.getAsyncMarker().getProcessingLock()) {
+                        packet.setCancelled(true);
                     }
-                });
+                }
             } else {
                 player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
             }
